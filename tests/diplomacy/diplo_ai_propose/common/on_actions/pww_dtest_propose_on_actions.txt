@@ -1,0 +1,108 @@
+# Diplomacy test: AI to AI Propose Agreement through the real scripted
+# diplomatic action (ai_desire -> send GUI reset -> ai_acceptance ->
+# complete/reject effects). GER (AI) needs tungsten; POR (AI) produces it.
+# Run with a non-participating player tag: --tag SWI.
+# The test arms GER's offer intent (what the staggered tick does when GER is
+# desperate) and re-arms it after each refusal so the counters play out
+# within days instead of months. PASS when the talks end signed and the
+# ledger agreement is active.
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = GER }
+				add_to_variable = { global.pww_dtest_day = 1 }
+				if = {
+					limit = { check_variable = { global.pww_dtest_day = 2 } }
+					set_global_flag = pww_diplo_debug
+					add_political_power = 150
+					set_variable = { pww_desp_tungsten = 80 }
+					set_variable = { pww_desp_max = 80 }
+					set_variable = { pww_desp_max_res = 3 }
+					POR = { set_temp_variable = { pww_dtest_por = THIS } }
+					set_variable = { pww_diplo_ai_offer_to = pww_dtest_por }
+					set_variable = { pww_diplo_ai_offer_res = 3 }
+					# What the staggered tick does for a desperate AI
+					set_temp_variable = { pww_dk_target = pww_dtest_por }
+					set_temp_variable = { pww_dk_act = 0 }
+					set_temp_variable = { pww_dap_res = 3 }
+					pww_diplo_ai_prepare_offer = yes
+					if = {
+						limit = { check_variable = { pww_dap_ready = 1 } }
+						set_country_flag = { flag = pww_diplo_ai_offer days = 30 value = 1 }
+					}
+					set_temp_variable = { pww_dtest_t = pww_do_talk }
+					log = "PWW_RESULT diplo_ai_propose.prepared INFO ready=[?pww_dap_ready|0] talk=[?pww_dtest_t|0] round=[?global.pww_dt_round^pww_dtest_t|0] rl_seen=[?global.pww_dt_rl_seen^pww_dtest_t|0] want_seen=[?global.pww_dt_want_seen^pww_dtest_t|0] price=[?pww_do_price|0] amt=[?pww_do_amt|0] pay=[?pww_do_pay|0] sweet=[?pww_do_sweet|0] fig=[?pww_do_fig|0] total=[?pww_do_e_total|0] status=[?global.pww_dt_status^pww_dtest_t|0]"
+					log = "PWW_RESULT diplo_ai_propose.armed INFO [GetDateText] GER->[?pww_diplo_ai_offer_to.GetTag] tungsten PP=[?GER.political_power|0]"
+				}
+				# Keep the intent armed (the tick would re-arm it each month; the
+				# test re-arms daily so the AI's own evaluation schedule decides).
+				if = {
+					limit = {
+						check_variable = { global.pww_dtest_day > 2 }
+						NOT = { has_country_flag = pww_diplo_ai_offer }
+						NOT = { has_country_flag = pww_diplo_pending }
+						NOT = { has_global_flag = pww_dtest_done }
+					}
+					if = {
+						limit = { has_variable = pww_do_talk }
+						set_temp_variable = { pww_dtest_t = pww_do_talk }
+						log = "PWW_RESULT diplo_ai_propose.round INFO [GetDateText] round=[?global.pww_dt_round^pww_dtest_t|0] patience=[?global.pww_dt_patience^pww_dtest_t|0] rl_seen=[?global.pww_dt_rl_seen^pww_dtest_t|0] want_seen=[?global.pww_dt_want_seen^pww_dtest_t|0] line=[?global.pww_dt_line^pww_dtest_t|0] price=[?pww_do_price|0] amt=[?pww_do_amt|0] pay=[?pww_do_pay|0] total=[?pww_do_e_total|0]"
+					}
+					set_country_flag = { flag = pww_diplo_ai_offer days = 30 value = 1 }
+				}
+				if = {
+					limit = {
+						has_variable = pww_do_talk
+						check_variable = { pww_do_talk > -1 }
+						NOT = { has_global_flag = pww_dtest_done }
+					}
+					set_temp_variable = { pww_dtest_t = pww_do_talk }
+					if = {
+						limit = { NOT = { check_variable = { global.pww_dt_status^pww_dtest_t = 0 } } }
+						set_global_flag = pww_dtest_done
+						set_temp_variable = { pww_dtest_ag = global.pww_dt_ag^pww_dtest_t }
+						if = {
+							limit = {
+								check_variable = { global.pww_dt_status^pww_dtest_t = 1 }
+								check_variable = { pww_dtest_ag > -1 }
+								check_variable = { global.pww_ag_status^pww_dtest_ag = 1 }
+								check_variable = { global.pww_ag_seller^pww_dtest_ag = POR }
+								check_variable = { global.pww_ag_buyer^pww_dtest_ag = GER }
+							}
+							log = "PWW_RESULT diplo_ai_propose.signed PASS [GetDateText] talk=[?pww_dtest_t|0] ag=[?pww_dtest_ag|0] res=[?global.pww_ag_res^pww_dtest_ag|0] amount=[?global.pww_ag_amount^pww_dtest_ag|1] civ=[?global.pww_ag_civ^pww_dtest_ag|0] term=[?global.pww_ag_term^pww_dtest_ag|0] rounds=[?global.pww_dt_round^pww_dtest_t|0]"
+						}
+						else = {
+							log = "PWW_RESULT diplo_ai_propose.signed FAIL [GetDateText] talk status=[?global.pww_dt_status^pww_dtest_t|0] ag=[?pww_dtest_ag|0] rounds=[?global.pww_dt_round^pww_dtest_t|0] line=[?global.pww_dt_line^pww_dtest_t|0]"
+						}
+						set_variable = { global.pww_dtest_end = global.pww_dtest_day }
+						add_to_variable = { global.pww_dtest_end = 3 }
+					}
+				}
+				if = {
+					limit = {
+						has_global_flag = pww_dtest_done
+						check_variable = { global.pww_dtest_day = global.pww_dtest_end }
+					}
+					# The ledger's flow modifier carries the delivery
+					if = {
+						limit = { check_variable = { GER.pww_lf_in_tungsten > 0 } }
+						log = "PWW_RESULT diplo_ai_propose.flow PASS GER receives [?GER.pww_lf_in_tungsten|1] tungsten"
+					}
+					else = {
+						log = "PWW_RESULT diplo_ai_propose.flow INFO no ledger inflow variable yet ([?GER.pww_lf_in_tungsten|1])"
+					}
+					log = "PWW_DONE diplo_ai_propose"
+				}
+				if = {
+					limit = {
+						check_variable = { global.pww_dtest_day = 60 }
+						NOT = { has_global_flag = pww_dtest_done }
+					}
+					log = "PWW_RESULT diplo_ai_propose.signed FAIL no outcome in 60 days talk=[?pww_do_talk|0] sent_flag=[?pww_do_valid|0]"
+					log = "PWW_DONE diplo_ai_propose"
+				}
+			}
+		}
+	}
+}

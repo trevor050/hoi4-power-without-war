@@ -30,6 +30,14 @@ import sys
 import time
 from pathlib import Path
 
+# error.log lines that are known engine false positives (see AGENTS.md).
+# context_type = diplomatic_action is required for diplomatic-action send GUIs
+# and works at runtime, but the parser still warns (Millennium Dawn documents
+# the same warning).
+KNOWN_FALSE_POSITIVES = (
+    '"Unexpected token: context_type',
+)
+
 try:
     import psutil  # type: ignore
 except ImportError:  # pragma: no cover
@@ -632,7 +640,7 @@ def main(argv: list[str] | None = None) -> int:
         err_path = userdir / "logs" / "error.log"
         if err_path.exists():
             for line in err_path.read_text(encoding="utf-8", errors="replace").splitlines():
-                if "pww" in line.lower():
+                if "pww" in line.lower() and not any(p in line for p in KNOWN_FALSE_POSITIVES):
                     err_lines.append(line)
         if err_lines:
             log(f"{len(err_lines)} pww-related error.log lines:")

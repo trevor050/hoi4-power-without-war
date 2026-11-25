@@ -1,0 +1,17 @@
+# Diplomacy GUI look (manual or scripted clicks): run with
+#   --tag POR --leave-running --screenshot --test tests/diplomacy/diplo_gui_look
+# Day 1 gives POR political power for the action costs, then hands the
+# running game over (pause with space and open Spain's diplomacy view).
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = GER NOT = { has_global_flag = pww_dtest_look } }
+				set_global_flag = pww_dtest_look
+				set_global_flag = pww_diplo_debug
+				POR = { add_political_power = 300 }
+				log = "PWW_DONE diplo_gui_look"
+			}
+		}
+	}
+}

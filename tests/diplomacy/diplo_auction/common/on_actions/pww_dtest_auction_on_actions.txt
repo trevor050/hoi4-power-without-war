@@ -1,0 +1,27 @@
+# Diplomacy test: a seller-written auction with two AI bidders.
+# Run with --tag SWI so POR, GER and ENG are all AI.
+# Day 2: POR opens a tungsten auction and writes its standard lots (with two
+# producing states: a split pair, an exclusive national lease, a bridge).
+# GER and ENG are made frantic for tungsten and bid through the AI bidder
+# (once per lot). A second bid on the same lot is refused.
+# Day 3: the holder closes and awards. PASS when at least one lot is awarded
+# with an active ledger agreement, the auction is closed, and split halves
+# (if awarded) went to different bidders.
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = GER }
+				add_to_variable = { global.pww_dtest_day = 1 }
+				if = {
+					limit = { check_variable = { global.pww_dtest_day = 2 } }
+					pww_dtest_auction_open = yes
+				}
+				if = {
+					limit = { check_variable = { global.pww_dtest_day = 3 } }
+					pww_dtest_auction_close = yes
+				}
+			}
+		}
+	}
+}

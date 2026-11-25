@@ -1,0 +1,105 @@
+pww_dtest_auction_open = {
+	set_global_flag = pww_diplo_debug
+	set_temp_variable = { pww_in_holder = POR }
+	set_temp_variable = { pww_in_resource = 3 }
+	set_temp_variable = { pww_in_sit_id = -1 }
+	set_temp_variable = { pww_in_days = 45 }
+	pww_diplo_auction_open = yes
+	set_variable = { global.pww_dtest_auc = pww_out_auction_id }
+	set_temp_variable = { pww_in_auction_id = pww_out_auction_id }
+	pww_diplo_auction_write_default_lots = yes
+	log = "PWW_RESULT diplo_auction.lots INFO auction=[?global.pww_dtest_auc|0] lots=[?global.pww_dau_lots^0|0] por_tungsten_states=[?POR.pww_producing_states_tungsten^num|0]"
+	GER = {
+		set_variable = { pww_desp_tungsten = 80 }
+		set_temp_variable = { pww_in_auction_id = global.pww_dtest_auc }
+		pww_diplo_auction_ai_bid = yes
+	}
+	ENG = {
+		set_variable = { pww_desp_tungsten = 80 }
+		set_temp_variable = { pww_in_auction_id = global.pww_dtest_auc }
+		pww_diplo_auction_ai_bid = yes
+	}
+	set_variable = { global.pww_dtest_bids = global.pww_next_bid_id }
+	# Bid once per lot: GER already bid on lot 0
+	set_temp_variable = { pww_in_lot_id = 0 }
+	set_temp_variable = { pww_in_bidder = GER }
+	set_temp_variable = { pww_in_pay = 0 }
+	set_temp_variable = { pww_in_price = 2 }
+	set_temp_variable = { pww_in_sweet = 0 }
+	set_temp_variable = { pww_in_fig = 0 }
+	pww_diplo_auction_bid = yes
+	if = {
+		limit = {
+			check_variable = { pww_out_bid_id = -1 }
+			check_variable = { global.pww_dtest_bids > 1 }
+		}
+		log = "PWW_RESULT diplo_auction.bid_once PASS bids=[?global.pww_dtest_bids|0]; a second bid on lot 0 was refused"
+	}
+	else = {
+		log = "PWW_RESULT diplo_auction.bid_once FAIL bids=[?global.pww_dtest_bids|0] second=[?pww_out_bid_id|0]"
+	}
+	for_each_loop = {
+		array = global.pww_dbid_live
+		value = b
+		set_temp_variable = { bl = global.pww_dbid_lot^b }
+		set_temp_variable = { bb = global.pww_dbid_bidder^b }
+		log = "PWW_RESULT diplo_auction.bid INFO id=[?b|0] lot=[?bl|0] kind=[?global.pww_dlot_kind^bl|0] bidder=[?bb.GetTag] pay=[?global.pww_dbid_pay^b|0] price=[?global.pww_dbid_price^b|0] score=[?global.pww_dbid_score^b|0]"
+	}
+}
+
+pww_dtest_auction_close = {
+	set_temp_variable = { pww_in_auction_id = global.pww_dtest_auc }
+	pww_diplo_auction_close = yes
+	set_temp_variable = { awarded = 0 }
+	set_temp_variable = { bad = 0 }
+	set_temp_variable = { w1 = 0 }
+	set_temp_variable = { w2 = 0 }
+	for_loop_effect = {
+		start = 0
+		end = global.pww_next_lot_id
+		value = l
+		set_temp_variable = { ag = global.pww_dlot_ag^l }
+		set_temp_variable = { lw = global.pww_dlot_winner^l }
+		log = "PWW_RESULT diplo_auction.lot INFO lot=[?l|0] kind=[?global.pww_dlot_kind^l|0] state=[?global.pww_dlot_state^l|0] status=[?global.pww_dlot_status^l|0] winner=[?lw.GetTag] ag=[?ag|0]"
+		if = {
+			limit = { check_variable = { global.pww_dlot_status^l = 1 } }
+			add_to_temp_variable = { awarded = 1 }
+			if = {
+				limit = {
+					OR = {
+						check_variable = { ag < 0 }
+						NOT = { check_variable = { global.pww_ag_status^ag = 1 } }
+					}
+				}
+				add_to_temp_variable = { bad = 1 }
+			}
+			if = {
+				limit = { check_variable = { global.pww_dlot_kind^l = 1 } }
+				if = {
+					limit = { check_variable = { w1 = 0 } }
+					set_temp_variable = { w1 = lw }
+				}
+				else = {
+					set_temp_variable = { w2 = lw }
+				}
+			}
+		}
+	}
+	set_temp_variable = { a = global.pww_dtest_auc }
+	if = {
+		limit = {
+			check_variable = { awarded > 0 }
+			check_variable = { bad = 0 }
+			OR = {
+				check_variable = { w2 = 0 }
+				NOT = { check_variable = { w1 = w2 } }
+			}
+			check_variable = { global.pww_dau_status^a = 1 }
+		}
+		log = "PWW_RESULT diplo_auction.awarded PASS awarded=[?awarded|0] lots, agreements active, split halves to distinct bidders"
+	}
+	else = {
+		log = "PWW_RESULT diplo_auction.awarded FAIL awarded=[?awarded|0] bad=[?bad|0] w1=[?w1.GetTag] w2=[?w2.GetTag] status=[?global.pww_dau_status^a|0] lfail=[?pww_l_fail|0]"
+	}
+	log = "PWW_DONE diplo_auction"
+}

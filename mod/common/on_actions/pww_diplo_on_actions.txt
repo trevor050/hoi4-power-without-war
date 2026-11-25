@@ -1,0 +1,17 @@
+# Power Without War: diplomacy lane hooks. on_startup has no scope and does
+# not fire on load, so init is wrapped in a country scope and repeated
+# lazily from on_daily (pww_diplo_on_daily, pww_diplo_ticks.txt).
+on_actions = {
+	on_startup = {
+		effect = {
+			random_country = {
+				pww_diplo_init = yes
+			}
+		}
+	}
+	on_daily = {
+		effect = {
+			pww_diplo_on_daily = yes
+		}
+	}
+}

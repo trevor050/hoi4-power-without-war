@@ -1,0 +1,23 @@
+# Power Without War: diplomacy lane sprites (vanilla textures).
+spriteTypes = {
+	spriteType = {
+		name = "GFX_pww_diplo_prev"
+		texturefile = "gfx/interface/scrollbar_leftbutton_type_2.dds"
+		effectFile = "gfx/FX/buttonstate.lua"
+	}
+	spriteType = {
+		name = "GFX_pww_diplo_next"
+		texturefile = "gfx/interface/scrollbar_rightbutton_type_2.dds"
+		effectFile = "gfx/FX/buttonstate.lua"
+	}
+	spriteType = {
+		name = "GFX_pww_diplo_box_off"
+		texturefile = "gfx/interface/checkbox_small_unticked.dds"
+		effectFile = "gfx/FX/buttonstate.lua"
+	}
+	spriteType = {
+		name = "GFX_pww_diplo_box_on"
+		texturefile = "gfx/interface/checkbox_small_ticked.dds"
+		effectFile = "gfx/FX/buttonstate.lua"
+	}
+}

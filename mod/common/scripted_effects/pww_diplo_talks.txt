@@ -1,0 +1,1652 @@
+###############################################################################
+# Power Without War: diplomacy lane, negotiation (talks, offers, replies)
+#
+# Storage and enums: header of pww_diplo_core.txt (TALKS, OFFER DRAFT).
+#
+# How a negotiation runs
+#   1. The sender opens Propose Agreement or Lease Rights. reset_send_effect
+#      calls pww_diplo_offer_begin: it finds or opens the talk with that
+#      target (seeding its hidden values once) and loads the draft.
+#   2. Every card click calls pww_diplo_offer_changed: it re-evaluates the
+#      draft (pww_diplo_eval_offer), so the GUI, can_be_sent and the AI
+#      acceptance always read current numbers.
+#   3. On a rejection pww_diplo_talk_reply runs in reject_effect: it reveals
+#      one red line or hidden want (or reports the main obstacle), spends or
+#      restores patience, and closes the talks after the third counter or
+#      when patience runs out. An identical repeat gets the same answer and
+#      reveals nothing.
+#   4. On acceptance pww_diplo_sign_draft turns the draft into a ledger
+#      agreement (supply or named-state lease), with tranches for the
+#      irreversible payment types and sweeteners.
+#
+# Values (hidden; the player sees bands only). Civilian-factory equivalents:
+#   resource value = units / 8 (fixed vanilla price, 8 units per factory)
+#   payment value  = resource value x price factor (0.7 / 1.0 / 1.35);
+#                    a license is valued 1.5 x price factor regardless of size
+#   The receiver discounts payment forms it cannot use freely (clearing
+#   credit 0.75, equipment 0.85, political power 0.9) and weighs its own
+#   desperation: a seller in need loses more, a desperate buyer gains more.
+# Acceptance points (the AI accepts when the total is above zero):
+#   terms     (gain - loss) x 10, clamped -60..60
+#   need      buyer's desperation / 4; a factory-poor seller paid in
+#             factories +8
+#   want      +25 when the draft carries their hidden want
+#   sweet     sweeteners and fig leaves
+#   red line  -1000 when the draft crosses it
+#   trust     sender Reliability (frozen at opening), halved if non-committal
+#   relations normalized opinion / 4 (frozen at opening)
+#   patron    -20 when a patron underwrites them against this sender
+#   reserve   their hidden reservation (5..20)
+#   repeat    -1000 when the exact draft was already refused
+###############################################################################
+
+###############################################################################
+# Open or find a talk. Sender scope.
+# in : pww_dk_target (country), pww_dk_act (0/1), pww_dk_ai_side (0/1)
+# out: pww_dk_talk (id, -1 if refused by cooldown), pww_dk_new (1 if opened)
+###############################################################################
+pww_diplo_talk_find = {
+	set_temp_variable = { pww_dk_talk = -1 }
+	set_temp_variable = { pww_dk_brk = 0 }
+	for_each_loop = {
+		array = pww_dt_ids
+		value = pww_dk_v
+		break = pww_dk_brk
+		if = {
+			limit = {
+				check_variable = { global.pww_dt_status^pww_dk_v = 0 }
+				check_variable = { global.pww_dt_target^pww_dk_v = pww_dk_target }
+				check_variable = { global.pww_dt_act^pww_dk_v = pww_dk_act }
+			}
+			set_temp_variable = { pww_dk_talk = pww_dk_v }
+			set_temp_variable = { pww_dk_brk = 1 }
+		}
+	}
+}
+
+# Sender scope. in: pww_dk_target. out: pww_dk_cool (1 when a closed talk
+# with that target is still cooling down), pww_dk_cool_talk,
+# pww_dk_recent (1 when talks with that target opened in the last 90 days:
+# AI intents skip such targets so a signed deal is not re-proposed at once).
+pww_diplo_talk_cooling = {
+	set_temp_variable = { pww_dk_cool = 0 }
+	set_temp_variable = { pww_dk_recent = 0 }
+	set_temp_variable = { pww_dk_cool_talk = -1 }
+	set_temp_variable = { pww_dk_since = global.num_days }
+	subtract_from_temp_variable = { pww_dk_since = 90 }
+	for_each_loop = {
+		array = pww_dt_ids
+		value = pww_dk_rv
+		if = {
+			limit = {
+				check_variable = { global.pww_dt_target^pww_dk_rv = pww_dk_target }
+				check_variable = { global.pww_dt_opened^pww_dk_rv > pww_dk_since }
+				NOT = { check_variable = { global.pww_dt_status^pww_dk_rv = 0 } }
+			}
+			set_temp_variable = { pww_dk_recent = 1 }
+		}
+	}
+	for_each_loop = {
+		array = pww_dt_ids
+		value = pww_dk_cv
+		if = {
+			limit = {
+				check_variable = { global.pww_dt_target^pww_dk_cv = pww_dk_target }
+				check_variable = { global.pww_dt_status^pww_dk_cv = 2 }
+				check_variable = { global.pww_dt_cool_until^pww_dk_cv > global.num_days }
+			}
+			set_temp_variable = { pww_dk_cool = 1 }
+			set_temp_variable = { pww_dk_cool_talk = pww_dk_cv }
+		}
+	}
+}
+
+pww_diplo_talk_open = {
+	pww_diplo_init = yes
+	set_temp_variable = { pww_dk_new = 0 }
+	pww_diplo_talk_find = yes
+	if = {
+		limit = { check_variable = { pww_dk_talk < 0 } }
+		pww_diplo_talk_cooling = yes
+		if = {
+			limit = { check_variable = { pww_dk_cool = 0 } }
+			pww_diplo_talk_create = yes
+		}
+	}
+}
+
+# Sender scope. Appends a new talk record and seeds its hidden values.
+pww_diplo_talk_create = {
+	set_temp_variable = { pww_dk_talk = global.pww_next_talk_id }
+	add_to_variable = { global.pww_next_talk_id = 1 }
+	set_temp_variable = { pww_dk_new = 1 }
+	set_temp_variable = { pww_dk_expires = global.num_days }
+	add_to_temp_variable = { pww_dk_expires = global.pww_diplo_c_talk_days }
+
+	# Seed: campaign salt + the pair (core buckets are fixed per country) +
+	# the talk id. Stable across save and reload.
+	set_temp_variable = { pww_dk_seed = global.pww_diplo_salt }
+	set_temp_variable = { pww_dk_b = pww_bucket }
+	multiply_temp_variable = { pww_dk_b = 17 }
+	add_to_temp_variable = { pww_dk_seed = pww_dk_b }
+	var:pww_dk_target = { set_temp_variable = { pww_dk_b = pww_bucket } }
+	multiply_temp_variable = { pww_dk_b = 31 }
+	add_to_temp_variable = { pww_dk_seed = pww_dk_b }
+	set_temp_variable = { pww_dk_b = pww_dk_talk }
+	multiply_temp_variable = { pww_dk_b = 7 }
+	add_to_temp_variable = { pww_dk_seed = pww_dk_b }
+	modulo_temp_variable = { var = pww_dk_seed value = 97 }
+
+	# The AI party being read: the target, or the sender when an AI tables
+	# terms to a human.
+	if = {
+		limit = { check_variable = { pww_dk_ai_side = 1 } }
+		set_temp_variable = { pww_dk_party = THIS }
+		set_temp_variable = { pww_dk_other = pww_dk_target }
+	}
+	else = {
+		set_temp_variable = { pww_dk_party = pww_dk_target }
+		set_temp_variable = { pww_dk_other = THIS }
+	}
+
+	# Red line candidates
+	set_temp_variable = { pww_dpk_found = 0 }
+	clear_temp_array = pww_dk_cand
+	if = {
+		limit = { check_variable = { pww_dk_act = 1 } }
+		add_to_temp_array = { pww_dk_cand = 0 }
+		add_to_temp_array = { pww_dk_cand = 1 }
+		add_to_temp_array = { pww_dk_cand = 3 }
+		add_to_temp_array = { pww_dk_cand = 7 }
+		var:pww_dk_party = {
+			if = {
+				limit = { NOT = { has_government = democratic } }
+				add_to_temp_array = { pww_dk_cand = 0 }
+				add_to_temp_array = { pww_dk_cand = 0 }
+			}
+		}
+	}
+	else = {
+		add_to_temp_array = { pww_dk_cand = 1 }
+		add_to_temp_array = { pww_dk_cand = 2 }
+		add_to_temp_array = { pww_dk_cand = 3 }
+		add_to_temp_array = { pww_dk_cand = 5 }
+		add_to_temp_array = { pww_dk_cand = 7 }
+	}
+	var:pww_dk_party = {
+		if = {
+			limit = { has_government = democratic }
+			add_to_temp_array = { pww_dk_cand = 3 }
+		}
+		set_temp_variable = { pww_dpk_claimant = pww_dk_other }
+		pww_diplo_pledged_against = yes
+		if = {
+			limit = { check_variable = { pww_dpk_found = 1 } }
+			add_to_temp_array = { pww_dk_cand = 6 }
+			add_to_temp_array = { pww_dk_cand = 6 }
+		}
+	}
+	set_temp_variable = { pww_dk_r = pww_dk_seed }
+	multiply_temp_variable = { pww_dk_r = 5 }
+	add_to_temp_variable = { pww_dk_r = 13 }
+	modulo_temp_variable = { var = pww_dk_r value = pww_dk_cand^num }
+	set_temp_variable = { pww_dk_redline = pww_dk_cand^pww_dk_r }
+
+	# Hidden want candidates
+	set_temp_variable = { pww_dk_coal_ok = 0 }
+	clear_temp_array = pww_dk_cand
+	add_to_temp_array = { pww_dk_cand = 3 }
+	add_to_temp_array = { pww_dk_cand = 4 }
+	add_to_temp_array = { pww_dk_cand = 5 }
+	add_to_temp_array = { pww_dk_cand = 6 }
+	var:pww_dk_other = {
+		if = {
+			limit = { num_of_military_factories > 9 }
+			add_to_temp_array = { pww_dk_cand = 0 }
+			add_to_temp_array = { pww_dk_cand = 0 }
+		}
+		if = {
+			limit = { pww_core_produces_coal = yes }
+			set_temp_variable = { pww_dk_coal_ok = 1 }
+		}
+	}
+	var:pww_dk_party = {
+		if = {
+			limit = { num_of_civilian_factories < 25 }
+			add_to_temp_array = { pww_dk_cand = 1 }
+			add_to_temp_array = { pww_dk_cand = 1 }
+		}
+		if = {
+			limit = {
+				pww_core_has_deficit_coal = yes
+				check_variable = { pww_dk_coal_ok = 1 }
+			}
+			add_to_temp_array = { pww_dk_cand = 2 }
+			add_to_temp_array = { pww_dk_cand = 2 }
+		}
+		if = {
+			limit = { check_variable = { pww_dpk_found = 1 } }
+			add_to_temp_array = { pww_dk_cand = 8 }
+		}
+	}
+	set_temp_variable = { pww_dk_r = pww_dk_seed }
+	multiply_temp_variable = { pww_dk_r = 7 }
+	add_to_temp_variable = { pww_dk_r = 29 }
+	modulo_temp_variable = { var = pww_dk_r value = pww_dk_cand^num }
+	set_temp_variable = { pww_dk_want = pww_dk_cand^pww_dk_r }
+
+	# Frozen relations and trust (party's view of the other side)
+	set_temp_variable = { pww_opinion_target = pww_dk_other }
+	var:pww_dk_party = { pww_core_norm_opinion = yes }
+	set_temp_variable = { pww_dk_rel = pww_norm_opinion }
+	divide_temp_variable = { pww_dk_rel = 4 }
+	round_temp_variable = pww_dk_rel
+	var:pww_dk_other = {
+		pww_ledger_rep_ensure = yes
+		set_temp_variable = { pww_dk_trust = pww_reliability }
+	}
+	subtract_from_temp_variable = { pww_dk_trust = 50 }
+	divide_temp_variable = { pww_dk_trust = 2 }
+	round_temp_variable = pww_dk_trust
+
+	# Patience 45..80 shifted by relations; reserve 5..20
+	set_temp_variable = { pww_dk_pat = pww_dk_seed }
+	multiply_temp_variable = { pww_dk_pat = 11 }
+	add_to_temp_variable = { pww_dk_pat = 3 }
+	modulo_temp_variable = { var = pww_dk_pat value = 36 }
+	add_to_temp_variable = { pww_dk_pat = 45 }
+	set_temp_variable = { pww_dk_b = pww_dk_rel }
+	divide_temp_variable = { pww_dk_b = 2 }
+	add_to_temp_variable = { pww_dk_pat = pww_dk_b }
+	clamp_temp_variable = { var = pww_dk_pat min = 20 max = 95 }
+	round_temp_variable = pww_dk_pat
+	set_temp_variable = { pww_dk_res = pww_dk_seed }
+	multiply_temp_variable = { pww_dk_res = 13 }
+	add_to_temp_variable = { pww_dk_res = 41 }
+	modulo_temp_variable = { var = pww_dk_res value = 16 }
+	add_to_temp_variable = { pww_dk_res = 5 }
+
+	# Shared situation
+	set_temp_variable = { pww_dg_a = THIS }
+	set_temp_variable = { pww_dg_b = pww_dk_target }
+	pww_diplo_find_shared_sit = yes
+
+	add_to_array = { array = global.pww_dt_sender value = THIS }
+	add_to_array = { array = global.pww_dt_target value = pww_dk_target }
+	add_to_array = { array = global.pww_dt_act value = pww_dk_act }
+	add_to_array = { array = global.pww_dt_status value = 0 }
+	add_to_array = { array = global.pww_dt_opened value = global.num_days }
+	add_to_array = { array = global.pww_dt_expires value = pww_dk_expires }
+	add_to_array = { array = global.pww_dt_cool_until value = 0 }
+	add_to_array = { array = global.pww_dt_round value = 0 }
+	add_to_array = { array = global.pww_dt_patience value = pww_dk_pat }
+	add_to_array = { array = global.pww_dt_redline value = pww_dk_redline }
+	add_to_array = { array = global.pww_dt_want value = pww_dk_want }
+	add_to_array = { array = global.pww_dt_rl_seen value = 0 }
+	add_to_array = { array = global.pww_dt_want_seen value = 0 }
+	add_to_array = { array = global.pww_dt_reserve value = pww_dk_res }
+	add_to_array = { array = global.pww_dt_seed value = pww_dk_seed }
+	add_to_array = { array = global.pww_dt_rel value = pww_dk_rel }
+	add_to_array = { array = global.pww_dt_trust value = pww_dk_trust }
+	add_to_array = { array = global.pww_dt_last_sig value = -1 }
+	add_to_array = { array = global.pww_dt_last_ok value = 0 }
+	add_to_array = { array = global.pww_dt_line value = 94 }
+	add_to_array = { array = global.pww_dt_sit value = pww_dg_sit }
+	add_to_array = { array = global.pww_dt_ag value = -1 }
+	add_to_array = { array = global.pww_dt_ai_side value = pww_dk_ai_side }
+	add_to_array = { array = pww_dt_ids value = pww_dk_talk }
+	var:pww_dk_target = { add_to_array = { array = pww_dt_in value = pww_dk_talk } }
+	add_to_array = { array = global.pww_dt_live value = pww_dk_talk }
+
+	set_temp_variable = { pww_dq_kind_in = 1 }
+	set_temp_variable = { pww_dq_a_in = THIS }
+	set_temp_variable = { pww_dq_b_in = pww_dk_target }
+	set_temp_variable = { pww_dq_ref_in = pww_dk_talk }
+	set_temp_variable = { pww_dq_ag_in = -1 }
+	set_temp_variable = { pww_dq_sit_in = pww_dg_sit }
+	set_temp_variable = { pww_dq_x_in = pww_dk_act }
+	pww_diplo_queue_push = yes
+	if = {
+		limit = { has_global_flag = pww_diplo_debug }
+		log = "[GetDateText] PWW_DIPLO talk open id=[?pww_dk_talk|0] [THIS.GetTag]->[?pww_dk_target.GetTag] act=[?pww_dk_act|0] seed=[?pww_dk_seed|0] redline=[?pww_dk_redline|0] want=[?pww_dk_want|0] patience=[?pww_dk_pat|0] reserve=[?pww_dk_res|0] rel=[?pww_dk_rel|0] trust=[?pww_dk_trust|0]"
+	}
+}
+
+###############################################################################
+# Begin an offer. Sender scope. in: pww_dk_target, pww_dk_act.
+# Opens or resumes talks and loads the draft. A draft for the same target and
+# act is kept between visits (the GUI remembers the last terms).
+###############################################################################
+pww_diplo_offer_begin = {
+	set_temp_variable = { pww_dk_ai_side = 0 }
+	if = {
+		limit = {
+			is_ai = yes
+			var:pww_dk_target = { is_ai = no }
+		}
+		set_temp_variable = { pww_dk_ai_side = 1 }
+	}
+	pww_diplo_talk_open = yes
+	set_temp_variable = { pww_dob_keep = 0 }
+	if = {
+		limit = {
+			check_variable = { pww_do_target = pww_dk_target }
+			check_variable = { pww_do_act = pww_dk_act }
+			check_variable = { pww_do_talk = pww_dk_talk }
+			has_variable = pww_do_res
+		}
+		set_temp_variable = { pww_dob_keep = 1 }
+	}
+	set_variable = { pww_do_target = pww_dk_target }
+	set_variable = { pww_do_act = pww_dk_act }
+	set_variable = { pww_do_talk = pww_dk_talk }
+	if = {
+		limit = { check_variable = { pww_dob_keep = 0 } }
+		pww_diplo_draft_defaults = yes
+	}
+	pww_diplo_offer_changed = yes
+}
+
+# Sender scope. Default terms: buy the resource we need most that they
+# produce (or the one they produce most), a fair share for a year, paid in
+# civilian factories at market.
+pww_diplo_draft_defaults = {
+	set_variable = { pww_do_dir = 0 }
+	set_variable = { pww_do_amt = 1 }
+	set_variable = { pww_do_slot = 0 }
+	set_variable = { pww_do_dur = 2 }
+	set_variable = { pww_do_pay = 0 }
+	set_variable = { pww_do_price = 1 }
+	set_variable = { pww_do_sweet = 0 }
+	set_variable = { pww_do_fig = 0 }
+	set_variable = { pww_do_res = 3 }
+	set_temp_variable = { pww_ddf_best = -1 }
+	set_temp_variable = { pww_ddf_bestv = -1 }
+	for_loop_effect = {
+		start = 0
+		end = 7
+		value = pww_ddf_r
+		set_temp_variable = { pww_dg_res = pww_ddf_r }
+		var:pww_do_target = { pww_diplo_read_res = yes }
+		if = {
+			limit = { check_variable = { pww_dg_prod > 0.999 } }
+			set_temp_variable = { pww_ddf_v = pww_dg_prod }
+			pww_diplo_read_res = yes
+			multiply_temp_variable = { pww_dg_desp = 10 }
+			add_to_temp_variable = { pww_ddf_v = pww_dg_desp }
+			if = {
+				limit = { check_variable = { pww_ddf_v > pww_ddf_bestv } }
+				set_temp_variable = { pww_ddf_bestv = pww_ddf_v }
+				set_temp_variable = { pww_ddf_best = pww_ddf_r }
+			}
+		}
+	}
+	if = {
+		limit = { check_variable = { pww_ddf_best > -1 } }
+		set_variable = { pww_do_res = pww_ddf_best }
+	}
+}
+
+# Sender scope. Re-evaluate and refresh every display mirror.
+pww_diplo_offer_changed = {
+	pww_diplo_eval_offer = yes
+	pww_diplo_refresh_display = yes
+	add_to_variable = { pww_diplo_dirty = 1 }
+}
+
+# Sender scope. Display mirrors for the send GUI (read as ROOT.*).
+pww_diplo_refresh_display = {
+	set_temp_variable = { pww_drd_t = pww_do_talk }
+	set_variable = { pww_dd_rl = -1 }
+	set_variable = { pww_dd_want = -1 }
+	set_variable = { pww_dd_line = 0 }
+	set_variable = { pww_dd_round = 0 }
+	set_variable = { pww_dd_closed = 0 }
+	if = {
+		limit = {
+			check_variable = { pww_drd_t > -1 }
+			check_variable = { pww_drd_t < global.pww_next_talk_id }
+		}
+		if = {
+			limit = { check_variable = { global.pww_dt_rl_seen^pww_drd_t = 1 } }
+			set_variable = { pww_dd_rl = global.pww_dt_redline^pww_drd_t }
+		}
+		if = {
+			limit = { check_variable = { global.pww_dt_want_seen^pww_drd_t = 1 } }
+			set_variable = { pww_dd_want = global.pww_dt_want^pww_drd_t }
+		}
+		set_variable = { pww_dd_line = global.pww_dt_line^pww_drd_t }
+		set_variable = { pww_dd_round = global.pww_dt_round^pww_drd_t }
+		if = {
+			limit = { NOT = { check_variable = { global.pww_dt_status^pww_drd_t = 0 } } }
+			set_variable = { pww_dd_closed = 1 }
+		}
+	}
+	else = {
+		set_variable = { pww_dd_closed = 1 }
+		set_variable = { pww_dd_line = 92 }
+	}
+	# Patron name for the rival envoy lines, on the target
+	var:pww_do_target = {
+		if = {
+			limit = { check_variable = { pww_dpl_ids^num > 0 } }
+			for_each_loop = {
+				array = pww_dpl_ids
+				value = pww_drd_p
+				if = {
+					limit = { check_variable = { global.pww_dpl_status^pww_drd_p = 0 } }
+					set_variable = { pww_dd_patron = global.pww_dpl_patron^pww_drd_p }
+				}
+			}
+		}
+	}
+}
+
+###############################################################################
+# Evaluate the draft. Sender scope; target = pww_do_target.
+# Writes every derived pww_do_* variable (see the core header).
+###############################################################################
+pww_diplo_eval_offer = {
+	set_temp_variable = { pww_dv_t = pww_do_target }
+	set_temp_variable = { pww_dv_talk = pww_do_talk }
+	set_variable = { pww_do_valid = 0 }
+	set_variable = { pww_do_crosses = 0 }
+
+	# Roles: the receiver (target) sells in a lease or when we buy.
+	if = {
+		limit = {
+			OR = {
+				check_variable = { pww_do_act = 1 }
+				check_variable = { pww_do_dir = 0 }
+			}
+		}
+		set_variable = { pww_do_seller = pww_dv_t }
+		set_variable = { pww_do_buyer = THIS }
+		set_temp_variable = { pww_dv_rcv_sells = 1 }
+	}
+	else = {
+		set_variable = { pww_do_seller = THIS }
+		set_variable = { pww_do_buyer = pww_dv_t }
+		set_temp_variable = { pww_dv_rcv_sells = 0 }
+	}
+	set_temp_variable = { pww_dg_res = pww_do_res }
+	var:pww_do_seller = { pww_diplo_read_res = yes }
+	set_temp_variable = { pww_dv_s_prod = pww_dg_prod }
+	set_temp_variable = { pww_dv_s_desp = pww_dg_desp }
+	var:pww_do_buyer = { pww_diplo_read_res = yes }
+	set_temp_variable = { pww_dv_b_desp = pww_dg_desp }
+
+	# Units
+	set_temp_variable = { pww_dv_units = 0 }
+	if = {
+		limit = { check_variable = { pww_do_act = 0 } }
+		set_temp_variable = { pww_dv_share = 0.15 }
+		if = {
+			limit = { check_variable = { pww_do_amt = 1 } }
+			set_temp_variable = { pww_dv_share = 0.3 }
+		}
+		else_if = {
+			limit = { check_variable = { pww_do_amt = 2 } }
+			set_temp_variable = { pww_dv_share = 0.5 }
+		}
+		else_if = {
+			limit = { check_variable = { pww_do_amt = 3 } }
+			set_temp_variable = { pww_dv_share = 0.75 }
+		}
+		set_temp_variable = { pww_dv_units = pww_dv_s_prod }
+		multiply_temp_variable = { pww_dv_units = pww_dv_share }
+		round_temp_variable = pww_dv_units
+		if = {
+			limit = { check_variable = { pww_dv_units < 1 } }
+			set_temp_variable = { pww_dv_units = 1 }
+		}
+		if = {
+			limit = { check_variable = { pww_dv_s_prod < 1 } }
+			set_variable = { pww_do_valid = 1 }
+		}
+		clear_variable = pww_do_state
+	}
+	else = {
+		set_temp_variable = { pww_dg_slot = pww_do_slot }
+		var:pww_dv_t = { pww_diplo_pick_state = yes }
+		set_variable = { pww_do_slot = pww_dg_slot }
+		set_variable = { pww_do_nstates = pww_dg_nstates }
+		if = {
+			limit = { check_variable = { pww_dg_nstates < 1 } }
+			set_variable = { pww_do_valid = 2 }
+			clear_variable = pww_do_state
+		}
+		else = {
+			set_variable = { pww_do_state = pww_dg_state }
+			set_variable = { pww_do_state_s = pww_dg_state_s }
+			var:pww_dv_t = { set_variable = { pww_do_state_s = pww_dg_state_s } }
+			var:pww_dg_state = { pww_diplo_state_units = yes }
+			set_temp_variable = { pww_dv_units = pww_dg_units }
+		}
+		if = {
+			limit = { check_variable = { pww_do_dur = 0 } }
+			set_variable = { pww_do_valid = 5 }
+		}
+	}
+	set_variable = { pww_do_units = pww_dv_units }
+	set_temp_variable = { pww_dv_vres = pww_dv_units }
+	divide_temp_variable = { pww_dv_vres = 8 }
+
+	# Term
+	set_variable = { pww_do_term = 0 }
+	if = {
+		limit = { check_variable = { pww_do_dur = 1 } }
+		set_variable = { pww_do_term = 180 }
+	}
+	else_if = {
+		limit = { check_variable = { pww_do_dur = 2 } }
+		set_variable = { pww_do_term = 365 }
+	}
+	else_if = {
+		limit = { check_variable = { pww_do_dur = 3 } }
+		set_variable = { pww_do_term = 1095 }
+	}
+	else_if = {
+		limit = { check_variable = { pww_do_dur = 4 } }
+		set_variable = { pww_do_term = 1825 }
+	}
+	if = {
+		limit = {
+			check_variable = { pww_do_dur = 0 }
+			check_variable = { pww_do_pay > 1 }
+		}
+		set_variable = { pww_do_valid = 3 }
+	}
+
+	# Payment
+	set_temp_variable = { pww_dv_pf = 1 }
+	if = {
+		limit = { check_variable = { pww_do_price = 0 } }
+		set_temp_variable = { pww_dv_pf = 0.7 }
+	}
+	else_if = {
+		limit = { check_variable = { pww_do_price = 2 } }
+		set_temp_variable = { pww_dv_pf = 1.35 }
+	}
+	set_temp_variable = { pww_dv_vpay = pww_dv_vres }
+	multiply_temp_variable = { pww_dv_vpay = pww_dv_pf }
+	set_variable = { pww_do_civ = 0 }
+	set_variable = { pww_do_pp = 0 }
+	set_variable = { pww_do_cic = 0 }
+	if = {
+		limit = { check_variable = { pww_do_pay = 0 } }
+		set_temp_variable = { pww_dv_civ = pww_dv_vpay }
+		round_temp_variable = pww_dv_civ
+		if = {
+			limit = { check_variable = { pww_dv_civ < 1 } }
+			set_temp_variable = { pww_dv_civ = 1 }
+		}
+		set_variable = { pww_do_civ = pww_dv_civ }
+		set_temp_variable = { pww_dv_vpay = pww_dv_civ }
+	}
+	else_if = {
+		limit = { check_variable = { pww_do_pay = 1 } }
+		set_temp_variable = { pww_dv_pp = pww_dv_vpay }
+		multiply_temp_variable = { pww_dv_pp = 0.1 }
+		if = {
+			limit = { check_variable = { pww_dv_pp < 0.05 } }
+			set_temp_variable = { pww_dv_pp = 0.05 }
+		}
+		set_variable = { pww_do_pp = pww_dv_pp }
+	}
+	else_if = {
+		limit = { check_variable = { pww_do_pay = 4 } }
+		set_temp_variable = { pww_dv_vpay = 1.5 }
+		multiply_temp_variable = { pww_dv_vpay = pww_dv_pf }
+	}
+	else = {
+		# Clearing credit or equipment: three tranches over the term, each
+		# worth a third of the payment flow (5 CIC per factory-day).
+		set_temp_variable = { pww_dv_cic = pww_dv_vpay }
+		multiply_temp_variable = { pww_dv_cic = 5 }
+		multiply_temp_variable = { pww_dv_cic = pww_do_term }
+		divide_temp_variable = { pww_dv_cic = 3 }
+		clamp_temp_variable = { var = pww_dv_cic min = 50 max = 5000 }
+		round_temp_variable = pww_dv_cic
+		set_variable = { pww_do_cic = pww_dv_cic }
+	}
+
+	# Sweetener validity: a coal bundle needs our own coal surplus.
+	if = {
+		limit = { check_variable = { pww_do_sweet = 1 } }
+		set_temp_variable = { pww_dg_res = 6 }
+		pww_diplo_read_res = yes
+		if = {
+			limit = { check_variable = { pww_dg_net < 2 } }
+			set_variable = { pww_do_valid = 4 }
+		}
+	}
+	# Same direction check for the sender selling: it must produce the resource.
+	if = {
+		limit = {
+			check_variable = { pww_dv_rcv_sells = 0 }
+			check_variable = { pww_dv_s_prod < 1 }
+		}
+		set_variable = { pww_do_valid = 6 }
+	}
+
+	# --- Acceptance parts (the receiver's view) -----------------------------
+	set_temp_variable = { pww_dv_mult = 1 }
+	if = {
+		limit = { check_variable = { pww_do_pay = 1 } }
+		set_temp_variable = { pww_dv_mult = 0.9 }
+	}
+	else_if = {
+		limit = { check_variable = { pww_do_pay = 2 } }
+		set_temp_variable = { pww_dv_mult = 0.75 }
+	}
+	else_if = {
+		limit = { check_variable = { pww_do_pay = 3 } }
+		set_temp_variable = { pww_dv_mult = 0.85 }
+	}
+	set_temp_variable = { pww_dv_fig_cut = 0 }
+	if = {
+		limit = { check_variable = { pww_do_fig > 0 } }
+		set_temp_variable = { pww_dv_fig_cut = 0.4 }
+	}
+	if = {
+		limit = { check_variable = { pww_dv_rcv_sells = 1 } }
+		set_temp_variable = { pww_dv_gain = pww_dv_vpay }
+		multiply_temp_variable = { pww_dv_gain = pww_dv_mult }
+		set_temp_variable = { pww_dv_loss = pww_dv_s_desp }
+		divide_temp_variable = { pww_dv_loss = 100 }
+		add_to_temp_variable = { pww_dv_loss = 1 }
+		multiply_temp_variable = { pww_dv_loss = pww_dv_vres }
+		if = {
+			limit = { check_variable = { pww_do_act = 1 } }
+			# Foreign rights on home soil
+			add_to_temp_variable = { pww_dv_loss = 1 }
+			subtract_from_temp_variable = { pww_dv_loss = pww_dv_fig_cut }
+		}
+	}
+	else = {
+		set_temp_variable = { pww_dv_gain = pww_dv_b_desp }
+		divide_temp_variable = { pww_dv_gain = 50 }
+		add_to_temp_variable = { pww_dv_gain = 1 }
+		multiply_temp_variable = { pww_dv_gain = pww_dv_vres }
+		set_temp_variable = { pww_dv_loss = pww_dv_vpay }
+		multiply_temp_variable = { pww_dv_loss = pww_dv_mult }
+	}
+	set_temp_variable = { pww_dv_terms = pww_dv_gain }
+	subtract_from_temp_variable = { pww_dv_terms = pww_dv_loss }
+	multiply_temp_variable = { pww_dv_terms = 10 }
+	clamp_temp_variable = { var = pww_dv_terms min = -60 max = 60 }
+	round_temp_variable = pww_dv_terms
+	set_variable = { pww_do_e_terms = pww_dv_terms }
+
+	set_variable = { pww_do_e_need = 0 }
+	if = {
+		limit = { check_variable = { pww_dv_rcv_sells = 0 } }
+		set_temp_variable = { pww_dv_need = pww_dv_b_desp }
+		divide_temp_variable = { pww_dv_need = 4 }
+		round_temp_variable = pww_dv_need
+		set_variable = { pww_do_e_need = pww_dv_need }
+	}
+	else_if = {
+		limit = {
+			check_variable = { pww_do_pay = 0 }
+			var:pww_dv_t = { num_of_civilian_factories < 20 }
+		}
+		set_variable = { pww_do_e_need = 8 }
+	}
+
+	# Talk-dependent parts
+	set_variable = { pww_do_e_want = 0 }
+	set_variable = { pww_do_e_red = 0 }
+	set_variable = { pww_do_e_trust = 0 }
+	set_variable = { pww_do_e_rel = 0 }
+	set_variable = { pww_do_e_reserve = -10 }
+	set_variable = { pww_do_e_repeat = 0 }
+	if = {
+		limit = {
+			check_variable = { pww_dv_talk > -1 }
+			check_variable = { pww_dv_talk < global.pww_next_talk_id }
+		}
+		set_temp_variable = { pww_dv_w = global.pww_dt_want^pww_dv_talk }
+		set_temp_variable = { pww_dv_r = global.pww_dt_redline^pww_dv_talk }
+		pww_diplo_draft_meets_want = yes
+		if = {
+			limit = { check_variable = { pww_dv_meets = 1 } }
+			set_variable = { pww_do_e_want = 25 }
+		}
+		pww_diplo_draft_crosses_redline = yes
+		if = {
+			limit = { check_variable = { pww_dv_cross = 1 } }
+			set_variable = { pww_do_e_red = -1000 }
+			set_variable = { pww_do_crosses = 1 }
+		}
+		set_variable = { pww_do_e_trust = global.pww_dt_trust^pww_dv_talk }
+		if = {
+			limit = { check_variable = { pww_do_dur = 0 } }
+			divide_variable = { pww_do_e_trust = 2 }
+			round_variable = pww_do_e_trust
+		}
+		set_variable = { pww_do_e_rel = global.pww_dt_rel^pww_dv_talk }
+		set_variable = { pww_do_e_reserve = global.pww_dt_reserve^pww_dv_talk }
+		multiply_variable = { pww_do_e_reserve = -1 }
+	}
+
+	# Sweeteners and fig leaves
+	set_variable = { pww_do_e_sweet = 0 }
+	if = {
+		limit = { check_variable = { pww_do_sweet > 0 } }
+		add_to_variable = { pww_do_e_sweet = 6 }
+		if = {
+			limit = {
+				check_variable = { pww_do_sweet = 1 }
+				var:pww_dv_t = { pww_core_has_deficit_coal = yes }
+			}
+			add_to_variable = { pww_do_e_sweet = 10 }
+		}
+	}
+	if = {
+		limit = {
+			check_variable = { pww_do_fig > 0 }
+			check_variable = { pww_do_act = 0 }
+		}
+		add_to_variable = { pww_do_e_sweet = 4 }
+	}
+
+	# Patron underwriting the target against us
+	set_variable = { pww_do_e_patron = 0 }
+	var:pww_dv_t = {
+		set_temp_variable = { pww_dpk_claimant = PREV }
+		pww_diplo_pledged_against = yes
+	}
+	if = {
+		limit = { check_variable = { pww_dpk_found = 1 } }
+		set_variable = { pww_do_e_patron = -20 }
+	}
+
+	pww_diplo_compute_sig = yes
+	if = {
+		limit = {
+			check_variable = { pww_dv_talk > -1 }
+			check_variable = { pww_dv_talk < global.pww_next_talk_id }
+			check_variable = { global.pww_dt_last_sig^pww_dv_talk = pww_do_sig }
+			check_variable = { global.pww_dt_last_ok^pww_dv_talk = 0 }
+		}
+		set_variable = { pww_do_e_repeat = -1000 }
+	}
+
+	set_variable = { pww_do_e_invalid = 0 }
+	if = {
+		limit = { NOT = { check_variable = { pww_do_valid = 0 } } }
+		set_variable = { pww_do_e_invalid = -1000 }
+	}
+
+	set_variable = { pww_do_e_total = pww_do_e_terms }
+	add_to_variable = { pww_do_e_total = pww_do_e_need }
+	add_to_variable = { pww_do_e_total = pww_do_e_want }
+	add_to_variable = { pww_do_e_total = pww_do_e_red }
+	add_to_variable = { pww_do_e_total = pww_do_e_trust }
+	add_to_variable = { pww_do_e_total = pww_do_e_rel }
+	add_to_variable = { pww_do_e_total = pww_do_e_reserve }
+	add_to_variable = { pww_do_e_total = pww_do_e_sweet }
+	add_to_variable = { pww_do_e_total = pww_do_e_patron }
+	add_to_variable = { pww_do_e_total = pww_do_e_repeat }
+	add_to_variable = { pww_do_e_total = pww_do_e_invalid }
+	set_variable = { pww_do_ok = 0 }
+	if = {
+		limit = { check_variable = { pww_do_e_total > 0 } }
+		set_variable = { pww_do_ok = 1 }
+	}
+
+	# Bands from the sender's view
+	if = {
+		limit = { check_variable = { pww_dv_rcv_sells = 1 } }
+		set_temp_variable = { pww_band_value = pww_dv_vpay }
+		pww_core_value_to_band = yes
+		set_variable = { pww_do_band_give = pww_band }
+		set_temp_variable = { pww_band_value = pww_dv_vres }
+		pww_core_value_to_band = yes
+		set_variable = { pww_do_band_get = pww_band }
+	}
+	else = {
+		set_temp_variable = { pww_band_value = pww_dv_vres }
+		pww_core_value_to_band = yes
+		set_variable = { pww_do_band_give = pww_band }
+		set_temp_variable = { pww_band_value = pww_dv_vpay }
+		pww_core_value_to_band = yes
+		set_variable = { pww_do_band_get = pww_band }
+	}
+	set_variable = { pww_do_vres = pww_dv_vres }
+	set_variable = { pww_do_vpay = pww_dv_vpay }
+	set_variable = { pww_do_rcv_sells = pww_dv_rcv_sells }
+}
+
+# Sender scope. in: pww_dv_w (want). out: pww_dv_meets.
+pww_diplo_draft_meets_want = {
+	set_temp_variable = { pww_dv_meets = 0 }
+	if = {
+		limit = {
+			OR = {
+				AND = { check_variable = { pww_dv_w = 0 } check_variable = { pww_do_pay = 2 } }
+				AND = { check_variable = { pww_dv_w = 1 } check_variable = { pww_do_pay = 0 } }
+				AND = { check_variable = { pww_dv_w = 2 } check_variable = { pww_do_sweet = 1 } }
+				AND = {
+					check_variable = { pww_dv_w = 3 }
+					OR = {
+						check_variable = { pww_do_pay = 3 }
+						check_variable = { pww_do_sweet = 3 }
+					}
+				}
+				AND = {
+					check_variable = { pww_dv_w = 4 }
+					OR = {
+						check_variable = { pww_do_pay = 4 }
+						check_variable = { pww_do_sweet = 2 }
+					}
+				}
+				AND = { check_variable = { pww_dv_w = 5 } check_variable = { pww_do_fig = 4 } }
+				AND = {
+					check_variable = { pww_dv_w = 6 }
+					check_variable = { pww_do_fig > 0 }
+					check_variable = { pww_do_fig < 4 }
+				}
+				AND = {
+					check_variable = { pww_dv_w = 7 }
+					check_variable = { pww_do_act = 0 }
+					check_variable = { pww_do_amt < 2 }
+				}
+				AND = { check_variable = { pww_dv_w = 8 } check_variable = { pww_do_fig > 4 } }
+			}
+		}
+		set_temp_variable = { pww_dv_meets = 1 }
+	}
+}
+
+# Sender scope. in: pww_dv_r (red line), pww_dv_rcv_sells. out: pww_dv_cross.
+pww_diplo_draft_crosses_redline = {
+	set_temp_variable = { pww_dv_cross = 0 }
+	if = {
+		limit = {
+			OR = {
+				AND = { check_variable = { pww_dv_r = 0 } check_variable = { pww_do_act = 1 } }
+				AND = { check_variable = { pww_dv_r = 1 } check_variable = { pww_do_dur > 2 } }
+				AND = {
+					check_variable = { pww_dv_r = 2 }
+					check_variable = { pww_dv_rcv_sells = 1 }
+					check_variable = { pww_do_act = 0 }
+					check_variable = { pww_do_amt = 3 }
+				}
+				AND = { check_variable = { pww_dv_r = 3 } check_variable = { pww_do_pay = 1 } }
+				AND = {
+					check_variable = { pww_dv_r = 5 }
+					check_variable = { pww_dv_rcv_sells = 1 }
+					check_variable = { pww_do_act = 0 }
+					check_variable = { pww_do_amt > 1 }
+				}
+				AND = {
+					check_variable = { pww_dv_r = 6 }
+					check_variable = { pww_dv_rcv_sells = 1 }
+					OR = {
+						check_variable = { pww_do_act = 1 }
+						check_variable = { pww_do_amt > 1 }
+					}
+				}
+				AND = {
+					check_variable = { pww_dv_r = 7 }
+					check_variable = { pww_do_pay = 2 }
+					check_variable = { pww_do_sweet = 0 }
+				}
+			}
+		}
+		set_temp_variable = { pww_dv_cross = 1 }
+	}
+}
+
+# Sender scope. pww_do_sig: a number unique to the draft's terms.
+pww_diplo_compute_sig = {
+	set_temp_variable = { pww_dsg = pww_do_dir }
+	multiply_temp_variable = { pww_dsg = 7 }
+	add_to_temp_variable = { pww_dsg = pww_do_fig }
+	multiply_temp_variable = { pww_dsg = 4 }
+	add_to_temp_variable = { pww_dsg = pww_do_sweet }
+	multiply_temp_variable = { pww_dsg = 3 }
+	add_to_temp_variable = { pww_dsg = pww_do_price }
+	multiply_temp_variable = { pww_dsg = 5 }
+	add_to_temp_variable = { pww_dsg = pww_do_pay }
+	multiply_temp_variable = { pww_dsg = 5 }
+	add_to_temp_variable = { pww_dsg = pww_do_dur }
+	multiply_temp_variable = { pww_dsg = 8 }
+	if = {
+		limit = { check_variable = { pww_do_act = 1 } }
+		set_temp_variable = { pww_dsg_s = pww_do_slot }
+		modulo_temp_variable = { var = pww_dsg_s value = 8 }
+		add_to_temp_variable = { pww_dsg = pww_dsg_s }
+	}
+	else = {
+		add_to_temp_variable = { pww_dsg = pww_do_amt }
+	}
+	multiply_temp_variable = { pww_dsg = 7 }
+	add_to_temp_variable = { pww_dsg = pww_do_res }
+	if = {
+		limit = { check_variable = { pww_do_act = 1 } }
+		add_to_temp_variable = { pww_dsg = 300000 }
+	}
+	set_variable = { pww_do_sig = pww_dsg }
+}
+
+###############################################################################
+# Reply to a refused draft. Sender scope (the draft is current).
+# Reveals one red line or hidden want, moves patience, may close the talks.
+###############################################################################
+pww_diplo_talk_reply = {
+	set_temp_variable = { pww_dr_t = pww_do_talk }
+	if = {
+		limit = {
+			check_variable = { pww_dr_t > -1 }
+			check_variable = { pww_dr_t < global.pww_next_talk_id }
+			check_variable = { global.pww_dt_status^pww_dr_t = 0 }
+		}
+		set_temp_variable = { pww_dr_seed = global.pww_dt_seed^pww_dr_t }
+		set_temp_variable = { pww_dr_pat = global.pww_dt_patience^pww_dr_t }
+		set_temp_variable = { pww_dr_round = global.pww_dt_round^pww_dr_t }
+		set_temp_variable = { pww_dr_line = 0 }
+		if = {
+			limit = {
+				check_variable = { global.pww_dt_last_sig^pww_dr_t = pww_do_sig }
+				check_variable = { pww_dr_round > 0 }
+			}
+			# The same terms again: the same answer, nothing new learned.
+			set_temp_variable = { pww_dr_line = 83 }
+			subtract_from_temp_variable = { pww_dr_pat = 10 }
+		}
+		else = {
+			add_to_temp_variable = { pww_dr_round = 1 }
+			set_variable = { global.pww_dt_last_sig^pww_dr_t = pww_do_sig }
+			set_temp_variable = { pww_dr_k = pww_dr_seed }
+			add_to_temp_variable = { pww_dr_k = pww_dr_round }
+			if = {
+				limit = { check_variable = { pww_do_crosses = 1 } }
+				if = {
+					limit = { check_variable = { global.pww_dt_rl_seen^pww_dr_t = 0 } }
+					set_variable = { global.pww_dt_rl_seen^pww_dr_t = 1 }
+					subtract_from_temp_variable = { pww_dr_pat = 30 }
+					modulo_temp_variable = { var = pww_dr_k value = 7 }
+					set_temp_variable = { pww_dr_line = 31 }
+					add_to_temp_variable = { pww_dr_line = pww_dr_k }
+				}
+				else = {
+					subtract_from_temp_variable = { pww_dr_pat = 45 }
+					set_temp_variable = { pww_dr_line = 35 }
+				}
+			}
+			else_if = {
+				limit = { check_variable = { global.pww_dt_want_seen^pww_dr_t = 0 } }
+				set_variable = { global.pww_dt_want_seen^pww_dr_t = 1 }
+				subtract_from_temp_variable = { pww_dr_pat = 10 }
+				set_temp_variable = { pww_dr_line = 40 }
+				add_to_temp_variable = { pww_dr_line = global.pww_dt_want^pww_dr_t }
+			}
+			else_if = {
+				limit = { check_variable = { pww_do_e_want > 0 } }
+				add_to_temp_variable = { pww_dr_pat = 20 }
+				modulo_temp_variable = { var = pww_dr_k value = 5 }
+				set_temp_variable = { pww_dr_line = 21 }
+				add_to_temp_variable = { pww_dr_line = pww_dr_k }
+			}
+			else = {
+				subtract_from_temp_variable = { pww_dr_pat = 10 }
+				if = {
+					limit = { check_variable = { pww_do_e_patron < 0 } }
+					modulo_temp_variable = { var = pww_dr_k value = 6 }
+					set_temp_variable = { pww_dr_line = 71 }
+					add_to_temp_variable = { pww_dr_line = pww_dr_k }
+				}
+				else_if = {
+					limit = { check_variable = { pww_do_e_trust < -5 } }
+					modulo_temp_variable = { var = pww_dr_k value = 6 }
+					set_temp_variable = { pww_dr_line = 51 }
+					add_to_temp_variable = { pww_dr_line = pww_dr_k }
+				}
+				else_if = {
+					limit = { check_variable = { pww_dr_pat < 35 } }
+					modulo_temp_variable = { var = pww_dr_k value = 7 }
+					set_temp_variable = { pww_dr_line = 11 }
+					add_to_temp_variable = { pww_dr_line = pww_dr_k }
+				}
+				else = {
+					modulo_temp_variable = { var = pww_dr_k value = 4 }
+					set_temp_variable = { pww_dr_line = 84 }
+					add_to_temp_variable = { pww_dr_line = pww_dr_k }
+					if = {
+						limit = { check_variable = { pww_dr_line = 87 } }
+						set_temp_variable = { pww_dr_line = 81 }
+					}
+				}
+			}
+		}
+		clamp_temp_variable = { var = pww_dr_pat min = 0 max = 100 }
+		set_variable = { global.pww_dt_patience^pww_dr_t = pww_dr_pat }
+		set_variable = { global.pww_dt_round^pww_dr_t = pww_dr_round }
+		set_variable = { global.pww_dt_last_ok^pww_dr_t = 0 }
+		set_variable = { global.pww_dt_line^pww_dr_t = pww_dr_line }
+		if = {
+			limit = {
+				OR = {
+					check_variable = { pww_dr_pat < 1 }
+					check_variable = { pww_dr_round > global.pww_diplo_c_max_counters }
+				}
+			}
+			set_temp_variable = { pww_dtc_t = pww_dr_t }
+			set_temp_variable = { pww_dtc_status = 2 }
+			pww_diplo_talk_close = yes
+		}
+		if = {
+			limit = { has_global_flag = pww_diplo_debug }
+			log = "[GetDateText] PWW_DIPLO reply talk=[?pww_dr_t|0] round=[?pww_dr_round|0] patience=[?pww_dr_pat|0] line=[?pww_dr_line|0] sig=[?pww_do_sig|0] total=[?pww_do_e_total|0] terms=[?pww_do_e_terms|0] need=[?pww_do_e_need|0] want=[?pww_do_e_want|0] red=[?pww_do_e_red|0] trust=[?pww_do_e_trust|0] rel=[?pww_do_e_rel|0] patron=[?pww_do_e_patron|0] reserve=[?pww_do_e_reserve|0] repeat=[?pww_do_e_repeat|0] invalid=[?pww_do_valid|0] pay=[?pww_do_pay|0] price=[?pww_do_price|0] amt=[?pww_do_amt|0] dur=[?pww_do_dur|0] status=[?global.pww_dt_status^pww_dr_t|0]"
+		}
+	}
+	pww_diplo_refresh_display = yes
+	add_to_variable = { pww_diplo_dirty = 1 }
+}
+
+# Any scope. in: pww_dtc_t, pww_dtc_status (2 broken off, 3 expired,
+# 4 superseded). Closes the talk and starts the cooldown.
+pww_diplo_talk_close = {
+	set_variable = { global.pww_dt_status^pww_dtc_t = pww_dtc_status }
+	set_temp_variable = { pww_dtc_cool = global.num_days }
+	add_to_temp_variable = { pww_dtc_cool = global.pww_diplo_c_cooldown }
+	if = {
+		limit = { check_variable = { pww_dtc_status = 2 } }
+		set_variable = { global.pww_dt_cool_until^pww_dtc_t = pww_dtc_cool }
+		set_variable = { global.pww_dt_line^pww_dtc_t = 92 }
+	}
+	else_if = {
+		limit = { check_variable = { pww_dtc_status = 4 } }
+		set_variable = { global.pww_dt_line^pww_dtc_t = 93 }
+	}
+	else = {
+		set_variable = { global.pww_dt_line^pww_dtc_t = 95 }
+	}
+	set_temp_variable = { pww_dlr_id = pww_dtc_t }
+	pww_diplo_live_drop_talk = yes
+	set_temp_variable = { pww_dq_kind_in = 3 }
+	set_temp_variable = { pww_dq_a_in = global.pww_dt_sender^pww_dtc_t }
+	set_temp_variable = { pww_dq_b_in = global.pww_dt_target^pww_dtc_t }
+	set_temp_variable = { pww_dq_ref_in = pww_dtc_t }
+	set_temp_variable = { pww_dq_sit_in = global.pww_dt_sit^pww_dtc_t }
+	set_temp_variable = { pww_dq_x_in = pww_dtc_status }
+	pww_diplo_queue_push = yes
+}
+
+###############################################################################
+# Sign the current draft. Sender scope.
+# out: pww_dsd_ok (1 signed), pww_dsd_ag (main agreement id or -1)
+###############################################################################
+pww_diplo_sign_draft = {
+	set_temp_variable = { pww_dsd_ok = 0 }
+	set_temp_variable = { pww_dsd_ag = -1 }
+	pww_diplo_eval_offer = yes
+	pww_diplo_ledger_clear = yes
+	set_temp_variable = { pww_l_seller = pww_do_seller }
+	set_temp_variable = { pww_l_buyer = pww_do_buyer }
+	set_temp_variable = { pww_l_kind = pww_do_act }
+	set_temp_variable = { pww_l_res = pww_do_res }
+	if = {
+		limit = { check_variable = { pww_do_act = 0 } }
+		set_temp_variable = { pww_l_amount = pww_do_units }
+	}
+	else = {
+		set_temp_variable = { pww_l_state = pww_do_state }
+	}
+	if = {
+		limit = { check_variable = { pww_do_dur > 0 } }
+		set_temp_variable = { pww_l_committal = 1 }
+	}
+	set_temp_variable = { pww_l_term_days = pww_do_term }
+	set_temp_variable = { pww_l_civ = pww_do_civ }
+	set_temp_variable = { pww_l_pp = pww_do_pp }
+	# Payer side for tranches and token payments: the sender's side.
+	set_temp_variable = { pww_dsd_side = 0 }
+	if = {
+		limit = { check_variable = { pww_do_buyer = THIS } }
+		set_temp_variable = { pww_dsd_side = 1 }
+	}
+	if = {
+		limit = { check_variable = { pww_do_fig = 1 } }
+		if = {
+			limit = { check_variable = { pww_dsd_side = 1 } }
+			add_to_temp_variable = { pww_l_civ = 1 }
+		}
+		else = {
+			subtract_from_temp_variable = { pww_l_civ = 1 }
+		}
+	}
+	if = {
+		limit = {
+			check_variable = { pww_do_fig = 4 }
+			check_variable = { pww_do_term > 0 }
+		}
+		set_temp_variable = { pww_l_revert_days = pww_do_term }
+		divide_temp_variable = { pww_l_revert_days = 2 }
+		round_temp_variable = pww_l_revert_days
+	}
+	set_temp_variable = { pww_dsd_tranches = 0 }
+	if = {
+		limit = {
+			OR = {
+				check_variable = { pww_do_pay > 1 }
+				check_variable = { pww_do_sweet > 1 }
+			}
+		}
+		set_temp_variable = { pww_dsd_tranches = 1 }
+	}
+	if = {
+		limit = { check_variable = { pww_dsd_tranches = 0 } }
+		set_temp_variable = { pww_l_activate = 1 }
+	}
+	pww_ledger_create_agreement = yes
+	if = {
+		limit = { check_variable = { pww_l_result = 1 } }
+		set_temp_variable = { pww_dsd_ag = pww_l_new_id }
+		if = {
+			limit = { check_variable = { pww_dsd_tranches = 1 } }
+			pww_diplo_add_draft_tranches = yes
+			set_temp_variable = { pww_l_ag = pww_dsd_ag }
+			set_temp_variable = { pww_l_expect_rev = 0 }
+			pww_ledger_activate = yes
+		}
+		if = {
+			limit = { check_variable = { global.pww_ag_status^pww_dsd_ag = 1 } }
+			set_temp_variable = { pww_dsd_ok = 1 }
+		}
+		else = {
+			# Activation refused: cancel the draft so nothing dangles.
+			set_temp_variable = { pww_dsd_fail = pww_l_fail }
+			set_temp_variable = { pww_l_ag = pww_dsd_ag }
+			set_temp_variable = { pww_l_cause = 18 }
+			pww_ledger_terminate = yes
+			set_temp_variable = { pww_l_fail = pww_dsd_fail }
+		}
+	}
+	# Coal bundle: a second, unpaid coal supply from the sender for the term.
+	if = {
+		limit = {
+			check_variable = { pww_dsd_ok = 1 }
+			check_variable = { pww_do_sweet = 1 }
+		}
+		set_temp_variable = { pww_dg_res = 6 }
+		pww_diplo_read_res = yes
+		set_temp_variable = { pww_dsd_coal = pww_dg_prod }
+		multiply_temp_variable = { pww_dsd_coal = 0.1 }
+		round_temp_variable = pww_dsd_coal
+		if = {
+			limit = { check_variable = { pww_dsd_coal < 1 } }
+			set_temp_variable = { pww_dsd_coal = 1 }
+		}
+		pww_diplo_ledger_clear = yes
+		set_temp_variable = { pww_l_seller = THIS }
+		set_temp_variable = { pww_l_buyer = pww_do_target }
+		set_temp_variable = { pww_l_res = 6 }
+		set_temp_variable = { pww_l_amount = pww_dsd_coal }
+		if = {
+			limit = { check_variable = { pww_do_dur > 0 } }
+			set_temp_variable = { pww_l_committal = 1 }
+		}
+		set_temp_variable = { pww_l_term_days = pww_do_term }
+		set_temp_variable = { pww_l_activate = 1 }
+		pww_ledger_create_agreement = yes
+	}
+	if = {
+		limit = { has_global_flag = pww_diplo_debug }
+		log = "[GetDateText] PWW_DIPLO sign [THIS.GetTag]->[?pww_do_target.GetTag] act=[?pww_do_act|0] res=[?pww_do_res|0] units=[?pww_do_units|1] pay=[?pww_do_pay|0] civ=[?pww_do_civ|0] term=[?pww_do_term|0] ok=[?pww_dsd_ok|0] ag=[?pww_dsd_ag|0] fail=[?pww_l_fail|0]"
+	}
+}
+
+# Sender scope; pww_dsd_ag is a draft agreement. Adds the payment and
+# sweetener tranches (nothing irreversible is paid in full on signing).
+pww_diplo_add_draft_tranches = {
+	set_temp_variable = { pww_dat_third = pww_do_term }
+	divide_temp_variable = { pww_dat_third = 3 }
+	round_temp_variable = pww_dat_third
+	if = {
+		limit = { check_variable = { pww_dat_third < 30 } }
+		set_temp_variable = { pww_dat_third = 30 }
+	}
+	# The buyer pays for the resource in every case.
+	if = {
+		limit = {
+			OR = {
+				check_variable = { pww_do_pay = 2 }
+				check_variable = { pww_do_pay = 3 }
+			}
+		}
+		set_temp_variable = { pww_dat_kind = 3 }
+		set_temp_variable = { pww_dat_amt = pww_do_cic }
+		if = {
+			limit = { check_variable = { pww_do_pay = 3 } }
+			set_temp_variable = { pww_dat_kind = 0 }
+			multiply_temp_variable = { pww_dat_amt = 2 }
+		}
+		for_loop_effect = {
+			start = 0
+			end = 3
+			value = pww_dat_m
+			set_temp_variable = { pww_l_ag = pww_dsd_ag }
+			set_temp_variable = { pww_l_t_payer = 1 }
+			set_temp_variable = { pww_l_t_kind = pww_dat_kind }
+			set_temp_variable = { pww_l_t_item = 0 }
+			set_temp_variable = { pww_l_t_amount = pww_dat_amt }
+			set_temp_variable = { pww_l_t_uses = 1 }
+			set_temp_variable = { pww_l_t_milestone = pww_dat_m }
+			set_temp_variable = { pww_l_t_offset = pww_dat_third }
+			if = {
+				limit = { check_variable = { pww_dat_m = 0 } }
+				set_temp_variable = { pww_l_t_offset = 0 }
+			}
+			set_temp_variable = { pww_l_t_escrow = 0 }
+			pww_ledger_add_tranche = yes
+		}
+	}
+	else_if = {
+		limit = { check_variable = { pww_do_pay = 4 } }
+		# Technical mission on signing, the license after service.
+		set_temp_variable = { pww_l_ag = pww_dsd_ag }
+		set_temp_variable = { pww_l_t_payer = 1 }
+		set_temp_variable = { pww_l_t_kind = 2 }
+		set_temp_variable = { pww_l_t_item = 0 }
+		set_temp_variable = { pww_l_t_amount = 0.1 }
+		if = {
+			limit = { check_variable = { pww_do_price = 2 } }
+			set_temp_variable = { pww_l_t_amount = 0.2 }
+		}
+		set_temp_variable = { pww_l_t_uses = 1 }
+		set_temp_variable = { pww_l_t_milestone = 0 }
+		set_temp_variable = { pww_l_t_offset = 0 }
+		set_temp_variable = { pww_l_t_escrow = 0 }
+		pww_ledger_add_tranche = yes
+		set_temp_variable = { pww_l_ag = pww_dsd_ag }
+		set_temp_variable = { pww_l_t_payer = 1 }
+		set_temp_variable = { pww_l_t_kind = 1 }
+		set_temp_variable = { pww_l_t_item = 2 }
+		set_temp_variable = { pww_l_t_amount = 0 }
+		set_temp_variable = { pww_l_t_uses = 1 }
+		set_temp_variable = { pww_l_t_milestone = 1 }
+		set_temp_variable = { pww_l_t_offset = pww_dat_third }
+		set_temp_variable = { pww_l_t_escrow = 0 }
+		pww_ledger_add_tranche = yes
+	}
+	# Sweeteners paid by the sender's side after a month of service.
+	if = {
+		limit = { check_variable = { pww_do_sweet = 2 } }
+		set_temp_variable = { pww_l_ag = pww_dsd_ag }
+		set_temp_variable = { pww_l_t_payer = pww_dsd_side }
+		set_temp_variable = { pww_l_t_kind = 2 }
+		set_temp_variable = { pww_l_t_item = 0 }
+		set_temp_variable = { pww_l_t_amount = 0.1 }
+		set_temp_variable = { pww_l_t_uses = 1 }
+		set_temp_variable = { pww_l_t_milestone = 1 }
+		set_temp_variable = { pww_l_t_offset = 30 }
+		set_temp_variable = { pww_l_t_escrow = 0 }
+		pww_ledger_add_tranche = yes
+	}
+	else_if = {
+		limit = { check_variable = { pww_do_sweet = 3 } }
+		set_temp_variable = { pww_l_ag = pww_dsd_ag }
+		set_temp_variable = { pww_l_t_payer = pww_dsd_side }
+		set_temp_variable = { pww_l_t_kind = 0 }
+		set_temp_variable = { pww_l_t_item = 0 }
+		set_temp_variable = { pww_l_t_amount = 500 }
+		set_temp_variable = { pww_l_t_uses = 1 }
+		set_temp_variable = { pww_l_t_milestone = 1 }
+		set_temp_variable = { pww_l_t_offset = 30 }
+		set_temp_variable = { pww_l_t_escrow = 0 }
+		pww_ledger_add_tranche = yes
+	}
+}
+
+###############################################################################
+# Accepted: sign and record. Sender scope.
+###############################################################################
+pww_diplo_talk_accepted = {
+	set_temp_variable = { pww_dta_t = pww_do_talk }
+	pww_diplo_sign_draft = yes
+	if = {
+		limit = {
+			check_variable = { pww_dta_t > -1 }
+			check_variable = { pww_dta_t < global.pww_next_talk_id }
+		}
+		if = {
+			limit = { check_variable = { pww_dsd_ok = 1 } }
+			set_variable = { global.pww_dt_status^pww_dta_t = 1 }
+			set_variable = { global.pww_dt_ag^pww_dta_t = pww_dsd_ag }
+			set_variable = { global.pww_dt_last_ok^pww_dta_t = 1 }
+			set_variable = { global.pww_dt_line^pww_dta_t = 90 }
+			set_temp_variable = { pww_dlr_id = pww_dta_t }
+			pww_diplo_live_drop_talk = yes
+			set_temp_variable = { pww_dq_kind_in = 2 }
+			set_temp_variable = { pww_dq_a_in = THIS }
+			set_temp_variable = { pww_dq_b_in = pww_do_target }
+			set_temp_variable = { pww_dq_ref_in = pww_dta_t }
+			set_temp_variable = { pww_dq_ag_in = pww_dsd_ag }
+			set_temp_variable = { pww_dq_sit_in = global.pww_dt_sit^pww_dta_t }
+			set_temp_variable = { pww_dq_x_in = pww_do_act }
+			pww_diplo_queue_push = yes
+		}
+		else = {
+			set_variable = { global.pww_dt_line^pww_dta_t = 91 }
+		}
+	}
+	pww_diplo_refresh_display = yes
+	add_to_variable = { pww_diplo_dirty = 1 }
+}
+
+###############################################################################
+# AI drafting. Sender scope (AI). in: pww_do_target, pww_do_act, pww_do_res
+# already set. Honest: the AI only uses what the talks have revealed.
+###############################################################################
+pww_diplo_ai_build_draft = {
+	set_variable = { pww_do_dir = 0 }
+	set_variable = { pww_do_slot = 0 }
+	set_variable = { pww_do_dur = 2 }
+	set_variable = { pww_do_sweet = 0 }
+	set_variable = { pww_do_fig = 0 }
+	set_temp_variable = { pww_dg_res = pww_do_res }
+	pww_diplo_read_res = yes
+	set_variable = { pww_do_amt = 1 }
+	set_variable = { pww_do_price = 1 }
+	if = {
+		limit = { check_variable = { pww_dg_desp > 74.999 } }
+		set_variable = { pww_do_amt = 2 }
+		set_variable = { pww_do_price = 2 }
+	}
+	if = {
+		limit = { num_of_civilian_factories_available_for_projects > 3 }
+		set_variable = { pww_do_pay = 0 }
+	}
+	else_if = {
+		limit = { num_of_military_factories > 14 }
+		set_variable = { pww_do_pay = 2 }
+	}
+	else_if = {
+		limit = { has_political_power > 100 }
+		set_variable = { pww_do_pay = 1 }
+	}
+	else = {
+		set_variable = { pww_do_pay = 3 }
+	}
+	# Learned from earlier rounds
+	set_temp_variable = { pww_dab_t = pww_do_talk }
+	if = {
+		limit = {
+			check_variable = { pww_dab_t > -1 }
+			check_variable = { pww_dab_t < global.pww_next_talk_id }
+		}
+		if = {
+			limit = { check_variable = { global.pww_dt_rl_seen^pww_dab_t = 1 } }
+			set_temp_variable = { pww_dab_r = global.pww_dt_redline^pww_dab_t }
+			if = {
+				limit = { check_variable = { pww_dab_r = 1 } }
+				set_variable = { pww_do_dur = 2 }
+			}
+			else_if = {
+				limit = { check_variable = { pww_dab_r = 3 } check_variable = { pww_do_pay = 1 } }
+				set_variable = { pww_do_pay = 3 }
+			}
+			else_if = {
+				limit = {
+					OR = {
+						check_variable = { pww_dab_r = 2 }
+						check_variable = { pww_dab_r = 5 }
+						check_variable = { pww_dab_r = 6 }
+					}
+				}
+				set_variable = { pww_do_amt = 1 }
+			}
+			else_if = {
+				limit = { check_variable = { pww_dab_r = 7 } check_variable = { pww_do_pay = 2 } }
+				set_variable = { pww_do_sweet = 3 }
+			}
+		}
+		if = {
+			limit = { check_variable = { global.pww_dt_want_seen^pww_dab_t = 1 } }
+			set_temp_variable = { pww_dab_w = global.pww_dt_want^pww_dab_t }
+			if = {
+				limit = { check_variable = { pww_dab_w = 0 } num_of_military_factories > 4 }
+				set_variable = { pww_do_pay = 2 }
+			}
+			else_if = {
+				limit = { check_variable = { pww_dab_w = 1 } num_of_civilian_factories > 9 }
+				set_variable = { pww_do_pay = 0 }
+			}
+			else_if = {
+				limit = { check_variable = { pww_dab_w = 2 } pww_core_produces_coal = yes }
+				set_variable = { pww_do_sweet = 1 }
+			}
+			else_if = {
+				limit = { check_variable = { pww_dab_w = 3 } }
+				set_variable = { pww_do_sweet = 3 }
+			}
+			else_if = {
+				limit = { check_variable = { pww_dab_w = 4 } }
+				set_variable = { pww_do_sweet = 2 }
+			}
+			else_if = {
+				limit = { check_variable = { pww_dab_w = 5 } }
+				set_variable = { pww_do_fig = 4 }
+			}
+			else_if = {
+				limit = { check_variable = { pww_dab_w = 6 } }
+				set_variable = { pww_do_fig = 2 }
+			}
+			else_if = {
+				limit = { check_variable = { pww_dab_w = 7 } }
+				set_variable = { pww_do_amt = 1 }
+			}
+			else_if = {
+				limit = { check_variable = { pww_dab_w = 8 } }
+				set_variable = { pww_do_fig = 5 }
+			}
+		}
+		# A second try pays more.
+		if = {
+			limit = {
+				check_variable = { global.pww_dt_round^pww_dab_t > 0 }
+				check_variable = { pww_do_price < 2 }
+			}
+			add_to_variable = { pww_do_price = 1 }
+		}
+	}
+	pww_diplo_eval_offer = yes
+}
+
+###############################################################################
+# AI preparation (sender scope, AI). in: pww_dk_target, pww_dk_act,
+# pww_dap_res. Engine fact (v1.20, verified in tests/diplomacy): an AI sends
+# a scripted diplomatic action only when the target's ai_acceptance, read on
+# the draft as it stands BEFORE reset_send_effect, is positive. So the AI
+# prepares its draft on its tick and plays the legation rounds in script:
+# each refused draft goes through pww_diplo_talk_reply exactly like a sent
+# one (one red line or hidden want revealed, patience spent, three counters
+# at most), then the AI redrafts with what it learned. A draft the target
+# would sign stays on the sender and the engine sends it through the real
+# action. out: pww_dap_ready (1 = a signable draft is in place)
+###############################################################################
+pww_diplo_ai_prepare_offer = {
+	set_temp_variable = { pww_dap_ready = 0 }
+	pww_diplo_offer_begin = yes
+	if = {
+		limit = { check_variable = { pww_do_talk > -1 } }
+		set_variable = { pww_do_res = pww_dap_res }
+		pww_diplo_ai_build_draft = yes
+		set_temp_variable = { pww_dap_brk = 0 }
+		for_loop_effect = {
+			start = 0
+			end = 5
+			value = pww_dap_i
+			break = pww_dap_brk
+			set_temp_variable = { pww_dap_t = pww_do_talk }
+			if = {
+				limit = { check_variable = { pww_do_ok = 1 } }
+				set_temp_variable = { pww_dap_ready = 1 }
+				set_temp_variable = { pww_dap_brk = 1 }
+			}
+			else_if = {
+				limit = { check_variable = { global.pww_dt_status^pww_dap_t = 0 } }
+				pww_diplo_talk_reply = yes
+				if = {
+					limit = { check_variable = { global.pww_dt_status^pww_dap_t = 0 } }
+					pww_diplo_ai_build_draft = yes
+				}
+			}
+			else = {
+				set_temp_variable = { pww_dap_brk = 1 }
+			}
+		}
+	}
+	pww_diplo_refresh_display = yes
+}
+
+###############################################################################
+# AI sender, human target: the human countered from the receiver GUI.
+# Sender scope (AI). in: pww_dac_counter (1 higher price, 2 smaller share,
+# 3 shorter term). The AI re-tables the countered terms if they still beat
+# its own reservation, or re-tables its draft otherwise.
+###############################################################################
+pww_diplo_ai_consider_counter = {
+	set_temp_variable = { pww_dac_t = pww_do_talk }
+	set_variable = { pww_do_price_prev = pww_do_price }
+	set_variable = { pww_do_amt_prev = pww_do_amt }
+	set_variable = { pww_do_dur_prev = pww_do_dur }
+	if = {
+		limit = { check_variable = { pww_dac_counter = 1 } check_variable = { pww_do_price < 2 } }
+		add_to_variable = { pww_do_price = 1 }
+	}
+	else_if = {
+		limit = { check_variable = { pww_dac_counter = 2 } check_variable = { pww_do_amt > 0 } }
+		subtract_from_variable = { pww_do_amt = 1 }
+	}
+	else_if = {
+		limit = { check_variable = { pww_dac_counter = 3 } check_variable = { pww_do_dur > 1 } }
+		subtract_from_variable = { pww_do_dur = 1 }
+	}
+	pww_diplo_eval_offer = yes
+	# The AI's own balance as buyer: resource gain against the payment.
+	set_temp_variable = { pww_dac_own = pww_do_vres }
+	set_temp_variable = { pww_dg_res = pww_do_res }
+	pww_diplo_read_res = yes
+	set_temp_variable = { pww_dac_f = pww_dg_desp }
+	divide_temp_variable = { pww_dac_f = 50 }
+	add_to_temp_variable = { pww_dac_f = 1 }
+	multiply_temp_variable = { pww_dac_own = pww_dac_f }
+	subtract_from_temp_variable = { pww_dac_own = pww_do_vpay }
+	multiply_temp_variable = { pww_dac_own = 10 }
+	set_temp_variable = { pww_dac_need = 5 }
+	if = {
+		limit = {
+			check_variable = { pww_dac_t > -1 }
+			check_variable = { pww_dac_t < global.pww_next_talk_id }
+		}
+		set_temp_variable = { pww_dac_need = global.pww_dt_reserve^pww_dac_t }
+	}
+	set_temp_variable = { pww_dac_take = 0 }
+	if = {
+		limit = { check_variable = { pww_dac_own > pww_dac_need } }
+		set_temp_variable = { pww_dac_take = 1 }
+	}
+	if = {
+		limit = { check_variable = { pww_dac_take = 0 } }
+		set_variable = { pww_do_price = pww_do_price_prev }
+		set_variable = { pww_do_amt = pww_do_amt_prev }
+		set_variable = { pww_do_dur = pww_do_dur_prev }
+		pww_diplo_eval_offer = yes
+	}
+	if = {
+		limit = {
+			check_variable = { pww_dac_t > -1 }
+			check_variable = { pww_dac_t < global.pww_next_talk_id }
+		}
+		set_temp_variable = { pww_dac_round = global.pww_dt_round^pww_dac_t }
+		add_to_temp_variable = { pww_dac_round = 1 }
+		set_variable = { global.pww_dt_round^pww_dac_t = pww_dac_round }
+		set_temp_variable = { pww_dac_k = global.pww_dt_seed^pww_dac_t }
+		add_to_temp_variable = { pww_dac_k = pww_dac_round }
+		modulo_temp_variable = { var = pww_dac_k value = 5 }
+		if = {
+			limit = { check_variable = { pww_dac_take = 1 } }
+			set_temp_variable = { pww_dac_line = 21 }
+		}
+		else = {
+			set_temp_variable = { pww_dac_line = 86 }
+			set_temp_variable = { pww_dac_k = 0 }
+		}
+		add_to_temp_variable = { pww_dac_line = pww_dac_k }
+		set_variable = { global.pww_dt_line^pww_dac_t = pww_dac_line }
+		if = {
+			limit = { check_variable = { pww_dac_round > global.pww_diplo_c_max_counters } }
+			set_temp_variable = { pww_dtc_t = pww_dac_t }
+			set_temp_variable = { pww_dtc_status = 2 }
+			pww_diplo_talk_close = yes
+		}
+		else = {
+			set_country_flag = pww_diplo_ai_resend
+			set_variable = { pww_diplo_ai_offer_to = pww_do_target }
+			set_country_flag = pww_diplo_ai_offer
+		}
+	}
+}
+
+###############################################################################
+# Receiver mirror (sender scope): copies the draft into pww_dr_* on both the
+# sender and the target so the receiver GUI reads them in either scope.
+# Bands are from the receiver's view.
+###############################################################################
+pww_diplo_mirror_for_receiver = {
+	set_variable = { pww_dr_act = pww_do_act }
+	set_variable = { pww_dr_dir = pww_do_dir }
+	set_variable = { pww_dr_res = pww_do_res }
+	set_variable = { pww_dr_amt = pww_do_amt }
+	set_variable = { pww_dr_dur = pww_do_dur }
+	set_variable = { pww_dr_pay = pww_do_pay }
+	set_variable = { pww_dr_price = pww_do_price }
+	set_variable = { pww_dr_sweet = pww_do_sweet }
+	set_variable = { pww_dr_fig = pww_do_fig }
+	set_variable = { pww_dr_give = pww_do_band_get }
+	set_variable = { pww_dr_get = pww_do_band_give }
+	set_variable = { pww_dr_line = 0 }
+	set_variable = { pww_dr_round = 0 }
+	set_temp_variable = { pww_dmr_t = pww_do_talk }
+	if = {
+		limit = {
+			check_variable = { pww_dmr_t > -1 }
+			check_variable = { pww_dmr_t < global.pww_next_talk_id }
+		}
+		set_variable = { pww_dr_line = global.pww_dt_line^pww_dmr_t }
+		set_variable = { pww_dr_round = global.pww_dt_round^pww_dmr_t }
+	}
+	if = {
+		limit = { has_variable = pww_do_state_s }
+		set_variable = { pww_dr_state = pww_do_state_s }
+	}
+	set_temp_variable = { pww_dmr_s = THIS }
+	var:pww_do_target = {
+		set_variable = { pww_dr_from = pww_dmr_s }
+		set_variable = { pww_dr_act = PREV.pww_dr_act }
+		set_variable = { pww_dr_dir = PREV.pww_dr_dir }
+		set_variable = { pww_dr_res = PREV.pww_dr_res }
+		set_variable = { pww_dr_amt = PREV.pww_dr_amt }
+		set_variable = { pww_dr_dur = PREV.pww_dr_dur }
+		set_variable = { pww_dr_pay = PREV.pww_dr_pay }
+		set_variable = { pww_dr_price = PREV.pww_dr_price }
+		set_variable = { pww_dr_sweet = PREV.pww_dr_sweet }
+		set_variable = { pww_dr_fig = PREV.pww_dr_fig }
+		set_variable = { pww_dr_give = PREV.pww_dr_give }
+		set_variable = { pww_dr_get = PREV.pww_dr_get }
+		set_variable = { pww_dr_line = PREV.pww_dr_line }
+		set_variable = { pww_dr_round = PREV.pww_dr_round }
+		if = {
+			limit = { PREV = { has_variable = pww_dr_state } }
+			set_variable = { pww_dr_state = PREV.pww_dr_state }
+		}
+		set_variable = { pww_dr_counter = 0 }
+		add_to_variable = { pww_diplo_dirty = 1 }
+	}
+}

@@ -1,0 +1,1157 @@
+###############################################################################
+# Power Without War: scripted diplomatic actions (diplomacy lane)
+#
+# ROOT is the sender, THIS the target (vanilla template). Every send GUI
+# stores its draft on ROOT; the AI acceptance reads only precomputed ROOT
+# variables (cheap and deterministic), and ai_desire reads only intent flags
+# set on the staggered tick (pww_diplo_ticks.txt), so the AI sends nothing
+# without a concrete reason.
+#
+# Actions
+#   pww_diplo_propose_agreement   negotiated supply agreement     10 PP
+#   pww_diplo_lease_rights        negotiated named-state lease    25 PP
+#   pww_diplo_demand_quiet        demand, back channel            25 PP
+#   pww_diplo_demand_public       demand, public ultimatum        50 PP
+#   pww_diplo_pledge_support      patron pledge (reserved deal)   25 PP
+#   pww_diplo_quarantine          declare quarantine (coercion)   75 PP, 25 CP
+#   pww_diplo_demand_settlement   after a nationalization         10 PP
+#   pww_diplo_join_embargo        ask a third party to embargo    15 PP
+#   pww_diplo_submit_bid          bid on a holder's auction lot    5 PP
+# A pending flag (pww_diplo_pending, 30 days) stops an AI from tabling a
+# second proposal before the first is answered: drafts live on the sender.
+###############################################################################
+
+scripted_diplomatic_actions = {
+
+	pww_diplo_propose_agreement = {
+		allowed = { always = yes }
+		visible = {
+			NOT = { tag = ROOT }
+			NOT = { has_war_with = ROOT }
+		}
+		selectable = {
+			exists = yes
+		}
+		requires_acceptance = yes
+		cost = 10
+		command_power = 0
+		show_acceptance_on_action_button = no
+		icon = 1
+
+		send_scripted_gui = pww_diplo_send_offer_gui
+		reset_send_effect = {
+			set_temp_variable = { pww_dk_target = THIS }
+			set_temp_variable = { pww_dk_act = 0 }
+			ROOT = {
+				if = {
+					limit = {
+						is_ai = yes
+						has_country_flag = pww_diplo_ai_resend
+						check_variable = { pww_do_target = pww_dk_target }
+						check_variable = { pww_do_act = 0 }
+					}
+					clr_country_flag = pww_diplo_ai_resend
+					pww_diplo_offer_changed = yes
+				}
+				else = {
+					pww_diplo_offer_begin = yes
+					# An AI sends the draft it prepared on its tick (kept by
+					# offer_begin); it only drafts afresh when none is kept.
+					if = {
+						limit = {
+							is_ai = yes
+							check_variable = { pww_dob_keep = 0 }
+						}
+						if = {
+							limit = { check_variable = { pww_diplo_ai_offer_to = pww_dk_target } }
+							set_variable = { pww_do_res = pww_diplo_ai_offer_res }
+						}
+						pww_diplo_ai_build_draft = yes
+						pww_diplo_refresh_display = yes
+					}
+				}
+			}
+		}
+		can_be_sent = {
+			# AI senders build the draft in reset_send_effect; ai_acceptance
+			# rejects anything unworkable.
+			OR = {
+				ROOT = { is_ai = yes }
+				AND = {
+						ROOT = {
+							check_variable = { pww_do_valid = 0 }
+							check_variable = { pww_dd_closed = 0 }
+							check_variable = { pww_do_act = 0 }
+							check_variable = { pww_do_target = PREV }
+						}
+				}
+			}
+		}
+		send_description = pww_diplo_offer_send_desc
+
+		on_sent_effect = {
+			ROOT = {
+				clr_country_flag = pww_diplo_ai_offer
+				set_country_flag = { flag = pww_diplo_pending days = 30 value = 1 }
+				pww_diplo_sit_bid_hook = yes
+			}
+		}
+		complete_effect = {
+			ROOT = {
+				clr_country_flag = pww_diplo_pending
+				pww_diplo_talk_accepted = yes
+			}
+		}
+		reject_effect = {
+			if = {
+				limit = {
+					is_ai = no
+					ROOT = { is_ai = yes }
+				}
+				# A human receiver declined or countered an AI proposal.
+				set_temp_variable = { pww_dac_counter = pww_dr_counter }
+				ROOT = {
+					clr_country_flag = pww_diplo_pending
+					if = {
+						limit = { check_variable = { pww_dac_counter > 0 } }
+						pww_diplo_ai_consider_counter = yes
+					}
+					else = {
+						set_temp_variable = { pww_dtc_t = pww_do_talk }
+						set_temp_variable = { pww_dtc_status = 2 }
+						if = {
+							limit = {
+								check_variable = { pww_dtc_t > -1 }
+								check_variable = { global.pww_dt_status^pww_dtc_t = 0 }
+							}
+							pww_diplo_talk_close = yes
+						}
+					}
+				}
+			}
+			else = {
+				ROOT = {
+					clr_country_flag = pww_diplo_pending
+					pww_diplo_eval_offer = yes
+					pww_diplo_talk_reply = yes
+				}
+			}
+		}
+
+		receive_scripted_gui = pww_diplo_recv_offer_gui
+		reset_receive_effect = {
+			ROOT = {
+				pww_diplo_eval_offer = yes
+				pww_diplo_mirror_for_receiver = yes
+			}
+		}
+		can_be_accepted = { always = yes }
+		receive_description = pww_diplo_offer_receive_desc
+
+		accept_title = pww_diplo_offer_accept_title
+		accept_description = pww_diplo_offer_accept_desc
+		reject_title = pww_diplo_offer_reject_title
+		reject_description = pww_diplo_offer_reject_desc
+
+		ai_acceptance = {
+			pww_diplo_acc_terms = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_do_e_terms }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_need = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_do_e_need }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_want = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_do_e_want }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_sweeteners = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_do_e_sweet }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_red_line = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_do_e_red }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_trust = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_do_e_trust }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_relations = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_do_e_rel }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_patron = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_do_e_patron }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_reserve = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_do_e_reserve }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_repeat = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_do_e_repeat }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_unworkable = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_do_e_invalid }
+					add = var:pww_dacc
+				}
+				modifier = {
+					NOT = { check_variable = { ROOT.pww_do_target = THIS } }
+					add = -1000
+				}
+				modifier = {
+					check_variable = { ROOT.pww_dd_closed = 1 }
+					add = -1000
+				}
+			}
+		}
+		ai_desire = {
+			base = -1
+			modifier = {
+				ROOT = {
+					has_country_flag = pww_diplo_ai_offer
+					NOT = { has_country_flag = pww_diplo_pending }
+				}
+				check_variable = { ROOT.pww_diplo_ai_offer_to = THIS }
+				add = 101
+			}
+		}
+	}
+
+	pww_diplo_lease_rights = {
+		allowed = { always = yes }
+		visible = {
+			NOT = { tag = ROOT }
+			NOT = { has_war_with = ROOT }
+		}
+		selectable = {
+			exists = yes
+		}
+		requires_acceptance = yes
+		cost = 25
+		command_power = 0
+		show_acceptance_on_action_button = no
+		icon = 1
+
+		send_scripted_gui = pww_diplo_send_offer_gui
+		reset_send_effect = {
+			set_temp_variable = { pww_dk_target = THIS }
+			set_temp_variable = { pww_dk_act = 1 }
+			ROOT = {
+				pww_diplo_offer_begin = yes
+				if = {
+					limit = {
+						is_ai = yes
+						check_variable = { pww_dob_keep = 0 }
+					}
+					if = {
+						limit = { check_variable = { pww_diplo_ai_lease_to = pww_dk_target } }
+						set_variable = { pww_do_res = pww_diplo_ai_lease_res }
+					}
+					pww_diplo_ai_build_draft = yes
+					pww_diplo_refresh_display = yes
+				}
+			}
+		}
+		can_be_sent = {
+			# AI senders build the draft in reset_send_effect; ai_acceptance
+			# rejects anything unworkable.
+			OR = {
+				ROOT = { is_ai = yes }
+				AND = {
+						ROOT = {
+							check_variable = { pww_do_valid = 0 }
+							check_variable = { pww_dd_closed = 0 }
+							check_variable = { pww_do_act = 1 }
+							check_variable = { pww_do_target = PREV }
+						}
+				}
+			}
+		}
+		send_description = pww_diplo_lease_send_desc
+
+		on_sent_effect = {
+			ROOT = {
+				clr_country_flag = pww_diplo_ai_lease
+				set_country_flag = { flag = pww_diplo_pending days = 30 value = 1 }
+				pww_diplo_sit_bid_hook = yes
+			}
+		}
+		complete_effect = {
+			ROOT = {
+				clr_country_flag = pww_diplo_pending
+				pww_diplo_talk_accepted = yes
+			}
+		}
+		reject_effect = {
+			if = {
+				limit = {
+					is_ai = no
+					ROOT = { is_ai = yes }
+				}
+				set_temp_variable = { pww_dac_counter = pww_dr_counter }
+				ROOT = {
+					clr_country_flag = pww_diplo_pending
+					if = {
+						limit = { check_variable = { pww_dac_counter > 0 } }
+						pww_diplo_ai_consider_counter = yes
+					}
+					else = {
+						set_temp_variable = { pww_dtc_t = pww_do_talk }
+						set_temp_variable = { pww_dtc_status = 2 }
+						if = {
+							limit = {
+								check_variable = { pww_dtc_t > -1 }
+								check_variable = { global.pww_dt_status^pww_dtc_t = 0 }
+							}
+							pww_diplo_talk_close = yes
+						}
+					}
+				}
+			}
+			else = {
+				ROOT = {
+					clr_country_flag = pww_diplo_pending
+					pww_diplo_eval_offer = yes
+					pww_diplo_talk_reply = yes
+				}
+			}
+		}
+
+		receive_scripted_gui = pww_diplo_recv_offer_gui
+		reset_receive_effect = {
+			ROOT = {
+				pww_diplo_eval_offer = yes
+				pww_diplo_mirror_for_receiver = yes
+			}
+		}
+		can_be_accepted = { always = yes }
+		receive_description = pww_diplo_lease_receive_desc
+
+		accept_title = pww_diplo_offer_accept_title
+		accept_description = pww_diplo_offer_accept_desc
+		reject_title = pww_diplo_offer_reject_title
+		reject_description = pww_diplo_offer_reject_desc
+
+		ai_acceptance = {
+			pww_diplo_acc_terms = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_do_e_terms }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_want = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_do_e_want }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_sweeteners = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_do_e_sweet }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_red_line = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_do_e_red }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_trust = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_do_e_trust }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_relations = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_do_e_rel }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_patron = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_do_e_patron }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_reserve = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_do_e_reserve }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_repeat = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_do_e_repeat }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_unworkable = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_do_e_invalid }
+					add = var:pww_dacc
+				}
+				modifier = {
+					NOT = { check_variable = { ROOT.pww_do_target = THIS } }
+					add = -1000
+				}
+				modifier = {
+					check_variable = { ROOT.pww_dd_closed = 1 }
+					add = -1000
+				}
+			}
+		}
+		ai_desire = {
+			base = -1
+			modifier = {
+				ROOT = {
+					has_country_flag = pww_diplo_ai_lease
+					NOT = { has_country_flag = pww_diplo_pending }
+				}
+				check_variable = { ROOT.pww_diplo_ai_lease_to = THIS }
+				add = 101
+			}
+		}
+	}
+
+	pww_diplo_demand_quiet = {
+		allowed = { always = yes }
+		visible = {
+			NOT = { tag = ROOT }
+			NOT = { has_war_with = ROOT }
+			NOT = { is_subject_of = ROOT }
+		}
+		selectable = {
+			exists = yes
+		}
+		requires_acceptance = yes
+		cost = 25
+		command_power = 0
+		show_acceptance_on_action_button = no
+		icon = 1
+
+		send_scripted_gui = pww_diplo_send_demand_gui
+		reset_send_effect = {
+			set_temp_variable = { pww_dk_target = THIS }
+			set_temp_variable = { pww_dk_channel = 0 }
+			ROOT = { pww_diplo_demand_begin = yes }
+		}
+		can_be_sent = {
+			# AI senders build the draft in reset_send_effect; ai_acceptance
+			# rejects anything unworkable.
+			OR = {
+				ROOT = { is_ai = yes }
+				AND = {
+						ROOT = {
+							check_variable = { pww_dm_valid = 0 }
+							check_variable = { pww_dm_target = PREV }
+						}
+				}
+			}
+		}
+		send_description = pww_diplo_demand_send_desc
+
+		on_sent_effect = {
+			ROOT = {
+				clr_country_flag = pww_diplo_ai_demand
+				set_variable = { pww_dm_channel = 0 }
+				pww_diplo_demand_sent = yes
+			}
+		}
+		complete_effect = {
+			set_temp_variable = { pww_dda_move = 0 }
+			ROOT = { pww_diplo_demand_answered = yes }
+		}
+		reject_effect = {
+			set_temp_variable = { pww_dda_move = -1 }
+			if = {
+				limit = { is_ai = no }
+				set_temp_variable = { pww_dda_move = pww_dr_move }
+				if = {
+					limit = { check_variable = { pww_dda_move < 1 } }
+					set_temp_variable = { pww_dda_move = 6 }
+				}
+			}
+			else_if = {
+				limit = { NOT = { has_global_flag = pww_coer_loaded } }
+				set_temp_variable = { pww_dam_claimant = ROOT }
+				pww_diplo_ai_pick_move = yes
+			}
+			ROOT = { pww_diplo_demand_answered = yes }
+		}
+
+		receive_scripted_gui = pww_diplo_recv_demand_gui
+		reset_receive_effect = {
+			set_variable = { pww_dr_move = 6 }
+			if = {
+				limit = { ROOT = { check_variable = { pww_dm_channel = 0 } } }
+				set_variable = { pww_dr_move = 7 }
+			}
+			ROOT = { pww_diplo_demand_mirror = yes }
+		}
+		can_be_accepted = { always = yes }
+		receive_description = pww_rcv_demand_quiet_desc
+
+		accept_title = pww_diplo_demand_accept_title
+		accept_description = pww_diplo_demand_accept_desc
+		reject_title = pww_diplo_demand_reject_title
+		reject_description = pww_diplo_demand_reject_desc
+
+		ai_acceptance = {
+			pww_diplo_acc_pressure = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_dm_e_state }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_face = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_dm_e_fig }
+					add = var:pww_dacc
+				}
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_dm_e_less }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_underwritten = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_dm_e_pledge }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_credibility = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_dm_e_cred }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_unworkable = {
+				base = 0
+				modifier = {
+					NOT = { check_variable = { ROOT.pww_dm_target = THIS } }
+					add = -1000
+				}
+				modifier = {
+					NOT = { check_variable = { ROOT.pww_dm_valid = 0 } }
+					add = -1000
+				}
+			}
+		}
+		ai_desire = {
+			base = -1
+			modifier = {
+				ROOT = {
+					has_country_flag = pww_diplo_ai_demand
+					NOT = { has_government = democratic }
+				}
+				check_variable = { ROOT.pww_diplo_ai_demand_to = THIS }
+				add = 101
+			}
+		}
+	}
+
+	pww_diplo_demand_public = {
+		allowed = { always = yes }
+		visible = {
+			NOT = { tag = ROOT }
+			NOT = { has_war_with = ROOT }
+			NOT = { is_subject_of = ROOT }
+		}
+		selectable = {
+			exists = yes
+		}
+		requires_acceptance = yes
+		cost = 50
+		command_power = 0
+		show_acceptance_on_action_button = no
+		icon = 1
+
+		send_scripted_gui = pww_diplo_send_demand_gui
+		reset_send_effect = {
+			set_temp_variable = { pww_dk_target = THIS }
+			set_temp_variable = { pww_dk_channel = 1 }
+			ROOT = { pww_diplo_demand_begin = yes }
+		}
+		can_be_sent = {
+			# AI senders build the draft in reset_send_effect; ai_acceptance
+			# rejects anything unworkable.
+			OR = {
+				ROOT = { is_ai = yes }
+				AND = {
+						ROOT = {
+							check_variable = { pww_dm_valid = 0 }
+							check_variable = { pww_dm_target = PREV }
+						}
+				}
+			}
+		}
+		send_description = pww_diplo_demand_send_desc
+
+		on_sent_effect = {
+			ROOT = {
+				clr_country_flag = pww_diplo_ai_demand
+				set_variable = { pww_dm_channel = 1 }
+				pww_diplo_demand_sent = yes
+			}
+		}
+		complete_effect = {
+			set_temp_variable = { pww_dda_move = 0 }
+			ROOT = { pww_diplo_demand_answered = yes }
+		}
+		reject_effect = {
+			set_temp_variable = { pww_dda_move = -1 }
+			if = {
+				limit = { is_ai = no }
+				set_temp_variable = { pww_dda_move = pww_dr_move }
+				if = {
+					limit = {
+						OR = {
+							check_variable = { pww_dda_move < 1 }
+							check_variable = { pww_dda_move = 7 }
+						}
+					}
+					set_temp_variable = { pww_dda_move = 6 }
+				}
+			}
+			else_if = {
+				limit = { NOT = { has_global_flag = pww_coer_loaded } }
+				set_temp_variable = { pww_dam_claimant = ROOT }
+				pww_diplo_ai_pick_move = yes
+			}
+			ROOT = { pww_diplo_demand_answered = yes }
+		}
+
+		receive_scripted_gui = pww_diplo_recv_demand_gui
+		reset_receive_effect = {
+			set_variable = { pww_dr_move = 6 }
+			ROOT = { pww_diplo_demand_mirror = yes }
+		}
+		can_be_accepted = { always = yes }
+		receive_description = pww_rcv_demand_public_desc
+
+		accept_title = pww_diplo_demand_accept_title
+		accept_description = pww_diplo_demand_accept_desc
+		reject_title = pww_diplo_demand_reject_title
+		reject_description = pww_diplo_demand_reject_desc
+
+		ai_acceptance = {
+			pww_diplo_acc_pressure = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_dm_e_state }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_face = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_dm_e_fig }
+					add = var:pww_dacc
+				}
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_dm_e_less }
+					add = var:pww_dacc
+				}
+				# Public humiliation costs more face than a quiet word.
+				modifier = {
+					add = -10
+				}
+			}
+			pww_diplo_acc_underwritten = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_dm_e_pledge }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_credibility = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_dm_e_cred }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_unworkable = {
+				base = 0
+				modifier = {
+					NOT = { check_variable = { ROOT.pww_dm_target = THIS } }
+					add = -1000
+				}
+				modifier = {
+					NOT = { check_variable = { ROOT.pww_dm_valid = 0 } }
+					add = -1000
+				}
+			}
+		}
+		ai_desire = {
+			base = -1
+			modifier = {
+				ROOT = {
+					has_country_flag = pww_diplo_ai_demand
+					has_government = democratic
+				}
+				check_variable = { ROOT.pww_diplo_ai_demand_to = THIS }
+				add = 101
+			}
+		}
+	}
+
+	pww_diplo_pledge_support = {
+		allowed = { always = yes }
+		visible = {
+			NOT = { tag = ROOT }
+			NOT = { has_war_with = ROOT }
+		}
+		selectable = {
+			exists = yes
+		}
+		requires_acceptance = yes
+		cost = 25
+		command_power = 0
+		show_acceptance_on_action_button = no
+		icon = 1
+
+		send_scripted_gui = pww_diplo_send_pledge_gui
+		reset_send_effect = {
+			set_temp_variable = { pww_dk_target = THIS }
+			ROOT = {
+				pww_diplo_pledge_begin = yes
+				if = {
+					limit = {
+						is_ai = yes
+						check_variable = { pww_diplo_ai_pledge_to = pww_dk_target }
+					}
+					set_variable = { pww_dp_ci = -1 }
+					set_temp_variable = { pww_dkp_vs = pww_diplo_ai_pledge_vs }
+					var:pww_dk_target = {
+						for_each_loop = {
+							array = pww_dd_pressers
+							value = pww_dkp_c
+							index = pww_dkp_i
+							if = {
+								limit = { check_variable = { pww_dkp_c = pww_dkp_vs } }
+								PREV = { set_variable = { pww_dp_ci = pww_dkp_i } }
+							}
+						}
+					}
+					pww_diplo_pledge_changed = yes
+				}
+			}
+		}
+		can_be_sent = {
+			# AI senders build the draft in reset_send_effect; ai_acceptance
+			# rejects anything unworkable.
+			OR = {
+				ROOT = { is_ai = yes }
+				AND = {
+						ROOT = {
+							check_variable = { pww_dp_valid = 0 }
+							check_variable = { pww_dp_target = PREV }
+						}
+				}
+			}
+		}
+		send_description = pww_diplo_pledge_send_desc
+
+		on_sent_effect = {
+			ROOT = { clr_country_flag = pww_diplo_ai_pledge }
+		}
+		complete_effect = {
+			ROOT = {
+				pww_diplo_pledge_make = yes
+				pww_diplo_sit_pledge_hook = yes
+			}
+		}
+		reject_effect = {
+		}
+
+		can_be_accepted = { always = yes }
+		receive_description = pww_rcv_pledge_desc
+
+		accept_title = pww_diplo_pledge_accept_title
+		accept_description = pww_diplo_pledge_accept_desc
+		reject_title = pww_diplo_pledge_reject_title
+		reject_description = pww_diplo_pledge_reject_desc
+
+		ai_acceptance = {
+			pww_diplo_acc_underwriting = {
+				base = 40
+			}
+			pww_diplo_acc_relations = {
+				base = 0
+				modifier = {
+					has_opinion = { target = ROOT value < -25 }
+					add = -40
+				}
+			}
+			pww_diplo_acc_claimant_friend = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_dp_e_friend }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_unworkable = {
+				base = 0
+				modifier = {
+					NOT = { check_variable = { ROOT.pww_dp_target = THIS } }
+					add = -1000
+				}
+				modifier = {
+					NOT = { check_variable = { ROOT.pww_dp_valid = 0 } }
+					add = -1000
+				}
+			}
+		}
+		ai_desire = {
+			base = -1
+			modifier = {
+				ROOT = { has_country_flag = pww_diplo_ai_pledge }
+				check_variable = { ROOT.pww_diplo_ai_pledge_to = THIS }
+				add = 101
+			}
+		}
+	}
+
+	pww_diplo_quarantine = {
+		allowed = { always = yes }
+		visible = {
+			has_global_flag = pww_coer_loaded
+			NOT = { tag = ROOT }
+			NOT = { has_war_with = ROOT }
+			is_in_array = { array = pww_dd_pressers value = ROOT }
+		}
+		selectable = {
+			NOT = { has_country_flag = pww_coer_quarantined }
+		}
+		requires_acceptance = no
+		cost = 75
+		command_power = 25
+		icon = 1
+		send_description = pww_diplo_quarantine_send_desc
+
+		complete_effect = {
+			pww_diplo_quarantine_declare = yes
+			ROOT = { clr_country_flag = pww_diplo_ai_quarantine }
+		}
+
+		ai_desire = {
+			base = -1
+			modifier = {
+				ROOT = { has_country_flag = pww_diplo_ai_quarantine }
+				check_variable = { ROOT.pww_diplo_ai_quarantine_to = THIS }
+				add = 101
+			}
+		}
+	}
+
+	pww_diplo_demand_settlement = {
+		allowed = { always = yes }
+		visible = {
+			ROOT = { has_country_flag = pww_dset_open }
+			is_in_array = { array = ROOT.pww_dset_hosts value = THIS }
+		}
+		selectable = {
+			NOT = { has_war_with = ROOT }
+		}
+		requires_acceptance = yes
+		cost = 10
+		command_power = 0
+		show_acceptance_on_action_button = no
+		icon = 1
+		send_description = pww_diplo_settlement_send_desc
+
+		on_sent_effect = {
+			set_temp_variable = { pww_dk_target = THIS }
+			ROOT = {
+				clr_country_flag = pww_diplo_ai_settle
+				pww_diplo_settle_begin = yes
+			}
+		}
+		complete_effect = {
+			if = {
+				limit = { is_ai = no }
+				set_temp_variable = { pww_dso_opt = pww_dr_settle }
+			}
+			else = {
+				set_temp_variable = { pww_dsa_res = ROOT.pww_ds_res }
+				pww_diplo_ai_pick_settlement = yes
+				if = {
+					limit = { check_variable = { pww_dso_opt = 3 } }
+					set_temp_variable = { pww_dso_opt = 1 }
+				}
+			}
+			ROOT = { pww_diplo_settle_apply = yes }
+		}
+		reject_effect = {
+			set_temp_variable = { pww_dso_opt = 3 }
+			ROOT = { pww_diplo_settle_apply = yes }
+		}
+
+		receive_scripted_gui = pww_diplo_recv_settle_gui
+		reset_receive_effect = {
+			set_temp_variable = { pww_dk_target = THIS }
+			ROOT = { pww_diplo_settle_begin = yes }
+			set_variable = { pww_dr_settle = 1 }
+			add_to_variable = { pww_diplo_dirty = 1 }
+		}
+		can_be_accepted = { always = yes }
+		receive_description = pww_rcv_settlement_desc
+
+		accept_title = pww_diplo_settle_accept_title
+		accept_description = pww_diplo_settle_accept_desc
+		reject_title = pww_diplo_settle_reject_title
+		reject_description = pww_diplo_settle_reject_desc
+
+		ai_acceptance = {
+			pww_diplo_acc_grievance = {
+				base = 30
+			}
+			pww_diplo_acc_relations = {
+				base = 0
+				modifier = {
+					has_opinion = { target = ROOT value < -50 }
+					add = -50
+				}
+			}
+			pww_diplo_acc_strength = {
+				base = 0
+				modifier = {
+					ROOT = { is_major = yes }
+					add = 15
+				}
+				modifier = {
+					is_major = yes
+					ROOT = { is_major = no }
+					add = -40
+				}
+			}
+		}
+		ai_desire = {
+			base = -1
+			modifier = {
+				ROOT = { has_country_flag = pww_diplo_ai_settle }
+				check_variable = { ROOT.pww_diplo_ai_settle_to = THIS }
+				add = 101
+			}
+		}
+	}
+
+	pww_diplo_join_embargo = {
+		allowed = { always = yes }
+		visible = {
+			NOT = { tag = ROOT }
+			NOT = { has_war_with = ROOT }
+		}
+		selectable = {
+			exists = yes
+		}
+		requires_acceptance = yes
+		cost = 15
+		command_power = 0
+		show_acceptance_on_action_button = no
+		icon = 1
+
+		send_scripted_gui = pww_diplo_send_embargo_gui
+		reset_send_effect = {
+			set_temp_variable = { pww_dk_target = THIS }
+			ROOT = {
+				pww_diplo_embargo_begin = yes
+				if = {
+					limit = {
+						is_ai = yes
+						check_variable = { pww_diplo_ai_embargo_to = pww_dk_target }
+					}
+					set_temp_variable = { pww_dke_t = pww_diplo_ai_embargo_target }
+					for_each_loop = {
+						array = pww_de_list
+						value = pww_dke_c
+						index = pww_dke_i
+						if = {
+							limit = { check_variable = { pww_dke_c = pww_dke_t } }
+							set_variable = { pww_de_i = pww_dke_i }
+						}
+					}
+					pww_diplo_embargo_changed = yes
+				}
+			}
+		}
+		can_be_sent = {
+			# AI senders build the draft in reset_send_effect; ai_acceptance
+			# rejects anything unworkable.
+			OR = {
+				ROOT = { is_ai = yes }
+				AND = {
+						ROOT = {
+							check_variable = { pww_de_valid = 0 }
+							check_variable = { pww_de_member = PREV }
+						}
+				}
+			}
+		}
+		send_description = pww_diplo_embargo_send_desc
+
+		on_sent_effect = {
+			ROOT = { clr_country_flag = pww_diplo_ai_embargo }
+		}
+		complete_effect = {
+			ROOT = { pww_diplo_embargo_joined = yes }
+		}
+		reject_effect = {
+			ROOT = { pww_diplo_embargo_refused = yes }
+		}
+
+		can_be_accepted = { always = yes }
+		receive_description = pww_rcv_join_embargo_desc
+
+		accept_title = pww_diplo_embargo_accept_title
+		accept_description = pww_diplo_embargo_accept_desc
+		reject_title = pww_diplo_embargo_reject_title
+		reject_description = pww_diplo_embargo_reject_desc
+
+		ai_acceptance = {
+			pww_diplo_acc_bloc = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_de_e_bloc }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_view = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_de_e_view }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_credibility = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_de_e_cred }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_lost_trade = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_de_e_cost }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_unworkable = {
+				base = 0
+				modifier = {
+					NOT = { check_variable = { ROOT.pww_de_member = THIS } }
+					add = -1000
+				}
+				modifier = {
+					NOT = { check_variable = { ROOT.pww_de_valid = 0 } }
+					add = -1000
+				}
+			}
+		}
+		ai_desire = {
+			base = -1
+			modifier = {
+				ROOT = { has_country_flag = pww_diplo_ai_embargo }
+				check_variable = { ROOT.pww_diplo_ai_embargo_to = THIS }
+				add = 101
+			}
+		}
+	}
+
+	pww_diplo_submit_bid = {
+		allowed = { always = yes }
+		visible = {
+			NOT = { tag = ROOT }
+			has_country_flag = pww_diplo_auction_open
+		}
+		selectable = {
+			NOT = { has_war_with = ROOT }
+		}
+		requires_acceptance = no
+		cost = 5
+		command_power = 0
+		icon = 1
+
+		send_scripted_gui = pww_diplo_send_bid_gui
+		reset_send_effect = {
+			set_temp_variable = { pww_dk_target = THIS }
+			ROOT = { pww_diplo_bid_begin = yes }
+		}
+		can_be_sent = {
+			# AI senders build the draft in reset_send_effect; ai_acceptance
+			# rejects anything unworkable.
+			OR = {
+				ROOT = { is_ai = yes }
+				AND = {
+						ROOT = {
+							check_variable = { pww_db_valid = 0 }
+							check_variable = { pww_db_holder = PREV }
+						}
+				}
+			}
+		}
+		send_description = pww_diplo_bid_send_desc
+
+		complete_effect = {
+			ROOT = { pww_diplo_bid_submit = yes }
+		}
+
+		ai_desire = {
+			base = -1
+		}
+	}
+}

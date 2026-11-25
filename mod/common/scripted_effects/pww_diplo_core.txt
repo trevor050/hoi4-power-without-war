@@ -1,0 +1,538 @@
+###############################################################################
+# Power Without War: diplomacy lane, core (init, storage, queue, helpers)
+#
+# The diplomacy lane owns the scripted diplomatic actions, their sender and
+# receiver GUIs, negotiation (term cards, bands, seeded hidden values, three
+# counters, red lines and hidden wants), patron pledges, seller-written
+# auctions, and the glue that turns a demand, a quarantine, a settlement or
+# an embargo request into calls on the coercion lane and the ledger.
+#
+# Files
+#   scripted_effects/pww_diplo_core.txt      this file: init, queue, helpers
+#   scripted_effects/pww_diplo_talks.txt     negotiation and offer signing
+#   scripted_effects/pww_diplo_pledges.txt   patron pledges (reserved deals)
+#   scripted_effects/pww_diplo_auctions.txt  seller-written auctions
+#   scripted_effects/pww_diplo_pressure.txt  demands, quarantine, embargo
+#                                            requests, settlements
+#   scripted_effects/pww_diplo_ticks.txt     staggered country tick (AI
+#                                            intent flags), global sweep
+#   scripted_triggers/pww_diplo_triggers.txt
+#   scripted_diplomatic_actions/pww_diplo_actions.txt
+#   scripted_guis/pww_diplo_guis.txt, interface/pww_diplo.gui,
+#   interface/pww_diplo_sprites.gfx
+#   scripted_localisation/pww_diplo_scripted_loc.txt
+#   on_actions/pww_diplo_on_actions.txt
+#   localisation/english/pww_diplo_l_english.yml,
+#   localisation/english/pww_diplo_envoys_l_english.yml
+#
+# ===========================================================================
+# LOAD FLAGS AND GUARDS
+#   global flag pww_diplo_loaded       set by pww_diplo_init (this lane is
+#                                      present and initialized).
+#   Calls into the coercion lane run only under global flag pww_coer_loaded;
+#   calls into the situations lane only under global flag pww_sit_loaded.
+#   Without them the actions still work: demands are recorded locally and
+#   answered from the diplomacy model, Declare Quarantine is hidden, and no
+#   situation ids are attached.
+#
+# ===========================================================================
+# STORAGE
+# Every record kind is a set of global parallel arrays indexed by id (append
+# only, id == index forever), like the ledger. Live-id lists keep sweeps
+# small. Country refs are stored as countries, states as state ids.
+#
+# TALKS (negotiations, pww_diplo_talks.txt)          global.pww_dt_<field>
+#   sender, target     countries (sender = the side that tables offers)
+#   act                0 Propose Agreement, 1 Lease Rights
+#   status             0 open, 1 signed, 2 broken off, 3 expired,
+#                      4 superseded (holder opened an auction)
+#   opened, expires    num_days
+#   cool_until         num_days before the pair may reopen talks (on close)
+#   round              counters used (0..3)
+#   patience           0..100 (hidden)
+#   redline            red line of the negotiating AI side, 0..7 (hidden):
+#                      0 no lease, 1 no long term, 2 no exclusive,
+#                      3 no political clause, 4 no public signing,
+#                      5 no full output, 6 no patron-treaty breach,
+#                      7 no pure clearing credit
+#   want               hidden want 0..8: 0 clearing arms, 1 civilian
+#                      factories, 2 coal, 3 equipment tranches, 4 license or
+#                      technical mission, 5 timed reversion, 6 fig leaf,
+#                      7 split award, 8 quiet commercial cover
+#   rl_seen, want_seen 0/1 revealed to the sender
+#   reserve            hidden reservation (acceptance points they need)
+#   seed               0..96, derived from the campaign salt and the pair
+#   rel, trust         acceptance points frozen at opening (opinion and the
+#                      sender's Reliability), so equal offers get equal answers
+#   last_sig, last_ok  signature of the last tabled offer and its answer
+#   line               envoy line code of the last reply (see ENVOY LINES)
+#   sit                situation id shared by the pair (-1 none)
+#   ag                 ledger agreement id once signed (-1)
+#   ai_side            0 the target is the AI party being read (human or AI
+#                      sender), 1 the sender is (AI sender, human target)
+# Country array pww_dt_ids: talks the country opened as sender.
+# Country array pww_dt_in: talks the country is the target of.
+# global.pww_dt_live: open talk ids.
+#
+# OFFER DRAFT (country variables on the sender, read by the GUIs and by the
+# AI acceptance of the target)
+#   pww_do_target (country), pww_do_talk (talk id), pww_do_act
+#   pww_do_dir     0 we buy, 1 we sell (agreement only)
+#   pww_do_res     0..6
+#   pww_do_amt     0 Small, 1 Fair, 2 Large, 3 Generous (share of output)
+#   pww_do_slot    lease: index into the target's pww_producing_states_<res>
+#   pww_do_state   lease: the state (scope variable, for names)
+#   pww_do_dur     0 open (non-committal), 1 six months, 2 one year,
+#                  3 three years, 4 five years
+#   pww_do_pay     0 civilian factories, 1 political power, 2 clearing
+#                  credit, 3 equipment tranches, 4 license
+#   pww_do_price   0 below market, 1 at market, 2 above market
+#   pww_do_sweet   0 none, 1 coal bundle, 2 technical mission, 3 arms gift
+#   pww_do_fig     0 none, 1 nominal purchase, 2 joint commission,
+#                  3 sovereignty note, 4 fixed reversion date, 5 clearing
+#                  protocol, 6 neutral registry
+#   derived: pww_do_seller, pww_do_buyer, pww_do_units, pww_do_civ,
+#   pww_do_pp, pww_do_cic, pww_do_term, pww_do_valid (0 ok, else a reason
+#   code, loc pww_diplo_invalid_N), pww_do_band_give / pww_do_band_get
+#   (core bands from the sender's view), pww_do_sig, pww_do_ok (verdict),
+#   pww_do_e_<part> acceptance parts and pww_do_e_total.
+#
+# PLEDGES (pww_diplo_pledges.txt)                    global.pww_dpl_<field>
+#   patron, holder, claimant (country, or 0 for "anyone"), cond (ledger
+#   condition id), ag (reserved agreement id), status (0 live, 1 fired,
+#   2 lapsed, 3 withdrawn, 4 failed to activate), value (civ-equivalent),
+#   made (num_days)
+#   Country arrays: pww_dpl_ids (holder: pledges covering it),
+#                   pww_dpl_given (patron: pledges it made).
+#   Country variable pww_patron_pledge_strength on the holder, 0..100: the
+#   coercion lane reads it as resistance. Recomputed whenever a pledge is
+#   made, fires, lapses or is withdrawn, and on the holder's tick.
+#
+# AUCTIONS (pww_diplo_auctions.txt)                  global.pww_dau_<field>
+#   holder, res, sit (-1 none), status (0 open, 1 awarded, 2 cancelled),
+#   opened, closes (num_days), lots (count)
+#   Country array pww_dau_ids on the holder. global.pww_dau_live.
+# LOTS                                               global.pww_dlot_<field>
+#   auction, kind (0 named-state lease, 1 split half, 2 exclusive national
+#   lease, 3 bridge contract), state (state id, kinds 0 and 1), group (split
+#   pair id; both halves share it; -1 otherwise), res, amt (bridge amount
+#   band), term (days), status (0 open, 1 awarded, 2 void), winner (country
+#   or 0), bid (winning bid id or -1), ag (agreement id or -1), excl (1 when
+#   awarding it records an exclusivity clause)
+#   Array global.pww_dau_lots_<n> is NOT used; lots of an auction are the
+#   ids with global.pww_dlot_auction == auction id (scan global.pww_dlot_live).
+# BIDS                                               global.pww_dbid_<field>
+#   lot, bidder, pay, price, dur (ignored: the lot sets the term), sweet,
+#   fig, score (holder's evaluation, acceptance points), status (0 live,
+#   1 won, 2 lost)
+# EXCLUSIVITY CLAUSES                                global.pww_dex_<field>
+#   holder, lessee, res, until (num_days), ag, status (0 in force, 1 expired,
+#   2 breached)
+#
+# DEMAND RECORDS (pww_diplo_pressure.txt)            global.pww_ddm_<field>
+#   claimant, target, coer (coercion demand id or -1), channel (0 quiet,
+#   1 public), type (0 output share, 1 named-state lease), res, amt, state,
+#   dur, fig, status (0 pending, 1 fulfilled, 2 refused, 3 withdrawn),
+#   move (last target move, see RESPONSES), ag, made
+#   Country array pww_ddm_ids on both parties. Target array pww_dd_pressers
+#   lists claimants with a pending demand (patrons pledge against them).
+# EMBARGO REQUESTS                                   global.pww_dje_<field>
+#   sender, member, target, deadline, status (0 complying, 1 broke, 2 ended)
+# SETTLEMENTS: victim array pww_dset_pending (nationalized agreement ids not
+#   yet settled), pww_dset_hosts (their hosts), flag pww_dset_open.
+#
+# RESPONSES (target moves, pww_in_response for pww_coer_target_respond)
+#   0 fold, 1 smaller named lot, 2 90-day provisional suspension, 3 fig leaf,
+#   4 call a patron, 5 harden and mobilize, 6 plain refusal
+#
+# ===========================================================================
+# EVENT QUEUE (for situations, coercion and the UI lane; poll, never edit)
+#   global.pww_dq_seq^n   monotonic sequence number
+#   global.pww_dq_kind^n  1 talks opened, 2 agreement signed from talks,
+#                         3 talks broken off or expired, 4 pledge made,
+#                         5 pledge fired, 6 pledge lapsed or withdrawn,
+#                         7 demand issued, 8 demand answered (x = move),
+#                         9 lot awarded, 10 exclusivity breached,
+#                         11 settlement chosen (x = option), 12 embargo
+#                         joined, 13 embargo request broken, 14 auction opened
+#   global.pww_dq_a^n     first country (sender, patron, claimant, holder)
+#   global.pww_dq_b^n     second country (target, holder, winner)
+#   global.pww_dq_ref^n   record id (talk, pledge, demand, lot, request)
+#   global.pww_dq_ag^n    ledger agreement id or -1
+#   global.pww_dq_sit^n   situation id or -1
+#   global.pww_dq_x^n     extra code (move, option)
+#   global.pww_dq_day^n   num_days
+#   The queue keeps the newest global.pww_diplo_c_queue_cap entries.
+#
+# ===========================================================================
+# PUBLIC EFFECTS FOR OTHER LANES (temp-variable inputs, set right before)
+#   pww_diplo_init = yes                     idempotent
+#   pww_diplo_on_demand_refused = yes        in pww_in_claimant, pww_in_target
+#       Fires every live pledge covering the target against that claimant
+#       (or against anyone). Coercion calls it when a demand is refused or
+#       its deadline passes unanswered. out: pww_out_fired (count)
+#   pww_diplo_withdraw_pledge = yes          in pww_in_pledge_id
+#   pww_diplo_demand_fulfil = yes            in pww_in_demand_id (coercion's
+#       id): creates the ledger agreement from the recorded demand terms
+#       (used when the coercion lane resolves a fold on its own clock).
+#       out: pww_out_ag
+#   pww_diplo_auction_open = yes             in pww_in_holder,
+#       pww_in_resource, pww_in_sit_id (-1 none), pww_in_days (bidding
+#       window); out pww_out_auction_id
+#   pww_diplo_auction_add_lot = yes          in pww_in_auction_id,
+#       pww_in_lot_kind, pww_in_state (kinds 0/1), pww_in_group (kind 1),
+#       pww_in_amount_band (kind 3), pww_in_term_days; out pww_out_lot_id
+#   pww_diplo_auction_write_default_lots = yes  in pww_in_auction_id:
+#       the holder's standard lots (one lease per producing state, the split
+#       pair when it has two or more, an exclusive national lease, a
+#       six-month bridge)
+#   pww_diplo_auction_bid = yes              in pww_in_lot_id, pww_in_bidder,
+#       pww_in_pay, pww_in_price, pww_in_sweet, pww_in_fig; out pww_out_bid_id
+#       (-1 when refused: second bid on the lot, lot closed, same country)
+#   pww_diplo_auction_ai_bid = yes           (bidder country scope) in
+#       pww_in_auction_id: bids once on every open lot worth it
+#   pww_diplo_auction_award = yes            in pww_in_lot_id, pww_in_bid_id
+#   pww_diplo_auction_close = yes            in pww_in_auction_id: the
+#       holder awards the best combination (split pair, exclusive, single
+#       leases, bridge) and closes the auction
+#
+# DEBUG: global flag pww_diplo_debug logs "PWW_DIPLO ..." lines.
+# TEMP VARIABLES: inputs/outputs for other lanes are pww_in_* / pww_out_*;
+#   internal temps are pww_d<xx>_*.
+###############################################################################
+
+pww_diplo_init = {
+	if = {
+		limit = { NOT = { has_global_flag = pww_diplo_initialized } }
+		set_global_flag = pww_diplo_initialized
+		set_global_flag = pww_diplo_loaded
+		set_variable = { global.pww_diplo_version = 1 }
+		# Campaign salt: hidden negotiation values derive from it and from the
+		# pair, so reloading or reopening talks never rerolls them.
+		set_temp_variable_to_random = { var = pww_dinit_salt min = 0 max = 997 integer = yes }
+		set_variable = { global.pww_diplo_salt = pww_dinit_salt }
+		set_variable = { global.pww_next_talk_id = 0 }
+		set_variable = { global.pww_next_pledge_id = 0 }
+		set_variable = { global.pww_next_auction_id = 0 }
+		set_variable = { global.pww_next_lot_id = 0 }
+		set_variable = { global.pww_next_bid_id = 0 }
+		set_variable = { global.pww_next_excl_id = 0 }
+		set_variable = { global.pww_next_ddm_id = 0 }
+		set_variable = { global.pww_next_dje_id = 0 }
+		set_variable = { global.pww_dq_next_seq = 1 }
+		set_variable = { global.pww_dq_ledger_seen = 0 }
+		# Tunables (a balance patch may overwrite after init)
+		set_variable = { global.pww_diplo_c_queue_cap = 256 }
+		set_variable = { global.pww_diplo_c_talk_days = 120 }
+		set_variable = { global.pww_diplo_c_cooldown = 180 }
+		set_variable = { global.pww_diplo_c_max_counters = 3 }
+		set_variable = { global.pww_diplo_c_auction_days = 45 }
+		set_variable = { global.pww_diplo_c_pledge_days = 365 }
+		set_variable = { global.pww_diplo_c_pledge_cap = 2 }
+		set_variable = { global.pww_diplo_c_embargo_days = 30 }
+		if = {
+			limit = { has_global_flag = pww_diplo_debug }
+			log = "[GetDateText] PWW_DIPLO init salt=[?global.pww_diplo_salt|0]"
+		}
+	}
+}
+
+###############################################################################
+# Event queue
+#   in: pww_dq_kind_in, pww_dq_a_in, pww_dq_b_in, pww_dq_ref_in, pww_dq_ag_in,
+#       pww_dq_sit_in, pww_dq_x_in
+###############################################################################
+pww_diplo_queue_push = {
+	add_to_array = { array = global.pww_dq_seq value = global.pww_dq_next_seq }
+	add_to_array = { array = global.pww_dq_kind value = pww_dq_kind_in }
+	add_to_array = { array = global.pww_dq_a value = pww_dq_a_in }
+	add_to_array = { array = global.pww_dq_b value = pww_dq_b_in }
+	add_to_array = { array = global.pww_dq_ref value = pww_dq_ref_in }
+	add_to_array = { array = global.pww_dq_ag value = pww_dq_ag_in }
+	add_to_array = { array = global.pww_dq_sit value = pww_dq_sit_in }
+	add_to_array = { array = global.pww_dq_x value = pww_dq_x_in }
+	add_to_array = { array = global.pww_dq_day value = global.num_days }
+	add_to_variable = { global.pww_dq_next_seq = 1 }
+	if = {
+		limit = { check_variable = { global.pww_dq_seq^num > global.pww_diplo_c_queue_cap } }
+		remove_from_array = { array = global.pww_dq_seq index = 0 }
+		remove_from_array = { array = global.pww_dq_kind index = 0 }
+		remove_from_array = { array = global.pww_dq_a index = 0 }
+		remove_from_array = { array = global.pww_dq_b index = 0 }
+		remove_from_array = { array = global.pww_dq_ref index = 0 }
+		remove_from_array = { array = global.pww_dq_ag index = 0 }
+		remove_from_array = { array = global.pww_dq_sit index = 0 }
+		remove_from_array = { array = global.pww_dq_x index = 0 }
+		remove_from_array = { array = global.pww_dq_day index = 0 }
+	}
+	if = {
+		limit = { has_global_flag = pww_diplo_debug }
+		log = "[GetDateText] PWW_DIPLO queue kind=[?pww_dq_kind_in|0] a=[?pww_dq_a_in.GetTag] b=[?pww_dq_b_in.GetTag] ref=[?pww_dq_ref_in|0] ag=[?pww_dq_ag_in|0] x=[?pww_dq_x_in|0]"
+	}
+	set_temp_variable = { pww_dq_ag_in = -1 }
+	set_temp_variable = { pww_dq_sit_in = -1 }
+	set_temp_variable = { pww_dq_x_in = 0 }
+}
+
+###############################################################################
+# Ledger input hygiene: ledger inputs are temp variables that survive between
+# calls inside one effect run, so every create starts from zero.
+###############################################################################
+pww_diplo_ledger_clear = {
+	set_temp_variable = { pww_l_kind = 0 }
+	set_temp_variable = { pww_l_res = 0 }
+	set_temp_variable = { pww_l_amount = 0 }
+	set_temp_variable = { pww_l_state = 0 }
+	set_temp_variable = { pww_l_committal = 0 }
+	set_temp_variable = { pww_l_term_days = 0 }
+	set_temp_variable = { pww_l_civ = 0 }
+	set_temp_variable = { pww_l_pp = 0 }
+	set_temp_variable = { pww_l_ideo = 0 }
+	set_temp_variable = { pww_l_ideo_giver = 0 }
+	set_temp_variable = { pww_l_cond = 0 }
+	set_temp_variable = { pww_l_reserve_days = 0 }
+	set_temp_variable = { pww_l_revert_days = 0 }
+	set_temp_variable = { pww_l_convoys = 0 }
+	set_temp_variable = { pww_l_activate = 0 }
+	set_temp_variable = { pww_l_expect_rev = 0 }
+}
+
+###############################################################################
+# Resource reads (country scope). in: pww_dg_res (0..6)
+# out: pww_dg_prod  resource_produced@res
+#      pww_dg_net   resource@res (net surplus after consumption and exports)
+#      pww_dg_desp  core desperation 0..100
+###############################################################################
+pww_diplo_read_res = {
+	set_temp_variable = { pww_dg_prod = 0 }
+	set_temp_variable = { pww_dg_net = 0 }
+	set_temp_variable = { pww_dg_desp = 0 }
+	if = {
+		limit = { check_variable = { pww_dg_res = 0 } }
+		set_temp_variable = { pww_dg_prod = resource_produced@oil }
+		set_temp_variable = { pww_dg_net = resource@oil }
+		set_temp_variable = { pww_dg_desp = pww_desp_oil }
+	}
+	else_if = {
+		limit = { check_variable = { pww_dg_res = 1 } }
+		set_temp_variable = { pww_dg_prod = resource_produced@aluminium }
+		set_temp_variable = { pww_dg_net = resource@aluminium }
+		set_temp_variable = { pww_dg_desp = pww_desp_aluminium }
+	}
+	else_if = {
+		limit = { check_variable = { pww_dg_res = 2 } }
+		set_temp_variable = { pww_dg_prod = resource_produced@rubber }
+		set_temp_variable = { pww_dg_net = resource@rubber }
+		set_temp_variable = { pww_dg_desp = pww_desp_rubber }
+	}
+	else_if = {
+		limit = { check_variable = { pww_dg_res = 3 } }
+		set_temp_variable = { pww_dg_prod = resource_produced@tungsten }
+		set_temp_variable = { pww_dg_net = resource@tungsten }
+		set_temp_variable = { pww_dg_desp = pww_desp_tungsten }
+	}
+	else_if = {
+		limit = { check_variable = { pww_dg_res = 4 } }
+		set_temp_variable = { pww_dg_prod = resource_produced@steel }
+		set_temp_variable = { pww_dg_net = resource@steel }
+		set_temp_variable = { pww_dg_desp = pww_desp_steel }
+	}
+	else_if = {
+		limit = { check_variable = { pww_dg_res = 5 } }
+		set_temp_variable = { pww_dg_prod = resource_produced@chromium }
+		set_temp_variable = { pww_dg_net = resource@chromium }
+		set_temp_variable = { pww_dg_desp = pww_desp_chromium }
+	}
+	else_if = {
+		limit = { check_variable = { pww_dg_res = 6 } }
+		set_temp_variable = { pww_dg_prod = resource_produced@coal }
+		set_temp_variable = { pww_dg_net = resource@coal }
+		set_temp_variable = { pww_dg_desp = pww_desp_coal }
+	}
+}
+
+###############################################################################
+# Producing state by slot (country scope = the state owner).
+# in: pww_dg_res, pww_dg_slot. out: pww_dg_state (plain numeric state id,
+#     0 none; what the ledger and meta_effect text need), pww_dg_state_s (the
+#     state scope, for loc names), pww_dg_nstates. The slot wraps.
+# Core's pww_producing_states_<res> arrays hold state scopes; the id comes
+# from [THIS.GetID] through meta_effect (as in pww_sit_core.txt).
+###############################################################################
+pww_diplo_pick_state = {
+	pww_diplo_pick_state_scope = yes
+	set_temp_variable = { pww_dg_state_s = pww_dg_state }
+	if = {
+		limit = { check_variable = { pww_dg_nstates > 0 } }
+		var:pww_dg_state_s = {
+			meta_effect = {
+				text = { set_temp_variable = { pww_dg_state = [ID] } }
+				ID = "[THIS.GetID]"
+			}
+		}
+	}
+}
+
+pww_diplo_pick_state_scope = {
+	set_temp_variable = { pww_dg_state = 0 }
+	set_temp_variable = { pww_dg_nstates = 0 }
+	if = {
+		limit = { check_variable = { pww_dg_res = 0 } }
+		set_temp_variable = { pww_dg_nstates = pww_producing_states_oil^num }
+		if = {
+			limit = { check_variable = { pww_dg_nstates > 0 } }
+			modulo_temp_variable = { var = pww_dg_slot value = pww_dg_nstates }
+			set_temp_variable = { pww_dg_state = pww_producing_states_oil^pww_dg_slot }
+		}
+	}
+	else_if = {
+		limit = { check_variable = { pww_dg_res = 1 } }
+		set_temp_variable = { pww_dg_nstates = pww_producing_states_aluminium^num }
+		if = {
+			limit = { check_variable = { pww_dg_nstates > 0 } }
+			modulo_temp_variable = { var = pww_dg_slot value = pww_dg_nstates }
+			set_temp_variable = { pww_dg_state = pww_producing_states_aluminium^pww_dg_slot }
+		}
+	}
+	else_if = {
+		limit = { check_variable = { pww_dg_res = 2 } }
+		set_temp_variable = { pww_dg_nstates = pww_producing_states_rubber^num }
+		if = {
+			limit = { check_variable = { pww_dg_nstates > 0 } }
+			modulo_temp_variable = { var = pww_dg_slot value = pww_dg_nstates }
+			set_temp_variable = { pww_dg_state = pww_producing_states_rubber^pww_dg_slot }
+		}
+	}
+	else_if = {
+		limit = { check_variable = { pww_dg_res = 3 } }
+		set_temp_variable = { pww_dg_nstates = pww_producing_states_tungsten^num }
+		if = {
+			limit = { check_variable = { pww_dg_nstates > 0 } }
+			modulo_temp_variable = { var = pww_dg_slot value = pww_dg_nstates }
+			set_temp_variable = { pww_dg_state = pww_producing_states_tungsten^pww_dg_slot }
+		}
+	}
+	else_if = {
+		limit = { check_variable = { pww_dg_res = 4 } }
+		set_temp_variable = { pww_dg_nstates = pww_producing_states_steel^num }
+		if = {
+			limit = { check_variable = { pww_dg_nstates > 0 } }
+			modulo_temp_variable = { var = pww_dg_slot value = pww_dg_nstates }
+			set_temp_variable = { pww_dg_state = pww_producing_states_steel^pww_dg_slot }
+		}
+	}
+	else_if = {
+		limit = { check_variable = { pww_dg_res = 5 } }
+		set_temp_variable = { pww_dg_nstates = pww_producing_states_chromium^num }
+		if = {
+			limit = { check_variable = { pww_dg_nstates > 0 } }
+			modulo_temp_variable = { var = pww_dg_slot value = pww_dg_nstates }
+			set_temp_variable = { pww_dg_state = pww_producing_states_chromium^pww_dg_slot }
+		}
+	}
+	else_if = {
+		limit = { check_variable = { pww_dg_res = 6 } }
+		set_temp_variable = { pww_dg_nstates = pww_producing_states_coal^num }
+		if = {
+			limit = { check_variable = { pww_dg_nstates > 0 } }
+			modulo_temp_variable = { var = pww_dg_slot value = pww_dg_nstates }
+			set_temp_variable = { pww_dg_state = pww_producing_states_coal^pww_dg_slot }
+		}
+	}
+}
+
+###############################################################################
+# Numeric state id -> scope (any scope). in: pww_dg_sid. out: pww_dg_sscope
+###############################################################################
+pww_diplo_state_scope_of = {
+	set_temp_variable = { pww_dg_sscope = 0 }
+	if = {
+		limit = { check_variable = { pww_dg_sid > 0 } }
+		var:pww_dg_sid = { set_temp_variable = { pww_dg_sscope = THIS } }
+	}
+}
+
+###############################################################################
+# State output (state scope). in: pww_dg_res. out: pww_dg_units (the state's
+# amount of that resource, modifiers included).
+###############################################################################
+pww_diplo_state_units = {
+	set_temp_variable = { pww_dg_units = 0 }
+	if = {
+		limit = { check_variable = { pww_dg_res = 0 } }
+		set_temp_variable = { pww_dg_units = resource@oil }
+	}
+	else_if = {
+		limit = { check_variable = { pww_dg_res = 1 } }
+		set_temp_variable = { pww_dg_units = resource@aluminium }
+	}
+	else_if = {
+		limit = { check_variable = { pww_dg_res = 2 } }
+		set_temp_variable = { pww_dg_units = resource@rubber }
+	}
+	else_if = {
+		limit = { check_variable = { pww_dg_res = 3 } }
+		set_temp_variable = { pww_dg_units = resource@tungsten }
+	}
+	else_if = {
+		limit = { check_variable = { pww_dg_res = 4 } }
+		set_temp_variable = { pww_dg_units = resource@steel }
+	}
+	else_if = {
+		limit = { check_variable = { pww_dg_res = 5 } }
+		set_temp_variable = { pww_dg_units = resource@chromium }
+	}
+	else_if = {
+		limit = { check_variable = { pww_dg_res = 6 } }
+		set_temp_variable = { pww_dg_units = resource@coal }
+	}
+}
+
+###############################################################################
+# Shared-situation lookup (any scope). in: pww_dg_a, pww_dg_b (countries).
+# out: pww_dg_sit (-1 none). Reads the situations lane's per-country array
+# pww_my_situations and trigger pww_sit_is_live (temp pww_in_sit_id), only
+# when that lane is loaded.
+###############################################################################
+pww_diplo_find_shared_sit = {
+	set_temp_variable = { pww_dg_sit = -1 }
+	if = {
+		limit = { has_global_flag = pww_sit_loaded }
+		var:pww_dg_a = {
+			for_each_loop = {
+				array = pww_my_situations
+				value = pww_dg_sv
+				break = pww_dg_sbrk
+				if = {
+					limit = {
+						var:pww_dg_b = { is_in_array = { array = pww_my_situations value = pww_dg_sv } }
+					}
+					set_temp_variable = { pww_dg_sit = pww_dg_sv }
+					set_temp_variable = { pww_dg_sbrk = 1 }
+				}
+			}
+		}
+	}
+}
+
+###############################################################################
+# Live-list removal (any scope). in: pww_dlr_id. Separate effects per list.
+###############################################################################
+pww_diplo_live_drop_talk = {
+	if = {
+		limit = { is_in_array = { array = global.pww_dt_live value = pww_dlr_id } }
+		remove_from_array = { array = global.pww_dt_live value = pww_dlr_id }
+	}
+}
+pww_diplo_live_drop_pledge = {
+	if = {
+		limit = { is_in_array = { array = global.pww_dpl_live value = pww_dlr_id } }
+		remove_from_array = { array = global.pww_dpl_live value = pww_dlr_id }
+	}
+}
+pww_diplo_live_drop_auction = {
+	if = {
+		limit = { is_in_array = { array = global.pww_dau_live value = pww_dlr_id } }
+		remove_from_array = { array = global.pww_dau_live value = pww_dlr_id }
+	}
+}

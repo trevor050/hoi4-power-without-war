@@ -1,0 +1,669 @@
+# Power Without War: diplomacy lane scripted GUIs (generated layout script;
+# safe to edit by hand). context_type diplomatic_action: ROOT is the sender,
+# THIS the receiver. Send GUIs edit the draft on ROOT; receive GUIs write
+# the receiver's choice (pww_dr_counter, pww_dr_move, pww_dr_settle) on THIS.
+# No randomness here; all values are computed in effects.
+#
+# KNOWN FALSE POSITIVE: the v1.20 parser logs 'Unexpected token: context_type'
+# once per block for context_type = diplomatic_action. The value is still the
+# entry point send_scripted_gui / receive_scripted_gui need: maintained 1.20
+# mods (Millennium Dawn's peace deal builder, workshop 2777392649) document
+# the same line and warn that player_context breaks the action. Like them,
+# these blocks carry no top-level 'visible'.
+scripted_gui = {
+	pww_diplo_send_offer_gui = {
+		context_type = diplomatic_action
+		window_name = "pww_diplo_send_offer"
+		dirty = pww_diplo_dirty
+		effects = {
+			pww_so_deal_next_click = {
+				ROOT = {
+					add_to_variable = { pww_do_dir = 1 }
+					if = { limit = { check_variable = { pww_do_dir > 1 } } set_variable = { pww_do_dir = 0 } }
+					pww_diplo_offer_changed = yes
+				}
+			}
+			pww_so_deal_prev_click = {
+				ROOT = {
+					subtract_from_variable = { pww_do_dir = 1 }
+					if = { limit = { check_variable = { pww_do_dir < 0 } } set_variable = { pww_do_dir = 1 } }
+					pww_diplo_offer_changed = yes
+				}
+			}
+			pww_so_res_next_click = {
+				ROOT = {
+					add_to_variable = { pww_do_res = 1 }
+					if = { limit = { check_variable = { pww_do_res > 6 } } set_variable = { pww_do_res = 0 } }
+					pww_diplo_offer_changed = yes
+				}
+			}
+			pww_so_res_prev_click = {
+				ROOT = {
+					subtract_from_variable = { pww_do_res = 1 }
+					if = { limit = { check_variable = { pww_do_res < 0 } } set_variable = { pww_do_res = 6 } }
+					pww_diplo_offer_changed = yes
+				}
+			}
+			pww_so_qty_next_click = {
+				ROOT = {
+					if = {
+						limit = { check_variable = { pww_do_act = 1 } }
+						add_to_variable = { pww_do_slot = 1 }
+					}
+					else = {
+						add_to_variable = { pww_do_amt = 1 }
+						if = { limit = { check_variable = { pww_do_amt > 3 } } set_variable = { pww_do_amt = 0 } }
+					}
+					pww_diplo_offer_changed = yes
+				}
+			}
+			pww_so_qty_prev_click = {
+				ROOT = {
+					if = {
+						limit = { check_variable = { pww_do_act = 1 } }
+						subtract_from_variable = { pww_do_slot = 1 }
+						if = {
+							limit = { check_variable = { pww_do_slot < 0 } }
+							set_variable = { pww_do_slot = pww_do_nstates }
+							subtract_from_variable = { pww_do_slot = 1 }
+						}
+					}
+					else = {
+						subtract_from_variable = { pww_do_amt = 1 }
+						if = { limit = { check_variable = { pww_do_amt < 0 } } set_variable = { pww_do_amt = 3 } }
+					}
+					pww_diplo_offer_changed = yes
+				}
+			}
+			pww_so_dur_next_click = {
+				ROOT = {
+					add_to_variable = { pww_do_dur = 1 }
+					if = { limit = { check_variable = { pww_do_dur > 4 } } set_variable = { pww_do_dur = 0 } }
+					if = { limit = { check_variable = { pww_do_act = 1 } check_variable = { pww_do_dur < 1 } } set_variable = { pww_do_dur = 1 } }
+					pww_diplo_offer_changed = yes
+				}
+			}
+			pww_so_dur_prev_click = {
+				ROOT = {
+					subtract_from_variable = { pww_do_dur = 1 }
+					if = { limit = { check_variable = { pww_do_dur < 0 } } set_variable = { pww_do_dur = 4 } }
+					if = { limit = { check_variable = { pww_do_act = 1 } check_variable = { pww_do_dur < 1 } } set_variable = { pww_do_dur = 4 } }
+					pww_diplo_offer_changed = yes
+				}
+			}
+			pww_so_pay_next_click = {
+				ROOT = {
+					add_to_variable = { pww_do_pay = 1 }
+					if = { limit = { check_variable = { pww_do_pay > 4 } } set_variable = { pww_do_pay = 0 } }
+					pww_diplo_offer_changed = yes
+				}
+			}
+			pww_so_pay_prev_click = {
+				ROOT = {
+					subtract_from_variable = { pww_do_pay = 1 }
+					if = { limit = { check_variable = { pww_do_pay < 0 } } set_variable = { pww_do_pay = 4 } }
+					pww_diplo_offer_changed = yes
+				}
+			}
+			pww_so_price_next_click = {
+				ROOT = {
+					add_to_variable = { pww_do_price = 1 }
+					if = { limit = { check_variable = { pww_do_price > 2 } } set_variable = { pww_do_price = 0 } }
+					pww_diplo_offer_changed = yes
+				}
+			}
+			pww_so_price_prev_click = {
+				ROOT = {
+					subtract_from_variable = { pww_do_price = 1 }
+					if = { limit = { check_variable = { pww_do_price < 0 } } set_variable = { pww_do_price = 2 } }
+					pww_diplo_offer_changed = yes
+				}
+			}
+			pww_so_sweet_next_click = {
+				ROOT = {
+					add_to_variable = { pww_do_sweet = 1 }
+					if = { limit = { check_variable = { pww_do_sweet > 3 } } set_variable = { pww_do_sweet = 0 } }
+					pww_diplo_offer_changed = yes
+				}
+			}
+			pww_so_sweet_prev_click = {
+				ROOT = {
+					subtract_from_variable = { pww_do_sweet = 1 }
+					if = { limit = { check_variable = { pww_do_sweet < 0 } } set_variable = { pww_do_sweet = 3 } }
+					pww_diplo_offer_changed = yes
+				}
+			}
+			pww_so_fig_next_click = {
+				ROOT = {
+					add_to_variable = { pww_do_fig = 1 }
+					if = { limit = { check_variable = { pww_do_fig > 6 } } set_variable = { pww_do_fig = 0 } }
+					pww_diplo_offer_changed = yes
+				}
+			}
+			pww_so_fig_prev_click = {
+				ROOT = {
+					subtract_from_variable = { pww_do_fig = 1 }
+					if = { limit = { check_variable = { pww_do_fig < 0 } } set_variable = { pww_do_fig = 6 } }
+					pww_diplo_offer_changed = yes
+				}
+			}
+		}
+		triggers = {
+			pww_so_deal_prev_visible = {
+				ROOT = { check_variable = { pww_do_act = 0 } }
+			}
+			pww_so_deal_next_visible = {
+				ROOT = { check_variable = { pww_do_act = 0 } }
+			}
+		}
+		ai_enabled = { always = no }
+	}
+	pww_diplo_send_demand_gui = {
+		context_type = diplomatic_action
+		window_name = "pww_diplo_send_demand"
+		dirty = pww_diplo_dirty
+		effects = {
+			pww_sd_type_next_click = {
+				ROOT = {
+					add_to_variable = { pww_dm_type = 1 }
+					if = { limit = { check_variable = { pww_dm_type > 1 } } set_variable = { pww_dm_type = 0 } }
+					pww_diplo_demand_changed = yes
+				}
+			}
+			pww_sd_type_prev_click = {
+				ROOT = {
+					subtract_from_variable = { pww_dm_type = 1 }
+					if = { limit = { check_variable = { pww_dm_type < 0 } } set_variable = { pww_dm_type = 1 } }
+					pww_diplo_demand_changed = yes
+				}
+			}
+			pww_sd_res_next_click = {
+				ROOT = {
+					add_to_variable = { pww_dm_res = 1 }
+					if = { limit = { check_variable = { pww_dm_res > 6 } } set_variable = { pww_dm_res = 0 } }
+					pww_diplo_demand_changed = yes
+				}
+			}
+			pww_sd_res_prev_click = {
+				ROOT = {
+					subtract_from_variable = { pww_dm_res = 1 }
+					if = { limit = { check_variable = { pww_dm_res < 0 } } set_variable = { pww_dm_res = 6 } }
+					pww_diplo_demand_changed = yes
+				}
+			}
+			pww_sd_qty_next_click = {
+				ROOT = {
+					if = {
+						limit = { check_variable = { pww_dm_type = 1 } }
+						add_to_variable = { pww_dm_slot = 1 }
+					}
+					else = {
+						add_to_variable = { pww_dm_amt = 1 }
+						if = { limit = { check_variable = { pww_dm_amt > 2 } } set_variable = { pww_dm_amt = 0 } }
+					}
+					pww_diplo_demand_changed = yes
+				}
+			}
+			pww_sd_qty_prev_click = {
+				ROOT = {
+					if = {
+						limit = { check_variable = { pww_dm_type = 1 } }
+						add_to_variable = { pww_dm_slot = 1 }
+					}
+					else = {
+						subtract_from_variable = { pww_dm_amt = 1 }
+						if = { limit = { check_variable = { pww_dm_amt < 0 } } set_variable = { pww_dm_amt = 2 } }
+					}
+					pww_diplo_demand_changed = yes
+				}
+			}
+			pww_sd_dur_next_click = {
+				ROOT = {
+					add_to_variable = { pww_dm_dur = 1 }
+					if = { limit = { check_variable = { pww_dm_dur > 3 } } set_variable = { pww_dm_dur = 1 } }
+					pww_diplo_demand_changed = yes
+				}
+			}
+			pww_sd_dur_prev_click = {
+				ROOT = {
+					subtract_from_variable = { pww_dm_dur = 1 }
+					if = { limit = { check_variable = { pww_dm_dur < 1 } } set_variable = { pww_dm_dur = 3 } }
+					pww_diplo_demand_changed = yes
+				}
+			}
+			pww_sd_fig_next_click = {
+				ROOT = {
+					add_to_variable = { pww_dm_fig = 1 }
+					if = { limit = { check_variable = { pww_dm_fig > 4 } } set_variable = { pww_dm_fig = 0 } }
+					pww_diplo_demand_changed = yes
+				}
+			}
+			pww_sd_fig_prev_click = {
+				ROOT = {
+					subtract_from_variable = { pww_dm_fig = 1 }
+					if = { limit = { check_variable = { pww_dm_fig < 0 } } set_variable = { pww_dm_fig = 4 } }
+					pww_diplo_demand_changed = yes
+				}
+			}
+			pww_sd_less_off_click = {
+				ROOT = {
+					if = { limit = { check_variable = { pww_dm_less = 1 } } set_variable = { pww_dm_less = 0 } }
+					else = { set_variable = { pww_dm_less = 1 } }
+					pww_diplo_demand_changed = yes
+				}
+			}
+			pww_sd_less_on_click = {
+				ROOT = {
+					if = { limit = { check_variable = { pww_dm_less = 1 } } set_variable = { pww_dm_less = 0 } }
+					else = { set_variable = { pww_dm_less = 1 } }
+					pww_diplo_demand_changed = yes
+				}
+			}
+		}
+		triggers = {
+			pww_sd_type_prev_visible = {
+				ROOT = { check_variable = { pww_dm_live < 0 } }
+			}
+			pww_sd_type_next_visible = {
+				ROOT = { check_variable = { pww_dm_live < 0 } }
+			}
+			pww_sd_res_prev_visible = {
+				ROOT = { check_variable = { pww_dm_live < 0 } }
+			}
+			pww_sd_res_next_visible = {
+				ROOT = { check_variable = { pww_dm_live < 0 } }
+			}
+			pww_sd_qty_prev_visible = {
+				ROOT = { check_variable = { pww_dm_live < 0 } }
+			}
+			pww_sd_qty_next_visible = {
+				ROOT = { check_variable = { pww_dm_live < 0 } }
+			}
+			pww_sd_dur_prev_visible = {
+				ROOT = { check_variable = { pww_dm_live < 0 } }
+			}
+			pww_sd_dur_next_visible = {
+				ROOT = { check_variable = { pww_dm_live < 0 } }
+			}
+			pww_sd_less_on_visible = { ROOT = { check_variable = { pww_dm_live > -1 } check_variable = { pww_dm_less = 1 } } }
+			pww_sd_less_off_visible = { ROOT = { check_variable = { pww_dm_live > -1 } check_variable = { pww_dm_less = 0 } } }
+			pww_sd_less_label_visible = { ROOT = { check_variable = { pww_dm_live > -1 } } }
+		}
+		ai_enabled = { always = no }
+	}
+	pww_diplo_send_pledge_gui = {
+		context_type = diplomatic_action
+		window_name = "pww_diplo_send_pledge"
+		dirty = pww_diplo_dirty
+		effects = {
+			pww_sp_vs_next_click = {
+				set_temp_variable = { pww_gn = pww_dd_pressers^num }
+				ROOT = {
+					add_to_variable = { pww_dp_ci = 1 }
+					if = { limit = { check_variable = { pww_dp_ci > pww_gn } } set_variable = { pww_dp_ci = -1 } }
+					if = { limit = { check_variable = { pww_dp_ci = pww_gn } } set_variable = { pww_dp_ci = -1 } }
+					pww_diplo_pledge_changed = yes
+				}
+			}
+			pww_sp_vs_prev_click = {
+				set_temp_variable = { pww_gn = pww_dd_pressers^num }
+				subtract_from_temp_variable = { pww_gn = 1 }
+				ROOT = {
+					subtract_from_variable = { pww_dp_ci = 1 }
+					if = { limit = { check_variable = { pww_dp_ci < -1 } } set_variable = { pww_dp_ci = pww_gn } }
+					pww_diplo_pledge_changed = yes
+				}
+			}
+			pww_sp_res_next_click = {
+				ROOT = {
+					add_to_variable = { pww_dp_res = 1 }
+					if = { limit = { check_variable = { pww_dp_res > 6 } } set_variable = { pww_dp_res = 0 } }
+					pww_diplo_pledge_changed = yes
+				}
+			}
+			pww_sp_res_prev_click = {
+				ROOT = {
+					subtract_from_variable = { pww_dp_res = 1 }
+					if = { limit = { check_variable = { pww_dp_res < 0 } } set_variable = { pww_dp_res = 6 } }
+					pww_diplo_pledge_changed = yes
+				}
+			}
+			pww_sp_qty_next_click = {
+				ROOT = {
+					add_to_variable = { pww_dp_amt = 1 }
+					if = { limit = { check_variable = { pww_dp_amt > 3 } } set_variable = { pww_dp_amt = 0 } }
+					pww_diplo_pledge_changed = yes
+				}
+			}
+			pww_sp_qty_prev_click = {
+				ROOT = {
+					subtract_from_variable = { pww_dp_amt = 1 }
+					if = { limit = { check_variable = { pww_dp_amt < 0 } } set_variable = { pww_dp_amt = 3 } }
+					pww_diplo_pledge_changed = yes
+				}
+			}
+			pww_sp_pay_next_click = {
+				ROOT = {
+					if = { limit = { check_variable = { pww_dp_pay = 0 } } set_variable = { pww_dp_pay = 3 } }
+					else = { set_variable = { pww_dp_pay = 0 } }
+					pww_diplo_pledge_changed = yes
+				}
+			}
+			pww_sp_pay_prev_click = {
+				ROOT = {
+					if = { limit = { check_variable = { pww_dp_pay = 0 } } set_variable = { pww_dp_pay = 3 } }
+					else = { set_variable = { pww_dp_pay = 0 } }
+					pww_diplo_pledge_changed = yes
+				}
+			}
+			pww_sp_dur_next_click = {
+				ROOT = {
+					add_to_variable = { pww_dp_dur = 1 }
+					if = { limit = { check_variable = { pww_dp_dur > 4 } } set_variable = { pww_dp_dur = 1 } }
+					pww_diplo_pledge_changed = yes
+				}
+			}
+			pww_sp_dur_prev_click = {
+				ROOT = {
+					subtract_from_variable = { pww_dp_dur = 1 }
+					if = { limit = { check_variable = { pww_dp_dur < 1 } } set_variable = { pww_dp_dur = 4 } }
+					pww_diplo_pledge_changed = yes
+				}
+			}
+		}
+		ai_enabled = { always = no }
+	}
+	pww_diplo_send_embargo_gui = {
+		context_type = diplomatic_action
+		window_name = "pww_diplo_send_embargo"
+		dirty = pww_diplo_dirty
+		effects = {
+			pww_se_tgt_next_click = {
+				ROOT = {
+					add_to_variable = { pww_de_i = 1 }
+					if = { limit = { check_variable = { pww_de_i > 99 } } set_variable = { pww_de_i = 0 } }
+					pww_diplo_embargo_changed = yes
+				}
+			}
+			pww_se_tgt_prev_click = {
+				ROOT = {
+					subtract_from_variable = { pww_de_i = 1 }
+					if = {
+						limit = { check_variable = { pww_de_i < 0 } }
+						set_variable = { pww_de_i = pww_de_list^num }
+						subtract_from_variable = { pww_de_i = 1 }
+					}
+					pww_diplo_embargo_changed = yes
+				}
+			}
+		}
+		ai_enabled = { always = no }
+	}
+	pww_diplo_send_bid_gui = {
+		context_type = diplomatic_action
+		window_name = "pww_diplo_send_bid"
+		dirty = pww_diplo_dirty
+		effects = {
+			pww_sb_lot_next_click = {
+				ROOT = {
+					add_to_variable = { pww_db_i = 1 }
+					if = { limit = { check_variable = { pww_db_i > 99 } } set_variable = { pww_db_i = 0 } }
+					pww_diplo_bid_changed = yes
+				}
+			}
+			pww_sb_lot_prev_click = {
+				ROOT = {
+					subtract_from_variable = { pww_db_i = 1 }
+					if = {
+						limit = { check_variable = { pww_db_i < 0 } }
+						set_variable = { pww_db_i = pww_db_lots^num }
+						subtract_from_variable = { pww_db_i = 1 }
+					}
+					pww_diplo_bid_changed = yes
+				}
+			}
+			pww_sb_pay_next_click = {
+				ROOT = {
+					add_to_variable = { pww_db_pay = 1 }
+					if = { limit = { check_variable = { pww_db_pay > 4 } } set_variable = { pww_db_pay = 0 } }
+					pww_diplo_bid_changed = yes
+				}
+			}
+			pww_sb_pay_prev_click = {
+				ROOT = {
+					subtract_from_variable = { pww_db_pay = 1 }
+					if = { limit = { check_variable = { pww_db_pay < 0 } } set_variable = { pww_db_pay = 4 } }
+					pww_diplo_bid_changed = yes
+				}
+			}
+			pww_sb_price_next_click = {
+				ROOT = {
+					add_to_variable = { pww_db_price = 1 }
+					if = { limit = { check_variable = { pww_db_price > 2 } } set_variable = { pww_db_price = 0 } }
+					pww_diplo_bid_changed = yes
+				}
+			}
+			pww_sb_price_prev_click = {
+				ROOT = {
+					subtract_from_variable = { pww_db_price = 1 }
+					if = { limit = { check_variable = { pww_db_price < 0 } } set_variable = { pww_db_price = 2 } }
+					pww_diplo_bid_changed = yes
+				}
+			}
+			pww_sb_sweet_next_click = {
+				ROOT = {
+					add_to_variable = { pww_db_sweet = 1 }
+					if = { limit = { check_variable = { pww_db_sweet > 3 } } set_variable = { pww_db_sweet = 0 } }
+					pww_diplo_bid_changed = yes
+				}
+			}
+			pww_sb_sweet_prev_click = {
+				ROOT = {
+					subtract_from_variable = { pww_db_sweet = 1 }
+					if = { limit = { check_variable = { pww_db_sweet < 0 } } set_variable = { pww_db_sweet = 3 } }
+					pww_diplo_bid_changed = yes
+				}
+			}
+			pww_sb_fig_next_click = {
+				ROOT = {
+					add_to_variable = { pww_db_fig = 1 }
+					if = { limit = { check_variable = { pww_db_fig > 6 } } set_variable = { pww_db_fig = 0 } }
+					pww_diplo_bid_changed = yes
+				}
+			}
+			pww_sb_fig_prev_click = {
+				ROOT = {
+					subtract_from_variable = { pww_db_fig = 1 }
+					if = { limit = { check_variable = { pww_db_fig < 0 } } set_variable = { pww_db_fig = 6 } }
+					pww_diplo_bid_changed = yes
+				}
+			}
+		}
+		ai_enabled = { always = no }
+	}
+	pww_diplo_recv_offer_gui = {
+		context_type = diplomatic_action
+		window_name = "pww_diplo_recv_offer"
+		dirty = pww_diplo_dirty
+		effects = {
+			pww_ro_c1_off_click = {
+				if = {
+					limit = { check_variable = { pww_dr_counter = 1 } }
+					set_variable = { pww_dr_counter = 0 }
+				}
+				else = { set_variable = { pww_dr_counter = 1 } }
+				add_to_variable = { pww_diplo_dirty = 1 }
+			}
+			pww_ro_c1_on_click = {
+				if = {
+					limit = { check_variable = { pww_dr_counter = 1 } }
+					set_variable = { pww_dr_counter = 0 }
+				}
+				else = { set_variable = { pww_dr_counter = 1 } }
+				add_to_variable = { pww_diplo_dirty = 1 }
+			}
+			pww_ro_c2_off_click = {
+				if = {
+					limit = { check_variable = { pww_dr_counter = 2 } }
+					set_variable = { pww_dr_counter = 0 }
+				}
+				else = { set_variable = { pww_dr_counter = 2 } }
+				add_to_variable = { pww_diplo_dirty = 1 }
+			}
+			pww_ro_c2_on_click = {
+				if = {
+					limit = { check_variable = { pww_dr_counter = 2 } }
+					set_variable = { pww_dr_counter = 0 }
+				}
+				else = { set_variable = { pww_dr_counter = 2 } }
+				add_to_variable = { pww_diplo_dirty = 1 }
+			}
+			pww_ro_c3_off_click = {
+				if = {
+					limit = { check_variable = { pww_dr_counter = 3 } }
+					set_variable = { pww_dr_counter = 0 }
+				}
+				else = { set_variable = { pww_dr_counter = 3 } }
+				add_to_variable = { pww_diplo_dirty = 1 }
+			}
+			pww_ro_c3_on_click = {
+				if = {
+					limit = { check_variable = { pww_dr_counter = 3 } }
+					set_variable = { pww_dr_counter = 0 }
+				}
+				else = { set_variable = { pww_dr_counter = 3 } }
+				add_to_variable = { pww_diplo_dirty = 1 }
+			}
+		}
+		triggers = {
+			pww_ro_c1_on_visible = { check_variable = { pww_dr_counter = 1 } }
+			pww_ro_c1_off_visible = { NOT = { check_variable = { pww_dr_counter = 1 } } }
+			pww_ro_c2_on_visible = { check_variable = { pww_dr_counter = 2 } }
+			pww_ro_c2_off_visible = { NOT = { check_variable = { pww_dr_counter = 2 } } }
+			pww_ro_c3_on_visible = { check_variable = { pww_dr_counter = 3 } }
+			pww_ro_c3_off_visible = { NOT = { check_variable = { pww_dr_counter = 3 } } }
+		}
+		ai_enabled = { always = no }
+	}
+	pww_diplo_recv_demand_gui = {
+		context_type = diplomatic_action
+		window_name = "pww_diplo_recv_demand"
+		dirty = pww_diplo_dirty
+		effects = {
+			pww_rd_m1_off_click = {
+				set_variable = { pww_dr_move = 1 }
+				add_to_variable = { pww_diplo_dirty = 1 }
+			}
+			pww_rd_m1_on_click = {
+				set_variable = { pww_dr_move = 1 }
+				add_to_variable = { pww_diplo_dirty = 1 }
+			}
+			pww_rd_m2_off_click = {
+				set_variable = { pww_dr_move = 2 }
+				add_to_variable = { pww_diplo_dirty = 1 }
+			}
+			pww_rd_m2_on_click = {
+				set_variable = { pww_dr_move = 2 }
+				add_to_variable = { pww_diplo_dirty = 1 }
+			}
+			pww_rd_m3_off_click = {
+				set_variable = { pww_dr_move = 3 }
+				add_to_variable = { pww_diplo_dirty = 1 }
+			}
+			pww_rd_m3_on_click = {
+				set_variable = { pww_dr_move = 3 }
+				add_to_variable = { pww_diplo_dirty = 1 }
+			}
+			pww_rd_m4_off_click = {
+				set_variable = { pww_dr_move = 4 }
+				add_to_variable = { pww_diplo_dirty = 1 }
+			}
+			pww_rd_m4_on_click = {
+				set_variable = { pww_dr_move = 4 }
+				add_to_variable = { pww_diplo_dirty = 1 }
+			}
+			pww_rd_m5_off_click = {
+				set_variable = { pww_dr_move = 5 }
+				add_to_variable = { pww_diplo_dirty = 1 }
+			}
+			pww_rd_m5_on_click = {
+				set_variable = { pww_dr_move = 5 }
+				add_to_variable = { pww_diplo_dirty = 1 }
+			}
+			pww_rd_m6_off_click = {
+				set_variable = { pww_dr_move = 6 }
+				add_to_variable = { pww_diplo_dirty = 1 }
+			}
+			pww_rd_m6_on_click = {
+				set_variable = { pww_dr_move = 6 }
+				add_to_variable = { pww_diplo_dirty = 1 }
+			}
+			pww_rd_m7_off_click = {
+				set_variable = { pww_dr_move = 7 }
+				add_to_variable = { pww_diplo_dirty = 1 }
+			}
+			pww_rd_m7_on_click = {
+				set_variable = { pww_dr_move = 7 }
+				add_to_variable = { pww_diplo_dirty = 1 }
+			}
+		}
+		triggers = {
+			pww_rd_m1_on_visible = { check_variable = { pww_dr_move = 1 } }
+			pww_rd_m1_off_visible = { NOT = { check_variable = { pww_dr_move = 1 } } }
+			pww_rd_m2_on_visible = { check_variable = { pww_dr_move = 2 } }
+			pww_rd_m2_off_visible = { NOT = { check_variable = { pww_dr_move = 2 } } }
+			pww_rd_m3_on_visible = { check_variable = { pww_dr_move = 3 } }
+			pww_rd_m3_off_visible = { NOT = { check_variable = { pww_dr_move = 3 } } }
+			pww_rd_m4_on_visible = { check_variable = { pww_dr_move = 4 } }
+			pww_rd_m4_off_visible = { NOT = { check_variable = { pww_dr_move = 4 } } }
+			pww_rd_m5_on_visible = { check_variable = { pww_dr_move = 5 } }
+			pww_rd_m5_off_visible = { NOT = { check_variable = { pww_dr_move = 5 } } }
+			pww_rd_m6_on_visible = { check_variable = { pww_dr_move = 6 } }
+			pww_rd_m6_off_visible = { NOT = { check_variable = { pww_dr_move = 6 } } }
+			pww_rd_m7_on_visible = { check_variable = { pww_dr_move = 7 } }
+			pww_rd_m7_off_visible = { check_variable = { pww_dr_channel = 0 } NOT = { check_variable = { pww_dr_move = 7 } } }
+			pww_rd_m7_label_visible = { check_variable = { pww_dr_channel = 0 } }
+		}
+		ai_enabled = { always = no }
+	}
+	pww_diplo_recv_settle_gui = {
+		context_type = diplomatic_action
+		window_name = "pww_diplo_recv_settle"
+		dirty = pww_diplo_dirty
+		effects = {
+			pww_rs_o0_off_click = {
+				set_variable = { pww_dr_settle = 0 }
+				add_to_variable = { pww_diplo_dirty = 1 }
+			}
+			pww_rs_o0_on_click = {
+				set_variable = { pww_dr_settle = 0 }
+				add_to_variable = { pww_diplo_dirty = 1 }
+			}
+			pww_rs_o1_off_click = {
+				set_variable = { pww_dr_settle = 1 }
+				add_to_variable = { pww_diplo_dirty = 1 }
+			}
+			pww_rs_o1_on_click = {
+				set_variable = { pww_dr_settle = 1 }
+				add_to_variable = { pww_diplo_dirty = 1 }
+			}
+			pww_rs_o2_off_click = {
+				set_variable = { pww_dr_settle = 2 }
+				add_to_variable = { pww_diplo_dirty = 1 }
+			}
+			pww_rs_o2_on_click = {
+				set_variable = { pww_dr_settle = 2 }
+				add_to_variable = { pww_diplo_dirty = 1 }
+			}
+		}
+		triggers = {
+			pww_rs_o0_on_visible = { check_variable = { pww_dr_settle = 0 } }
+			pww_rs_o0_off_visible = { NOT = { check_variable = { pww_dr_settle = 0 } } }
+			pww_rs_o1_on_visible = { check_variable = { pww_dr_settle = 1 } }
+			pww_rs_o1_off_visible = { NOT = { check_variable = { pww_dr_settle = 1 } } }
+			pww_rs_o2_on_visible = { check_variable = { pww_dr_settle = 2 } }
+			pww_rs_o2_off_visible = { NOT = { check_variable = { pww_dr_settle = 2 } } }
+		}
+		ai_enabled = { always = no }
+	}
+}

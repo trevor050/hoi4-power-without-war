@@ -1,0 +1,201 @@
+###############################################################################
+# Power Without War: diplomacy lane, Submit Bid draft and situation hooks
+#
+# Submit Bid draft (bidder country variables, the send GUI):
+#   pww_db_holder, pww_db_lots (array: open lots of the holder's auctions
+#   this bidder has not bid on), pww_db_i, pww_db_lot, pww_db_pay,
+#   pww_db_price, pww_db_sweet, pww_db_fig, pww_db_valid (0 ok, 41 nothing
+#   open to bid on, 42 tranche payment on an open-ended lot)
+#   The lot is loaded into the offer draft for the bands (pww_do_band_*).
+#
+# Situation hooks (only under global flag pww_sit_loaded, via meta_effect):
+#   pww_sit_on_bid     when Propose Agreement, Lease Rights or Submit Bid
+#                      reaches the holder of a live situation in which the
+#                      sender holds a seat (band = offer band, 1..4)
+#   pww_sit_on_pledge  when a pledge is accepted inside a shared situation
+###############################################################################
+
+pww_diplo_bid_begin = {
+	set_variable = { pww_db_holder = pww_dk_target }
+	set_variable = { pww_db_i = 0 }
+	if = {
+		limit = { NOT = { has_variable = pww_db_pay } }
+		set_variable = { pww_db_pay = 0 }
+		set_variable = { pww_db_price = 1 }
+		set_variable = { pww_db_sweet = 0 }
+		set_variable = { pww_db_fig = 0 }
+	}
+	pww_diplo_bid_changed = yes
+}
+
+pww_diplo_bid_changed = {
+	set_variable = { pww_db_valid = 0 }
+	set_temp_variable = { pww_dbc_me = THIS }
+	set_temp_variable = { pww_dbc_h = pww_db_holder }
+	clear_array = pww_db_lots
+	for_each_loop = {
+		array = global.pww_dlot_live
+		value = pww_dbc_l
+		set_temp_variable = { pww_dbc_a = global.pww_dlot_auction^pww_dbc_l }
+		if = {
+			limit = {
+				check_variable = { global.pww_dlot_status^pww_dbc_l = 0 }
+				check_variable = { global.pww_dau_holder^pww_dbc_a = pww_dbc_h }
+				check_variable = { global.pww_dau_status^pww_dbc_a = 0 }
+			}
+			set_temp_variable = { pww_dbc_mine = 0 }
+			for_each_loop = {
+				array = global.pww_dbid_live
+				value = pww_dbc_b
+				if = {
+					limit = {
+						check_variable = { global.pww_dbid_lot^pww_dbc_b = pww_dbc_l }
+						check_variable = { global.pww_dbid_bidder^pww_dbc_b = pww_dbc_me }
+					}
+					set_temp_variable = { pww_dbc_mine = 1 }
+				}
+			}
+			if = {
+				limit = { check_variable = { pww_dbc_mine = 0 } }
+				add_to_array = { array = pww_db_lots value = pww_dbc_l }
+			}
+		}
+	}
+	set_temp_variable = { pww_dbc_n = pww_db_lots^num }
+	if = {
+		limit = { check_variable = { pww_dbc_n < 1 } }
+		set_variable = { pww_db_valid = 41 }
+		set_variable = { pww_db_lot = -1 }
+	}
+	else = {
+		set_temp_variable = { pww_dbc_i = pww_db_i }
+		modulo_temp_variable = { var = pww_dbc_i value = pww_dbc_n }
+		set_variable = { pww_db_i = pww_dbc_i }
+		set_variable = { pww_db_lot = pww_db_lots^pww_dbc_i }
+		set_temp_variable = { pww_dbl_lot = pww_db_lot }
+		set_temp_variable = { pww_dbl_pay = pww_db_pay }
+		set_temp_variable = { pww_dbl_price = pww_db_price }
+		set_temp_variable = { pww_dbl_sweet = pww_db_sweet }
+		set_temp_variable = { pww_dbl_fig = pww_db_fig }
+		set_temp_variable = { pww_dfs_state = global.pww_dlot_state^pww_dbl_lot }
+		set_temp_variable = { pww_dg_res = global.pww_dlot_res^pww_dbl_lot }
+		set_temp_variable = { pww_dbl_slot = 0 }
+		if = {
+			limit = { check_variable = { pww_dfs_state > 0 } }
+			var:pww_dbc_h = { pww_diplo_find_state_slot = yes }
+			set_temp_variable = { pww_dbl_slot = pww_dfs_slot }
+		}
+		pww_diplo_bid_load_draft = yes
+		set_variable = { pww_db_kind = global.pww_dlot_kind^pww_dbl_lot }
+		set_variable = { pww_db_term = global.pww_dlot_term^pww_dbl_lot }
+		set_variable = { pww_db_res = global.pww_dlot_res^pww_dbl_lot }
+		if = {
+			limit = { check_variable = { pww_dfs_state > 0 } }
+			set_variable = { pww_db_state = pww_dfs_state }
+			set_temp_variable = { pww_dg_sid = pww_dfs_state }
+			pww_diplo_state_scope_of = yes
+			set_variable = { pww_db_state_s = pww_dg_sscope }
+			var:pww_dbc_h = { set_variable = { pww_db_state_s = pww_dg_sscope } }
+		}
+		else = {
+			clear_variable = pww_db_state
+		}
+		if = {
+			limit = {
+				check_variable = { pww_do_valid > 0 }
+				NOT = { check_variable = { pww_do_valid = 2 } }
+			}
+			set_variable = { pww_db_valid = pww_do_valid }
+		}
+	}
+	add_to_variable = { pww_diplo_dirty = 1 }
+}
+
+# Bidder scope (ROOT of Submit Bid).
+pww_diplo_bid_submit = {
+	pww_diplo_bid_changed = yes
+	if = {
+		limit = { check_variable = { pww_db_valid = 0 } }
+		set_temp_variable = { pww_in_lot_id = pww_db_lot }
+		set_temp_variable = { pww_in_bidder = THIS }
+		set_temp_variable = { pww_in_pay = pww_db_pay }
+		set_temp_variable = { pww_in_price = pww_db_price }
+		set_temp_variable = { pww_in_sweet = pww_db_sweet }
+		set_temp_variable = { pww_in_fig = pww_db_fig }
+		pww_diplo_auction_bid = yes
+		if = {
+			limit = { check_variable = { pww_out_bid_id > -1 } }
+			set_temp_variable = { pww_dbs_a = global.pww_dlot_auction^pww_db_lot }
+			set_temp_variable = { pww_dbs_sit = global.pww_dau_sit^pww_dbs_a }
+			if = {
+				limit = {
+					has_global_flag = pww_sit_loaded
+					check_variable = { pww_dbs_sit > -1 }
+				}
+				set_temp_variable = { pww_in_sit_id = pww_dbs_sit }
+				set_temp_variable = { pww_in_bidder = THIS }
+				set_temp_variable = { pww_in_bid_band = pww_do_band_give }
+				clamp_temp_variable = { var = pww_in_bid_band min = 1 max = 4 }
+				meta_effect = {
+					text = { pww_sit_on_bid = [Y] }
+					Y = "yes"
+				}
+			}
+		}
+		pww_diplo_bid_changed = yes
+	}
+}
+
+###############################################################################
+# Situation hooks
+###############################################################################
+# Sender scope after an offer to pww_do_target was sent.
+pww_diplo_sit_bid_hook = {
+	if = {
+		limit = { has_global_flag = pww_sit_loaded }
+		set_temp_variable = { pww_dg_a = THIS }
+		set_temp_variable = { pww_dg_b = pww_do_target }
+		pww_diplo_find_shared_sit = yes
+		if = {
+			limit = {
+				check_variable = { pww_dg_sit > -1 }
+				check_variable = { global.pww_sit_holder^pww_dg_sit = pww_do_target }
+			}
+			set_temp_variable = { pww_in_sit_id = pww_dg_sit }
+			set_temp_variable = { pww_in_bidder = THIS }
+			set_temp_variable = { pww_in_bid_band = pww_do_band_give }
+			clamp_temp_variable = { var = pww_in_bid_band min = 1 max = 4 }
+			meta_effect = {
+				text = { pww_sit_on_bid = [Y] }
+				Y = "yes"
+			}
+			clr_country_flag = pww_sit_ai_wants_bid
+		}
+	}
+}
+
+# Patron scope after pww_diplo_pledge_make succeeded (pww_dpm_ag).
+pww_diplo_sit_pledge_hook = {
+	if = {
+		limit = {
+			has_global_flag = pww_sit_loaded
+			check_variable = { pww_dpm_ok = 1 }
+		}
+		set_temp_variable = { pww_dg_a = THIS }
+		set_temp_variable = { pww_dg_b = pww_dp_target }
+		pww_diplo_find_shared_sit = yes
+		if = {
+			limit = {
+				check_variable = { pww_dg_sit > -1 }
+				check_variable = { global.pww_sit_holder^pww_dg_sit = pww_dp_target }
+			}
+			set_temp_variable = { pww_in_sit_id = pww_dg_sit }
+			set_temp_variable = { pww_in_ag = pww_dpm_ag }
+			meta_effect = {
+				text = { pww_sit_on_pledge = [Y] }
+				Y = "yes"
+			}
+			clr_country_flag = pww_sit_ai_wants_pledge
+		}
+	}
+}

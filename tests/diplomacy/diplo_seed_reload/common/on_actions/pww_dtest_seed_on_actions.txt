@@ -1,0 +1,47 @@
+# Diplomacy test: hidden negotiation values are seeded once when talks open
+# and survive save and reload unchanged; reopening the talks never rerolls.
+#
+# Session 1 (fresh start, --autosave MONTHLY --clear-saves): day 2 GER opens
+# Propose Agreement talks with POR; the seeded values are logged and copied
+# to global.pww_dtest_*. The 1 February autosave (day 32) holds the talk.
+# Day 33 runs the check below and ends the session.
+# Session 2 (--continue-last-save): the save resumes at 1 February and the
+# same day-33 check runs again after the load: it reopens the talks through
+# pww_diplo_offer_begin (what the GUI does), which must find the existing
+# talk without creating a new one or reseeding, and the values must equal
+# the session-1 values (compare the "values" INFO lines of both runs; the
+# PASS line checks them against the copies taken at opening).
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = GER }
+				add_to_variable = { global.pww_dtest_day = 1 }
+				if = {
+					limit = {
+						check_variable = { global.pww_dtest_day = 2 }
+						NOT = { has_global_flag = pww_dtest_opened }
+					}
+					set_global_flag = pww_dtest_opened
+					set_global_flag = pww_diplo_debug
+					set_temp_variable = { pww_dk_target = POR }
+					set_temp_variable = { pww_dk_act = 0 }
+					pww_diplo_offer_begin = yes
+					set_temp_variable = { t = pww_do_talk }
+					set_variable = { global.pww_dtest_talk = t }
+					set_variable = { global.pww_dtest_rl = global.pww_dt_redline^t }
+					set_variable = { global.pww_dtest_want = global.pww_dt_want^t }
+					set_variable = { global.pww_dtest_pat = global.pww_dt_patience^t }
+					set_variable = { global.pww_dtest_res = global.pww_dt_reserve^t }
+					set_variable = { global.pww_dtest_seed = global.pww_dt_seed^t }
+					set_variable = { global.pww_dtest_n = global.pww_next_talk_id }
+					log = "PWW_RESULT diplo_seed_reload.seeded INFO [GetDateText] talk=[?t|0] seed=[?global.pww_dtest_seed|0] redline=[?global.pww_dtest_rl|0] want=[?global.pww_dtest_want|0] patience=[?global.pww_dtest_pat|0] reserve=[?global.pww_dtest_res|0] salt=[?global.pww_diplo_salt|0]"
+				}
+				if = {
+					limit = { check_variable = { global.pww_dtest_day = 33 } }
+					pww_dtest_seed_check = yes
+				}
+			}
+		}
+	}
+}

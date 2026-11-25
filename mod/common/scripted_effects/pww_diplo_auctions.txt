@@ -1,0 +1,844 @@
+###############################################################################
+# Power Without War: diplomacy lane, seller-written auctions
+#
+# When two or more claimants want a holder's output, the holder writes the
+# lots and each claimant bids once per lot with term cards (payment type,
+# price, sweetener, fig leaf; the lot fixes the resource, states and term).
+# Awarding a lot signs its ledger agreement(s) at once; an exclusive lot also
+# records an exclusivity clause, and a later sale of that resource to anyone
+# else during the clause is a breach (queue kind 10) for the situations lane.
+#
+# Storage: header of pww_diplo_core.txt (AUCTIONS, LOTS, BIDS, EXCLUSIVITY).
+# Lot kinds: 0 named-state lease, 1 split half (the two halves of a group go
+# to different buyers), 2 exclusive national lease (every producing state,
+# one buyer, exclusivity clause), 3 bridge contract (supply, no rights).
+#
+# Holder's choice at close (pww_diplo_auction_close): the best exclusive bid
+# against the best split pair (distinct bidders, +10 for keeping both
+# capitals at the table) plus the best single-state leases; a bridge only
+# when nothing else is awarded. Bids at or below zero are never taken.
+#
+# For the UI lane: global.pww_dau_live lists open auctions; global.pww_dlot_
+# live lists lots of open auctions; global.pww_dbid_live lists their bids.
+# Lot display: kind, state (state id: use it as a scope for the name), term,
+# status, winner. A human holder writes lots through
+# pww_diplo_auction_open + pww_diplo_auction_add_lot (or the default
+# writer) and awards through pww_diplo_auction_award or _close; a human
+# claimant bids with the Submit Bid diplomatic action.
+###############################################################################
+
+pww_diplo_auction_open = {
+	pww_diplo_init = yes
+	set_temp_variable = { pww_out_auction_id = global.pww_next_auction_id }
+	add_to_variable = { global.pww_next_auction_id = 1 }
+	set_temp_variable = { pww_dao_close = global.num_days }
+	set_temp_variable = { pww_dao_days = pww_in_days }
+	if = {
+		limit = { check_variable = { pww_dao_days < 1 } }
+		set_temp_variable = { pww_dao_days = global.pww_diplo_c_auction_days }
+	}
+	add_to_temp_variable = { pww_dao_close = pww_dao_days }
+	add_to_array = { array = global.pww_dau_holder value = pww_in_holder }
+	add_to_array = { array = global.pww_dau_res value = pww_in_resource }
+	add_to_array = { array = global.pww_dau_sit value = pww_in_sit_id }
+	add_to_array = { array = global.pww_dau_status value = 0 }
+	add_to_array = { array = global.pww_dau_opened value = global.num_days }
+	add_to_array = { array = global.pww_dau_closes value = pww_dao_close }
+	add_to_array = { array = global.pww_dau_lots value = 0 }
+	var:pww_in_holder = {
+		set_country_flag = pww_diplo_auction_open
+		add_to_array = { array = pww_dau_ids value = pww_out_auction_id }
+		add_to_variable = { pww_diplo_dirty = 1 }
+	}
+	add_to_array = { array = global.pww_dau_live value = pww_out_auction_id }
+	set_temp_variable = { pww_dq_kind_in = 14 }
+	set_temp_variable = { pww_dq_a_in = pww_in_holder }
+	set_temp_variable = { pww_dq_b_in = pww_in_holder }
+	set_temp_variable = { pww_dq_ref_in = pww_out_auction_id }
+	set_temp_variable = { pww_dq_sit_in = pww_in_sit_id }
+	set_temp_variable = { pww_dq_x_in = pww_in_resource }
+	pww_diplo_queue_push = yes
+}
+
+pww_diplo_auction_add_lot = {
+	set_temp_variable = { pww_out_lot_id = -1 }
+	set_temp_variable = { pww_dal_a = pww_in_auction_id }
+	if = {
+		limit = {
+			check_variable = { pww_dal_a > -1 }
+			check_variable = { pww_dal_a < global.pww_next_auction_id }
+			check_variable = { global.pww_dau_status^pww_dal_a = 0 }
+		}
+		set_temp_variable = { pww_out_lot_id = global.pww_next_lot_id }
+		add_to_variable = { global.pww_next_lot_id = 1 }
+		set_temp_variable = { pww_dal_state = 0 }
+		if = {
+			limit = { check_variable = { pww_in_lot_kind < 2 } }
+			set_temp_variable = { pww_dal_state = pww_in_state }
+		}
+		set_temp_variable = { pww_dal_group = -1 }
+		if = {
+			limit = { check_variable = { pww_in_lot_kind = 1 } }
+			set_temp_variable = { pww_dal_group = pww_in_group }
+		}
+		set_temp_variable = { pww_dal_term = pww_in_term_days }
+		if = {
+			limit = { check_variable = { pww_dal_term < 1 } }
+			set_temp_variable = { pww_dal_term = 365 }
+		}
+		add_to_array = { array = global.pww_dlot_auction value = pww_dal_a }
+		add_to_array = { array = global.pww_dlot_kind value = pww_in_lot_kind }
+		add_to_array = { array = global.pww_dlot_state value = pww_dal_state }
+		add_to_array = { array = global.pww_dlot_group value = pww_dal_group }
+		add_to_array = { array = global.pww_dlot_res value = global.pww_dau_res^pww_dal_a }
+		add_to_array = { array = global.pww_dlot_amt value = pww_in_amount_band }
+		add_to_array = { array = global.pww_dlot_term value = pww_dal_term }
+		add_to_array = { array = global.pww_dlot_status value = 0 }
+		add_to_array = { array = global.pww_dlot_winner value = 0 }
+		add_to_array = { array = global.pww_dlot_bid value = -1 }
+		add_to_array = { array = global.pww_dlot_ag value = -1 }
+		add_to_array = { array = global.pww_dlot_excl value = 0 }
+		if = {
+			limit = { check_variable = { pww_in_lot_kind = 2 } }
+			set_variable = { global.pww_dlot_excl^pww_out_lot_id = 1 }
+		}
+		add_to_array = { array = global.pww_dlot_live value = pww_out_lot_id }
+		set_temp_variable = { pww_dal_n = global.pww_dau_lots^pww_dal_a }
+		add_to_temp_variable = { pww_dal_n = 1 }
+		set_variable = { global.pww_dau_lots^pww_dal_a = pww_dal_n }
+	}
+}
+
+# Any scope. in: pww_in_auction_id. The holder's standard lots.
+pww_diplo_auction_write_default_lots = {
+	set_temp_variable = { pww_dwl_a = pww_in_auction_id }
+	set_temp_variable = { pww_dwl_h = global.pww_dau_holder^pww_dwl_a }
+	set_temp_variable = { pww_dg_res = global.pww_dau_res^pww_dwl_a }
+	set_temp_variable = { pww_dg_slot = 0 }
+	var:pww_dwl_h = { pww_diplo_pick_state = yes }
+	set_temp_variable = { pww_dwl_n = pww_dg_nstates }
+	clamp_temp_variable = { var = pww_dwl_n min = 0 max = 4 }
+	set_temp_variable = { pww_dwl_group = pww_dwl_a }
+	multiply_temp_variable = { pww_dwl_group = 10 }
+	add_to_temp_variable = { pww_dwl_group = 1 }
+	for_loop_effect = {
+		start = 0
+		end = pww_dwl_n
+		value = pww_dwl_i
+		set_temp_variable = { pww_dg_slot = pww_dwl_i }
+		var:pww_dwl_h = { pww_diplo_pick_state = yes }
+		set_temp_variable = { pww_in_auction_id = pww_dwl_a }
+		set_temp_variable = { pww_in_lot_kind = 0 }
+		if = {
+			limit = {
+				check_variable = { pww_dwl_n > 1 }
+				check_variable = { pww_dwl_i < 2 }
+			}
+			set_temp_variable = { pww_in_lot_kind = 1 }
+		}
+		set_temp_variable = { pww_in_state = pww_dg_state }
+		set_temp_variable = { pww_in_group = pww_dwl_group }
+		set_temp_variable = { pww_in_amount_band = 0 }
+		set_temp_variable = { pww_in_term_days = 365 }
+		pww_diplo_auction_add_lot = yes
+	}
+	if = {
+		limit = { check_variable = { pww_dwl_n > 1 } }
+		set_temp_variable = { pww_in_auction_id = pww_dwl_a }
+		set_temp_variable = { pww_in_lot_kind = 2 }
+		set_temp_variable = { pww_in_state = 0 }
+		set_temp_variable = { pww_in_group = -1 }
+		set_temp_variable = { pww_in_amount_band = 3 }
+		set_temp_variable = { pww_in_term_days = 365 }
+		pww_diplo_auction_add_lot = yes
+	}
+	set_temp_variable = { pww_in_auction_id = pww_dwl_a }
+	set_temp_variable = { pww_in_lot_kind = 3 }
+	set_temp_variable = { pww_in_state = 0 }
+	set_temp_variable = { pww_in_group = -1 }
+	set_temp_variable = { pww_in_amount_band = 1 }
+	set_temp_variable = { pww_in_term_days = 180 }
+	pww_diplo_auction_add_lot = yes
+	set_temp_variable = { pww_in_auction_id = pww_dwl_a }
+}
+
+###############################################################################
+# Bidder scope helper: load a lot into the bidder's draft (for evaluation
+# and signing). in: pww_dbl_lot, pww_dbl_slot (lease slot for kinds 0/1/2)
+# plus the bid terms pww_dbl_pay, pww_dbl_price, pww_dbl_sweet, pww_dbl_fig.
+###############################################################################
+pww_diplo_bid_load_draft = {
+	set_temp_variable = { pww_dbl_a = global.pww_dlot_auction^pww_dbl_lot }
+	set_temp_variable = { pww_dbl_kind = global.pww_dlot_kind^pww_dbl_lot }
+	set_variable = { pww_do_target = global.pww_dau_holder^pww_dbl_a }
+	set_variable = { pww_do_talk = -1 }
+	set_variable = { pww_do_res = global.pww_dlot_res^pww_dbl_lot }
+	set_variable = { pww_do_dir = 0 }
+	set_variable = { pww_do_pay = pww_dbl_pay }
+	set_variable = { pww_do_price = pww_dbl_price }
+	set_variable = { pww_do_sweet = pww_dbl_sweet }
+	set_variable = { pww_do_fig = pww_dbl_fig }
+	set_temp_variable = { pww_dbl_term = global.pww_dlot_term^pww_dbl_lot }
+	set_variable = { pww_do_dur = 2 }
+	if = {
+		limit = { check_variable = { pww_dbl_term < 200 } }
+		set_variable = { pww_do_dur = 1 }
+	}
+	else_if = {
+		limit = { check_variable = { pww_dbl_term > 1000 } }
+		set_variable = { pww_do_dur = 3 }
+	}
+	if = {
+		limit = { check_variable = { pww_dbl_kind = 3 } }
+		set_variable = { pww_do_act = 0 }
+		set_variable = { pww_do_amt = global.pww_dlot_amt^pww_dbl_lot }
+	}
+	else_if = {
+		limit = { check_variable = { pww_dbl_kind = 2 } }
+		# Valued as most of their output, signed as one lease per state.
+		set_variable = { pww_do_act = 0 }
+		set_variable = { pww_do_amt = 3 }
+	}
+	else = {
+		set_variable = { pww_do_act = 1 }
+		set_variable = { pww_do_slot = pww_dbl_slot }
+	}
+	pww_diplo_eval_offer = yes
+}
+
+# Holder scope. in: pww_dfs_state (state). out: pww_dfs_slot (-1 none).
+pww_diplo_find_state_slot = {
+	set_temp_variable = { pww_dfs_slot = -1 }
+	set_temp_variable = { pww_dg_slot = 0 }
+	pww_diplo_pick_state = yes
+	set_temp_variable = { pww_dfs_n = pww_dg_nstates }
+	for_loop_effect = {
+		start = 0
+		end = pww_dfs_n
+		value = pww_dfs_i
+		set_temp_variable = { pww_dg_slot = pww_dfs_i }
+		pww_diplo_pick_state = yes
+		if = {
+			limit = { check_variable = { pww_dg_state = pww_dfs_state } }
+			set_temp_variable = { pww_dfs_slot = pww_dfs_i }
+		}
+	}
+}
+
+###############################################################################
+# Submit a bid. Any scope.
+# in : pww_in_lot_id, pww_in_bidder, pww_in_pay, pww_in_price, pww_in_sweet,
+#      pww_in_fig. out: pww_out_bid_id (-1 refused)
+###############################################################################
+pww_diplo_auction_bid = {
+	set_temp_variable = { pww_out_bid_id = -1 }
+	set_temp_variable = { pww_dab_lot = pww_in_lot_id }
+	set_temp_variable = { pww_dab_ok = 0 }
+	if = {
+		limit = {
+			check_variable = { pww_dab_lot > -1 }
+			check_variable = { pww_dab_lot < global.pww_next_lot_id }
+			check_variable = { global.pww_dlot_status^pww_dab_lot = 0 }
+		}
+		set_temp_variable = { pww_dab_a = global.pww_dlot_auction^pww_dab_lot }
+		set_temp_variable = { pww_dab_h = global.pww_dau_holder^pww_dab_a }
+		if = {
+			limit = {
+				check_variable = { global.pww_dau_status^pww_dab_a = 0 }
+				NOT = { check_variable = { pww_dab_h = pww_in_bidder } }
+			}
+			set_temp_variable = { pww_dab_ok = 1 }
+		}
+		# Once per lot
+		for_each_loop = {
+			array = global.pww_dbid_live
+			value = pww_dab_v
+			if = {
+				limit = {
+					check_variable = { global.pww_dbid_lot^pww_dab_v = pww_dab_lot }
+					check_variable = { global.pww_dbid_bidder^pww_dab_v = pww_in_bidder }
+				}
+				set_temp_variable = { pww_dab_ok = 0 }
+			}
+		}
+	}
+	if = {
+		limit = { check_variable = { pww_dab_ok = 1 } }
+		set_temp_variable = { pww_dbl_lot = pww_dab_lot }
+		set_temp_variable = { pww_dbl_pay = pww_in_pay }
+		set_temp_variable = { pww_dbl_price = pww_in_price }
+		set_temp_variable = { pww_dbl_sweet = pww_in_sweet }
+		set_temp_variable = { pww_dbl_fig = pww_in_fig }
+		set_temp_variable = { pww_dfs_state = global.pww_dlot_state^pww_dab_lot }
+		set_temp_variable = { pww_dg_res = global.pww_dlot_res^pww_dab_lot }
+		set_temp_variable = { pww_dbl_slot = 0 }
+		if = {
+			limit = { check_variable = { pww_dfs_state > 0 } }
+			var:pww_dab_h = { pww_diplo_find_state_slot = yes }
+			set_temp_variable = { pww_dbl_slot = pww_dfs_slot }
+		}
+		var:pww_in_bidder = {
+			pww_diplo_bid_load_draft = yes
+			# Holder's score: the offer parts plus its view of the bidder.
+			set_temp_variable = { pww_dab_score = pww_do_e_terms }
+			add_to_temp_variable = { pww_dab_score = pww_do_e_need }
+			add_to_temp_variable = { pww_dab_score = pww_do_e_sweet }
+			add_to_temp_variable = { pww_dab_score = pww_do_e_patron }
+			add_to_temp_variable = { pww_dab_score = pww_do_e_invalid }
+			pww_ledger_rep_ensure = yes
+			set_temp_variable = { pww_dab_tr = pww_reliability }
+			subtract_from_temp_variable = { pww_dab_tr = 50 }
+			divide_temp_variable = { pww_dab_tr = 2 }
+			add_to_temp_variable = { pww_dab_score = pww_dab_tr }
+			set_temp_variable = { pww_dab_bidder = THIS }
+		}
+		set_temp_variable = { pww_opinion_target = pww_dab_bidder }
+		var:pww_dab_h = { pww_core_norm_opinion = yes }
+		divide_temp_variable = { pww_norm_opinion = 4 }
+		add_to_temp_variable = { pww_dab_score = pww_norm_opinion }
+		# Foreign rights cost the holder face; fig leaves soften it.
+		if = {
+			limit = { check_variable = { global.pww_dlot_kind^pww_dab_lot < 3 } }
+			subtract_from_temp_variable = { pww_dab_score = 6 }
+			if = {
+				limit = { check_variable = { pww_in_fig > 0 } }
+				add_to_temp_variable = { pww_dab_score = 4 }
+			}
+		}
+		round_temp_variable = pww_dab_score
+		set_temp_variable = { pww_out_bid_id = global.pww_next_bid_id }
+		add_to_variable = { global.pww_next_bid_id = 1 }
+		add_to_array = { array = global.pww_dbid_lot value = pww_dab_lot }
+		add_to_array = { array = global.pww_dbid_bidder value = pww_in_bidder }
+		add_to_array = { array = global.pww_dbid_pay value = pww_in_pay }
+		add_to_array = { array = global.pww_dbid_price value = pww_in_price }
+		add_to_array = { array = global.pww_dbid_dur value = 0 }
+		add_to_array = { array = global.pww_dbid_sweet value = pww_in_sweet }
+		add_to_array = { array = global.pww_dbid_fig value = pww_in_fig }
+		add_to_array = { array = global.pww_dbid_score value = pww_dab_score }
+		add_to_array = { array = global.pww_dbid_status value = 0 }
+		add_to_array = { array = global.pww_dbid_live value = pww_out_bid_id }
+		var:pww_dab_h = { add_to_variable = { pww_diplo_dirty = 1 } }
+		if = {
+			limit = { has_global_flag = pww_diplo_debug }
+			log = "[GetDateText] PWW_DIPLO bid id=[?pww_out_bid_id|0] lot=[?pww_dab_lot|0] bidder=[?pww_in_bidder.GetTag] pay=[?pww_in_pay|0] price=[?pww_in_price|0] score=[?pww_dab_score|0]"
+		}
+	}
+}
+
+###############################################################################
+# AI bidder. Bidder scope. in: pww_in_auction_id. Bids once on each open lot
+# it wants: leases and split halves when in need, the exclusive lot only when
+# frantic, the bridge when in need. Terms follow its means and desperation.
+###############################################################################
+pww_diplo_auction_ai_bid = {
+	set_temp_variable = { pww_daa_a = pww_in_auction_id }
+	set_temp_variable = { pww_dg_res = global.pww_dau_res^pww_daa_a }
+	pww_diplo_read_res = yes
+	set_temp_variable = { pww_daa_desp = pww_dg_desp }
+	set_temp_variable = { pww_daa_pay = 3 }
+	if = {
+		limit = { num_of_civilian_factories_available_for_projects > 2 }
+		set_temp_variable = { pww_daa_pay = 0 }
+	}
+	else_if = {
+		limit = { num_of_military_factories > 14 }
+		set_temp_variable = { pww_daa_pay = 2 }
+	}
+	set_temp_variable = { pww_daa_price = 0 }
+	if = {
+		limit = { check_variable = { pww_daa_desp > 74.999 } }
+		set_temp_variable = { pww_daa_price = 2 }
+	}
+	else_if = {
+		limit = {
+			OR = {
+				check_variable = { pww_daa_desp > 24.999 }
+				is_major = yes
+			}
+		}
+		set_temp_variable = { pww_daa_price = 1 }
+	}
+	set_temp_variable = { pww_daa_me = THIS }
+	clear_temp_array = pww_daa_lots
+	for_each_loop = {
+		array = global.pww_dlot_live
+		value = pww_daa_l
+		if = {
+			limit = {
+				check_variable = { global.pww_dlot_auction^pww_daa_l = pww_daa_a }
+				check_variable = { global.pww_dlot_status^pww_daa_l = 0 }
+			}
+			add_to_temp_array = { pww_daa_lots = pww_daa_l }
+		}
+	}
+	for_each_loop = {
+		array = pww_daa_lots
+		value = pww_daa_l
+		set_temp_variable = { pww_daa_k = global.pww_dlot_kind^pww_daa_l }
+		set_temp_variable = { pww_daa_go = 0 }
+		if = {
+			limit = {
+				check_variable = { pww_daa_k < 2 }
+				OR = {
+					check_variable = { pww_daa_desp > 24.999 }
+					is_major = yes
+				}
+			}
+			set_temp_variable = { pww_daa_go = 1 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { pww_daa_k = 2 }
+				check_variable = { pww_daa_desp > 74.999 }
+			}
+			set_temp_variable = { pww_daa_go = 1 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { pww_daa_k = 3 }
+				check_variable = { pww_daa_desp > 24.999 }
+			}
+			set_temp_variable = { pww_daa_go = 1 }
+		}
+		if = {
+			limit = { check_variable = { pww_daa_go = 1 } }
+			set_temp_variable = { pww_in_lot_id = pww_daa_l }
+			set_temp_variable = { pww_in_bidder = pww_daa_me }
+			set_temp_variable = { pww_in_pay = pww_daa_pay }
+			if = {
+				limit = {
+					check_variable = { pww_daa_k = 3 }
+					check_variable = { pww_daa_pay > 1 }
+				}
+				# Bridge lots run six months: tranches still allowed (committal).
+				set_temp_variable = { pww_in_pay = pww_daa_pay }
+			}
+			set_temp_variable = { pww_in_price = pww_daa_price }
+			set_temp_variable = { pww_in_sweet = 0 }
+			set_temp_variable = { pww_in_fig = 0 }
+			if = {
+				limit = { check_variable = { pww_daa_k < 3 } }
+				set_temp_variable = { pww_in_fig = 2 }
+			}
+			pww_diplo_auction_bid = yes
+		}
+	}
+}
+
+###############################################################################
+# Award one lot to one bid. Any scope. in: pww_in_lot_id, pww_in_bid_id.
+# out: pww_out_ok (1 awarded and signed)
+###############################################################################
+pww_diplo_auction_award = {
+	set_temp_variable = { pww_out_ok = 0 }
+	set_temp_variable = { pww_daw_lot = pww_in_lot_id }
+	set_temp_variable = { pww_daw_bid = pww_in_bid_id }
+	if = {
+		limit = {
+			check_variable = { pww_daw_lot > -1 }
+			check_variable = { pww_daw_lot < global.pww_next_lot_id }
+			check_variable = { global.pww_dlot_status^pww_daw_lot = 0 }
+			check_variable = { pww_daw_bid > -1 }
+			check_variable = { pww_daw_bid < global.pww_next_bid_id }
+			check_variable = { global.pww_dbid_lot^pww_daw_bid = pww_daw_lot }
+		}
+		set_temp_variable = { pww_daw_a = global.pww_dlot_auction^pww_daw_lot }
+		set_temp_variable = { pww_daw_h = global.pww_dau_holder^pww_daw_a }
+		set_temp_variable = { pww_daw_w = global.pww_dbid_bidder^pww_daw_bid }
+		set_temp_variable = { pww_daw_kind = global.pww_dlot_kind^pww_daw_lot }
+		set_temp_variable = { pww_dbl_lot = pww_daw_lot }
+		set_temp_variable = { pww_dbl_pay = global.pww_dbid_pay^pww_daw_bid }
+		set_temp_variable = { pww_dbl_price = global.pww_dbid_price^pww_daw_bid }
+		set_temp_variable = { pww_dbl_sweet = global.pww_dbid_sweet^pww_daw_bid }
+		set_temp_variable = { pww_dbl_fig = global.pww_dbid_fig^pww_daw_bid }
+		set_temp_variable = { pww_daw_first_ag = -1 }
+		if = {
+			limit = { check_variable = { pww_daw_kind = 2 } }
+			# One lease per producing state, payment split across them.
+			set_temp_variable = { pww_dg_res = global.pww_dlot_res^pww_daw_lot }
+			set_temp_variable = { pww_dg_slot = 0 }
+			var:pww_daw_h = { pww_diplo_pick_state = yes }
+			set_temp_variable = { pww_daw_n = pww_dg_nstates }
+			for_loop_effect = {
+				start = 0
+				end = pww_daw_n
+				value = pww_daw_i
+				set_temp_variable = { pww_dbl_slot = pww_daw_i }
+				var:pww_daw_w = {
+					pww_diplo_bid_load_draft = yes
+					set_variable = { pww_do_act = 1 }
+					set_variable = { pww_do_slot = pww_dbl_slot }
+					pww_diplo_sign_draft = yes
+				}
+				if = {
+					limit = {
+						check_variable = { pww_dsd_ok = 1 }
+						check_variable = { pww_daw_first_ag = -1 }
+					}
+					set_temp_variable = { pww_daw_first_ag = pww_dsd_ag }
+				}
+			}
+		}
+		else = {
+			set_temp_variable = { pww_dfs_state = global.pww_dlot_state^pww_daw_lot }
+			set_temp_variable = { pww_dg_res = global.pww_dlot_res^pww_daw_lot }
+			set_temp_variable = { pww_dbl_slot = 0 }
+			if = {
+				limit = { check_variable = { pww_dfs_state > 0 } }
+				var:pww_daw_h = { pww_diplo_find_state_slot = yes }
+				set_temp_variable = { pww_dbl_slot = pww_dfs_slot }
+			}
+			var:pww_daw_w = {
+				pww_diplo_bid_load_draft = yes
+				pww_diplo_sign_draft = yes
+			}
+			if = {
+				limit = { check_variable = { pww_dsd_ok = 1 } }
+				set_temp_variable = { pww_daw_first_ag = pww_dsd_ag }
+			}
+		}
+		if = {
+			limit = { check_variable = { pww_daw_first_ag > -1 } }
+			set_temp_variable = { pww_out_ok = 1 }
+			set_variable = { global.pww_dlot_status^pww_daw_lot = 1 }
+			set_variable = { global.pww_dlot_winner^pww_daw_lot = pww_daw_w }
+			set_variable = { global.pww_dlot_bid^pww_daw_lot = pww_daw_bid }
+			set_variable = { global.pww_dlot_ag^pww_daw_lot = pww_daw_first_ag }
+			set_variable = { global.pww_dbid_status^pww_daw_bid = 1 }
+			if = {
+				limit = { check_variable = { global.pww_dlot_excl^pww_daw_lot = 1 } }
+				set_temp_variable = { pww_daw_until = global.num_days }
+				add_to_temp_variable = { pww_daw_until = global.pww_dlot_term^pww_daw_lot }
+				add_to_array = { array = global.pww_dex_holder value = pww_daw_h }
+				add_to_array = { array = global.pww_dex_lessee value = pww_daw_w }
+				add_to_array = { array = global.pww_dex_res value = global.pww_dlot_res^pww_daw_lot }
+				add_to_array = { array = global.pww_dex_until value = pww_daw_until }
+				set_temp_variable = { pww_daw_last = global.pww_next_agreement_id }
+				subtract_from_temp_variable = { pww_daw_last = 1 }
+				add_to_array = { array = global.pww_dex_ag value = pww_daw_last }
+				add_to_array = { array = global.pww_dex_status value = 0 }
+				add_to_variable = { global.pww_next_excl_id = 1 }
+			}
+			set_temp_variable = { pww_dq_kind_in = 9 }
+			set_temp_variable = { pww_dq_a_in = pww_daw_h }
+			set_temp_variable = { pww_dq_b_in = pww_daw_w }
+			set_temp_variable = { pww_dq_ref_in = pww_daw_lot }
+			set_temp_variable = { pww_dq_ag_in = pww_daw_first_ag }
+			set_temp_variable = { pww_dq_sit_in = global.pww_dau_sit^pww_daw_a }
+			set_temp_variable = { pww_dq_x_in = pww_daw_kind }
+			pww_diplo_queue_push = yes
+		}
+		if = {
+			limit = { has_global_flag = pww_diplo_debug }
+			log = "[GetDateText] PWW_DIPLO award lot=[?pww_daw_lot|0] kind=[?pww_daw_kind|0] bid=[?pww_daw_bid|0] winner=[?pww_daw_w.GetTag] ok=[?pww_out_ok|0] ag=[?pww_daw_first_ag|0] fail=[?pww_l_fail|0]"
+		}
+	}
+}
+
+###############################################################################
+# Close an auction: the holder awards the best combination. Any scope.
+# in: pww_in_auction_id
+###############################################################################
+pww_diplo_auction_close = {
+	set_temp_variable = { pww_dcl_a = pww_in_auction_id }
+	if = {
+		limit = {
+			check_variable = { pww_dcl_a > -1 }
+			check_variable = { pww_dcl_a < global.pww_next_auction_id }
+			check_variable = { global.pww_dau_status^pww_dcl_a = 0 }
+		}
+		# Lots of this auction
+		clear_temp_array = pww_dcl_lots
+		for_each_loop = {
+			array = global.pww_dlot_live
+			value = pww_dcl_l
+			if = {
+				limit = { check_variable = { global.pww_dlot_auction^pww_dcl_l = pww_dcl_a } }
+				add_to_temp_array = { pww_dcl_lots = pww_dcl_l }
+			}
+		}
+		# Best bid per lot (score > 0)
+		clear_temp_array = pww_dcl_best
+		clear_temp_array = pww_dcl_bests
+		for_each_loop = {
+			array = pww_dcl_lots
+			value = pww_dcl_l
+			set_temp_variable = { pww_dcl_bb = -1 }
+			set_temp_variable = { pww_dcl_bs = 0 }
+			for_each_loop = {
+				array = global.pww_dbid_live
+				value = pww_dcl_b
+				if = {
+					limit = {
+						check_variable = { global.pww_dbid_lot^pww_dcl_b = pww_dcl_l }
+						check_variable = { global.pww_dbid_score^pww_dcl_b > pww_dcl_bs }
+					}
+					set_temp_variable = { pww_dcl_bb = pww_dcl_b }
+					set_temp_variable = { pww_dcl_bs = global.pww_dbid_score^pww_dcl_b }
+				}
+			}
+			add_to_temp_array = { pww_dcl_best = pww_dcl_bb }
+			add_to_temp_array = { pww_dcl_bests = pww_dcl_bs }
+		}
+		# Option values
+		set_temp_variable = { pww_dcl_excl_lot = -1 }
+		set_temp_variable = { pww_dcl_excl_bid = -1 }
+		set_temp_variable = { pww_dcl_excl_s = 0 }
+		set_temp_variable = { pww_dcl_bridge_lot = -1 }
+		set_temp_variable = { pww_dcl_bridge_bid = -1 }
+		set_temp_variable = { pww_dcl_single_s = 0 }
+		set_temp_variable = { pww_dcl_h1 = -1 }
+		set_temp_variable = { pww_dcl_h2 = -1 }
+		for_each_loop = {
+			array = pww_dcl_lots
+			value = pww_dcl_l
+			index = pww_dcl_i
+			set_temp_variable = { pww_dcl_k = global.pww_dlot_kind^pww_dcl_l }
+			set_temp_variable = { pww_dcl_bb = pww_dcl_best^pww_dcl_i }
+			set_temp_variable = { pww_dcl_bs = pww_dcl_bests^pww_dcl_i }
+			if = {
+				limit = { check_variable = { pww_dcl_k = 2 } check_variable = { pww_dcl_bb > -1 } }
+				set_temp_variable = { pww_dcl_excl_lot = pww_dcl_l }
+				set_temp_variable = { pww_dcl_excl_bid = pww_dcl_bb }
+				set_temp_variable = { pww_dcl_excl_s = pww_dcl_bs }
+			}
+			else_if = {
+				limit = { check_variable = { pww_dcl_k = 3 } }
+				set_temp_variable = { pww_dcl_bridge_lot = pww_dcl_l }
+				set_temp_variable = { pww_dcl_bridge_bid = pww_dcl_bb }
+			}
+			else_if = {
+				limit = { check_variable = { pww_dcl_k = 0 } check_variable = { pww_dcl_bb > -1 } }
+				add_to_temp_variable = { pww_dcl_single_s = pww_dcl_bs }
+			}
+			else_if = {
+				limit = { check_variable = { pww_dcl_k = 1 } }
+				if = {
+					limit = { check_variable = { pww_dcl_h1 = -1 } }
+					set_temp_variable = { pww_dcl_h1 = pww_dcl_l }
+				}
+				else = {
+					set_temp_variable = { pww_dcl_h2 = pww_dcl_l }
+				}
+			}
+		}
+		# Best split pair: distinct bidders
+		set_temp_variable = { pww_dcl_pair_s = 0 }
+		set_temp_variable = { pww_dcl_p1 = -1 }
+		set_temp_variable = { pww_dcl_p2 = -1 }
+		if = {
+			limit = { check_variable = { pww_dcl_h1 > -1 } check_variable = { pww_dcl_h2 > -1 } }
+			for_each_loop = {
+				array = global.pww_dbid_live
+				value = pww_dcl_x
+				if = {
+					limit = {
+						check_variable = { global.pww_dbid_lot^pww_dcl_x = pww_dcl_h1 }
+						check_variable = { global.pww_dbid_score^pww_dcl_x > 0 }
+					}
+					for_each_loop = {
+						array = global.pww_dbid_live
+						value = pww_dcl_y
+						if = {
+							limit = {
+								check_variable = { global.pww_dbid_lot^pww_dcl_y = pww_dcl_h2 }
+								check_variable = { global.pww_dbid_score^pww_dcl_y > 0 }
+								NOT = { check_variable = { global.pww_dbid_bidder^pww_dcl_y = global.pww_dbid_bidder^pww_dcl_x } }
+							}
+							set_temp_variable = { pww_dcl_ps = global.pww_dbid_score^pww_dcl_x }
+							add_to_temp_variable = { pww_dcl_ps = global.pww_dbid_score^pww_dcl_y }
+							add_to_temp_variable = { pww_dcl_ps = 10 }
+							if = {
+								limit = { check_variable = { pww_dcl_ps > pww_dcl_pair_s } }
+								set_temp_variable = { pww_dcl_pair_s = pww_dcl_ps }
+								set_temp_variable = { pww_dcl_p1 = pww_dcl_x }
+								set_temp_variable = { pww_dcl_p2 = pww_dcl_y }
+							}
+						}
+					}
+				}
+			}
+		}
+		set_temp_variable = { pww_dcl_nonex = pww_dcl_pair_s }
+		add_to_temp_variable = { pww_dcl_nonex = pww_dcl_single_s }
+		set_temp_variable = { pww_dcl_awarded = 0 }
+		if = {
+			limit = {
+				check_variable = { pww_dcl_excl_bid > -1 }
+				check_variable = { pww_dcl_excl_s > pww_dcl_nonex }
+			}
+			set_temp_variable = { pww_in_lot_id = pww_dcl_excl_lot }
+			set_temp_variable = { pww_in_bid_id = pww_dcl_excl_bid }
+			pww_diplo_auction_award = yes
+			add_to_temp_variable = { pww_dcl_awarded = pww_out_ok }
+		}
+		else = {
+			if = {
+				limit = { check_variable = { pww_dcl_p1 > -1 } }
+				set_temp_variable = { pww_in_lot_id = pww_dcl_h1 }
+				set_temp_variable = { pww_in_bid_id = pww_dcl_p1 }
+				pww_diplo_auction_award = yes
+				add_to_temp_variable = { pww_dcl_awarded = pww_out_ok }
+				set_temp_variable = { pww_in_lot_id = pww_dcl_h2 }
+				set_temp_variable = { pww_in_bid_id = pww_dcl_p2 }
+				pww_diplo_auction_award = yes
+				add_to_temp_variable = { pww_dcl_awarded = pww_out_ok }
+			}
+			for_each_loop = {
+				array = pww_dcl_lots
+				value = pww_dcl_l
+				index = pww_dcl_i
+				if = {
+					limit = {
+						check_variable = { global.pww_dlot_kind^pww_dcl_l = 0 }
+						check_variable = { pww_dcl_best^pww_dcl_i > -1 }
+					}
+					set_temp_variable = { pww_in_lot_id = pww_dcl_l }
+					set_temp_variable = { pww_in_bid_id = pww_dcl_best^pww_dcl_i }
+					pww_diplo_auction_award = yes
+					add_to_temp_variable = { pww_dcl_awarded = pww_out_ok }
+				}
+			}
+			if = {
+				limit = {
+					check_variable = { pww_dcl_awarded = 0 }
+					check_variable = { pww_dcl_bridge_bid > -1 }
+				}
+				set_temp_variable = { pww_in_lot_id = pww_dcl_bridge_lot }
+				set_temp_variable = { pww_in_bid_id = pww_dcl_bridge_bid }
+				pww_diplo_auction_award = yes
+				add_to_temp_variable = { pww_dcl_awarded = pww_out_ok }
+			}
+		}
+		# Void what was not awarded; settle bids; close.
+		for_each_loop = {
+			array = pww_dcl_lots
+			value = pww_dcl_l
+			if = {
+				limit = { check_variable = { global.pww_dlot_status^pww_dcl_l = 0 } }
+				set_variable = { global.pww_dlot_status^pww_dcl_l = 2 }
+			}
+			if = {
+				limit = { is_in_array = { array = global.pww_dlot_live value = pww_dcl_l } }
+				remove_from_array = { array = global.pww_dlot_live value = pww_dcl_l }
+			}
+		}
+		clear_temp_array = pww_dcl_dropb
+		for_each_loop = {
+			array = global.pww_dbid_live
+			value = pww_dcl_b
+			set_temp_variable = { pww_dcl_bl = global.pww_dbid_lot^pww_dcl_b }
+			if = {
+				limit = { is_in_array = { array = pww_dcl_lots value = pww_dcl_bl } }
+				if = {
+					limit = { check_variable = { global.pww_dbid_status^pww_dcl_b = 0 } }
+					set_variable = { global.pww_dbid_status^pww_dcl_b = 2 }
+				}
+				add_to_temp_array = { pww_dcl_dropb = pww_dcl_b }
+			}
+		}
+		for_each_loop = {
+			array = pww_dcl_dropb
+			value = pww_dcl_b
+			remove_from_array = { array = global.pww_dbid_live value = pww_dcl_b }
+		}
+		set_variable = { global.pww_dau_status^pww_dcl_a = 1 }
+		set_temp_variable = { pww_dlr_id = pww_dcl_a }
+		pww_diplo_live_drop_auction = yes
+		set_temp_variable = { pww_dcl_hh = global.pww_dau_holder^pww_dcl_a }
+		var:pww_dcl_hh = {
+			add_to_variable = { pww_diplo_dirty = 1 }
+			set_temp_variable = { pww_dcl_more = 0 }
+			for_each_loop = {
+				array = pww_dau_ids
+				value = pww_dcl_o
+				if = {
+					limit = { check_variable = { global.pww_dau_status^pww_dcl_o = 0 } }
+					set_temp_variable = { pww_dcl_more = 1 }
+				}
+			}
+			if = {
+				limit = { check_variable = { pww_dcl_more = 0 } }
+				clr_country_flag = pww_diplo_auction_open
+			}
+		}
+		if = {
+			limit = { has_global_flag = pww_diplo_debug }
+			log = "[GetDateText] PWW_DIPLO auction close id=[?pww_dcl_a|0] awarded=[?pww_dcl_awarded|0] excl=[?pww_dcl_excl_s|0] pair=[?pww_dcl_pair_s|0] singles=[?pww_dcl_single_s|0]"
+		}
+	}
+}
+
+###############################################################################
+# Sweep (any scope): close due auctions; check exclusivity clauses.
+###############################################################################
+pww_diplo_auctions_sweep = {
+	clear_temp_array = pww_das_due
+	for_each_loop = {
+		array = global.pww_dau_live
+		value = pww_das_a
+		if = {
+			limit = { check_variable = { global.pww_dau_closes^pww_das_a < global.num_days } }
+			add_to_temp_array = { pww_das_due = pww_das_a }
+		}
+		else_if = {
+			limit = { check_variable = { global.pww_dau_closes^pww_das_a = global.num_days } }
+			add_to_temp_array = { pww_das_due = pww_das_a }
+		}
+	}
+	for_each_loop = {
+		array = pww_das_due
+		value = pww_das_a
+		set_temp_variable = { pww_in_auction_id = pww_das_a }
+		pww_diplo_auction_close = yes
+	}
+	# Exclusivity: in force until expiry; a later live sale of that resource
+	# by the holder to anyone else is a breach.
+	for_each_loop = {
+		array = global.pww_dex_status
+		value = pww_das_st
+		index = pww_das_x
+		if = {
+			limit = { check_variable = { pww_das_st = 0 } }
+			if = {
+				limit = { check_variable = { global.pww_dex_until^pww_das_x < global.num_days } }
+				set_variable = { global.pww_dex_status^pww_das_x = 1 }
+			}
+			else = {
+				set_temp_variable = { pww_das_h = global.pww_dex_holder^pww_das_x }
+				set_temp_variable = { pww_das_l = global.pww_dex_lessee^pww_das_x }
+				set_temp_variable = { pww_das_r = global.pww_dex_res^pww_das_x }
+				set_temp_variable = { pww_das_from = global.pww_dex_ag^pww_das_x }
+				set_temp_variable = { pww_das_br = 0 }
+				var:pww_das_h = {
+					for_each_loop = {
+						array = pww_ag_ids
+						value = pww_das_g
+						if = {
+							limit = {
+								check_variable = { pww_das_g > pww_das_from }
+								check_variable = { global.pww_ag_seller^pww_das_g = pww_das_h }
+								check_variable = { global.pww_ag_res^pww_das_g = pww_das_r }
+								check_variable = { global.pww_ag_status^pww_das_g = 1 }
+								NOT = { check_variable = { global.pww_ag_buyer^pww_das_g = pww_das_l } }
+							}
+							set_temp_variable = { pww_das_br = 1 }
+							set_temp_variable = { pww_das_brag = pww_das_g }
+						}
+					}
+				}
+				if = {
+					limit = { check_variable = { pww_das_br = 1 } }
+					set_variable = { global.pww_dex_status^pww_das_x = 2 }
+					set_temp_variable = { pww_dq_kind_in = 10 }
+					set_temp_variable = { pww_dq_a_in = pww_das_h }
+					set_temp_variable = { pww_dq_b_in = pww_das_l }
+					set_temp_variable = { pww_dq_ref_in = pww_das_x }
+					set_temp_variable = { pww_dq_ag_in = pww_das_brag }
+					pww_diplo_queue_push = yes
+				}
+			}
+		}
+	}
+}

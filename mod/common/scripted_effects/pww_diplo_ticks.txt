@@ -1,0 +1,538 @@
+###############################################################################
+# Power Without War: diplomacy lane, ticks
+#
+# pww_diplo_on_daily (country, from on_actions/pww_diplo_on_actions.txt):
+#   lazy init; the global sweep once per day (talk expiry, auctions,
+#   pledges, embargo compliance, ledger and coercion queue polls, every
+#   5 days for the heavier parts); the country's staggered tick on its core
+#   bucket day (global.pww_day_mod30).
+#
+# AI intents (pww_diplo_country_tick, AI countries only). ai_desire reads
+# these flags and variables only, so it stays cheap. Every intent has a
+# concrete reason:
+#   pww_diplo_ai_offer      (+ pww_diplo_ai_offer_to, _res): desperation for
+#                           a resource another active trader has spare;
+#                           an agreement it buys under expiring within 60
+#                           days; or a situation bid intent
+#                           (pww_sit_ai_wants_bid). Also set by a human
+#                           counter the AI accepts (re-table).
+#   pww_diplo_ai_lease      (+ _lease_to, _lease_res): frantic major whose
+#                           supplier has producing states
+#   pww_diplo_ai_pledge     (+ _pledge_to, _pledge_vs): a situation pledge
+#                           intent (pww_sit_ai_wants_pledge), or a holder it
+#                           guarantees or shares a faction with called for a
+#                           patron while under a demand
+#   pww_diplo_ai_demand     (+ _demand_to): frantic major, coercion loaded,
+#                           its trade talks with that producer broke off
+#   pww_diplo_ai_quarantine (+ _quarantine_to): its live demand on a
+#                           coastal target that hardened, with a fleet
+#   pww_diplo_ai_settle     (+ _settle_to): a nationalization against it
+#   pww_diplo_ai_embargo    (+ _embargo_to member, _embargo_target): it
+#                           embargoes a target for a live demand and a
+#                           faction member or subject does not
+# Flags are timed (30 days) and cleared when the action is sent.
+###############################################################################
+
+pww_diplo_on_daily = {
+	if = {
+		limit = { NOT = { has_global_flag = pww_diplo_initialized } }
+		pww_diplo_init = yes
+	}
+	if = {
+		limit = { NOT = { check_variable = { global.pww_diplo_last_day = global.num_days } } }
+		set_variable = { global.pww_diplo_last_day = global.num_days }
+		pww_diplo_global_sweep = yes
+	}
+	if = {
+		limit = {
+			has_variable = pww_bucket
+			check_variable = { pww_bucket = global.pww_day_mod30 }
+			NOT = { check_variable = { pww_diplo_tick_day = global.num_days } }
+		}
+		set_variable = { pww_diplo_tick_day = global.num_days }
+		pww_diplo_country_tick = yes
+	}
+}
+
+###############################################################################
+# Global sweep (any scope)
+###############################################################################
+pww_diplo_global_sweep = {
+	# Talk expiry
+	clear_temp_array = pww_dgs_exp
+	for_each_loop = {
+		array = global.pww_dt_live
+		value = pww_dgs_t
+		if = {
+			limit = { check_variable = { global.pww_dt_expires^pww_dgs_t < global.num_days } }
+			add_to_temp_array = { pww_dgs_exp = pww_dgs_t }
+		}
+	}
+	for_each_loop = {
+		array = pww_dgs_exp
+		value = pww_dgs_t
+		set_temp_variable = { pww_dtc_t = pww_dgs_t }
+		set_temp_variable = { pww_dtc_status = 3 }
+		pww_diplo_talk_close = yes
+	}
+	pww_diplo_auctions_sweep = yes
+	set_temp_variable = { pww_dgs_m = global.num_days }
+	modulo_temp_variable = { var = pww_dgs_m value = 5 }
+	if = {
+		limit = { check_variable = { pww_dgs_m = 0 } }
+		pww_diplo_pledges_sweep = yes
+		pww_diplo_embargo_sweep = yes
+		pww_diplo_ledger_queue_poll = yes
+		pww_diplo_coer_queue_poll = yes
+		pww_diplo_auto_auctions = yes
+	}
+}
+
+###############################################################################
+# AI holders turn competing talks into an auction: two or more distinct
+# senders in open talks to buy the same resource from one AI holder.
+###############################################################################
+pww_diplo_auto_auctions = {
+	for_each_loop = {
+		array = global.pww_dt_live
+		value = pww_daut_t
+		set_temp_variable = { pww_daut_h = global.pww_dt_target^pww_daut_t }
+		set_temp_variable = { pww_daut_s = global.pww_dt_sender^pww_daut_t }
+		if = {
+			limit = {
+				check_variable = { global.pww_dt_status^pww_daut_t = 0 }
+				var:pww_daut_h = {
+					is_ai = yes
+					NOT = { has_country_flag = pww_diplo_auctioning }
+				}
+				var:pww_daut_s = { check_variable = { pww_do_target = pww_daut_h } }
+			}
+			set_temp_variable = { pww_daut_r = -1 }
+			var:pww_daut_s = {
+				if = {
+					limit = {
+						check_variable = { pww_do_talk = pww_daut_t }
+						OR = {
+							check_variable = { pww_do_act = 1 }
+							check_variable = { pww_do_dir = 0 }
+						}
+					}
+					set_temp_variable = { pww_daut_r = pww_do_res }
+				}
+			}
+			if = {
+				limit = { check_variable = { pww_daut_r > -1 } }
+				# A second sender after the same resource from this holder?
+				set_temp_variable = { pww_daut_other = -1 }
+				for_each_loop = {
+					array = global.pww_dt_live
+					value = pww_daut_u
+					set_temp_variable = { pww_daut_s2 = global.pww_dt_sender^pww_daut_u }
+					if = {
+						limit = {
+							NOT = { check_variable = { pww_daut_u = pww_daut_t } }
+							check_variable = { global.pww_dt_status^pww_daut_u = 0 }
+							check_variable = { global.pww_dt_target^pww_daut_u = pww_daut_h }
+							NOT = { check_variable = { pww_daut_s2 = pww_daut_s } }
+							var:pww_daut_s2 = {
+								check_variable = { pww_do_talk = pww_daut_u }
+								check_variable = { pww_do_res = pww_daut_r }
+							}
+						}
+						set_temp_variable = { pww_daut_other = pww_daut_u }
+					}
+				}
+				if = {
+					limit = { check_variable = { pww_daut_other > -1 } }
+					var:pww_daut_h = { set_country_flag = { flag = pww_diplo_auctioning days = 60 value = 1 } }
+					set_temp_variable = { pww_dg_a = pww_daut_s }
+					set_temp_variable = { pww_dg_b = pww_daut_h }
+					pww_diplo_find_shared_sit = yes
+					set_temp_variable = { pww_in_holder = pww_daut_h }
+					set_temp_variable = { pww_in_resource = pww_daut_r }
+					set_temp_variable = { pww_in_sit_id = pww_dg_sit }
+					set_temp_variable = { pww_in_days = 0 }
+					pww_diplo_auction_open = yes
+					set_temp_variable = { pww_in_auction_id = pww_out_auction_id }
+					pww_diplo_auction_write_default_lots = yes
+					# Supersede the competing talks: bids replace them.
+					set_temp_variable = { pww_dtc_t = pww_daut_t }
+					set_temp_variable = { pww_dtc_status = 4 }
+					pww_diplo_talk_close = yes
+					set_temp_variable = { pww_dtc_t = pww_daut_other }
+					set_temp_variable = { pww_dtc_status = 4 }
+					pww_diplo_talk_close = yes
+				}
+			}
+		}
+	}
+}
+
+###############################################################################
+# Country tick (staggered, about monthly per country)
+###############################################################################
+pww_diplo_country_tick = {
+	if = {
+		limit = { check_variable = { pww_dpl_ids^num > 0 } }
+		pww_diplo_pledge_strength = yes
+	}
+	if = {
+		limit = {
+			is_ai = yes
+			has_global_flag = pww_initialized
+			has_war = no
+		}
+		pww_diplo_ai_intents = yes
+	}
+}
+
+pww_diplo_ai_intents = {
+	set_temp_variable = { pww_dai_me = THIS }
+	# --- Offer: situation bid intent first, then expiry, then desperation
+	if = {
+		limit = { NOT = { has_country_flag = pww_diplo_ai_offer } }
+		set_temp_variable = { pww_dai_to = -1 }
+		set_temp_variable = { pww_dai_res = -1 }
+		if = {
+			limit = {
+				has_country_flag = pww_sit_ai_wants_bid
+				has_variable = pww_sit_ai_sit
+			}
+			set_temp_variable = { pww_dai_sit = pww_sit_ai_sit }
+			set_temp_variable = { pww_dai_to = global.pww_sit_holder^pww_dai_sit }
+			set_temp_variable = { pww_dai_res = global.pww_sit_res^pww_dai_sit }
+			if = {
+				limit = { check_variable = { pww_dai_to = THIS } }
+				set_temp_variable = { pww_dai_to = -1 }
+			}
+		}
+		if = {
+			limit = { check_variable = { pww_dai_to = -1 } }
+			for_each_loop = {
+				array = pww_ag_ids
+				value = pww_dai_a
+				if = {
+					limit = {
+						check_variable = { global.pww_ag_status^pww_dai_a = 1 }
+						check_variable = { global.pww_ag_buyer^pww_dai_a = THIS }
+						check_variable = { global.pww_ag_kind^pww_dai_a = 0 }
+						check_variable = { global.pww_ag_end^pww_dai_a > 0 }
+					}
+					set_temp_variable = { pww_dai_left = global.pww_ag_end^pww_dai_a }
+					subtract_from_temp_variable = { pww_dai_left = global.num_days }
+					if = {
+						limit = { check_variable = { pww_dai_left < 60 } }
+						set_temp_variable = { pww_dai_to = global.pww_ag_seller^pww_dai_a }
+						set_temp_variable = { pww_dai_res = global.pww_ag_res^pww_dai_a }
+					}
+				}
+			}
+		}
+		if = {
+			limit = {
+				check_variable = { pww_dai_to = -1 }
+				pww_core_is_desperate_any = yes
+				check_variable = { pww_desp_max_res > -1 }
+			}
+			set_temp_variable = { pww_dai_res = pww_desp_max_res }
+			set_temp_variable = { pww_dai_best = 1.999 }
+			for_each_loop = {
+				array = global.pww_active_traders
+				value = pww_dai_c
+				if = {
+					limit = {
+						NOT = { check_variable = { pww_dai_c = pww_dai_me } }
+						var:pww_dai_c = {
+							exists = yes
+							NOT = { has_war_with = var:pww_dai_me }
+						}
+					}
+					set_temp_variable = { pww_dg_res = pww_dai_res }
+					var:pww_dai_c = { pww_diplo_read_res = yes }
+					if = {
+						limit = { check_variable = { pww_dg_net > pww_dai_best } }
+						set_temp_variable = { pww_dk_target = pww_dai_c }
+						pww_diplo_talk_cooling = yes
+						if = {
+							limit = {
+								check_variable = { pww_dk_cool = 0 }
+								check_variable = { pww_dk_recent = 0 }
+							}
+							set_temp_variable = { pww_dai_best = pww_dg_net }
+							set_temp_variable = { pww_dai_to = pww_dai_c }
+						}
+					}
+				}
+			}
+		}
+		if = {
+			limit = { check_variable = { pww_dai_to > -1 } }
+			set_variable = { pww_diplo_ai_offer_to = pww_dai_to }
+			set_variable = { pww_diplo_ai_offer_res = pww_dai_res }
+			set_temp_variable = { pww_dk_target = pww_dai_to }
+			set_temp_variable = { pww_dk_act = 0 }
+			set_temp_variable = { pww_dap_res = pww_dai_res }
+			pww_diplo_ai_prepare_offer = yes
+			if = {
+				limit = { check_variable = { pww_dap_ready = 1 } }
+				set_country_flag = { flag = pww_diplo_ai_offer days = 30 value = 1 }
+			}
+		}
+	}
+	# --- Lease: frantic major, its chosen supplier has producing states
+	if = {
+		limit = {
+			NOT = { has_country_flag = pww_diplo_ai_lease }
+			is_major = yes
+			pww_core_is_frantic_any = yes
+			has_variable = pww_diplo_ai_offer_to
+		}
+		set_temp_variable = { pww_dg_res = pww_diplo_ai_offer_res }
+		set_temp_variable = { pww_dg_slot = 0 }
+		var:pww_diplo_ai_offer_to = { pww_diplo_pick_state = yes }
+		# Only when no supply draft is ready: one tabled proposal at a time.
+		if = {
+			limit = { check_variable = { pww_dg_nstates > 0 } }
+			set_variable = { pww_diplo_ai_lease_to = pww_diplo_ai_offer_to }
+			set_variable = { pww_diplo_ai_lease_res = pww_diplo_ai_offer_res }
+		}
+	}
+	if = {
+		limit = {
+			NOT = { has_country_flag = pww_diplo_ai_lease }
+			NOT = { has_country_flag = pww_diplo_ai_offer }
+			is_major = yes
+			pww_core_is_frantic_any = yes
+			has_variable = pww_diplo_ai_lease_to
+		}
+		set_temp_variable = { pww_dk_target = pww_diplo_ai_lease_to }
+		set_temp_variable = { pww_dk_act = 1 }
+		set_temp_variable = { pww_dap_res = pww_diplo_ai_lease_res }
+		pww_diplo_ai_prepare_offer = yes
+		if = {
+			limit = { check_variable = { pww_dap_ready = 1 } }
+			set_country_flag = { flag = pww_diplo_ai_lease days = 30 value = 1 }
+		}
+	}
+	# --- Pledge: situation intent, or a called-for patron duty
+	if = {
+		limit = { NOT = { has_country_flag = pww_diplo_ai_pledge } }
+		set_temp_variable = { pww_dai_ph = -1 }
+		set_temp_variable = { pww_dai_pv = 0 }
+		if = {
+			limit = {
+				has_country_flag = pww_sit_ai_wants_pledge
+				has_variable = pww_sit_ai_sit
+			}
+			set_temp_variable = { pww_dai_sit = pww_sit_ai_sit }
+			set_temp_variable = { pww_dai_ph = global.pww_sit_holder^pww_dai_sit }
+			set_temp_variable = { pww_dai_pv = global.pww_sit_claimant^pww_dai_sit }
+		}
+		else = {
+			every_country = {
+				limit = {
+					has_country_flag = pww_diplo_called_patron
+					check_variable = { pww_dd_pressers^num > 0 }
+					OR = {
+						var:pww_dai_me = { has_guaranteed = PREV }
+						is_in_faction_with = var:pww_dai_me
+					}
+				}
+				set_temp_variable = { pww_dai_ph = THIS }
+				set_temp_variable = { pww_dai_pv = pww_dd_pressers^0 }
+			}
+		}
+		if = {
+			limit = { check_variable = { pww_dai_ph > -1 } }
+			set_variable = { pww_diplo_ai_pledge_to = pww_dai_ph }
+			set_variable = { pww_diplo_ai_pledge_vs = pww_dai_pv }
+			# The engine reads ai_acceptance on the standing draft before
+			# reset_send_effect: build it now.
+			set_temp_variable = { pww_dk_target = pww_dai_ph }
+			pww_diplo_pledge_begin = yes
+			set_temp_variable = { pww_dkp_vs = pww_dai_pv }
+			var:pww_dai_ph = {
+				for_each_loop = {
+					array = pww_dd_pressers
+					value = pww_dkp_c
+					index = pww_dkp_i
+					if = {
+						limit = { check_variable = { pww_dkp_c = pww_dkp_vs } }
+						PREV = { set_variable = { pww_dp_ci = pww_dkp_i } }
+					}
+				}
+			}
+			pww_diplo_pledge_changed = yes
+			if = {
+				limit = { check_variable = { pww_dp_valid = 0 } }
+				set_country_flag = { flag = pww_diplo_ai_pledge days = 30 value = 1 }
+			}
+		}
+	}
+	# --- Settlement
+	if = {
+		limit = {
+			has_country_flag = pww_dset_open
+			check_variable = { pww_dset_hosts^num > 0 }
+			NOT = { has_country_flag = pww_diplo_ai_settle }
+		}
+		set_variable = { pww_diplo_ai_settle_to = pww_dset_hosts^0 }
+		set_country_flag = { flag = pww_diplo_ai_settle days = 30 value = 1 }
+	}
+	# --- Demand: frantic major whose trade talks with a producer broke off
+	if = {
+		limit = {
+			has_global_flag = pww_coer_loaded
+			is_major = yes
+			pww_core_is_frantic_any = yes
+			NOT = { has_country_flag = pww_diplo_ai_demand }
+		}
+		set_temp_variable = { pww_dai_dt = -1 }
+		for_each_loop = {
+			array = pww_dt_ids
+			value = pww_dai_t
+			if = {
+				limit = {
+					check_variable = { global.pww_dt_status^pww_dai_t = 2 }
+					check_variable = { global.pww_dt_cool_until^pww_dai_t > global.num_days }
+				}
+				set_temp_variable = { pww_dai_dt = global.pww_dt_target^pww_dai_t }
+			}
+		}
+		if = {
+			limit = {
+				check_variable = { pww_dai_dt > -1 }
+				var:pww_dai_dt = {
+					is_major = no
+					NOT = { has_war_with = var:pww_dai_me }
+				}
+			}
+			set_temp_variable = { pww_dai_has = 0 }
+			for_each_loop = {
+				array = global.pww_coer_live
+				value = pww_dai_d
+				if = {
+					limit = { check_variable = { global.pww_cd_claimant^pww_dai_d = pww_dai_me } }
+					set_temp_variable = { pww_dai_has = 1 }
+				}
+			}
+			# A target's ai_acceptance of a demand means folding, so the
+			# engine would never let the AI send it: AI demands go straight
+			# to the coercion lane (same draft and call as the action).
+			if = {
+				limit = { check_variable = { pww_dai_has = 0 } }
+				set_variable = { pww_diplo_ai_demand_to = pww_dai_dt }
+				set_country_flag = { flag = pww_diplo_ai_demand days = 30 value = 1 }
+				set_temp_variable = { pww_dk_target = pww_dai_dt }
+				set_temp_variable = { pww_dk_channel = 0 }
+				if = {
+					limit = { has_government = democratic }
+					set_temp_variable = { pww_dk_channel = 1 }
+				}
+				pww_diplo_demand_begin = yes
+				if = {
+					limit = { check_variable = { pww_dm_valid = 0 } }
+					pww_diplo_demand_sent = yes
+				}
+			}
+		}
+	}
+	# --- Quarantine: a hardened target of our live demand, coast and fleet
+	if = {
+		limit = {
+			has_global_flag = pww_coer_loaded
+			NOT = { has_country_flag = pww_diplo_ai_quarantine }
+			has_navy_size = { size > 19 }
+		}
+		for_each_loop = {
+			array = global.pww_coer_live
+			value = pww_dai_d
+			if = {
+				limit = {
+					check_variable = { global.pww_cd_claimant^pww_dai_d = pww_dai_me }
+					check_variable = { global.pww_cd_hardened^pww_dai_d = 1 }
+					check_variable = { global.pww_cd_quar^pww_dai_d = 0 }
+				}
+				set_temp_variable = { pww_dai_qt = global.pww_cd_target^pww_dai_d }
+				if = {
+					limit = { var:pww_dai_qt = { check_variable = { pww_coastal_states^num > 0 } } }
+					set_variable = { pww_diplo_ai_quarantine_to = pww_dai_qt }
+					set_country_flag = { flag = pww_diplo_ai_quarantine days = 30 value = 1 }
+				}
+			}
+		}
+	}
+	# --- Join our embargo: a member of our bloc still trades with a target we
+	# embargo for a live demand.
+	if = {
+		limit = {
+			has_global_flag = pww_coer_loaded
+			NOT = { has_country_flag = pww_diplo_ai_embargo }
+		}
+		for_each_loop = {
+			array = global.pww_coer_live
+			value = pww_dai_d
+			if = {
+				limit = {
+					check_variable = { global.pww_cd_claimant^pww_dai_d = pww_dai_me }
+					check_variable = { global.pww_cd_emb^pww_dai_d = 1 }
+				}
+				set_temp_variable = { pww_dai_et = global.pww_cd_target^pww_dai_d }
+				set_temp_variable = { pww_dai_em = 0 }
+				every_country = {
+					limit = {
+						exists = yes
+						NOT = { check_variable = { pww_dai_et = THIS } }
+						OR = {
+							is_in_faction_with = var:pww_dai_me
+							is_subject_of = var:pww_dai_me
+						}
+						NOT = { is_embargoing = var:pww_dai_et }
+					}
+					set_temp_variable = { pww_dai_em = THIS }
+				}
+				if = {
+					limit = { check_variable = { pww_dai_em > 0 } }
+					set_variable = { pww_diplo_ai_embargo_to = pww_dai_em }
+					set_variable = { pww_diplo_ai_embargo_target = pww_dai_et }
+					set_temp_variable = { pww_dk_target = pww_dai_em }
+					pww_diplo_embargo_begin = yes
+					for_each_loop = {
+						array = pww_de_list
+						value = pww_dke_c
+						index = pww_dke_i
+						if = {
+							limit = { check_variable = { pww_dke_c = pww_dai_et } }
+							set_variable = { pww_de_i = pww_dke_i }
+						}
+					}
+					pww_diplo_embargo_changed = yes
+					set_country_flag = { flag = pww_diplo_ai_embargo days = 30 value = 1 }
+				}
+			}
+		}
+	}
+	# --- Auctions: bid on open lots of holders we need
+	for_each_loop = {
+		array = global.pww_dau_live
+		value = pww_dai_au
+		if = {
+			limit = {
+				check_variable = { global.pww_dau_status^pww_dai_au = 0 }
+				NOT = { check_variable = { global.pww_dau_holder^pww_dai_au = pww_dai_me } }
+			}
+			set_temp_variable = { pww_dg_res = global.pww_dau_res^pww_dai_au }
+			pww_diplo_read_res = yes
+			if = {
+				limit = {
+					OR = {
+						check_variable = { pww_dg_desp > 24.999 }
+						is_major = yes
+					}
+				}
+				set_temp_variable = { pww_in_auction_id = pww_dai_au }
+				pww_diplo_auction_ai_bid = yes
+			}
+		}
+	}
+}
