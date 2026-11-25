@@ -1,0 +1,85 @@
+###############################################################################
+# Power Without War: core on_actions
+#
+#   on_startup        pww_core_init (idempotent). If the mod is added to a save
+#                     where on_startup does not fire, pww_core_on_daily runs
+#                     init lazily on the first day.
+#   on_daily          per country: day refresh, lazy bucket, staggered tick
+#                     (about 2 to 3 countries per day), dirty map refresh.
+#   on_monthly        per country: the first one at least 28 days after the
+#                     last run triggers pww_core_monthly_global_tick.
+#   ownership events  flag affected countries pww_map_dirty; their map arrays
+#                     are rebuilt on their next daily pulse.
+###############################################################################
+
+on_actions = {
+	on_startup = {
+		# on_startup has no scope; run init inside any existing country.
+		effect = {
+			random_country = {
+				limit = { exists = yes }
+				pww_core_init = yes
+			}
+		}
+	}
+
+	on_daily = {
+		effect = {
+			pww_core_on_daily = yes
+		}
+	}
+
+	on_monthly = {
+		effect = {
+			pww_core_on_monthly = yes
+		}
+	}
+
+	# ROOT is new controller, FROM is old controller, FROM.FROM is the state.
+	# Only ownership matters to the map arrays, so flag when the new controller
+	# also owns the state (a transfer, or a return to its owner).
+	on_state_control_changed = {
+		effect = {
+			if = {
+				limit = {
+					has_global_flag = pww_initialized
+					FROM.FROM = { is_owned_by = ROOT }
+				}
+				set_country_flag = pww_map_dirty
+				FROM = { set_country_flag = pww_map_dirty }
+			}
+		}
+	}
+
+	# ROOT is winner, FROM gets annexed.
+	on_annex = {
+		effect = {
+			if = {
+				limit = { has_global_flag = pww_initialized }
+				set_country_flag = pww_map_dirty
+			}
+		}
+	}
+
+	# ROOT is the winner, FROM is the loser. Ownership is final here.
+	on_peaceconference_ended = {
+		effect = {
+			if = {
+				limit = { has_global_flag = pww_initialized }
+				set_country_flag = pww_map_dirty
+				FROM = { set_country_flag = pww_map_dirty }
+			}
+		}
+	}
+
+	# ROOT is free nation, FROM is releaser.
+	on_release_as_free = {
+		effect = {
+			if = {
+				limit = { has_global_flag = pww_initialized }
+				set_country_flag = pww_map_dirty
+				FROM = { set_country_flag = pww_map_dirty }
+			}
+		}
+	}
+}

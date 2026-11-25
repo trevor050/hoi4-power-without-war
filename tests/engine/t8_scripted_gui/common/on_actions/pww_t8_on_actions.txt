@@ -1,0 +1,15 @@
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = GER }
+				add_to_variable = { global.pww_t8_day = 1 }
+				if = {
+					limit = { check_variable = { global.pww_t8_day = 2 } }
+					log = "PWW_RESULT t8.loaded INFO scripted gui test mod running; check error.log for pww_t8 lines"
+					log = "PWW_DONE t8_scripted_gui"
+				}
+			}
+		}
+	}
+}

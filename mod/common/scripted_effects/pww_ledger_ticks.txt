@@ -1,0 +1,776 @@
+###############################################################################
+# Power Without War: agreements ledger, ticks, reconciliation, lifecycle hooks
+#
+# PUBLIC EFFECTS
+#   pww_ledger_country_tick = yes      (country) called by core's staggered
+#       scheduler (about every 30 days per country). For agreements involving
+#       THIS: due tranche deliveries, expiry, timed clause reversion, renewal
+#       notices, ideology drift, suspension repair windows and automatic
+#       resumes, reserved lapses, stale drafts, pruning. Idempotent: both
+#       parties tick, each record is processed by whichever comes first.
+#   pww_ledger_monthly_tick = yes      (any) global housekeeping: parties that
+#       no longer exist, and reconciliation of every tracked right against
+#       has_resources_rights, classified by cause (design 7.6): owner change,
+#       war between holder and host, occupation, depleted state, otherwise
+#       nationalization.
+#   pww_ledger_process_agreement = yes temp in pww_lpa_id (one record)
+#
+# ON_ACTION HANDLERS (wired in common/on_actions/pww_ledger_on_actions.txt)
+#   pww_ledger_oa_capitulation   ROOT capitulated: its live agreements end
+#                                (terminated, cause 5).
+#   pww_ledger_oa_annex          ROOT annexed FROM (also covers civil war
+#                                ends, which fire on_annex): FROM's leases as
+#                                host are suspended for a Concession Fate
+#                                decision (cause 1) unless ROOT is the holder;
+#                                everything else of FROM terminates (cause 6).
+#   pww_ledger_oa_war_relation   ROOT and FROM are now at war. If ROOT started
+#                                a war with a wargoal against FROM, ROOT
+#                                defaults on every live agreement with FROM.
+#                                Otherwise the war is involuntary: active
+#                                agreements are suspended (cause 2) and
+#                                terminate when the repair window lapses;
+#                                drafts and reserved ones terminate.
+#   pww_ledger_oa_control_changed  A state changed controller: active leases
+#                                on it suspend when the host loses control
+#                                (cause 8) and resume when it returns.
+#   Civil war start has no on_action: the country tick suspends a party's
+#   agreements while has_civil_war is true (cause 7) and resumes them after.
+#
+# DEBUG
+#   pww_ledger_debug_scenario_tungsten = yes  creates a POR -> GER tungsten
+#       supply agreement with a tranche schedule and logs PWW_RESULT lines
+#       (harness protocol, tools/README.md).
+#   pww_ledger_debug_dump = yes  logs every agreement record.
+###############################################################################
+
+pww_ledger_country_tick = {
+	pww_ledger_init = yes
+	if = {
+		limit = { check_variable = { pww_ag_ids^num > 0 } }
+		# Payments first, so a term that ends today has paid what was due
+		pww_ledger_tranches_country_due = yes
+		for_each_loop = {
+			array = pww_ag_ids
+			value = pww_lct_id
+			index = pww_lct_i
+			set_temp_variable = { pww_lpa_id = pww_lct_id }
+			pww_ledger_process_agreement = yes
+		}
+		pww_ledger_prune_country = yes
+	}
+}
+
+pww_ledger_process_agreement = {
+	set_temp_variable = { pww_lpa_st = global.pww_ag_status^pww_lpa_id }
+	set_temp_variable = { pww_lpa_s = global.pww_ag_seller^pww_lpa_id }
+	set_temp_variable = { pww_lpa_b = global.pww_ag_buyer^pww_lpa_id }
+	set_temp_variable = { pww_lpa_kind = global.pww_ag_kind^pww_lpa_id }
+	set_temp_variable = { pww_lpa_state = global.pww_ag_state^pww_lpa_id }
+	set_temp_variable = { pww_lpa_gone = 0 }
+	if = {
+		limit = {
+			OR = {
+				var:pww_lpa_s = { exists = no }
+				var:pww_lpa_b = { exists = no }
+			}
+		}
+		set_temp_variable = { pww_lpa_gone = 1 }
+	}
+
+	# ---------------------------------------------------------------- active
+	if = {
+		limit = { check_variable = { pww_lpa_st = 1 } }
+		set_temp_variable = { pww_lpa_end = global.pww_ag_end^pww_lpa_id }
+		set_temp_variable = { pww_lpa_rd = global.pww_ag_revert_day^pww_lpa_id }
+		set_temp_variable = { pww_l_ag = pww_lpa_id }
+		if = {
+			limit = { check_variable = { pww_lpa_gone = 1 } }
+			set_temp_variable = { pww_l_cause = 14 }
+			pww_ledger_terminate = yes
+		}
+		else_if = {
+			limit = {
+				OR = {
+					var:pww_lpa_s = { has_civil_war = yes }
+					var:pww_lpa_b = { has_civil_war = yes }
+				}
+			}
+			set_temp_variable = { pww_l_cause = 7 }
+			pww_ledger_suspend = yes
+		}
+		else_if = {
+			limit = {
+				var:pww_lpa_s = { var:pww_lpa_b = { has_war_with = PREV } }
+			}
+			set_temp_variable = { pww_l_cause = 2 }
+			pww_ledger_suspend = yes
+		}
+		else_if = {
+			limit = {
+				check_variable = { pww_lpa_end > 0 }
+				NOT = { check_variable = { pww_lpa_end > global.num_days } }
+			}
+			set_temp_variable = { pww_l_cause = 9 }
+			pww_ledger_complete = yes
+		}
+		else_if = {
+			limit = {
+				check_variable = { pww_lpa_rd > 0 }
+				NOT = { check_variable = { pww_lpa_rd > global.num_days } }
+			}
+			set_temp_variable = { pww_l_cause = 12 }
+			pww_ledger_complete = yes
+		}
+		else_if = {
+			limit = {
+				check_variable = { pww_lpa_kind = 1 }
+				var:pww_lpa_state = {
+					NOT = { CONTROLLER = { check_variable = { pww_lpa_s = THIS } } }
+				}
+			}
+			set_temp_variable = { pww_l_cause = 8 }
+			pww_ledger_suspend = yes
+		}
+		else = {
+			# Renewal notice, once per term
+			if = {
+				limit = {
+					check_variable = { pww_lpa_end > 0 }
+					check_variable = { global.pww_ag_notice^pww_lpa_id = 0 }
+				}
+				set_temp_variable = { pww_lpa_left = pww_lpa_end }
+				subtract_from_temp_variable = { pww_lpa_left = global.num_days }
+				if = {
+					limit = { NOT = { check_variable = { pww_lpa_left > global.pww_ledger_c_notice_days } } }
+					set_variable = { global.pww_ag_notice^pww_lpa_id = 1 }
+					set_temp_variable = { pww_lq_kind_in = 2 }
+					set_temp_variable = { pww_lq_ag_in = pww_lpa_id }
+					set_temp_variable = { pww_lq_status_in = 1 }
+					set_temp_variable = { pww_lq_cause_in = 0 }
+					pww_ledger_queue_push = yes
+				}
+			}
+			pww_ledger_apply_ideology_drift = yes
+		}
+	}
+
+	# ------------------------------------------------------------- suspended
+	else_if = {
+		limit = { check_variable = { pww_lpa_st = 2 } }
+		set_temp_variable = { pww_lpa_cause = global.pww_ag_cause^pww_lpa_id }
+		set_temp_variable = { pww_l_ag = pww_lpa_id }
+		if = {
+			limit = { check_variable = { pww_lpa_gone = 1 } }
+			set_temp_variable = { pww_l_cause = 14 }
+			pww_ledger_terminate = yes
+		}
+		else_if = {
+			limit = { check_variable = { global.num_days > global.pww_ag_repair_until^pww_lpa_id } }
+			set_temp_variable = { pww_l_cause = 11 }
+			pww_ledger_terminate = yes
+		}
+		else_if = {
+			limit = {
+				OR = {
+					AND = {
+						check_variable = { pww_lpa_cause = 7 }
+						var:pww_lpa_s = { has_civil_war = no }
+						var:pww_lpa_b = { has_civil_war = no }
+					}
+					AND = {
+						check_variable = { pww_lpa_cause = 2 }
+						var:pww_lpa_s = { var:pww_lpa_b = { NOT = { has_war_with = PREV } } }
+					}
+					AND = {
+						check_variable = { pww_lpa_cause = 8 }
+						var:pww_lpa_state = { CONTROLLER = { check_variable = { pww_lpa_s = THIS } } }
+					}
+					AND = {
+						check_variable = { pww_lpa_cause = 3 }
+						set_temp_variable = { pww_lv_res = global.pww_ag_res^pww_lpa_id }
+						var:pww_lpa_state = { NOT = { pww_ledger_state_lacks_lease_resource = yes } }
+					}
+				}
+			}
+			# Resume rechecks every term; on refusal it stays suspended.
+			pww_ledger_resume = yes
+		}
+	}
+
+	# -------------------------------------------------------------- reserved
+	else_if = {
+		limit = { check_variable = { pww_lpa_st = 7 } }
+		set_temp_variable = { pww_lpa_ru = global.pww_ag_reserve_until^pww_lpa_id }
+		set_temp_variable = { pww_l_ag = pww_lpa_id }
+		if = {
+			limit = { check_variable = { pww_lpa_gone = 1 } }
+			set_temp_variable = { pww_l_cause = 14 }
+			pww_ledger_terminate = yes
+		}
+		else_if = {
+			limit = {
+				check_variable = { pww_lpa_ru > 0 }
+				check_variable = { global.num_days > pww_lpa_ru }
+			}
+			set_temp_variable = { pww_l_cause = 17 }
+			pww_ledger_terminate = yes
+		}
+	}
+
+	# ----------------------------------------------------------------- draft
+	else_if = {
+		limit = { check_variable = { pww_lpa_st = 0 } }
+		set_temp_variable = { pww_lpa_age = global.num_days }
+		subtract_from_temp_variable = { pww_lpa_age = global.pww_ag_last_change^pww_lpa_id }
+		if = {
+			limit = {
+				OR = {
+					check_variable = { pww_lpa_gone = 1 }
+					check_variable = { pww_lpa_age > global.pww_ledger_c_prune_days }
+				}
+			}
+			set_temp_variable = { pww_l_ag = pww_lpa_id }
+			set_temp_variable = { pww_l_cause = 18 }
+			pww_ledger_terminate = yes
+		}
+	}
+}
+
+# Internal. Agreement pww_lpa_id is active; pww_lpa_s / pww_lpa_b loaded.
+pww_ledger_apply_ideology_drift = {
+	set_temp_variable = { pww_lid_rate = global.pww_ag_ideo^pww_lpa_id }
+	if = {
+		limit = { check_variable = { pww_lid_rate > 0 } }
+		set_temp_variable = { pww_lid_days = global.num_days }
+		subtract_from_temp_variable = { pww_lid_days = global.pww_ag_ideo_last^pww_lpa_id }
+		if = {
+			limit = { check_variable = { pww_lid_days > 0 } }
+			set_variable = { global.pww_ag_ideo_last^pww_lpa_id = global.num_days }
+			# popularity points per day -> add_popularity fraction
+			set_temp_variable = { pww_lid_amt = pww_lid_rate }
+			multiply_temp_variable = { pww_lid_amt = pww_lid_days }
+			divide_temp_variable = { pww_lid_amt = 100 }
+			if = {
+				limit = { check_variable = { global.pww_ag_ideo_giver^pww_lpa_id = 1 } }
+				set_temp_variable = { pww_lid_giver = pww_lpa_b }
+				set_temp_variable = { pww_lid_other = pww_lpa_s }
+			}
+			else = {
+				set_temp_variable = { pww_lid_giver = pww_lpa_s }
+				set_temp_variable = { pww_lid_other = pww_lpa_b }
+			}
+			var:pww_lid_giver = {
+				set_temp_variable = { pww_lid_elec = days_until_next_election }
+				if = {
+					limit = {
+						check_variable = { pww_lid_elec > -1 }
+						check_variable = { pww_lid_elec < 180 }
+					}
+					multiply_temp_variable = { pww_lid_amt = 0.5 }
+				}
+				if = {
+					limit = { var:pww_lid_other = { has_government = democratic } }
+					add_popularity = { ideology = democratic popularity = var:pww_lid_amt }
+				}
+				else_if = {
+					limit = { var:pww_lid_other = { has_government = communism } }
+					add_popularity = { ideology = communism popularity = var:pww_lid_amt }
+				}
+				else_if = {
+					limit = { var:pww_lid_other = { has_government = fascism } }
+					add_popularity = { ideology = fascism popularity = var:pww_lid_amt }
+				}
+				else_if = {
+					limit = { var:pww_lid_other = { has_government = neutrality } }
+					add_popularity = { ideology = neutrality popularity = var:pww_lid_amt }
+				}
+			}
+			if = {
+				limit = { pww_ledger_debug_on = yes }
+				log = "[GetDateText] PWW_LEDGER drift id=[?pww_lpa_id|0] giver=[?pww_lid_giver.GetTag] amount=[?pww_lid_amt|3] days=[?pww_lid_days|0]"
+			}
+		}
+	}
+}
+
+# Internal, country scope. Drops ids of agreements that ended more than
+# global.pww_ledger_c_prune_days ago, and their settled tranches.
+pww_ledger_prune_country = {
+	clear_temp_array = pww_lpr_drop
+	for_each_loop = {
+		array = pww_ag_ids
+		value = pww_lpr_id
+		index = pww_lpr_i
+		if = {
+			limit = {
+				check_variable = { global.pww_ag_status^pww_lpr_id > 2 }
+				check_variable = { global.pww_ag_status^pww_lpr_id < 7 }
+			}
+			set_temp_variable = { pww_lpr_age = global.num_days }
+			subtract_from_temp_variable = { pww_lpr_age = global.pww_ag_last_change^pww_lpr_id }
+			if = {
+				limit = { check_variable = { pww_lpr_age > global.pww_ledger_c_prune_days } }
+				add_to_temp_array = { pww_lpr_drop = pww_lpr_id }
+			}
+		}
+	}
+	if = {
+		limit = { check_variable = { pww_lpr_drop^num > 0 } }
+		for_each_loop = {
+			array = pww_lpr_drop
+			value = pww_lpr_id
+			index = pww_lpr_j
+			remove_from_array = { array = pww_ag_ids value = pww_lpr_id }
+			set_temp_variable = { pww_lpr_st = global.pww_ag_state^pww_lpr_id }
+			if = {
+				limit = { check_variable = { pww_lpr_st > 0 } }
+				var:pww_lpr_st = { remove_from_array = { array = pww_ls_ids value = pww_lpr_id } }
+			}
+		}
+		clear_temp_array = pww_lpr_tdrop
+		for_each_loop = {
+			array = pww_lt_ids
+			value = pww_lpr_tid
+			index = pww_lpr_k
+			set_temp_variable = { pww_lpr_tag = global.pww_lt_ag^pww_lpr_tid }
+			if = {
+				limit = { is_in_array = { pww_lpr_drop = pww_lpr_tag } }
+				add_to_temp_array = { pww_lpr_tdrop = pww_lpr_tid }
+			}
+		}
+		for_each_loop = {
+			array = pww_lpr_tdrop
+			value = pww_lpr_tid
+			index = pww_lpr_m
+			remove_from_array = { array = pww_lt_ids value = pww_lpr_tid }
+		}
+	}
+}
+
+###############################################################################
+pww_ledger_monthly_tick = {
+	pww_ledger_init = yes
+	set_temp_variable = { pww_lmt_live = 0 }
+	for_each_loop = {
+		array = global.pww_ag_status
+		value = pww_lmt_st
+		index = pww_lmt_id
+		if = {
+			limit = {
+				OR = {
+					check_variable = { pww_lmt_st < 3 }
+					check_variable = { pww_lmt_st = 7 }
+				}
+			}
+			add_to_temp_variable = { pww_lmt_live = 1 }
+			set_temp_variable = { pww_lmt_s = global.pww_ag_seller^pww_lmt_id }
+			set_temp_variable = { pww_lmt_b = global.pww_ag_buyer^pww_lmt_id }
+			set_temp_variable = { pww_lmt_kind = global.pww_ag_kind^pww_lmt_id }
+			if = {
+				limit = {
+					OR = {
+						var:pww_lmt_s = { exists = no }
+						var:pww_lmt_b = { exists = no }
+					}
+				}
+				set_temp_variable = { pww_l_ag = pww_lmt_id }
+				set_temp_variable = { pww_l_cause = 14 }
+				pww_ledger_terminate = yes
+			}
+			else_if = {
+				limit = {
+					check_variable = { pww_lmt_st = 1 }
+					check_variable = { pww_lmt_kind > 0 }
+				}
+				set_temp_variable = { pww_lrc_id = pww_lmt_id }
+				pww_ledger_reconcile_right = yes
+			}
+		}
+	}
+	if = {
+		limit = { pww_ledger_debug_on = yes }
+		log = "[GetDateText] PWW_LEDGER monthly: records=[?global.pww_next_agreement_id|0] live=[?pww_lmt_live|0] tranches=[?global.pww_next_tranche_id|0] queue=[?global.pww_lq_seq^num|0]"
+	}
+}
+
+# Internal. Active lease or concession pww_lrc_id: does the holder still hold
+# a right in the state? If not, classify why (design 7.6).
+pww_ledger_reconcile_right = {
+	set_temp_variable = { pww_lrc_s = global.pww_ag_seller^pww_lrc_id }
+	set_temp_variable = { pww_lrc_b = global.pww_ag_buyer^pww_lrc_id }
+	set_temp_variable = { pww_lrc_state = global.pww_ag_state^pww_lrc_id }
+	set_variable = { global.pww_l_meta_state = pww_lrc_state }
+	if = {
+		limit = {
+			var:pww_lrc_b = { NOT = { pww_ledger_holder_has_right_in_meta_state = yes } }
+		}
+		set_temp_variable = { pww_lrc_cause = 4 }
+		set_temp_variable = { pww_lv_res = global.pww_ag_res^pww_lrc_id }
+		if = {
+			limit = {
+				var:pww_lrc_state = { NOT = { OWNER = { check_variable = { pww_lrc_s = THIS } } } }
+			}
+			set_temp_variable = { pww_lrc_cause = 1 }
+		}
+		else_if = {
+			limit = { var:pww_lrc_s = { var:pww_lrc_b = { has_war_with = PREV } } }
+			set_temp_variable = { pww_lrc_cause = 2 }
+		}
+		else_if = {
+			limit = {
+				var:pww_lrc_state = { NOT = { CONTROLLER = { check_variable = { pww_lrc_s = THIS } } } }
+			}
+			set_temp_variable = { pww_lrc_cause = 8 }
+		}
+		else_if = {
+			limit = { var:pww_lrc_state = { pww_ledger_state_lacks_lease_resource = yes } }
+			set_temp_variable = { pww_lrc_cause = 3 }
+		}
+
+		set_temp_variable = { pww_lq_kind_in = 7 }
+		set_temp_variable = { pww_lq_ag_in = pww_lrc_id }
+		set_temp_variable = { pww_lq_status_in = 1 }
+		set_temp_variable = { pww_lq_cause_in = pww_lrc_cause }
+		pww_ledger_queue_push = yes
+
+		set_temp_variable = { pww_l_ag = pww_lrc_id }
+		set_temp_variable = { pww_l_cause = pww_lrc_cause }
+		if = {
+			limit = { check_variable = { pww_lrc_cause = 4 } }
+			pww_ledger_nationalize = yes
+		}
+		else = {
+			pww_ledger_suspend = yes
+		}
+		if = {
+			limit = { pww_ledger_debug_on = yes }
+			log = "[GetDateText] PWW_LEDGER reconcile id=[?pww_lrc_id|0] right vanished, cause=[?pww_lrc_cause|0]"
+		}
+	}
+}
+
+###############################################################################
+# Lifecycle on_action handlers
+###############################################################################
+
+# ROOT is the capitulated country.
+pww_ledger_oa_capitulation = {
+	if = {
+		limit = {
+			has_global_flag = pww_ledger_initialized
+			check_variable = { pww_ag_ids^num > 0 }
+		}
+		for_each_loop = {
+			array = pww_ag_ids
+			value = pww_loa_id
+			index = pww_loa_i
+			if = {
+				limit = {
+					OR = {
+						check_variable = { global.pww_ag_status^pww_loa_id < 3 }
+						check_variable = { global.pww_ag_status^pww_loa_id = 7 }
+					}
+				}
+				set_temp_variable = { pww_l_ag = pww_loa_id }
+				set_temp_variable = { pww_l_cause = 5 }
+				pww_ledger_terminate = yes
+			}
+		}
+	}
+}
+
+# ROOT is the winner, FROM is annexed.
+pww_ledger_oa_annex = {
+	if = {
+		limit = { has_global_flag = pww_ledger_initialized }
+		FROM = {
+			if = {
+				limit = { check_variable = { pww_ag_ids^num > 0 } }
+				for_each_loop = {
+					array = pww_ag_ids
+					value = pww_loa_id
+					index = pww_loa_i
+					set_temp_variable = { pww_loa_st = global.pww_ag_status^pww_loa_id }
+					if = {
+						limit = {
+							OR = {
+								check_variable = { pww_loa_st < 3 }
+								check_variable = { pww_loa_st = 7 }
+							}
+						}
+						set_temp_variable = { pww_loa_s = global.pww_ag_seller^pww_loa_id }
+						set_temp_variable = { pww_loa_b = global.pww_ag_buyer^pww_loa_id }
+						set_temp_variable = { pww_loa_kind = global.pww_ag_kind^pww_loa_id }
+						set_temp_variable = { pww_l_ag = pww_loa_id }
+						if = {
+							# FROM hosted a lease that ROOT does not hold: Concession Fate
+							limit = {
+								check_variable = { pww_loa_kind > 0 }
+								check_variable = { pww_loa_s = THIS }
+								NOT = { check_variable = { pww_loa_b = ROOT } }
+								OR = {
+									check_variable = { pww_loa_st = 1 }
+									check_variable = { pww_loa_st = 2 }
+								}
+							}
+							if = {
+								limit = { check_variable = { pww_loa_st = 1 } }
+								set_temp_variable = { pww_l_cause = 1 }
+								pww_ledger_suspend = yes
+							}
+							set_temp_variable = { pww_lq_kind_in = 7 }
+							set_temp_variable = { pww_lq_ag_in = pww_loa_id }
+							set_temp_variable = { pww_lq_status_in = global.pww_ag_status^pww_loa_id }
+							set_temp_variable = { pww_lq_cause_in = 1 }
+							pww_ledger_queue_push = yes
+						}
+						else = {
+							set_temp_variable = { pww_l_cause = 6 }
+							pww_ledger_terminate = yes
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+# ROOT is the attacking side, FROM the defending side.
+pww_ledger_oa_war_relation = {
+	if = {
+		limit = {
+			has_global_flag = pww_ledger_initialized
+			check_variable = { pww_ag_ids^num > 0 }
+		}
+		set_temp_variable = { pww_loa_deliberate = 0 }
+		if = {
+			limit = { has_war_with_wargoal_against = FROM }
+			set_temp_variable = { pww_loa_deliberate = 1 }
+		}
+		for_each_loop = {
+			array = pww_ag_ids
+			value = pww_loa_id
+			index = pww_loa_i
+			set_temp_variable = { pww_loa_st = global.pww_ag_status^pww_loa_id }
+			set_temp_variable = { pww_loa_s = global.pww_ag_seller^pww_loa_id }
+			set_temp_variable = { pww_loa_b = global.pww_ag_buyer^pww_loa_id }
+			if = {
+				limit = {
+					OR = {
+						check_variable = { pww_loa_s = FROM }
+						check_variable = { pww_loa_b = FROM }
+					}
+					OR = {
+						check_variable = { pww_loa_st < 3 }
+						check_variable = { pww_loa_st = 7 }
+					}
+				}
+				set_temp_variable = { pww_l_ag = pww_loa_id }
+				if = {
+					limit = {
+						check_variable = { pww_loa_deliberate = 1 }
+						OR = {
+							check_variable = { pww_loa_st = 1 }
+							check_variable = { pww_loa_st = 2 }
+						}
+					}
+					set_temp_variable = { pww_l_by = ROOT }
+					pww_ledger_default = yes
+				}
+				else_if = {
+					limit = { check_variable = { pww_loa_st = 1 } }
+					set_temp_variable = { pww_l_cause = 2 }
+					pww_ledger_suspend = yes
+				}
+				else_if = {
+					limit = {
+						OR = {
+							check_variable = { pww_loa_st = 0 }
+							check_variable = { pww_loa_st = 7 }
+						}
+					}
+					set_temp_variable = { pww_l_cause = 2 }
+					pww_ledger_terminate = yes
+				}
+			}
+		}
+	}
+}
+
+# ROOT is the new controller, FROM the old controller, FROM.FROM the state.
+pww_ledger_oa_control_changed = {
+	if = {
+		limit = { has_global_flag = pww_ledger_initialized }
+		FROM.FROM = {
+			if = {
+				limit = { check_variable = { pww_ls_ids^num > 0 } }
+				for_each_loop = {
+					array = pww_ls_ids
+					value = pww_loa_id
+					index = pww_loa_i
+					set_temp_variable = { pww_loa_st = global.pww_ag_status^pww_loa_id }
+					set_temp_variable = { pww_loa_s = global.pww_ag_seller^pww_loa_id }
+					if = {
+						limit = {
+							check_variable = { pww_loa_st = 1 }
+							check_variable = { global.pww_ag_kind^pww_loa_id = 1 }
+							NOT = { CONTROLLER = { check_variable = { pww_loa_s = THIS } } }
+						}
+						set_temp_variable = { pww_l_ag = pww_loa_id }
+						set_temp_variable = { pww_l_cause = 8 }
+						pww_ledger_suspend = yes
+					}
+					else_if = {
+						limit = {
+							check_variable = { pww_loa_st = 2 }
+							check_variable = { global.pww_ag_cause^pww_loa_id = 8 }
+							CONTROLLER = { check_variable = { pww_loa_s = THIS } }
+						}
+						set_temp_variable = { pww_l_ag = pww_loa_id }
+						pww_ledger_resume = yes
+					}
+				}
+			}
+		}
+	}
+}
+
+###############################################################################
+# Debug
+###############################################################################
+
+# Any scope. Logs every record.
+pww_ledger_debug_dump = {
+	for_each_loop = {
+		array = global.pww_ag_status
+		value = pww_ldd_st
+		index = pww_ldd_id
+		set_temp_variable = { pww_ldd_s = global.pww_ag_seller^pww_ldd_id }
+		set_temp_variable = { pww_ldd_b = global.pww_ag_buyer^pww_ldd_id }
+		log = "[GetDateText] PWW_LEDGER dump id=[?pww_ldd_id|0] [?pww_ldd_s.GetTag]->[?pww_ldd_b.GetTag] kind=[?global.pww_ag_kind^pww_ldd_id|0] res=[?global.pww_ag_res^pww_ldd_id|0] amount=[?global.pww_ag_amount^pww_ldd_id|2] status=[?pww_ldd_st|0] cause=[?global.pww_ag_cause^pww_ldd_id|0] end=[?global.pww_ag_end^pww_ldd_id|0] rev=[?global.pww_ag_rev^pww_ldd_id|0]"
+	}
+}
+
+# Any scope. POR sells 4 tungsten to GER for one year. GER pays 1 civilian
+# factory and 0.10 PP per day, plus clearing credit on signing, rifles after
+# 30 days of service and a tech bonus at a late milestone.
+pww_ledger_debug_scenario_tungsten = {
+	set_variable = { global.pww_ledger_debug = 1 }
+	POR = { set_temp_variable = { pww_l_seller = THIS } }
+	GER = { set_temp_variable = { pww_l_buyer = THIS } }
+	set_temp_variable = { pww_l_kind = 0 }
+	set_temp_variable = { pww_l_res = 3 }
+	set_temp_variable = { pww_l_amount = 4 }
+	set_temp_variable = { pww_l_state = 0 }
+	set_temp_variable = { pww_l_committal = 1 }
+	set_temp_variable = { pww_l_term_days = 365 }
+	set_temp_variable = { pww_l_civ = 1 }
+	set_temp_variable = { pww_l_pp = 0.1 }
+	set_temp_variable = { pww_l_ideo = 0 }
+	set_temp_variable = { pww_l_ideo_giver = 0 }
+	set_temp_variable = { pww_l_cond = 0 }
+	set_temp_variable = { pww_l_reserve_days = 0 }
+	set_temp_variable = { pww_l_revert_days = 0 }
+	set_temp_variable = { pww_l_convoys = 0 }
+	set_temp_variable = { pww_l_activate = 0 }
+	pww_ledger_create_agreement = yes
+	if = {
+		limit = { check_variable = { pww_l_result = 1 } }
+		log = "PWW_RESULT ledger.create PASS id=[?pww_l_new_id|0]"
+	}
+	else = {
+		log = "PWW_RESULT ledger.create FAIL fail=[?pww_l_fail|0]"
+	}
+	set_temp_variable = { pww_ldbg_id = pww_l_new_id }
+
+	# Clearing credit on signing: GER pays POR 300 CIC, spendable on German arms
+	set_temp_variable = { pww_l_ag = pww_ldbg_id }
+	set_temp_variable = { pww_l_t_payer = 1 }
+	set_temp_variable = { pww_l_t_kind = 3 }
+	set_temp_variable = { pww_l_t_item = 0 }
+	set_temp_variable = { pww_l_t_amount = 300 }
+	set_temp_variable = { pww_l_t_uses = 0 }
+	set_temp_variable = { pww_l_t_milestone = 0 }
+	set_temp_variable = { pww_l_t_offset = 0 }
+	set_temp_variable = { pww_l_t_escrow = 0 }
+	pww_ledger_add_tranche = yes
+	# Rifles after 30 days of service
+	set_temp_variable = { pww_l_ag = pww_ldbg_id }
+	set_temp_variable = { pww_l_t_kind = 0 }
+	set_temp_variable = { pww_l_t_item = 0 }
+	set_temp_variable = { pww_l_t_amount = 500 }
+	set_temp_variable = { pww_l_t_milestone = 1 }
+	set_temp_variable = { pww_l_t_offset = 30 }
+	pww_ledger_add_tranche = yes
+	# Industry tech bonus 60 days before the end
+	set_temp_variable = { pww_l_ag = pww_ldbg_id }
+	set_temp_variable = { pww_l_t_kind = 2 }
+	set_temp_variable = { pww_l_t_item = 0 }
+	set_temp_variable = { pww_l_t_amount = 0.25 }
+	set_temp_variable = { pww_l_t_uses = 1 }
+	set_temp_variable = { pww_l_t_milestone = 2 }
+	set_temp_variable = { pww_l_t_offset = 60 }
+	pww_ledger_add_tranche = yes
+
+	set_temp_variable = { pww_l_ag = pww_ldbg_id }
+	set_temp_variable = { pww_l_expect_rev = global.pww_ag_rev^pww_ldbg_id }
+	pww_ledger_activate = yes
+	if = {
+		limit = { check_variable = { pww_l_result = 1 } }
+		log = "PWW_RESULT ledger.activate PASS id=[?pww_ldbg_id|0]"
+	}
+	else = {
+		log = "PWW_RESULT ledger.activate FAIL fail=[?pww_l_fail|0]"
+	}
+
+	# Applies once: a second activation with the same stale revision is refused
+	pww_ledger_activate = yes
+	if = {
+		limit = { check_variable = { pww_l_result = 0 } }
+		log = "PWW_RESULT ledger.applies_once PASS fail=[?pww_l_fail|0]"
+	}
+	else = {
+		log = "PWW_RESULT ledger.applies_once FAIL activated twice"
+	}
+
+	POR = {
+		if = {
+			limit = {
+				check_variable = { pww_lf_out_tungsten = 4 }
+				check_variable = { pww_lf_civ_offsite = 1 }
+				check_variable = { pww_lf_pp > 0.099 }
+				has_dynamic_modifier = { modifier = pww_ledger_flows }
+			}
+			log = "PWW_RESULT ledger.seller_flows PASS out_tungsten=[?pww_lf_out_tungsten|2] civ_offsite=[?pww_lf_civ_offsite|0] pp=[?pww_lf_pp|2]"
+		}
+		else = {
+			log = "PWW_RESULT ledger.seller_flows FAIL out_tungsten=[?pww_lf_out_tungsten|2] civ_offsite=[?pww_lf_civ_offsite|0] pp=[?pww_lf_pp|2]"
+		}
+	}
+	GER = {
+		if = {
+			limit = {
+				check_variable = { pww_lf_in_tungsten = 4 }
+				check_variable = { pww_lf_civ_use = 1 }
+				check_variable = { pww_lf_pp < -0.099 }
+				has_dynamic_modifier = { modifier = pww_ledger_flows }
+			}
+			log = "PWW_RESULT ledger.buyer_flows PASS in_tungsten=[?pww_lf_in_tungsten|2] civ_use=[?pww_lf_civ_use|0] pp=[?pww_lf_pp|2]"
+		}
+		else = {
+			log = "PWW_RESULT ledger.buyer_flows FAIL in_tungsten=[?pww_lf_in_tungsten|2] civ_use=[?pww_lf_civ_use|0] pp=[?pww_lf_pp|2]"
+		}
+	}
+	if = {
+		limit = {
+			check_variable = { global.pww_lt_status^0 = 2 }
+			check_variable = { global.pww_lt_status^1 = 1 }
+			check_variable = { global.pww_lt_status^2 = 1 }
+		}
+		log = "PWW_RESULT ledger.tranche_schedule PASS signing delivered, later armed (due [?global.pww_lt_due^1|0] and [?global.pww_lt_due^2|0])"
+	}
+	else = {
+		log = "PWW_RESULT ledger.tranche_schedule FAIL statuses [?global.pww_lt_status^0|0] [?global.pww_lt_status^1|0] [?global.pww_lt_status^2|0]"
+	}
+	pww_ledger_debug_dump = yes
+}

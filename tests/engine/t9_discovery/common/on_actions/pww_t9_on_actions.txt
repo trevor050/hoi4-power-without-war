@@ -1,0 +1,20 @@
+# Phase 0 test 9: dynamic discovery of POR tungsten states, their land strategic region,
+# coastal flag, and a map fingerprint (state count). Run once vanilla, once with --r56.
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = GER }
+				add_to_variable = { global.pww_t9_day = 1 }
+				if = {
+					limit = { check_variable = { global.pww_t9_day = 2 } }
+					pww_t9_run = yes
+				}
+				if = {
+					limit = { check_variable = { global.pww_t9_day = 3 } }
+					log = "PWW_DONE t9_discovery"
+				}
+			}
+		}
+	}
+}

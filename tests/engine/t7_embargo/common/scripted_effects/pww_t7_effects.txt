@@ -1,0 +1,88 @@
+pww_t7_snap = {
+	set_variable = { global.pww_t7_threat = threat }
+	set_variable = { global.pww_t7_ger_pp = FRA.political_power }
+	set_variable = { global.pww_t7_usa_pp = USA.political_power }
+	set_variable = { global.pww_t7_por_exp = YUG.resource_exported@aluminium }
+	set_variable = { global.pww_t7_ger_imp = FRA.resource_imported@aluminium }
+	set_variable = { global.pww_t7_ger_imp_total = FRA.resource_imported@chromium }
+	log = "PWW_RESULT t7.snap INFO day=[?global.pww_t7_day] [GetDateText] threat=[?global.pww_t7_threat] FRA_pp=[?global.pww_t7_ger_pp] USA_pp=[?global.pww_t7_usa_pp] YUG_aluminium_exported=[?global.pww_t7_por_exp] FRA_aluminium_imported=[?global.pww_t7_ger_imp] FRA_chromium_imported=[?global.pww_t7_ger_imp_total]"
+}
+
+pww_t7_check = {
+	if = {
+		limit = { YUG = { is_embargoed_by = FRA } }
+		log = "PWW_RESULT t7.fra_yug_embargoed_by INFO day=[?global.pww_t7_day] yes"
+	}
+	else = { log = "PWW_RESULT t7.fra_yug_embargoed_by INFO day=[?global.pww_t7_day] no" }
+	if = {
+		limit = { FRA = { is_embargoing = YUG } }
+		log = "PWW_RESULT t7.fra_yug_embargoing INFO day=[?global.pww_t7_day] yes"
+	}
+	else = { log = "PWW_RESULT t7.fra_yug_embargoing INFO day=[?global.pww_t7_day] no" }
+	if = {
+		limit = { SWI = { is_embargoed_by = USA } }
+		log = "PWW_RESULT t7.usa_swi_embargoed_by INFO day=[?global.pww_t7_day] yes"
+	}
+	else = { log = "PWW_RESULT t7.usa_swi_embargoed_by INFO day=[?global.pww_t7_day] no" }
+	if = {
+		limit = { YUG = { is_embargoing = FRA } }
+		log = "PWW_RESULT t7.reverse_yug_embargoing_fra INFO day=[?global.pww_t7_day] yes (embargo is mutual)"
+	}
+}
+
+pww_t7_tick = {
+	if = {
+		limit = { check_variable = { global.pww_t7_day = 2 } }
+		pww_t7_check = yes
+		pww_t7_snap = yes
+	}
+	if = {
+		limit = { check_variable = { global.pww_t7_day = 3 } }
+		FRA = { send_embargo = YUG }
+		USA = { send_embargo = SWI }
+		log = "PWW_RESULT t7.sent INFO day=[?global.pww_t7_day] FRA->YUG and USA->SWI"
+	}
+	if = {
+		limit = { check_variable = { global.pww_t7_day = 4 } }
+		pww_t7_check = yes
+		pww_t7_snap = yes
+		if = {
+			limit = { YUG = { is_embargoed_by = FRA } SWI = { is_embargoed_by = USA } }
+			log = "PWW_RESULT t7.applies PASS day=[?global.pww_t7_day] send_embargo applied below the world tension threshold"
+		}
+		else = {
+			log = "PWW_RESULT t7.applies FAIL day=[?global.pww_t7_day] send_embargo did not apply"
+		}
+	}
+	if = {
+		limit = {
+			OR = {
+				check_variable = { global.pww_t7_day = 10 }
+				check_variable = { global.pww_t7_day = 20 }
+			}
+		}
+		pww_t7_check = yes
+		pww_t7_snap = yes
+	}
+	if = {
+		limit = { check_variable = { global.pww_t7_day = 21 } }
+		USA = { break_embargo = SWI }
+		log = "PWW_RESULT t7.break INFO day=[?global.pww_t7_day] USA->SWI broken with ROOT=GER (wrong ROOT); FRA->YUG broken from FRA on_daily (ROOT=FRA)"
+	}
+	if = {
+		limit = { check_variable = { global.pww_t7_day = 22 } }
+		pww_t7_check = yes
+		if = {
+			limit = { NOT = { YUG = { is_embargoed_by = FRA } } NOT = { SWI = { is_embargoed_by = USA } } }
+			log = "PWW_RESULT t7.break PASS day=[?global.pww_t7_day] break_embargo cleared both"
+		}
+		else = {
+			log = "PWW_RESULT t7.break FAIL day=[?global.pww_t7_day] embargo still present after break_embargo"
+		}
+	}
+	if = {
+		limit = { check_variable = { global.pww_t7_day = 30 } }
+		pww_t7_snap = yes
+		log = "PWW_DONE t7_embargo"
+	}
+}

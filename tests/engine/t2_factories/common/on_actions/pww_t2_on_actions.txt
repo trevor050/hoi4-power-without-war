@@ -1,0 +1,16 @@
+# Phase 0 test 2: factory flows. Payer ITA, receiver HUN.
+# A: civilian_factory_use (payer) + add_offsite_building (receiver), then removal with negative level.
+# B: cic_to_target_factor in a dynamic modifier added with scope = HUN.
+# C: cic_to_target_factor via targeted_modifier in an idea.
+# D: targeted_modifier block inside a dynamic modifier (vanilla comment says it does not work).
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = GER }
+				add_to_variable = { global.pww_t2_day = 1 }
+				pww_t2_tick = yes
+			}
+		}
+	}
+}

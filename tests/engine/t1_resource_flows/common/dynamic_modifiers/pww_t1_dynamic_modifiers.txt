@@ -1,0 +1,9 @@
+pww_t1_seller_dm = {
+	icon = GFX_idea_generic_production_bonus
+	country_resource_cost_tungsten = pww_t1_cost
+}
+
+pww_t1_buyer_dm = {
+	icon = GFX_idea_generic_production_bonus
+	country_resource_tungsten = pww_t1_gain
+}

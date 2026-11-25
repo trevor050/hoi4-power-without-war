@@ -1,0 +1,15 @@
+# Phase 0 test 5: give_resource_rights / remove_resource_rights.
+# Host TUR (chromium). Inland chromium state -> GER (land route). Coastal chromium state -> USA
+# after stripping USA's convoys (does a rights delivery need convoys?).
+# Then: duplicate grant, occupation (controller change), owner change, removal.
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = GER }
+				add_to_variable = { global.pww_t5_day = 1 }
+				pww_t5_tick = yes
+			}
+		}
+	}
+}

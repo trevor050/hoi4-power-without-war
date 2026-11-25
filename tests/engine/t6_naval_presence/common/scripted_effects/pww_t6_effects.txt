@@ -1,0 +1,93 @@
+# Scan all region ids for the country in scope. Logs regions with ships / planes / control.
+pww_t6_scan = {
+	for_loop_effect = {
+		start = 1
+		end = 310
+		compare = less_than_or_equals
+		value = pww_t6_r
+		set_variable = { global.pww_t6_r = pww_t6_r }
+		if = {
+			limit = {
+				meta_trigger = {
+					text = { ships_in_area = { area = [R] size > 0 } }
+					R = "[?global.pww_t6_r|0]"
+				}
+			}
+			set_variable = { global.pww_t6_n = 0 }
+			for_loop_effect = {
+				end = 60
+				value = pww_t6_k
+				set_variable = { global.pww_t6_k = pww_t6_k }
+				if = {
+					limit = {
+						meta_trigger = {
+							text = { ships_in_area = { area = [R] size > [K] } }
+							R = "[?global.pww_t6_r|0]"
+							K = "[?global.pww_t6_k|0]"
+						}
+					}
+					add_to_variable = { global.pww_t6_n = 1 }
+				}
+			}
+			set_variable = { global.pww_t6_ctl = 0 }
+			if = {
+				limit = {
+					meta_trigger = {
+						text = { has_naval_control = [R] }
+						R = "[?global.pww_t6_r|0]"
+					}
+				}
+				set_variable = { global.pww_t6_ctl = 1 }
+			}
+			log = "PWW_RESULT t6.ships INFO day=[?global.pww_t6_day] tag=[THIS.GetTag] region=[?global.pww_t6_r|0] ships~[?global.pww_t6_n|0] naval_control=[?global.pww_t6_ctl|0]"
+		}
+		if = {
+			limit = {
+				meta_trigger = {
+					text = { num_planes_stationed_in_regions = { value > 0 regions = { [R] } } }
+					R = "[?global.pww_t6_r|0]"
+				}
+			}
+			log = "PWW_RESULT t6.planes INFO day=[?global.pww_t6_day] tag=[THIS.GetTag] region=[?global.pww_t6_r|0] planes>0"
+		}
+	}
+	set_variable = { global.pww_t6_ships = num_ships }
+	log = "PWW_RESULT t6.total INFO day=[?global.pww_t6_day] tag=[THIS.GetTag] num_ships=[?global.pww_t6_ships|0]"
+}
+
+pww_t6_tick = {
+	if = {
+		limit = { check_variable = { global.pww_t6_day = 2 } }
+		ENG = { pww_t6_scan = yes }
+		ITA = { pww_t6_scan = yes }
+		FRA = { pww_t6_scan = yes }
+		# typed check, single region, to confirm the typed form parses
+		ENG = {
+			if = {
+				limit = { ships_in_area = { type = capital_ship area = 18 size > 0 } }
+				log = "PWW_RESULT t6.typed INFO ENG capital ships in region 18: yes"
+			}
+			else = { log = "PWW_RESULT t6.typed INFO ENG capital ships in region 18: no" }
+		}
+	}
+	if = {
+		limit = { check_variable = { global.pww_t6_day = 3 } }
+		ITA = { add_ai_strategy = { type = naval_dominance id = 47 value = 1000 } }
+		FRA = { add_ai_strategy = { type = naval_blockade id = 47 value = 1000 } }
+		log = "PWW_RESULT t6.strategy INFO day=[?global.pww_t6_day] ITA naval_dominance 47, FRA naval_blockade 47"
+	}
+	if = {
+		limit = {
+			OR = {
+				check_variable = { global.pww_t6_day = 15 }
+				check_variable = { global.pww_t6_day = 30 }
+			}
+		}
+		ITA = { pww_t6_scan = yes }
+		FRA = { pww_t6_scan = yes }
+	}
+	if = {
+		limit = { check_variable = { global.pww_t6_day = 31 } }
+		log = "PWW_DONE t6_naval_presence"
+	}
+}

@@ -1,0 +1,78 @@
+pww_t9_state_report = {
+	# THIS = state
+	set_variable = { global.pww_t9_sid = THIS }
+	# Land strategic region: scan ids with meta_trigger (region trigger takes a literal).
+	set_variable = { global.pww_t9_reg = -1 }
+	for_loop_effect = {
+		start = 1
+		end = 400
+		compare = less_than_or_equals
+		value = pww_t9_r
+		set_variable = { global.pww_t9_r = pww_t9_r }
+		if = {
+			limit = {
+				meta_trigger = {
+					text = { region = [REG] }
+					REG = "[?global.pww_t9_r|0]"
+				}
+			}
+			set_variable = { global.pww_t9_reg = global.pww_t9_r }
+		}
+	}
+	# Resource amount (scan thresholds).
+	set_variable = { global.pww_t9_amt = 0 }
+	for_loop_effect = {
+		start = 0
+		end = 300
+		value = pww_t9_a
+		set_variable = { global.pww_t9_a = pww_t9_a }
+		if = {
+			limit = {
+				meta_trigger = {
+					text = { has_resources_amount = { resource = tungsten amount > [A] } }
+					A = "[?global.pww_t9_a|0]"
+				}
+			}
+			add_to_variable = { global.pww_t9_amt = 1 }
+		}
+	}
+	set_variable = { global.pww_t9_coastal = 0 }
+	if = { limit = { is_coastal = yes } set_variable = { global.pww_t9_coastal = 1 } }
+	log = "PWW_RESULT t9.state INFO state=[THIS.GetID] name=[THIS.GetName] owner=[THIS.Owner.GetTag] land_region=[?global.pww_t9_reg|0] coastal=[?global.pww_t9_coastal|0] tungsten_amount=[?global.pww_t9_amt|0]"
+}
+
+pww_t9_run = {
+	# Map fingerprint.
+	set_variable = { global.pww_t9_nstates = 0 }
+	every_state = { add_to_variable = { global.pww_t9_nstates = 1 } }
+	log = "PWW_RESULT t9.fingerprint INFO state_count=[?global.pww_t9_nstates|0]"
+
+	clear_array = global.pww_t9_tung
+	POR = {
+		every_owned_state = {
+			limit = { has_resources_amount = { resource = tungsten amount > 0 } }
+			add_to_array = { global.pww_t9_tung = THIS }
+			pww_t9_state_report = yes
+		}
+	}
+	set_variable = { global.pww_t9_n = global.pww_t9_tung^num }
+	if = {
+		limit = { check_variable = { global.pww_t9_n > 0 } }
+		log = "PWW_RESULT t9.por_tungsten_found PASS count=[?global.pww_t9_n|0]"
+	}
+	else = {
+		log = "PWW_RESULT t9.por_tungsten_found FAIL no POR tungsten states found"
+	}
+	# Also: every coastal POR state (for sea approach lookup).
+	POR = {
+		every_owned_state = {
+			limit = { is_coastal = yes }
+			pww_t9_state_report = yes
+		}
+	}
+	# Variable-driven state scope check: does `var:` / array element scope work?
+	random_scope_in_array = {
+		array = global.pww_t9_tung
+		log = "PWW_RESULT t9.array_scope INFO random array element resolves to [THIS.GetName]"
+	}
+}

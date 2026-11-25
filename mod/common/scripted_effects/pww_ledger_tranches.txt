@@ -1,0 +1,977 @@
+###############################################################################
+# Power Without War: agreements ledger, tranches (irreversible payments)
+#
+# Irreversible items are paid on a schedule, never all on day one: on signing,
+# after service, and at a late milestone. Activation refuses an agreement
+# whose tranches are all on-signing (fail 11). A breach forfeits the
+# breaching party's remaining tranches (pww_ledger_tranches_settle mode 3).
+#
+# STORAGE (global arrays indexed by tranche id, appended together)
+#   global.pww_lt_ag          agreement id
+#   global.pww_lt_payer_side  0 the seller pays the buyer, 1 the buyer pays
+#   global.pww_lt_kind        0 equipment (send_equipment, or escrow release)
+#                             1 production license (create_production_license)
+#                             2 tech bonus (add_tech_bonus)
+#                             3 clearing credit (add_equipment_subsidy with the
+#                               payer as the only seller)
+#   global.pww_lt_item        catalog index for the kind (below)
+#   global.pww_lt_amount      kind 0: units; 1: license cost_factor;
+#                             2: bonus (0.25 = 25%); 3: CIC
+#   global.pww_lt_uses        kind 2 only: uses (min 1)
+#   global.pww_lt_milestone   0 on signing, 1 after service (start + offset),
+#                             2 late (end - offset; start + offset if open)
+#   global.pww_lt_offset      days for milestones 1 and 2
+#   global.pww_lt_due         num_days due (set on activation)
+#   global.pww_lt_status      0 scheduled (agreement not active yet),
+#                             1 armed, 2 delivered, 3 cancelled
+#   global.pww_lt_escrow      0 none, 1 requested, 2 held, 3 released to
+#                             payee, 4 returned to payer (equipment only)
+# Country array pww_lt_ids on both parties lists their tranche ids.
+#
+# CATALOGS (pww_lt_item)
+#   kind 0 equipment (archetypes):
+#     0 infantry_equipment
+#     1 support_equipment
+#     2 artillery_equipment
+#     3 anti_tank_equipment
+#     4 anti_air_equipment
+#     5 motorized_equipment
+#     6 convoy
+#     7 train_equipment
+#   kind 1 license (equipment type, latest variant via new_prioritised):
+#     0 infantry_equipment_1
+#     1 support_equipment_1
+#     2 artillery_equipment_1
+#     3 anti_tank_equipment_1
+#     4 anti_air_equipment_1
+#     5 motorized_equipment_1
+#     6 light_tank_chassis_1
+#     7 small_plane_airframe_1
+#   kind 2 tech bonus category:
+#     0 industry
+#     1 infantry_weapons
+#     2 artillery
+#     3 armor
+#     4 electronics
+#     5 air_equipment
+#     6 support_tech
+#     7 motorized_equipment
+#   kind 3 clearing credit equipment_type:
+#     0 infantry_equipment
+#     1 support_equipment
+#     2 artillery_equipment
+#     3 motorized_equipment
+#     4 small_plane_airframe
+#     5 light_tank_chassis
+#     6 medium_tank_chassis
+#     7 medium_plane_airframe
+#
+# PUBLIC EFFECTS
+#   pww_ledger_add_tranche = yes
+#       in : pww_l_ag (draft or reserved agreement), pww_l_t_payer (0/1),
+#            pww_l_t_kind, pww_l_t_item, pww_l_t_amount, pww_l_t_uses,
+#            pww_l_t_milestone, pww_l_t_offset, pww_l_t_escrow (kind 0 only:
+#            1 = the payer's equipment is held from signing)
+#       out: pww_l_result, pww_l_fail, pww_l_new_tranche
+#
+# INTERNAL EFFECTS (lifecycle only)
+#   pww_ledger_tranches_precheck   in pww_lta_ag; out pww_lta_count,
+#                                  pww_lta_later, pww_lta_escrow_short
+#   pww_ledger_tranches_arm        in pww_lta_ag (on activation)
+#   pww_ledger_tranche_deliver     in pww_ltd_id
+#   pww_ledger_tranche_cancel      in pww_ltd_id (returns held escrow)
+#   pww_ledger_tranches_settle     in pww_lts_ag, pww_lts_mode, pww_lts_by
+#   pww_ledger_tranches_country_due  (country) delivers due armed tranches of
+#                                  active agreements
+#
+# ENGINE NOTES (need harness confirmation)
+#   - send_equipment / create_production_license / add_tech_bonus /
+#     add_equipment_subsidy have no documented variable inputs, so numbers and
+#     tags go through meta_effect. add_equipment_to_stockpile documents
+#     variable amounts and is used for escrow directly.
+#   - Escrow by archetype: which variant add_equipment_to_stockpile removes
+#     or returns for an archetype type is untested.
+###############################################################################
+
+pww_ledger_add_tranche = {
+	pww_ledger_init = yes
+	set_temp_variable = { pww_l_result = 0 }
+	set_temp_variable = { pww_l_fail = 0 }
+	set_temp_variable = { pww_l_new_tranche = -1 }
+	if = {
+		limit = { NOT = { pww_ledger_ag_exists = yes } }
+		set_temp_variable = { pww_l_fail = 14 }
+	}
+	else_if = {
+		limit = {
+			NOT = { check_variable = { global.pww_ag_status^pww_l_ag = 0 } }
+			NOT = { check_variable = { global.pww_ag_status^pww_l_ag = 7 } }
+		}
+		set_temp_variable = { pww_l_fail = 9 }
+	}
+	else_if = {
+		limit = {
+			OR = {
+				check_variable = { pww_l_t_kind < 0 }
+				check_variable = { pww_l_t_kind > 3 }
+				check_variable = { pww_l_t_item < 0 }
+				check_variable = { pww_l_t_item > 7 }
+				check_variable = { pww_l_t_amount < 0.001 }
+				check_variable = { pww_l_t_milestone < 0 }
+				check_variable = { pww_l_t_milestone > 2 }
+				check_variable = { pww_l_t_offset < 0 }
+				check_variable = { pww_l_t_payer < 0 }
+				check_variable = { pww_l_t_payer > 1 }
+			}
+		}
+		set_temp_variable = { pww_l_fail = 3 }
+	}
+	if = {
+		limit = { check_variable = { pww_l_fail = 0 } }
+		set_temp_variable = { pww_lta_id = global.pww_next_tranche_id }
+		set_temp_variable = { pww_lta_uses = pww_l_t_uses }
+		if = {
+			limit = { check_variable = { pww_lta_uses < 1 } }
+			set_temp_variable = { pww_lta_uses = 1 }
+		}
+		set_temp_variable = { pww_lta_escrow = 0 }
+		if = {
+			limit = {
+				check_variable = { pww_l_t_kind = 0 }
+				check_variable = { pww_l_t_escrow = 1 }
+			}
+			set_temp_variable = { pww_lta_escrow = 1 }
+		}
+		add_to_array = { array = global.pww_lt_ag value = pww_l_ag }
+		add_to_array = { array = global.pww_lt_payer_side value = pww_l_t_payer }
+		add_to_array = { array = global.pww_lt_kind value = pww_l_t_kind }
+		add_to_array = { array = global.pww_lt_item value = pww_l_t_item }
+		add_to_array = { array = global.pww_lt_amount value = pww_l_t_amount }
+		add_to_array = { array = global.pww_lt_uses value = pww_lta_uses }
+		add_to_array = { array = global.pww_lt_milestone value = pww_l_t_milestone }
+		add_to_array = { array = global.pww_lt_offset value = pww_l_t_offset }
+		add_to_array = { array = global.pww_lt_due value = 0 }
+		add_to_array = { array = global.pww_lt_status value = 0 }
+		add_to_array = { array = global.pww_lt_escrow value = pww_lta_escrow }
+		add_to_variable = { global.pww_next_tranche_id = 1 }
+		set_temp_variable = { pww_lta_s = global.pww_ag_seller^pww_l_ag }
+		set_temp_variable = { pww_lta_b = global.pww_ag_buyer^pww_l_ag }
+		var:pww_lta_s = { add_to_array = { array = pww_lt_ids value = pww_lta_id } }
+		var:pww_lta_b = { add_to_array = { array = pww_lt_ids value = pww_lta_id } }
+		add_to_variable = { global.pww_ag_rev^pww_l_ag = 1 }
+		set_temp_variable = { pww_l_new_tranche = pww_lta_id }
+		set_temp_variable = { pww_l_result = 1 }
+		if = {
+			limit = { pww_ledger_debug_on = yes }
+			log = "[GetDateText] PWW_LEDGER tranche add id=[?pww_lta_id|0] ag=[?pww_l_ag|0] kind=[?pww_l_t_kind|0] item=[?pww_l_t_item|0] amount=[?pww_l_t_amount|2] milestone=[?pww_l_t_milestone|0] offset=[?pww_l_t_offset|0] escrow=[?pww_lta_escrow|0]"
+		}
+	}
+	else = {
+		if = {
+			limit = { pww_ledger_debug_on = yes }
+			log = "[GetDateText] PWW_LEDGER tranche add REFUSED ag=[?pww_l_ag|0] fail=[?pww_l_fail|0]"
+		}
+	}
+}
+
+# Internal. Loads tranche pww_ltd_id: pww_ltd_ag, pww_ltd_payer, pww_ltd_payee,
+# pww_ltd_kind, pww_ltd_item, pww_ltd_amt, pww_ltd_uses, pww_ltd_esc.
+pww_ledger_tranche_load = {
+	set_temp_variable = { pww_ltd_ag = global.pww_lt_ag^pww_ltd_id }
+	set_temp_variable = { pww_ltd_kind = global.pww_lt_kind^pww_ltd_id }
+	set_temp_variable = { pww_ltd_item = global.pww_lt_item^pww_ltd_id }
+	set_temp_variable = { pww_ltd_amt = global.pww_lt_amount^pww_ltd_id }
+	set_temp_variable = { pww_ltd_uses = global.pww_lt_uses^pww_ltd_id }
+	set_temp_variable = { pww_ltd_esc = global.pww_lt_escrow^pww_ltd_id }
+	if = {
+		limit = { check_variable = { global.pww_lt_payer_side^pww_ltd_id = 1 } }
+		set_temp_variable = { pww_ltd_payer = global.pww_ag_buyer^pww_ltd_ag }
+		set_temp_variable = { pww_ltd_payee = global.pww_ag_seller^pww_ltd_ag }
+	}
+	else = {
+		set_temp_variable = { pww_ltd_payer = global.pww_ag_seller^pww_ltd_ag }
+		set_temp_variable = { pww_ltd_payee = global.pww_ag_buyer^pww_ltd_ag }
+	}
+}
+
+# Country scope. In: pww_leq_item, pww_leq_amount (signed). Changes THIS
+# country's stockpile of the catalog archetype (escrow take / return / release).
+pww_ledger_eq_stockpile_change = {
+	if = {
+		limit = { check_variable = { pww_leq_item = 0 } }
+		add_equipment_to_stockpile = { type = infantry_equipment amount = var:pww_leq_amount }
+	}
+	else_if = {
+		limit = { check_variable = { pww_leq_item = 1 } }
+		add_equipment_to_stockpile = { type = support_equipment amount = var:pww_leq_amount }
+	}
+	else_if = {
+		limit = { check_variable = { pww_leq_item = 2 } }
+		add_equipment_to_stockpile = { type = artillery_equipment amount = var:pww_leq_amount }
+	}
+	else_if = {
+		limit = { check_variable = { pww_leq_item = 3 } }
+		add_equipment_to_stockpile = { type = anti_tank_equipment amount = var:pww_leq_amount }
+	}
+	else_if = {
+		limit = { check_variable = { pww_leq_item = 4 } }
+		add_equipment_to_stockpile = { type = anti_air_equipment amount = var:pww_leq_amount }
+	}
+	else_if = {
+		limit = { check_variable = { pww_leq_item = 5 } }
+		add_equipment_to_stockpile = { type = motorized_equipment amount = var:pww_leq_amount }
+	}
+	else_if = {
+		limit = { check_variable = { pww_leq_item = 6 } }
+		add_equipment_to_stockpile = { type = convoy amount = var:pww_leq_amount }
+	}
+	else_if = {
+		limit = { check_variable = { pww_leq_item = 7 } }
+		add_equipment_to_stockpile = { type = train_equipment amount = var:pww_leq_amount }
+	}
+}
+
+# Country scope (the payer). In: pww_leq_item. Out: pww_leq_have.
+pww_ledger_eq_count = {
+	set_temp_variable = { pww_leq_have = 0 }
+	if = {
+		limit = { check_variable = { pww_leq_item = 0 } }
+		set_temp_variable = { pww_leq_have = num_equipment@infantry_equipment }
+	}
+	else_if = {
+		limit = { check_variable = { pww_leq_item = 1 } }
+		set_temp_variable = { pww_leq_have = num_equipment@support_equipment }
+	}
+	else_if = {
+		limit = { check_variable = { pww_leq_item = 2 } }
+		set_temp_variable = { pww_leq_have = num_equipment@artillery_equipment }
+	}
+	else_if = {
+		limit = { check_variable = { pww_leq_item = 3 } }
+		set_temp_variable = { pww_leq_have = num_equipment@anti_tank_equipment }
+	}
+	else_if = {
+		limit = { check_variable = { pww_leq_item = 4 } }
+		set_temp_variable = { pww_leq_have = num_equipment@anti_air_equipment }
+	}
+	else_if = {
+		limit = { check_variable = { pww_leq_item = 5 } }
+		set_temp_variable = { pww_leq_have = num_equipment@motorized_equipment }
+	}
+	else_if = {
+		limit = { check_variable = { pww_leq_item = 6 } }
+		set_temp_variable = { pww_leq_have = num_equipment@convoy }
+	}
+	else_if = {
+		limit = { check_variable = { pww_leq_item = 7 } }
+		set_temp_variable = { pww_leq_have = num_equipment@train_equipment }
+	}
+}
+
+pww_ledger_tranches_precheck = {
+	set_temp_variable = { pww_lta_count = 0 }
+	set_temp_variable = { pww_lta_later = 0 }
+	set_temp_variable = { pww_lta_escrow_short = 0 }
+	set_temp_variable = { pww_lta_s = global.pww_ag_seller^pww_lta_ag }
+	var:pww_lta_s = {
+		for_each_loop = {
+			array = pww_lt_ids
+			value = pww_lta_tid
+			index = pww_lta_i
+			if = {
+				limit = {
+					check_variable = { global.pww_lt_ag^pww_lta_tid = pww_lta_ag }
+					check_variable = { global.pww_lt_status^pww_lta_tid = 0 }
+				}
+				add_to_temp_variable = { pww_lta_count = 1 }
+				if = {
+					limit = { check_variable = { global.pww_lt_milestone^pww_lta_tid > 0 } }
+					add_to_temp_variable = { pww_lta_later = 1 }
+				}
+				if = {
+					limit = { check_variable = { global.pww_lt_escrow^pww_lta_tid = 1 } }
+					set_temp_variable = { pww_ltd_id = pww_lta_tid }
+					pww_ledger_tranche_load = yes
+					set_temp_variable = { pww_leq_item = pww_ltd_item }
+					var:pww_ltd_payer = { pww_ledger_eq_count = yes }
+					if = {
+						limit = { check_variable = { pww_leq_have < pww_ltd_amt } }
+						add_to_temp_variable = { pww_lta_escrow_short = 1 }
+					}
+				}
+			}
+		}
+	}
+}
+
+pww_ledger_tranches_arm = {
+	set_temp_variable = { pww_lta_s = global.pww_ag_seller^pww_lta_ag }
+	set_temp_variable = { pww_lta_start = global.pww_ag_start^pww_lta_ag }
+	set_temp_variable = { pww_lta_end = global.pww_ag_end^pww_lta_ag }
+	var:pww_lta_s = {
+		for_each_loop = {
+			array = pww_lt_ids
+			value = pww_lta_tid
+			index = pww_lta_i
+			if = {
+				limit = {
+					check_variable = { global.pww_lt_ag^pww_lta_tid = pww_lta_ag }
+					check_variable = { global.pww_lt_status^pww_lta_tid = 0 }
+				}
+				set_temp_variable = { pww_lta_ms = global.pww_lt_milestone^pww_lta_tid }
+				set_temp_variable = { pww_lta_off = global.pww_lt_offset^pww_lta_tid }
+				set_temp_variable = { pww_lta_due = pww_lta_start }
+				if = {
+					limit = { check_variable = { pww_lta_ms = 1 } }
+					add_to_temp_variable = { pww_lta_due = pww_lta_off }
+				}
+				else_if = {
+					limit = { check_variable = { pww_lta_ms = 2 } }
+					if = {
+						limit = { check_variable = { pww_lta_end > 0 } }
+						set_temp_variable = { pww_lta_due = pww_lta_end }
+						subtract_from_temp_variable = { pww_lta_due = pww_lta_off }
+						# a late milestone is never earlier than one day after signing
+						set_temp_variable = { pww_lta_min = pww_lta_start }
+						add_to_temp_variable = { pww_lta_min = 1 }
+						if = {
+							limit = { check_variable = { pww_lta_due < pww_lta_min } }
+							set_temp_variable = { pww_lta_due = pww_lta_min }
+						}
+					}
+					else = {
+						add_to_temp_variable = { pww_lta_due = pww_lta_off }
+					}
+				}
+				set_variable = { global.pww_lt_due^pww_lta_tid = pww_lta_due }
+				set_variable = { global.pww_lt_status^pww_lta_tid = 1 }
+
+				# Escrow: take the payer's equipment now
+				if = {
+					limit = { check_variable = { global.pww_lt_escrow^pww_lta_tid = 1 } }
+					set_temp_variable = { pww_ltd_id = pww_lta_tid }
+					pww_ledger_tranche_load = yes
+					set_temp_variable = { pww_leq_item = pww_ltd_item }
+					set_temp_variable = { pww_leq_amount = pww_ltd_amt }
+					multiply_temp_variable = { pww_leq_amount = -1 }
+					var:pww_ltd_payer = { pww_ledger_eq_stockpile_change = yes }
+					set_variable = { global.pww_lt_escrow^pww_lta_tid = 2 }
+				}
+
+				# On-signing tranches pay now
+				if = {
+					limit = { NOT = { check_variable = { pww_lta_due > global.num_days } } }
+					set_temp_variable = { pww_ltd_id = pww_lta_tid }
+					pww_ledger_tranche_deliver = yes
+				}
+			}
+		}
+	}
+}
+
+pww_ledger_tranche_deliver = {
+	pww_ledger_tranche_load = yes
+	if = {
+		limit = {
+			check_variable = { global.pww_lt_status^pww_ltd_id = 1 }
+			var:pww_ltd_payer = { exists = yes }
+			var:pww_ltd_payee = { exists = yes }
+		}
+		set_variable = { global.pww_l_meta_amt = pww_ltd_amt }
+		set_variable = { global.pww_l_meta_uses = pww_ltd_uses }
+		set_variable = { global.pww_l_meta_payer = pww_ltd_payer }
+		set_variable = { global.pww_l_meta_payee = pww_ltd_payee }
+
+		# Kind 0: equipment
+		if = {
+			limit = { check_variable = { pww_ltd_kind = 0 } }
+			if = {
+				limit = { check_variable = { pww_ltd_esc = 2 } }
+				set_temp_variable = { pww_leq_item = pww_ltd_item }
+				set_temp_variable = { pww_leq_amount = pww_ltd_amt }
+				var:pww_ltd_payee = { pww_ledger_eq_stockpile_change = yes }
+				set_variable = { global.pww_lt_escrow^pww_ltd_id = 3 }
+			}
+			else = {
+				var:pww_ltd_payer = {
+					if = {
+						limit = { check_variable = { pww_ltd_item = 0 } }
+						meta_effect = {
+							text = {
+								send_equipment = { equipment = infantry_equipment amount = [A] target = [T] }
+							}
+							A = "[?global.pww_l_meta_amt|0]"
+							T = "[?global.pww_l_meta_payee.GetTag]"
+						}
+					}
+					else_if = {
+						limit = { check_variable = { pww_ltd_item = 1 } }
+						meta_effect = {
+							text = {
+								send_equipment = { equipment = support_equipment amount = [A] target = [T] }
+							}
+							A = "[?global.pww_l_meta_amt|0]"
+							T = "[?global.pww_l_meta_payee.GetTag]"
+						}
+					}
+					else_if = {
+						limit = { check_variable = { pww_ltd_item = 2 } }
+						meta_effect = {
+							text = {
+								send_equipment = { equipment = artillery_equipment amount = [A] target = [T] }
+							}
+							A = "[?global.pww_l_meta_amt|0]"
+							T = "[?global.pww_l_meta_payee.GetTag]"
+						}
+					}
+					else_if = {
+						limit = { check_variable = { pww_ltd_item = 3 } }
+						meta_effect = {
+							text = {
+								send_equipment = { equipment = anti_tank_equipment amount = [A] target = [T] }
+							}
+							A = "[?global.pww_l_meta_amt|0]"
+							T = "[?global.pww_l_meta_payee.GetTag]"
+						}
+					}
+					else_if = {
+						limit = { check_variable = { pww_ltd_item = 4 } }
+						meta_effect = {
+							text = {
+								send_equipment = { equipment = anti_air_equipment amount = [A] target = [T] }
+							}
+							A = "[?global.pww_l_meta_amt|0]"
+							T = "[?global.pww_l_meta_payee.GetTag]"
+						}
+					}
+					else_if = {
+						limit = { check_variable = { pww_ltd_item = 5 } }
+						meta_effect = {
+							text = {
+								send_equipment = { equipment = motorized_equipment amount = [A] target = [T] }
+							}
+							A = "[?global.pww_l_meta_amt|0]"
+							T = "[?global.pww_l_meta_payee.GetTag]"
+						}
+					}
+					else_if = {
+						limit = { check_variable = { pww_ltd_item = 6 } }
+						meta_effect = {
+							text = {
+								send_equipment = { equipment = convoy amount = [A] target = [T] }
+							}
+							A = "[?global.pww_l_meta_amt|0]"
+							T = "[?global.pww_l_meta_payee.GetTag]"
+						}
+					}
+					else_if = {
+						limit = { check_variable = { pww_ltd_item = 7 } }
+						meta_effect = {
+							text = {
+								send_equipment = { equipment = train_equipment amount = [A] target = [T] }
+							}
+							A = "[?global.pww_l_meta_amt|0]"
+							T = "[?global.pww_l_meta_payee.GetTag]"
+						}
+					}
+				}
+			}
+		}
+		# Kind 1: production license (payer is the licensor)
+		else_if = {
+			limit = { check_variable = { pww_ltd_kind = 1 } }
+			var:pww_ltd_payer = {
+				if = {
+					limit = { check_variable = { pww_ltd_item = 0 } }
+					meta_effect = {
+						text = {
+							create_production_license = {
+								target = [T]
+								cost_factor = [CF]
+								new_prioritised = yes
+								equipment = { type = infantry_equipment_1 }
+							}
+						}
+						T = "[?global.pww_l_meta_payee.GetTag]"
+						CF = "[?global.pww_l_meta_amt|2]"
+					}
+				}
+				else_if = {
+					limit = { check_variable = { pww_ltd_item = 1 } }
+					meta_effect = {
+						text = {
+							create_production_license = {
+								target = [T]
+								cost_factor = [CF]
+								new_prioritised = yes
+								equipment = { type = support_equipment_1 }
+							}
+						}
+						T = "[?global.pww_l_meta_payee.GetTag]"
+						CF = "[?global.pww_l_meta_amt|2]"
+					}
+				}
+				else_if = {
+					limit = { check_variable = { pww_ltd_item = 2 } }
+					meta_effect = {
+						text = {
+							create_production_license = {
+								target = [T]
+								cost_factor = [CF]
+								new_prioritised = yes
+								equipment = { type = artillery_equipment_1 }
+							}
+						}
+						T = "[?global.pww_l_meta_payee.GetTag]"
+						CF = "[?global.pww_l_meta_amt|2]"
+					}
+				}
+				else_if = {
+					limit = { check_variable = { pww_ltd_item = 3 } }
+					meta_effect = {
+						text = {
+							create_production_license = {
+								target = [T]
+								cost_factor = [CF]
+								new_prioritised = yes
+								equipment = { type = anti_tank_equipment_1 }
+							}
+						}
+						T = "[?global.pww_l_meta_payee.GetTag]"
+						CF = "[?global.pww_l_meta_amt|2]"
+					}
+				}
+				else_if = {
+					limit = { check_variable = { pww_ltd_item = 4 } }
+					meta_effect = {
+						text = {
+							create_production_license = {
+								target = [T]
+								cost_factor = [CF]
+								new_prioritised = yes
+								equipment = { type = anti_air_equipment_1 }
+							}
+						}
+						T = "[?global.pww_l_meta_payee.GetTag]"
+						CF = "[?global.pww_l_meta_amt|2]"
+					}
+				}
+				else_if = {
+					limit = { check_variable = { pww_ltd_item = 5 } }
+					meta_effect = {
+						text = {
+							create_production_license = {
+								target = [T]
+								cost_factor = [CF]
+								new_prioritised = yes
+								equipment = { type = motorized_equipment_1 }
+							}
+						}
+						T = "[?global.pww_l_meta_payee.GetTag]"
+						CF = "[?global.pww_l_meta_amt|2]"
+					}
+				}
+				else_if = {
+					limit = { check_variable = { pww_ltd_item = 6 } }
+					meta_effect = {
+						text = {
+							create_production_license = {
+								target = [T]
+								cost_factor = [CF]
+								new_prioritised = yes
+								equipment = { type = light_tank_chassis_1 }
+							}
+						}
+						T = "[?global.pww_l_meta_payee.GetTag]"
+						CF = "[?global.pww_l_meta_amt|2]"
+					}
+				}
+				else_if = {
+					limit = { check_variable = { pww_ltd_item = 7 } }
+					meta_effect = {
+						text = {
+							create_production_license = {
+								target = [T]
+								cost_factor = [CF]
+								new_prioritised = yes
+								equipment = { type = small_plane_airframe_1 }
+							}
+						}
+						T = "[?global.pww_l_meta_payee.GetTag]"
+						CF = "[?global.pww_l_meta_amt|2]"
+					}
+				}
+			}
+		}
+		# Kind 2: tech bonus (payee receives)
+		else_if = {
+			limit = { check_variable = { pww_ltd_kind = 2 } }
+			var:pww_ltd_payee = {
+				if = {
+					limit = { check_variable = { pww_ltd_item = 0 } }
+					meta_effect = {
+						text = {
+							add_tech_bonus = {
+								name = pww_ledger_tech_bonus
+								bonus = [B]
+								uses = [U]
+								category = industry
+							}
+						}
+						B = "[?global.pww_l_meta_amt|2]"
+						U = "[?global.pww_l_meta_uses|0]"
+					}
+				}
+				else_if = {
+					limit = { check_variable = { pww_ltd_item = 1 } }
+					meta_effect = {
+						text = {
+							add_tech_bonus = {
+								name = pww_ledger_tech_bonus
+								bonus = [B]
+								uses = [U]
+								category = infantry_weapons
+							}
+						}
+						B = "[?global.pww_l_meta_amt|2]"
+						U = "[?global.pww_l_meta_uses|0]"
+					}
+				}
+				else_if = {
+					limit = { check_variable = { pww_ltd_item = 2 } }
+					meta_effect = {
+						text = {
+							add_tech_bonus = {
+								name = pww_ledger_tech_bonus
+								bonus = [B]
+								uses = [U]
+								category = artillery
+							}
+						}
+						B = "[?global.pww_l_meta_amt|2]"
+						U = "[?global.pww_l_meta_uses|0]"
+					}
+				}
+				else_if = {
+					limit = { check_variable = { pww_ltd_item = 3 } }
+					meta_effect = {
+						text = {
+							add_tech_bonus = {
+								name = pww_ledger_tech_bonus
+								bonus = [B]
+								uses = [U]
+								category = armor
+							}
+						}
+						B = "[?global.pww_l_meta_amt|2]"
+						U = "[?global.pww_l_meta_uses|0]"
+					}
+				}
+				else_if = {
+					limit = { check_variable = { pww_ltd_item = 4 } }
+					meta_effect = {
+						text = {
+							add_tech_bonus = {
+								name = pww_ledger_tech_bonus
+								bonus = [B]
+								uses = [U]
+								category = electronics
+							}
+						}
+						B = "[?global.pww_l_meta_amt|2]"
+						U = "[?global.pww_l_meta_uses|0]"
+					}
+				}
+				else_if = {
+					limit = { check_variable = { pww_ltd_item = 5 } }
+					meta_effect = {
+						text = {
+							add_tech_bonus = {
+								name = pww_ledger_tech_bonus
+								bonus = [B]
+								uses = [U]
+								category = air_equipment
+							}
+						}
+						B = "[?global.pww_l_meta_amt|2]"
+						U = "[?global.pww_l_meta_uses|0]"
+					}
+				}
+				else_if = {
+					limit = { check_variable = { pww_ltd_item = 6 } }
+					meta_effect = {
+						text = {
+							add_tech_bonus = {
+								name = pww_ledger_tech_bonus
+								bonus = [B]
+								uses = [U]
+								category = support_tech
+							}
+						}
+						B = "[?global.pww_l_meta_amt|2]"
+						U = "[?global.pww_l_meta_uses|0]"
+					}
+				}
+				else_if = {
+					limit = { check_variable = { pww_ltd_item = 7 } }
+					meta_effect = {
+						text = {
+							add_tech_bonus = {
+								name = pww_ledger_tech_bonus
+								bonus = [B]
+								uses = [U]
+								category = motorized_equipment
+							}
+						}
+						B = "[?global.pww_l_meta_amt|2]"
+						U = "[?global.pww_l_meta_uses|0]"
+					}
+				}
+			}
+		}
+		# Kind 3: clearing credit, spendable only on the payer's arms
+		else_if = {
+			limit = { check_variable = { pww_ltd_kind = 3 } }
+			var:pww_ltd_payee = {
+				if = {
+					limit = { check_variable = { pww_ltd_item = 0 } }
+					meta_effect = {
+						text = {
+							add_equipment_subsidy = {
+								cic = [C]
+								equipment_type = infantry_equipment
+								seller_tags = { [P] }
+							}
+						}
+						C = "[?global.pww_l_meta_amt|0]"
+						P = "[?global.pww_l_meta_payer.GetTag]"
+					}
+				}
+				else_if = {
+					limit = { check_variable = { pww_ltd_item = 1 } }
+					meta_effect = {
+						text = {
+							add_equipment_subsidy = {
+								cic = [C]
+								equipment_type = support_equipment
+								seller_tags = { [P] }
+							}
+						}
+						C = "[?global.pww_l_meta_amt|0]"
+						P = "[?global.pww_l_meta_payer.GetTag]"
+					}
+				}
+				else_if = {
+					limit = { check_variable = { pww_ltd_item = 2 } }
+					meta_effect = {
+						text = {
+							add_equipment_subsidy = {
+								cic = [C]
+								equipment_type = artillery_equipment
+								seller_tags = { [P] }
+							}
+						}
+						C = "[?global.pww_l_meta_amt|0]"
+						P = "[?global.pww_l_meta_payer.GetTag]"
+					}
+				}
+				else_if = {
+					limit = { check_variable = { pww_ltd_item = 3 } }
+					meta_effect = {
+						text = {
+							add_equipment_subsidy = {
+								cic = [C]
+								equipment_type = motorized_equipment
+								seller_tags = { [P] }
+							}
+						}
+						C = "[?global.pww_l_meta_amt|0]"
+						P = "[?global.pww_l_meta_payer.GetTag]"
+					}
+				}
+				else_if = {
+					limit = { check_variable = { pww_ltd_item = 4 } }
+					meta_effect = {
+						text = {
+							add_equipment_subsidy = {
+								cic = [C]
+								equipment_type = small_plane_airframe
+								seller_tags = { [P] }
+							}
+						}
+						C = "[?global.pww_l_meta_amt|0]"
+						P = "[?global.pww_l_meta_payer.GetTag]"
+					}
+				}
+				else_if = {
+					limit = { check_variable = { pww_ltd_item = 5 } }
+					meta_effect = {
+						text = {
+							add_equipment_subsidy = {
+								cic = [C]
+								equipment_type = light_tank_chassis
+								seller_tags = { [P] }
+							}
+						}
+						C = "[?global.pww_l_meta_amt|0]"
+						P = "[?global.pww_l_meta_payer.GetTag]"
+					}
+				}
+				else_if = {
+					limit = { check_variable = { pww_ltd_item = 6 } }
+					meta_effect = {
+						text = {
+							add_equipment_subsidy = {
+								cic = [C]
+								equipment_type = medium_tank_chassis
+								seller_tags = { [P] }
+							}
+						}
+						C = "[?global.pww_l_meta_amt|0]"
+						P = "[?global.pww_l_meta_payer.GetTag]"
+					}
+				}
+				else_if = {
+					limit = { check_variable = { pww_ltd_item = 7 } }
+					meta_effect = {
+						text = {
+							add_equipment_subsidy = {
+								cic = [C]
+								equipment_type = medium_plane_airframe
+								seller_tags = { [P] }
+							}
+						}
+						C = "[?global.pww_l_meta_amt|0]"
+						P = "[?global.pww_l_meta_payer.GetTag]"
+					}
+				}
+			}
+		}
+
+		set_variable = { global.pww_lt_status^pww_ltd_id = 2 }
+		set_temp_variable = { pww_lq_kind_in = 3 }
+		set_temp_variable = { pww_lq_ag_in = pww_ltd_ag }
+		set_temp_variable = { pww_lq_status_in = global.pww_ag_status^pww_ltd_ag }
+		set_temp_variable = { pww_lq_cause_in = 0 }
+		pww_ledger_queue_push = yes
+		if = {
+			limit = { pww_ledger_debug_on = yes }
+			log = "[GetDateText] PWW_LEDGER tranche deliver id=[?pww_ltd_id|0] ag=[?pww_ltd_ag|0] kind=[?pww_ltd_kind|0] item=[?pww_ltd_item|0] amount=[?pww_ltd_amt|2] payer=[?pww_ltd_payer.GetTag] payee=[?pww_ltd_payee.GetTag] escrow=[?pww_ltd_esc|0]"
+		}
+	}
+	else_if = {
+		limit = { check_variable = { global.pww_lt_status^pww_ltd_id = 1 } }
+		# A party is gone: nothing can be delivered
+		pww_ledger_tranche_cancel = yes
+	}
+}
+
+pww_ledger_tranche_cancel = {
+	pww_ledger_tranche_load = yes
+	if = {
+		limit = {
+			OR = {
+				check_variable = { global.pww_lt_status^pww_ltd_id = 0 }
+				check_variable = { global.pww_lt_status^pww_ltd_id = 1 }
+			}
+		}
+		if = {
+			limit = { check_variable = { pww_ltd_esc = 2 } }
+			set_temp_variable = { pww_leq_item = pww_ltd_item }
+			set_temp_variable = { pww_leq_amount = pww_ltd_amt }
+			var:pww_ltd_payer = {
+				if = {
+					limit = { exists = yes }
+					pww_ledger_eq_stockpile_change = yes
+				}
+			}
+			set_variable = { global.pww_lt_escrow^pww_ltd_id = 4 }
+		}
+		set_variable = { global.pww_lt_status^pww_ltd_id = 3 }
+		set_temp_variable = { pww_lq_kind_in = 4 }
+		set_temp_variable = { pww_lq_ag_in = pww_ltd_ag }
+		set_temp_variable = { pww_lq_status_in = global.pww_ag_status^pww_ltd_ag }
+		set_temp_variable = { pww_lq_cause_in = 0 }
+		pww_ledger_queue_push = yes
+		if = {
+			limit = { pww_ledger_debug_on = yes }
+			log = "[GetDateText] PWW_LEDGER tranche cancel id=[?pww_ltd_id|0] ag=[?pww_ltd_ag|0] escrow=[?pww_ltd_esc|0]"
+		}
+	}
+}
+
+# Modes: 0 cancel all, 1 deliver due then cancel rest, 2 deliver every armed,
+# 3 default by pww_lts_by (breacher's receivables cancelled; breacher's held
+# escrow forfeited to the counterparty; breacher's unescrowed payables
+# cancelled because they cannot be forced).
+pww_ledger_tranches_settle = {
+	set_temp_variable = { pww_lts_s = global.pww_ag_seller^pww_lts_ag }
+	var:pww_lts_s = {
+		for_each_loop = {
+			array = pww_lt_ids
+			value = pww_lts_tid
+			index = pww_lts_i
+			if = {
+				limit = {
+					check_variable = { global.pww_lt_ag^pww_lts_tid = pww_lts_ag }
+					check_variable = { global.pww_lt_status^pww_lts_tid < 2 }
+				}
+				set_temp_variable = { pww_ltd_id = pww_lts_tid }
+				pww_ledger_tranche_load = yes
+				set_temp_variable = { pww_lts_deliver = 0 }
+				if = {
+					limit = { check_variable = { global.pww_lt_status^pww_lts_tid = 1 } }
+					if = {
+						limit = { check_variable = { pww_lts_mode = 2 } }
+						set_temp_variable = { pww_lts_deliver = 1 }
+					}
+					else_if = {
+						limit = {
+							check_variable = { pww_lts_mode = 1 }
+							NOT = { check_variable = { global.pww_lt_due^pww_lts_tid > global.num_days } }
+						}
+						set_temp_variable = { pww_lts_deliver = 1 }
+					}
+					else_if = {
+						limit = {
+							check_variable = { pww_lts_mode = 3 }
+							check_variable = { pww_ltd_payer = pww_lts_by }
+							check_variable = { pww_ltd_esc = 2 }
+						}
+						set_temp_variable = { pww_lts_deliver = 1 }
+					}
+				}
+				if = {
+					limit = { check_variable = { pww_lts_deliver = 1 } }
+					pww_ledger_tranche_deliver = yes
+				}
+				else = {
+					pww_ledger_tranche_cancel = yes
+				}
+			}
+		}
+	}
+}
+
+# Country scope. Delivers this country's armed, due tranches whose agreement
+# is active. Idempotent (both parties may run it).
+pww_ledger_tranches_country_due = {
+	for_each_loop = {
+		array = pww_lt_ids
+		value = pww_ltc_tid
+		index = pww_ltc_i
+		if = {
+			limit = {
+				check_variable = { global.pww_lt_status^pww_ltc_tid = 1 }
+				NOT = { check_variable = { global.pww_lt_due^pww_ltc_tid > global.num_days } }
+			}
+			set_temp_variable = { pww_ltc_ag = global.pww_lt_ag^pww_ltc_tid }
+			if = {
+				limit = { check_variable = { global.pww_ag_status^pww_ltc_ag = 1 } }
+				set_temp_variable = { pww_ltd_id = pww_ltc_tid }
+				pww_ledger_tranche_deliver = yes
+			}
+		}
+	}
+}
+

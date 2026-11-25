@@ -1,0 +1,333 @@
+###############################################################################
+# Power Without War: core effects (init, scheduler, active traders, utilities)
+#
+# Per-resource effects (map resolution, desperation, debug log) live in
+# pww_core_resources.txt. Triggers live in
+# common/scripted_triggers/pww_core_triggers.txt. Hooks into the engine live in
+# common/on_actions/pww_core_on_actions.txt.
+#
+# ---------------------------------------------------------------------------
+# GLOBAL STATE (all set by pww_core_init)
+#   flag global.pww_initialized          set once init has run
+#   var  global.pww_initialized = 1      same, as a variable (contract name)
+#   var  global.pww_core_version         schema version of core data (1)
+#   var  global.pww_res_<res>            resource index: oil 0, aluminium 1,
+#                                        rubber 2, tungsten 3, steel 4,
+#                                        chromium 5, coal 6
+#   var  global.pww_res_count = 7
+#   var  global.pww_opinion_scale        1 (vanilla, +-100) or 2 (+-200, e.g.
+#                                        Road to 56). Detected from the state
+#                                        count unless already set by a compat
+#                                        patch before init.
+#   var  global.pww_next_bucket          next bucket to hand out (0..29)
+#   var  global.pww_day_mod30            global.num_days modulo 30, refreshed
+#                                        once per day
+#   var  global.pww_last_day             num_days of the last day refresh
+#   var  global.pww_last_monthly_day     num_days of the last monthly global tick
+#   array global.pww_active_traders      countries flagged pww_is_active_trader
+#   flag global.pww_core_debug           (set by hand/harness) enables logging
+#
+# COUNTRY STATE
+#   var  pww_bucket                      0..29; the country ticks on days where
+#                                        pww_bucket = global.pww_day_mod30
+#   var  pww_last_tick_day               num_days of this country's last tick
+#   flag pww_is_active_trader            one of the ~18 active traders
+#   var  pww_trader_score                score used to pick active traders
+#   flag pww_map_dirty                   ownership changed; map re-resolved on
+#                                        the country's next daily pulse
+#   var/array: see pww_core_resources.txt (pww_desp_<res>, pww_desp_max,
+#              pww_desp_max_res, pww_producing_states_<res>,
+#              pww_coastal_states, pww_map_owned_states)
+#
+# ---------------------------------------------------------------------------
+# PUBLIC EFFECTS
+#   pww_core_init = yes                  (any scope) idempotent; safe on load
+#   pww_core_on_daily = yes              (country) on_daily entry point
+#   pww_core_on_monthly = yes            (country) on_monthly entry point
+#   pww_core_country_tick = yes          (country) one staggered tick: map,
+#                                        desperation, then the ledger hook
+#   pww_core_monthly_global_tick = yes   (any) active traders, then ledger hook
+#   pww_core_recompute_active_traders = yes  (any)
+#   pww_core_assign_bucket = yes         (country) gives a bucket if missing
+#   pww_core_norm_opinion = yes          (country A) temp in: pww_opinion_target
+#                                        (country B). temp out: pww_norm_opinion
+#                                        = A's opinion of B scaled to +-100.
+#   pww_core_norm_value = yes            (any) temp in/out: pww_norm_value;
+#                                        divides an opinion-scale number by
+#                                        global.pww_opinion_scale, clamps +-100.
+#   pww_core_value_to_band = yes         (any) temp in: pww_band_value (civilian
+#                                        factory equivalents). temp out:
+#                                        pww_band 0 Trivial, 1 Small, 2 Fair,
+#                                        3 Large, 4 Huge. Loc keys
+#                                        pww_core_band_0 .. pww_core_band_4.
+#
+# HOOKS INTO OTHER LANES (core calls these; the ledger lane defines them)
+#   pww_ledger_country_tick = yes        country scope, once per staggered tick,
+#                                        after core has refreshed map data and
+#                                        desperation for that country.
+#   pww_ledger_monthly_tick = yes        called roughly monthly (at least 28
+#                                        days apart) from whichever country's
+#                                        on_monthly fires first. Scope is an
+#                                        arbitrary country: treat it as global.
+#                                        Active traders are already recomputed.
+#   Core does NOT define stubs: the engine rejects duplicate definitions less
+#   gracefully than a missing one is fixed. Both effects must exist in the
+#   ledger lane's files before the mod loads cleanly.
+#
+# TEMP VARIABLES: core uses the pww_ prefix for its temps (pww_need, pww_raw,
+#   pww_tr_*, ...). Callers should not rely on temp values other than the
+#   documented outputs.
+###############################################################################
+
+pww_core_init = {
+	if = {
+		limit = { NOT = { has_global_flag = pww_initialized } }
+		set_global_flag = pww_initialized
+		set_variable = { global.pww_initialized = 1 }
+		set_variable = { global.pww_core_version = 1 }
+
+		# Fixed resource index (see AGENTS.md).
+		set_variable = { global.pww_res_oil = 0 }
+		set_variable = { global.pww_res_aluminium = 1 }
+		set_variable = { global.pww_res_rubber = 2 }
+		set_variable = { global.pww_res_tungsten = 3 }
+		set_variable = { global.pww_res_steel = 4 }
+		set_variable = { global.pww_res_chromium = 5 }
+		set_variable = { global.pww_res_coal = 6 }
+		set_variable = { global.pww_res_count = 7 }
+
+		# Opinion range. Vanilla caps opinion at +-100; Road to 56 doubles it.
+		# There is no runtime read of defines, so detect R56 by its state count
+		# (vanilla 1,081, R56 1,143). A compat patch may set
+		# global.pww_opinion_scale before init to override.
+		if = {
+			limit = { NOT = { has_variable = global.pww_opinion_scale } }
+			set_variable = { global.pww_opinion_scale = 1 }
+			if = {
+				limit = { check_variable = { global.states^num > 1110 } }
+				set_variable = { global.pww_opinion_scale = 2 }
+			}
+		}
+
+		# Buckets, spread evenly in country order.
+		set_variable = { global.pww_next_bucket = 0 }
+		every_country = {
+			limit = { exists = yes }
+			pww_core_assign_bucket = yes
+		}
+
+		# Map resolution for every existing country.
+		every_country = {
+			limit = { exists = yes }
+			pww_core_resolve_country_map = yes
+		}
+
+		# Force the first monthly global tick on the next on_monthly.
+		set_variable = { global.pww_last_monthly_day = -100 }
+		pww_core_refresh_day = yes
+		pww_core_recompute_active_traders = yes
+
+		if = {
+			limit = { has_global_flag = pww_core_debug }
+			log = "[GetDateText] PWW_CORE init done: opinion_scale=[?global.pww_opinion_scale] next_bucket=[?global.pww_next_bucket] traders=[?global.pww_active_traders^num]"
+		}
+	}
+}
+
+# Country scope. Gives the country a bucket if it has none. Countries that
+# appear later (releases, civil wars) get one lazily from pww_core_on_daily.
+pww_core_assign_bucket = {
+	if = {
+		limit = { NOT = { has_variable = pww_bucket } }
+		set_variable = { pww_bucket = global.pww_next_bucket }
+		add_to_variable = { global.pww_next_bucket = 1 }
+		modulo_variable = { var = global.pww_next_bucket value = 30 }
+		set_variable = { pww_desp_max = 0 }
+		set_variable = { pww_desp_max_res = -1 }
+		set_country_flag = pww_map_dirty
+	}
+}
+
+# Any scope. Refreshes the cached day counters once per game day.
+pww_core_refresh_day = {
+	set_variable = { global.pww_last_day = global.num_days }
+	set_temp_variable = { pww_day = global.num_days }
+	modulo_temp_variable = { var = pww_day value = 30 }
+	set_variable = { global.pww_day_mod30 = pww_day }
+}
+
+# Country scope. Called from on_daily for every country. Kept to a handful of
+# flag and variable checks; the heavy work only runs on the country's bucket day.
+pww_core_on_daily = {
+	if = {
+		limit = { NOT = { has_global_flag = pww_initialized } }
+		pww_core_init = yes
+	}
+	if = {
+		limit = { NOT = { check_variable = { global.pww_last_day = global.num_days } } }
+		pww_core_refresh_day = yes
+	}
+	if = {
+		limit = { NOT = { has_variable = pww_bucket } }
+		pww_core_assign_bucket = yes
+	}
+	if = {
+		limit = { check_variable = { pww_bucket = global.pww_day_mod30 } }
+		pww_core_country_tick = yes
+	}
+	else_if = {
+		limit = { has_country_flag = pww_map_dirty }
+		pww_core_resolve_country_map = yes
+	}
+}
+
+# Country scope. Called from on_monthly for every country; runs the global
+# monthly tick once (the first caller at least 28 days after the last run).
+pww_core_on_monthly = {
+	if = {
+		limit = { has_global_flag = pww_initialized }
+		set_temp_variable = { pww_since = global.num_days }
+		subtract_from_temp_variable = { pww_since = global.pww_last_monthly_day }
+		if = {
+			limit = { check_variable = { pww_since > 27 } }
+			pww_core_monthly_global_tick = yes
+		}
+	}
+}
+
+# Country scope. One staggered tick for this country.
+pww_core_country_tick = {
+	pww_core_resolve_country_map = yes
+	pww_core_update_desperation = yes
+	set_variable = { pww_last_tick_day = global.num_days }
+	if = {
+		limit = { has_global_flag = pww_core_debug }
+		pww_core_debug_log_country = yes
+	}
+	pww_ledger_country_tick = yes
+}
+
+# Any scope (runs inside an arbitrary country). Monthly global work.
+pww_core_monthly_global_tick = {
+	set_variable = { global.pww_last_monthly_day = global.num_days }
+	pww_core_recompute_active_traders = yes
+	if = {
+		limit = { has_global_flag = pww_core_debug }
+		log = "[GetDateText] PWW_CORE monthly: traders=[?global.pww_active_traders^num] day_mod30=[?global.pww_day_mod30]"
+	}
+	pww_ledger_monthly_tick = yes
+}
+
+# Country scope. Sets pww_trader_score.
+#   +1000 human player (always an active trader)
+#   +100  major
+#   +1 per unit of total resource exports
+#   +0.5 per factory (civilian + military + naval, owned)
+#   +0.5 per point of pww_desp_max when the country has 15+ factories
+#         (desperate industrializers)
+pww_core_compute_trader_score = {
+	set_variable = { pww_trader_score = 0 }
+	if = {
+		limit = { is_ai = no }
+		add_to_variable = { pww_trader_score = 1000 }
+	}
+	if = {
+		limit = { is_major = yes }
+		add_to_variable = { pww_trader_score = 100 }
+	}
+	add_to_variable = { pww_trader_score = resource_exported@oil }
+	add_to_variable = { pww_trader_score = resource_exported@aluminium }
+	add_to_variable = { pww_trader_score = resource_exported@rubber }
+	add_to_variable = { pww_trader_score = resource_exported@tungsten }
+	add_to_variable = { pww_trader_score = resource_exported@steel }
+	add_to_variable = { pww_trader_score = resource_exported@chromium }
+	add_to_variable = { pww_trader_score = resource_exported@coal }
+	set_temp_variable = { pww_fac = num_of_factories }
+	multiply_temp_variable = { pww_fac = 0.5 }
+	add_to_variable = { pww_trader_score = pww_fac }
+	if = {
+		limit = { num_of_factories > 14 }
+		set_temp_variable = { pww_dsc = pww_desp_max }
+		multiply_temp_variable = { pww_dsc = 0.5 }
+		add_to_variable = { pww_trader_score = pww_dsc }
+	}
+}
+
+# Any scope. Flags the top 18 existing countries by pww_trader_score with
+# pww_is_active_trader and lists them in global.pww_active_traders.
+pww_core_recompute_active_traders = {
+	clear_temp_array = pww_tr_c
+	clear_temp_array = pww_tr_s
+	clear_array = global.pww_active_traders
+	every_country = {
+		limit = { has_country_flag = pww_is_active_trader }
+		clr_country_flag = pww_is_active_trader
+	}
+	every_country = {
+		limit = { exists = yes }
+		pww_core_compute_trader_score = yes
+		add_to_temp_array = { pww_tr_c = THIS }
+		add_to_temp_array = { pww_tr_s = pww_trader_score }
+	}
+	for_loop_effect = {
+		start = 0
+		end = 18
+		value = pww_tr_k
+		break = pww_tr_break
+		find_highest_in_array = {
+			array = pww_tr_s
+			value = pww_tr_v
+			index = pww_tr_i
+		}
+		if = {
+			limit = { check_variable = { pww_tr_v > 0 } }
+			set_temp_variable = { pww_tr_pick = pww_tr_c^pww_tr_i }
+			var:pww_tr_pick = {
+				set_country_flag = pww_is_active_trader
+				add_to_array = { global.pww_active_traders = THIS }
+			}
+			set_temp_variable = { pww_tr_s^pww_tr_i = -1 }
+		}
+		else = {
+			set_temp_variable = { pww_tr_break = 1 }
+		}
+	}
+}
+
+# Country scope (the opinion holder). Temp in: pww_opinion_target (a country).
+# Temp out: pww_norm_opinion, this country's opinion of the target on a
+# +-100 scale regardless of the game's opinion range.
+pww_core_norm_opinion = {
+	set_temp_variable = { pww_norm_opinion = opinion@var:pww_opinion_target }
+	divide_temp_variable = { var = pww_norm_opinion value = global.pww_opinion_scale if_zero = 0 }
+	clamp_temp_variable = { var = pww_norm_opinion min = -100 max = 100 }
+}
+
+# Any scope. Temp in/out: pww_norm_value. Normalizes a raw opinion-scale value.
+pww_core_norm_value = {
+	divide_temp_variable = { var = pww_norm_value value = global.pww_opinion_scale if_zero = 0 }
+	clamp_temp_variable = { var = pww_norm_value min = -100 max = 100 }
+}
+
+# Any scope. Temp in: pww_band_value (civilian factory equivalents).
+# Temp out: pww_band (0 Trivial < 0.5 <= 1 Small < 1.5 <= 2 Fair < 3 <= 3 Large
+# < 6 <= 4 Huge). Thresholds are placeholders for playtest tuning.
+pww_core_value_to_band = {
+	set_temp_variable = { pww_band = 0 }
+	if = {
+		limit = { check_variable = { pww_band_value > 5.999 } }
+		set_temp_variable = { pww_band = 4 }
+	}
+	else_if = {
+		limit = { check_variable = { pww_band_value > 2.999 } }
+		set_temp_variable = { pww_band = 3 }
+	}
+	else_if = {
+		limit = { check_variable = { pww_band_value > 1.499 } }
+		set_temp_variable = { pww_band = 2 }
+	}
+	else_if = {
+		limit = { check_variable = { pww_band_value > 0.499 } }
+		set_temp_variable = { pww_band = 1 }
+	}
+}

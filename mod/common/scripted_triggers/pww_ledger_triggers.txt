@@ -1,0 +1,175 @@
+###############################################################################
+# Power Without War: agreements ledger triggers
+#
+# All triggers read temp variables documented per trigger. Status and kind
+# codes are listed in the header of
+# common/scripted_effects/pww_ledger_core.txt.
+#
+# PUBLIC TRIGGERS
+#   pww_ledger_debug_on                 (any) ledger debug logging is enabled:
+#                                       global.pww_ledger_debug > 0 or global
+#                                       flag pww_ledger_debug.
+#   pww_ledger_is_initialized           (any) ledger storage is initialized.
+#   pww_ledger_ag_exists                (any) temp pww_l_ag is a valid id.
+#   pww_ledger_ag_is_live               (any) temp pww_l_ag has status draft,
+#                                       active, suspended or reserved.
+#   pww_ledger_ag_is_active             (any) temp pww_l_ag is active.
+#   pww_ledger_ag_is_terminal           (any) temp pww_l_ag is completed,
+#                                       terminated, defaulted or nationalized.
+#   pww_ledger_ag_involves_this         (country) THIS is seller or buyer of
+#                                       temp pww_l_ag.
+#   pww_ledger_has_live_agreement_with  (country) THIS has a live agreement
+#                                       with the country in temp pww_l_other.
+#                                       Writes temps pww_ltg_*.
+###############################################################################
+
+pww_ledger_debug_on = {
+	OR = {
+		check_variable = { global.pww_ledger_debug > 0 }
+		has_global_flag = pww_ledger_debug
+	}
+}
+
+pww_ledger_is_initialized = {
+	has_global_flag = pww_ledger_initialized
+}
+
+pww_ledger_ag_exists = {
+	check_variable = { pww_l_ag > -1 }
+	check_variable = { pww_l_ag < global.pww_next_agreement_id }
+}
+
+pww_ledger_ag_is_live = {
+	pww_ledger_ag_exists = yes
+	OR = {
+		check_variable = { global.pww_ag_status^pww_l_ag = 0 }
+		check_variable = { global.pww_ag_status^pww_l_ag = 1 }
+		check_variable = { global.pww_ag_status^pww_l_ag = 2 }
+		check_variable = { global.pww_ag_status^pww_l_ag = 7 }
+	}
+}
+
+pww_ledger_ag_is_active = {
+	pww_ledger_ag_exists = yes
+	check_variable = { global.pww_ag_status^pww_l_ag = 1 }
+}
+
+pww_ledger_ag_is_terminal = {
+	pww_ledger_ag_exists = yes
+	check_variable = { global.pww_ag_status^pww_l_ag > 2 }
+	check_variable = { global.pww_ag_status^pww_l_ag < 7 }
+}
+
+pww_ledger_ag_involves_this = {
+	pww_ledger_ag_exists = yes
+	set_temp_variable = { pww_ltg_s = global.pww_ag_seller^pww_l_ag }
+	set_temp_variable = { pww_ltg_b = global.pww_ag_buyer^pww_l_ag }
+	OR = {
+		check_variable = { pww_ltg_s = THIS }
+		check_variable = { pww_ltg_b = THIS }
+	}
+}
+
+# Country scope. Temp in: pww_l_other (country).
+pww_ledger_has_live_agreement_with = {
+	check_variable = { pww_ag_ids^num > 0 }
+	any_of = {
+		array = pww_ag_ids
+		value = pww_ltg_id
+		OR = {
+			check_variable = { global.pww_ag_status^pww_ltg_id = 0 }
+			check_variable = { global.pww_ag_status^pww_ltg_id = 1 }
+			check_variable = { global.pww_ag_status^pww_ltg_id = 2 }
+			check_variable = { global.pww_ag_status^pww_ltg_id = 7 }
+		}
+		set_temp_variable = { pww_ltg_s = global.pww_ag_seller^pww_ltg_id }
+		set_temp_variable = { pww_ltg_b = global.pww_ag_buyer^pww_ltg_id }
+		OR = {
+			check_variable = { pww_ltg_s = pww_l_other }
+			check_variable = { pww_ltg_b = pww_l_other }
+		}
+	}
+}
+
+###############################################################################
+# Lease triggers (internal, used by validation and reconciliation)
+###############################################################################
+
+# Country scope (the holder). Reads global.pww_l_meta_state (a state id).
+# True if THIS holds any resource right in that state (vanilla or ours).
+# Note: has_resources_rights is false when the state has no resource.
+pww_ledger_holder_has_right_in_meta_state = {
+	meta_trigger = {
+		text = {
+			has_resources_rights = { state = [S] }
+		}
+		S = "[?global.pww_l_meta_state|0]"
+	}
+}
+
+# State scope. Reads pww_lv_res (-1 = any resource). True if the state
+# produces none of the leased resource.
+pww_ledger_state_lacks_lease_resource = {
+	OR = {
+		AND = {
+			check_variable = { pww_lv_res = -1 }
+			NOT = { check_variable = { resource@oil > 0 } }
+			NOT = { check_variable = { resource@aluminium > 0 } }
+			NOT = { check_variable = { resource@rubber > 0 } }
+			NOT = { check_variable = { resource@tungsten > 0 } }
+			NOT = { check_variable = { resource@steel > 0 } }
+			NOT = { check_variable = { resource@chromium > 0 } }
+			NOT = { check_variable = { resource@coal > 0 } }
+		}
+		AND = {
+			check_variable = { pww_lv_res = 0 }
+			NOT = { check_variable = { resource@oil > 0 } }
+		}
+		AND = {
+			check_variable = { pww_lv_res = 1 }
+			NOT = { check_variable = { resource@aluminium > 0 } }
+		}
+		AND = {
+			check_variable = { pww_lv_res = 2 }
+			NOT = { check_variable = { resource@rubber > 0 } }
+		}
+		AND = {
+			check_variable = { pww_lv_res = 3 }
+			NOT = { check_variable = { resource@tungsten > 0 } }
+		}
+		AND = {
+			check_variable = { pww_lv_res = 4 }
+			NOT = { check_variable = { resource@steel > 0 } }
+		}
+		AND = {
+			check_variable = { pww_lv_res = 5 }
+			NOT = { check_variable = { resource@chromium > 0 } }
+		}
+		AND = {
+			check_variable = { pww_lv_res = 6 }
+			NOT = { check_variable = { resource@coal > 0 } }
+		}
+	}
+}
+
+# Any scope. Reads pww_lv_state, pww_lv_buyer, pww_lv_ag. True if another
+# live lease or concession (status draft, active, suspended or reserved) on
+# that state already belongs to the same holder.
+pww_ledger_lease_duplicate_exists = {
+	var:pww_lv_state = {
+		check_variable = { pww_ls_ids^num > 0 }
+		any_of = {
+			array = pww_ls_ids
+			value = pww_ltg_lid
+			NOT = { check_variable = { pww_ltg_lid = pww_lv_ag } }
+			OR = {
+				check_variable = { global.pww_ag_status^pww_ltg_lid = 0 }
+				check_variable = { global.pww_ag_status^pww_ltg_lid = 1 }
+				check_variable = { global.pww_ag_status^pww_ltg_lid = 2 }
+				check_variable = { global.pww_ag_status^pww_ltg_lid = 7 }
+			}
+			set_temp_variable = { pww_ltg_lb = global.pww_ag_buyer^pww_ltg_lid }
+			check_variable = { pww_ltg_lb = pww_lv_buyer }
+		}
+	}
+}

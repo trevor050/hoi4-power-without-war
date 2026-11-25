@@ -1,0 +1,137 @@
+# Per-state delivered chromium (to the state's controller) into global.pww_t5_del.
+pww_t5_state_delivered = {
+	set_variable = { global.pww_t5_del = 0 }
+	for_loop_effect = {
+		end = 300
+		value = pww_t5_a
+		set_variable = { global.pww_t5_a = pww_t5_a }
+		if = {
+			limit = {
+				meta_trigger = {
+					text = { has_resources_amount = { resource = chromium amount > [A] delivered = yes } }
+					A = "[?global.pww_t5_a|0]"
+				}
+			}
+			add_to_variable = { global.pww_t5_del = 1 }
+		}
+	}
+	set_variable = { global.pww_t5_tot = 0 }
+	for_loop_effect = {
+		end = 300
+		value = pww_t5_a
+		set_variable = { global.pww_t5_a = pww_t5_a }
+		if = {
+			limit = {
+				meta_trigger = {
+					text = { has_resources_amount = { resource = chromium amount > [A] } }
+					A = "[?global.pww_t5_a|0]"
+				}
+			}
+			add_to_variable = { global.pww_t5_tot = 1 }
+		}
+	}
+	log = "PWW_RESULT t5.state INFO day=[?global.pww_t5_day] state=[THIS.GetID] [THIS.GetName] owner=[THIS.Owner.GetTag] controller=[THIS.Controller.GetTag] chromium_base~[?global.pww_t5_tot|0] delivered_to_controller~[?global.pww_t5_del|0]"
+}
+
+pww_t5_snap_country = {
+	set_variable = { global.pww_t5_prod = resource_produced@chromium }
+	set_variable = { global.pww_t5_sur = resource@chromium }
+	set_variable = { global.pww_t5_imp = resource_imported@chromium }
+	set_variable = { global.pww_t5_exp = resource_exported@chromium }
+	set_variable = { global.pww_t5_conv = num_equipment@convoy }
+	log = "PWW_RESULT t5.snap INFO day=[?global.pww_t5_day] tag=[THIS.GetTag] chromium produced=[?global.pww_t5_prod] surplus=[?global.pww_t5_sur] imported=[?global.pww_t5_imp] exported=[?global.pww_t5_exp] convoys=[?global.pww_t5_conv]"
+}
+
+pww_t5_report = {
+	if = { limit = { var:global.pww_t5_land = { has_resources_rights = { receiver = GER } } } log = "PWW_RESULT t5.rights INFO day=[?global.pww_t5_day] GER@land=yes" }
+	else = { log = "PWW_RESULT t5.rights INFO day=[?global.pww_t5_day] GER@land=no" }
+	if = { limit = { var:global.pww_t5_sea = { has_resources_rights = { receiver = USA } } } log = "PWW_RESULT t5.rights INFO day=[?global.pww_t5_day] USA@sea=yes" }
+	else = { log = "PWW_RESULT t5.rights INFO day=[?global.pww_t5_day] USA@sea=no" }
+	if = { limit = { var:global.pww_t5_sea2 = { has_resources_rights = { receiver = HAI } } } log = "PWW_RESULT t5.rights INFO day=[?global.pww_t5_day] HAI@sea2=yes" }
+	else = { log = "PWW_RESULT t5.rights INFO day=[?global.pww_t5_day] HAI@sea2=no" }
+	var:global.pww_t5_land = { pww_t5_state_delivered = yes }
+	var:global.pww_t5_sea = { pww_t5_state_delivered = yes }
+	var:global.pww_t5_sea2 = { pww_t5_state_delivered = yes }
+	TUR = { pww_t5_snap_country = yes }
+	GER = { pww_t5_snap_country = yes }
+	USA = { pww_t5_snap_country = yes }
+	HAI = { pww_t5_snap_country = yes }
+	SOV = { pww_t5_snap_country = yes }
+}
+
+pww_t5_tick = {
+	if = {
+		limit = { check_variable = { global.pww_t5_day = 2 } }
+		TUR = {
+			random_owned_state = {
+				limit = { is_coastal = no has_resources_amount = { resource = chromium amount > 10 } }
+				set_variable = { global.pww_t5_land = THIS }
+			}
+			random_owned_state = {
+				limit = { is_coastal = yes has_resources_amount = { resource = chromium amount > 10 } }
+				set_variable = { global.pww_t5_sea = THIS }
+			}
+			random_owned_state = {
+				limit = {
+					is_coastal = yes
+					has_resources_amount = { resource = chromium amount > 10 }
+					NOT = { check_variable = { global.pww_t5_sea = THIS } }
+				}
+				set_variable = { global.pww_t5_sea2 = THIS }
+			}
+		}
+		pww_t5_report = yes
+	}
+	if = {
+		limit = { check_variable = { global.pww_t5_day = 3 } }
+		TUR = {
+			give_resource_rights = { receiver = GER state = global.pww_t5_land }
+			give_resource_rights = { receiver = USA state = global.pww_t5_sea resources = { chromium } }
+			give_resource_rights = { receiver = HAI state = global.pww_t5_sea2 }
+		}
+		log = "PWW_RESULT t5.grant INFO day=[?global.pww_t5_day] GER@land, USA@sea (chromium only), HAI@sea2 (HAI has no convoys)"
+	}
+	if = {
+		limit = { check_variable = { global.pww_t5_day = 6 } }
+		pww_t5_report = yes
+	}
+	# Duplicate grant, then a single removal: do duplicates stack?
+	if = {
+		limit = { check_variable = { global.pww_t5_day = 7 } }
+		TUR = { give_resource_rights = { receiver = GER state = global.pww_t5_land } }
+	}
+	if = {
+		limit = { check_variable = { global.pww_t5_day = 8 } }
+		pww_t5_report = yes
+		GER = { remove_resource_rights = global.pww_t5_land }
+		log = "PWW_RESULT t5.remove_once INFO day=[?global.pww_t5_day] after duplicate grant"
+	}
+	if = {
+		limit = { check_variable = { global.pww_t5_day = 10 } }
+		pww_t5_report = yes
+		if = {
+			limit = { NOT = { var:global.pww_t5_land = { has_resources_rights = { receiver = GER } } } }
+			log = "PWW_RESULT t5.dup_single_remove PASS day=[?global.pww_t5_day] one remove clears a duplicated grant (no stacking)"
+		}
+		else = { log = "PWW_RESULT t5.dup_single_remove INFO day=[?global.pww_t5_day] grant still present: duplicates stack" }
+		# Owner change on the sea state (no occupation step first).
+		var:global.pww_t5_sea = { transfer_state_to = GRE }
+		log = "PWW_RESULT t5.transfer INFO day=[?global.pww_t5_day] sea state owner+controller -> GRE"
+	}
+	if = {
+		limit = { check_variable = { global.pww_t5_day = 12 } }
+		pww_t5_report = yes
+		var:global.pww_t5_sea = { transfer_state_to = TUR }
+	}
+	if = {
+		limit = { check_variable = { global.pww_t5_day = 14 } }
+		pww_t5_report = yes
+		USA = { remove_resource_rights = global.pww_t5_sea }
+		HAI = { remove_resource_rights = global.pww_t5_sea2 }
+	}
+	if = {
+		limit = { check_variable = { global.pww_t5_day = 16 } }
+		pww_t5_report = yes
+		log = "PWW_DONE t5_resource_rights"
+	}
+}

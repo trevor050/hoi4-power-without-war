@@ -1,0 +1,18 @@
+# Phase 0 test 1: variable-driven resource flows (seller cost, buyer gain).
+# Seller POR (tungsten), buyer GER. Driven from GER's on_daily with a global day counter.
+on_actions = {
+	on_startup = {
+		effect = {
+			log = "PWW_RESULT t1.on_startup INFO fired day=[?global.pww_t1_day] date=[GetDateText]"
+		}
+	}
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = GER }
+				add_to_variable = { global.pww_t1_day = 1 }
+				pww_t1_tick = yes
+			}
+		}
+	}
+}

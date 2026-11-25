@@ -1,0 +1,357 @@
+###############################################################################
+# Power Without War: agreements ledger, flows
+#
+# PUBLIC EFFECTS
+#   pww_ledger_recompute_flows = yes   (country scope)
+#       Rebuilds THIS country's flow variables from every ACTIVE agreement in
+#       its pww_ag_ids array, then applies them: the single dynamic modifier
+#       pww_ledger_flows (resources in/out, civilian factory use, net PP) and
+#       the civilian factory receipt. Called by the ledger after every status
+#       change. Idempotent: calling it again changes nothing.
+#   pww_ledger_apply_civ_receipt = yes (country scope)
+#       Makes THIS country's received civilian factories match pww_lf_civ_in.
+#
+# COUNTRY VARIABLES (read-only for other lanes)
+#   pww_lf_in_<res>, pww_lf_out_<res>   resource units in / out
+#   pww_lf_civ_use                      civilian factories paid out
+#   pww_lf_civ_in                       civilian factories received (target)
+#   pww_lf_civ_offsite                  offsite civilian factories currently
+#                                       granted by the ledger (applied)
+#   pww_lf_pp                           net political power per day
+#   pww_lf_active                       number of active agreements
+#
+# INTERNAL HELPERS
+#   pww_ledger_calc_seller_avail       (country) temp in pww_lv_res; temp out
+#                                      pww_lfa_avail = resource_produced minus
+#                                      resources already committed out
+#   pww_ledger_calc_state_lease_units  (state) temp in pww_lv_res; temp out
+#                                      pww_lls_units = state resource output
+#                                      covered by the lease
+###############################################################################
+
+pww_ledger_recompute_flows = {
+	set_variable = { pww_lf_in_oil = 0 }
+	set_variable = { pww_lf_in_aluminium = 0 }
+	set_variable = { pww_lf_in_rubber = 0 }
+	set_variable = { pww_lf_in_tungsten = 0 }
+	set_variable = { pww_lf_in_steel = 0 }
+	set_variable = { pww_lf_in_chromium = 0 }
+	set_variable = { pww_lf_in_coal = 0 }
+	set_variable = { pww_lf_out_oil = 0 }
+	set_variable = { pww_lf_out_aluminium = 0 }
+	set_variable = { pww_lf_out_rubber = 0 }
+	set_variable = { pww_lf_out_tungsten = 0 }
+	set_variable = { pww_lf_out_steel = 0 }
+	set_variable = { pww_lf_out_chromium = 0 }
+	set_variable = { pww_lf_out_coal = 0 }
+	set_variable = { pww_lf_civ_use = 0 }
+	set_variable = { pww_lf_civ_in = 0 }
+	set_variable = { pww_lf_pp = 0 }
+	set_variable = { pww_lf_active = 0 }
+
+	for_each_loop = {
+		array = pww_ag_ids
+		value = pww_lrf_id
+		index = pww_lrf_i
+		if = {
+			limit = { check_variable = { global.pww_ag_status^pww_lrf_id = 1 } }
+			add_to_variable = { pww_lf_active = 1 }
+			set_temp_variable = { pww_lrf_s = global.pww_ag_seller^pww_lrf_id }
+			set_temp_variable = { pww_lrf_b = global.pww_ag_buyer^pww_lrf_id }
+			set_temp_variable = { pww_lrf_is_s = 0 }
+			set_temp_variable = { pww_lrf_is_b = 0 }
+			if = {
+				limit = { check_variable = { pww_lrf_s = THIS } }
+				set_temp_variable = { pww_lrf_is_s = 1 }
+			}
+			if = {
+				limit = { check_variable = { pww_lrf_b = THIS } }
+				set_temp_variable = { pww_lrf_is_b = 1 }
+			}
+
+			# Resources (supply agreements only; leases deliver through rights)
+			if = {
+				limit = { check_variable = { global.pww_ag_kind^pww_lrf_id = 0 } }
+				set_temp_variable = { pww_lrf_res = global.pww_ag_res^pww_lrf_id }
+				set_temp_variable = { pww_lrf_amt = global.pww_ag_amount^pww_lrf_id }
+				if = {
+					limit = { check_variable = { pww_lrf_is_s = 1 } }
+					if = {
+						limit = { check_variable = { pww_lrf_res = 0 } }
+						add_to_variable = { pww_lf_out_oil = pww_lrf_amt }
+					}
+					else_if = {
+						limit = { check_variable = { pww_lrf_res = 1 } }
+						add_to_variable = { pww_lf_out_aluminium = pww_lrf_amt }
+					}
+					else_if = {
+						limit = { check_variable = { pww_lrf_res = 2 } }
+						add_to_variable = { pww_lf_out_rubber = pww_lrf_amt }
+					}
+					else_if = {
+						limit = { check_variable = { pww_lrf_res = 3 } }
+						add_to_variable = { pww_lf_out_tungsten = pww_lrf_amt }
+					}
+					else_if = {
+						limit = { check_variable = { pww_lrf_res = 4 } }
+						add_to_variable = { pww_lf_out_steel = pww_lrf_amt }
+					}
+					else_if = {
+						limit = { check_variable = { pww_lrf_res = 5 } }
+						add_to_variable = { pww_lf_out_chromium = pww_lrf_amt }
+					}
+					else_if = {
+						limit = { check_variable = { pww_lrf_res = 6 } }
+						add_to_variable = { pww_lf_out_coal = pww_lrf_amt }
+					}
+				}
+				if = {
+					limit = { check_variable = { pww_lrf_is_b = 1 } }
+					if = {
+						limit = { check_variable = { pww_lrf_res = 0 } }
+						add_to_variable = { pww_lf_in_oil = pww_lrf_amt }
+					}
+					else_if = {
+						limit = { check_variable = { pww_lrf_res = 1 } }
+						add_to_variable = { pww_lf_in_aluminium = pww_lrf_amt }
+					}
+					else_if = {
+						limit = { check_variable = { pww_lrf_res = 2 } }
+						add_to_variable = { pww_lf_in_rubber = pww_lrf_amt }
+					}
+					else_if = {
+						limit = { check_variable = { pww_lrf_res = 3 } }
+						add_to_variable = { pww_lf_in_tungsten = pww_lrf_amt }
+					}
+					else_if = {
+						limit = { check_variable = { pww_lrf_res = 4 } }
+						add_to_variable = { pww_lf_in_steel = pww_lrf_amt }
+					}
+					else_if = {
+						limit = { check_variable = { pww_lrf_res = 5 } }
+						add_to_variable = { pww_lf_in_chromium = pww_lrf_amt }
+					}
+					else_if = {
+						limit = { check_variable = { pww_lrf_res = 6 } }
+						add_to_variable = { pww_lf_in_coal = pww_lrf_amt }
+					}
+				}
+			}
+
+			# Civilian factories. Positive: buyer pays seller.
+			set_temp_variable = { pww_lrf_civ = global.pww_ag_civ^pww_lrf_id }
+			if = {
+				limit = { check_variable = { pww_lrf_civ > 0 } }
+				if = {
+					limit = { check_variable = { pww_lrf_is_b = 1 } }
+					add_to_variable = { pww_lf_civ_use = pww_lrf_civ }
+				}
+				if = {
+					limit = { check_variable = { pww_lrf_is_s = 1 } }
+					add_to_variable = { pww_lf_civ_in = pww_lrf_civ }
+				}
+			}
+			else_if = {
+				limit = { check_variable = { pww_lrf_civ < 0 } }
+				multiply_temp_variable = { pww_lrf_civ = -1 }
+				if = {
+					limit = { check_variable = { pww_lrf_is_s = 1 } }
+					add_to_variable = { pww_lf_civ_use = pww_lrf_civ }
+				}
+				if = {
+					limit = { check_variable = { pww_lrf_is_b = 1 } }
+					add_to_variable = { pww_lf_civ_in = pww_lrf_civ }
+				}
+			}
+
+			# Political power per day: matched debit and credit
+			set_temp_variable = { pww_lrf_pp = global.pww_ag_pp^pww_lrf_id }
+			if = {
+				limit = { check_variable = { pww_lrf_is_s = 1 } }
+				add_to_variable = { pww_lf_pp = pww_lrf_pp }
+			}
+			if = {
+				limit = { check_variable = { pww_lrf_is_b = 1 } }
+				subtract_from_variable = { pww_lf_pp = pww_lrf_pp }
+			}
+		}
+	}
+
+	pww_ledger_apply_civ_receipt = yes
+
+	if = {
+		limit = {
+			OR = {
+				check_variable = { pww_lf_active > 0 }
+				check_variable = { pww_lf_civ_offsite > 0 }
+			}
+		}
+		if = {
+			limit = { NOT = { has_dynamic_modifier = { modifier = pww_ledger_flows } } }
+			add_dynamic_modifier = { modifier = pww_ledger_flows }
+		}
+		force_update_dynamic_modifier = yes
+	}
+	else_if = {
+		limit = { has_dynamic_modifier = { modifier = pww_ledger_flows } }
+		remove_dynamic_modifier = { modifier = pww_ledger_flows }
+	}
+
+	if = {
+		limit = { pww_ledger_debug_on = yes }
+		log = "[GetDateText] PWW_LEDGER flows [THIS.GetTag] active=[?pww_lf_active|0] in/out oil=[?pww_lf_in_oil|2]/[?pww_lf_out_oil|2] aluminium=[?pww_lf_in_aluminium|2]/[?pww_lf_out_aluminium|2] rubber=[?pww_lf_in_rubber|2]/[?pww_lf_out_rubber|2] tungsten=[?pww_lf_in_tungsten|2]/[?pww_lf_out_tungsten|2] steel=[?pww_lf_in_steel|2]/[?pww_lf_out_steel|2] chromium=[?pww_lf_in_chromium|2]/[?pww_lf_out_chromium|2] coal=[?pww_lf_in_coal|2]/[?pww_lf_out_coal|2] civ_use=[?pww_lf_civ_use|0] civ_in=[?pww_lf_civ_in|0] civ_offsite=[?pww_lf_civ_offsite|0] pp=[?pww_lf_pp|2]"
+	}
+}
+
+###############################################################################
+# Civilian factory receipt. SWAP POINT.
+#
+# Default implementation: offsite civilian factories (industrial_complex) via
+# add_offsite_building, one level at a time (vanilla only uses constant
+# levels, see common/characters/ROM.txt). pww_lf_civ_offsite remembers how
+# many the ledger has granted, so the receipt converges on pww_lf_civ_in and
+# never double-grants.
+#
+# Alternative (if the harness engine test favors it): cic_to_target_factor
+# inside a targeted dynamic modifier (scope = payer), as in
+# common/decisions/SWI.txt. That needs one modifier instance per
+# (payer, receiver) pair, so replace ONLY this effect's body and keep
+# pww_lf_civ_in as the input. The payer side (civilian_factory_use in
+# pww_ledger_flows) is unchanged by the swap.
+###############################################################################
+pww_ledger_apply_civ_receipt = {
+	set_temp_variable = { pww_lcv_target = pww_lf_civ_in }
+	round_temp_variable = pww_lcv_target
+	clamp_temp_variable = { var = pww_lcv_target min = 0 max = 200 }
+	if = {
+		limit = { NOT = { has_variable = pww_lf_civ_offsite } }
+		set_variable = { pww_lf_civ_offsite = 0 }
+	}
+	set_temp_variable = { pww_lcv_guard = 0 }
+	while_loop_effect = {
+		limit = {
+			check_variable = { pww_lf_civ_offsite < pww_lcv_target }
+			check_variable = { pww_lcv_guard < 200 }
+		}
+		add_offsite_building = { type = industrial_complex level = 1 }
+		add_to_variable = { pww_lf_civ_offsite = 1 }
+		add_to_temp_variable = { pww_lcv_guard = 1 }
+	}
+	while_loop_effect = {
+		limit = {
+			check_variable = { pww_lf_civ_offsite > pww_lcv_target }
+			check_variable = { pww_lcv_guard < 200 }
+		}
+		add_offsite_building = { type = industrial_complex level = -1 }
+		subtract_from_variable = { pww_lf_civ_offsite = 1 }
+		add_to_temp_variable = { pww_lcv_guard = 1 }
+	}
+}
+
+# Country scope (the seller). In: pww_lv_res. Out: pww_lfa_avail.
+pww_ledger_calc_seller_avail = {
+	set_temp_variable = { pww_lfa_avail = 0 }
+	if = {
+		limit = { check_variable = { pww_lv_res = 0 } }
+		set_temp_variable = { pww_lfa_avail = resource_produced@oil }
+		subtract_from_temp_variable = { pww_lfa_avail = pww_lf_out_oil }
+	}
+	else_if = {
+		limit = { check_variable = { pww_lv_res = 1 } }
+		set_temp_variable = { pww_lfa_avail = resource_produced@aluminium }
+		subtract_from_temp_variable = { pww_lfa_avail = pww_lf_out_aluminium }
+	}
+	else_if = {
+		limit = { check_variable = { pww_lv_res = 2 } }
+		set_temp_variable = { pww_lfa_avail = resource_produced@rubber }
+		subtract_from_temp_variable = { pww_lfa_avail = pww_lf_out_rubber }
+	}
+	else_if = {
+		limit = { check_variable = { pww_lv_res = 3 } }
+		set_temp_variable = { pww_lfa_avail = resource_produced@tungsten }
+		subtract_from_temp_variable = { pww_lfa_avail = pww_lf_out_tungsten }
+	}
+	else_if = {
+		limit = { check_variable = { pww_lv_res = 4 } }
+		set_temp_variable = { pww_lfa_avail = resource_produced@steel }
+		subtract_from_temp_variable = { pww_lfa_avail = pww_lf_out_steel }
+	}
+	else_if = {
+		limit = { check_variable = { pww_lv_res = 5 } }
+		set_temp_variable = { pww_lfa_avail = resource_produced@chromium }
+		subtract_from_temp_variable = { pww_lfa_avail = pww_lf_out_chromium }
+	}
+	else_if = {
+		limit = { check_variable = { pww_lv_res = 6 } }
+		set_temp_variable = { pww_lfa_avail = resource_produced@coal }
+		subtract_from_temp_variable = { pww_lfa_avail = pww_lf_out_coal }
+	}
+}
+
+# State scope. In: pww_lv_res (-1 = all). Out: pww_lls_units.
+pww_ledger_calc_state_lease_units = {
+	set_temp_variable = { pww_lls_units = 0 }
+	if = {
+		limit = {
+			OR = {
+				check_variable = { pww_lv_res = -1 }
+				check_variable = { pww_lv_res = 0 }
+			}
+		}
+		add_to_temp_variable = { pww_lls_units = resource@oil }
+	}
+	if = {
+		limit = {
+			OR = {
+				check_variable = { pww_lv_res = -1 }
+				check_variable = { pww_lv_res = 1 }
+			}
+		}
+		add_to_temp_variable = { pww_lls_units = resource@aluminium }
+	}
+	if = {
+		limit = {
+			OR = {
+				check_variable = { pww_lv_res = -1 }
+				check_variable = { pww_lv_res = 2 }
+			}
+		}
+		add_to_temp_variable = { pww_lls_units = resource@rubber }
+	}
+	if = {
+		limit = {
+			OR = {
+				check_variable = { pww_lv_res = -1 }
+				check_variable = { pww_lv_res = 3 }
+			}
+		}
+		add_to_temp_variable = { pww_lls_units = resource@tungsten }
+	}
+	if = {
+		limit = {
+			OR = {
+				check_variable = { pww_lv_res = -1 }
+				check_variable = { pww_lv_res = 4 }
+			}
+		}
+		add_to_temp_variable = { pww_lls_units = resource@steel }
+	}
+	if = {
+		limit = {
+			OR = {
+				check_variable = { pww_lv_res = -1 }
+				check_variable = { pww_lv_res = 5 }
+			}
+		}
+		add_to_temp_variable = { pww_lls_units = resource@chromium }
+	}
+	if = {
+		limit = {
+			OR = {
+				check_variable = { pww_lv_res = -1 }
+				check_variable = { pww_lv_res = 6 }
+			}
+		}
+		add_to_temp_variable = { pww_lls_units = resource@coal }
+	}
+}

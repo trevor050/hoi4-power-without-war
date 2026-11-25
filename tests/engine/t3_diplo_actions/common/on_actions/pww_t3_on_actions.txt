@@ -1,0 +1,25 @@
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = GER }
+				add_to_variable = { global.pww_t3_day = 1 }
+				if = {
+					limit = {
+						OR = {
+							has_global_flag = pww_t3_accepted
+							check_variable = { global.pww_t3_day > 59 }
+						}
+						NOT = { has_global_flag = pww_t3_done }
+					}
+					set_global_flag = pww_t3_done
+					if = {
+						limit = { NOT = { has_global_flag = pww_t3_accepted } }
+						log = "PWW_RESULT t3.ai_to_ai FAIL no AI send/accept within 60 days sent=[?global.pww_t3_sent|0]"
+					}
+					log = "PWW_DONE t3_diplo_actions"
+				}
+			}
+		}
+	}
+}

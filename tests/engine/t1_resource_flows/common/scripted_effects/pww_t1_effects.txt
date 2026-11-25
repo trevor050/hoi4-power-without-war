@@ -1,0 +1,124 @@
+# Snapshot of tungsten flows for the country in scope.
+pww_t1_snap = {
+	set_variable = { global.pww_t1_prod = resource_produced@tungsten }
+	set_variable = { global.pww_t1_sur = resource@tungsten }
+	set_variable = { global.pww_t1_exp = resource_exported@tungsten }
+	set_variable = { global.pww_t1_imp = resource_imported@tungsten }
+	set_variable = { global.pww_t1_con = resource_consumed@tungsten }
+	set_variable = { global.pww_t1_mcost = modifier@country_resource_cost_tungsten }
+	set_variable = { global.pww_t1_mgain = modifier@country_resource_tungsten }
+	log = "PWW_RESULT t1.snap INFO day=[?global.pww_t1_day] [GetDateText] tag=[THIS.GetTag] produced=[?global.pww_t1_prod] surplus=[?global.pww_t1_sur] exported=[?global.pww_t1_exp] imported=[?global.pww_t1_imp] consumed=[?global.pww_t1_con] mod_cost=[?global.pww_t1_mcost] mod_gain=[?global.pww_t1_mgain]"
+	if = { limit = { has_idea = closed_economy } log = "PWW_RESULT t1.law INFO day=[?global.pww_t1_day] tag=[THIS.GetTag] law=closed_economy" }
+	if = { limit = { has_idea = limited_exports } log = "PWW_RESULT t1.law INFO day=[?global.pww_t1_day] tag=[THIS.GetTag] law=limited_exports" }
+	if = { limit = { has_idea = export_focus } log = "PWW_RESULT t1.law INFO day=[?global.pww_t1_day] tag=[THIS.GetTag] law=export_focus" }
+	if = { limit = { has_idea = free_trade } log = "PWW_RESULT t1.law INFO day=[?global.pww_t1_day] tag=[THIS.GetTag] law=free_trade" }
+	if = { limit = { is_ai = no } log = "PWW_RESULT t1.player INFO day=[?global.pww_t1_day] tag=[THIS.GetTag] is the player" }
+}
+
+pww_t1_snap_both = {
+	POR = { pww_t1_snap = yes }
+	GER = { pww_t1_snap = yes }
+}
+
+# Set the flow to FACTOR x POR's current tungsten production.
+pww_t1_set_flow = {
+	POR = {
+		set_variable = { pww_t1_cost = pww_t1_base_prod }
+		multiply_variable = { pww_t1_cost = global.pww_t1_factor }
+		force_update_dynamic_modifier = yes
+	}
+	GER = {
+		set_variable = { pww_t1_gain = POR.pww_t1_cost }
+		force_update_dynamic_modifier = yes
+	}
+	log = "PWW_RESULT t1.set_flow INFO day=[?global.pww_t1_day] factor=[?global.pww_t1_factor] amount=[?POR.pww_t1_cost]"
+}
+
+pww_t1_tick = {
+	if = {
+		limit = { check_variable = { global.pww_t1_day = 2 } }
+		pww_t1_snap_both = yes
+	}
+	if = {
+		limit = { check_variable = { global.pww_t1_day = 3 } }
+		POR = {
+			set_variable = { pww_t1_base_prod = resource_produced@tungsten }
+			add_dynamic_modifier = { modifier = pww_t1_seller_dm }
+		}
+		GER = { add_dynamic_modifier = { modifier = pww_t1_buyer_dm } }
+		set_variable = { global.pww_t1_factor = 0.5 }
+		pww_t1_set_flow = yes
+	}
+	if = {
+		limit = {
+			OR = {
+				check_variable = { global.pww_t1_day = 4 }
+				check_variable = { global.pww_t1_day = 7 }
+				check_variable = { global.pww_t1_day = 14 }
+			}
+		}
+		pww_t1_snap_both = yes
+	}
+	# Export law change on the seller: free trade maximises the exportable share.
+	if = {
+		limit = { check_variable = { global.pww_t1_day = 15 } }
+		POR = { add_ideas = free_trade }
+		log = "PWW_RESULT t1.law_change INFO day=[?global.pww_t1_day] POR -> free_trade"
+	}
+	if = {
+		limit = {
+			OR = {
+				check_variable = { global.pww_t1_day = 16 }
+				check_variable = { global.pww_t1_day = 22 }
+				check_variable = { global.pww_t1_day = 29 }
+			}
+		}
+		pww_t1_snap_both = yes
+	}
+	# State that must survive the 1 Feb autosave.
+	if = {
+		limit = { check_variable = { global.pww_t1_day = 30 } }
+		set_global_flag = pww_t1_pre_save
+		log = "PWW_RESULT t1.pre_save INFO day=[?global.pww_t1_day] cost=[?POR.pww_t1_cost] gain=[?GER.pww_t1_gain]"
+	}
+	# Reload check (runs both in the first session and after -continuelastsave).
+	if = {
+		limit = { check_variable = { global.pww_t1_day = 32 } }
+		if = {
+			limit = {
+				POR = { has_dynamic_modifier = { modifier = pww_t1_seller_dm } }
+				GER = { has_dynamic_modifier = { modifier = pww_t1_buyer_dm } }
+				POR = { check_variable = { pww_t1_cost > 0 } }
+			}
+			log = "PWW_RESULT t1.persist PASS day=[?global.pww_t1_day] modifiers and variables present cost=[?POR.pww_t1_cost] gain=[?GER.pww_t1_gain]"
+		}
+		else = {
+			log = "PWW_RESULT t1.persist FAIL day=[?global.pww_t1_day] modifier or variable missing"
+		}
+		pww_t1_snap_both = yes
+	}
+	# Switch off: expect full revert.
+	if = {
+		limit = { check_variable = { global.pww_t1_day = 33 } }
+		set_variable = { global.pww_t1_factor = 0 }
+		pww_t1_set_flow = yes
+	}
+	if = {
+		limit = { check_variable = { global.pww_t1_day = 35 } }
+		pww_t1_snap_both = yes
+	}
+	# Oversubscribe: cost twice the production.
+	if = {
+		limit = { check_variable = { global.pww_t1_day = 36 } }
+		set_variable = { global.pww_t1_factor = 2 }
+		pww_t1_set_flow = yes
+	}
+	if = {
+		limit = { check_variable = { global.pww_t1_day = 38 } }
+		pww_t1_snap_both = yes
+	}
+	if = {
+		limit = { check_variable = { global.pww_t1_day = 39 } }
+		log = "PWW_DONE t1_resource_flows"
+	}
+}

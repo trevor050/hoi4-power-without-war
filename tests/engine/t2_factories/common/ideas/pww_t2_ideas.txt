@@ -1,0 +1,12 @@
+ideas = {
+	country = {
+		pww_t2_target_idea = {
+			picture = generic_production_bonus
+			allowed = { always = yes }
+			targeted_modifier = {
+				tag = HUN
+				cic_to_target_factor = 0.1
+			}
+		}
+	}
+}

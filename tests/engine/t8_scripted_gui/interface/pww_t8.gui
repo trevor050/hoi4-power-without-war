@@ -1,0 +1,38 @@
+guiTypes = {
+	containerWindowType = {
+		name = "pww_t8_trade_window"
+		position = { x = 20 y = 60 }
+		size = { width = 160 height = 40 }
+		buttonType = {
+			name = "pww_t8_trade_button"
+			position = { x = 0 y = 0 }
+			quadTextureSprite = "GFX_button_148x34"
+			buttonText = "pww_t8_trade_text"
+			buttonFont = "hoi_16mbs"
+		}
+	}
+	containerWindowType = {
+		name = "pww_t8_topbar_window"
+		position = { x = 600 y = 60 }
+		size = { width = 160 height = 40 }
+		buttonType = {
+			name = "pww_t8_topbar_button"
+			position = { x = 0 y = 0 }
+			quadTextureSprite = "GFX_button_148x34"
+			buttonText = "pww_t8_topbar_text"
+			buttonFont = "hoi_16mbs"
+		}
+	}
+	containerWindowType = {
+		name = "pww_t8_diplo_window"
+		position = { x = 20 y = 20 }
+		size = { width = 160 height = 40 }
+		buttonType = {
+			name = "pww_t8_diplo_button"
+			position = { x = 0 y = 0 }
+			quadTextureSprite = "GFX_button_148x34"
+			buttonText = "pww_t8_diplo_text"
+			buttonFont = "hoi_16mbs"
+		}
+	}
+}

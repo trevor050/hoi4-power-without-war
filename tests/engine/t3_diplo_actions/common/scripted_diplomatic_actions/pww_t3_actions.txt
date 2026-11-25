@@ -1,0 +1,40 @@
+# Phase 0 test 3: minimal scripted diplomatic action. AI ITA should send it to AI HUN and HUN accept.
+scripted_diplomatic_actions = {
+	pww_t3_offer = {
+		allowed = { NOT = { has_global_flag = pww_t3_accepted } }
+		visible = { always = yes }
+		selectable = { always = yes }
+		requires_acceptance = yes
+		cost = 0
+		command_power = 0
+		icon = 1
+		on_sent_effect = {
+			add_to_variable = { global.pww_t3_sent = 1 }
+			log = "PWW_RESULT t3.sent INFO [GetDateText] sender=[ROOT.GetTag] receiver=[THIS.GetTag] n=[?global.pww_t3_sent|0]"
+		}
+		complete_effect = {
+			set_global_flag = pww_t3_accepted
+			log = "PWW_RESULT t3.accepted PASS [GetDateText] sender=[ROOT.GetTag] receiver=[THIS.GetTag]"
+		}
+		reject_effect = {
+			log = "PWW_RESULT t3.rejected INFO [GetDateText] sender=[ROOT.GetTag] receiver=[THIS.GetTag]"
+		}
+		can_be_sent = { always = yes }
+		send_description = pww_t3_offer_send_desc
+		can_be_accepted = { always = yes }
+		receive_description = pww_t3_offer_receive_desc
+		ai_acceptance = {
+			pww_t3_acceptance_base = {
+				base = 100
+			}
+		}
+		ai_desire = {
+			base = -1
+			modifier = {
+				ROOT = { tag = ITA }
+				tag = HUN
+				add = 1000
+			}
+		}
+	}
+}

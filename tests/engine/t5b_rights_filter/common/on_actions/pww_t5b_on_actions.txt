@@ -1,0 +1,13 @@
+# Phase 0 test 5b: does a resource-filtered grant deliver? Is USA (overseas, many convoys) able to receive?
+# Land chromium state -> GER with resources = { chromium }; coastal chromium state -> USA unfiltered.
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = GER }
+				add_to_variable = { global.pww_t5b_day = 1 }
+				pww_t5b_tick = yes
+			}
+		}
+	}
+}

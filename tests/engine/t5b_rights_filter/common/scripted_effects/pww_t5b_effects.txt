@@ -1,0 +1,51 @@
+pww_t5b_snap = {
+	set_variable = { global.pww_t5b_prod = resource_produced@chromium }
+	set_variable = { global.pww_t5b_imp = resource_imported@chromium }
+	set_variable = { global.pww_t5b_sur = resource@chromium }
+	log = "PWW_RESULT t5b.snap INFO day=[?global.pww_t5b_day] tag=[THIS.GetTag] chromium produced=[?global.pww_t5b_prod] imported=[?global.pww_t5b_imp] surplus=[?global.pww_t5b_sur]"
+}
+pww_t5b_report = {
+	TUR = { pww_t5b_snap = yes }
+	GER = { pww_t5b_snap = yes }
+	USA = { pww_t5b_snap = yes }
+	var:global.pww_t5b_land = { log = "PWW_RESULT t5b.state INFO day=[?global.pww_t5b_day] land=[THIS.GetID] [THIS.GetName]" }
+	var:global.pww_t5b_sea = { log = "PWW_RESULT t5b.state INFO day=[?global.pww_t5b_day] sea=[THIS.GetID] [THIS.GetName]" }
+	if = { limit = { var:global.pww_t5b_land = { has_resources_rights = { receiver = GER resources = { chromium } } } } log = "PWW_RESULT t5b.rights INFO day=[?global.pww_t5b_day] GER@land(chromium)=yes" }
+	if = { limit = { var:global.pww_t5b_sea = { has_resources_rights = { receiver = USA resources = { chromium } } } } log = "PWW_RESULT t5b.rights INFO day=[?global.pww_t5b_day] USA@sea(chromium)=yes" }
+}
+pww_t5b_tick = {
+	if = {
+		limit = { check_variable = { global.pww_t5b_day = 2 } }
+		TUR = {
+			random_owned_state = {
+				limit = { is_coastal = no has_resources_amount = { resource = chromium amount > 10 } }
+				set_variable = { global.pww_t5b_land = THIS }
+			}
+			random_owned_state = {
+				limit = { is_coastal = yes has_resources_amount = { resource = chromium amount > 10 } }
+				set_variable = { global.pww_t5b_sea = THIS }
+			}
+		}
+		pww_t5b_report = yes
+	}
+	if = {
+		limit = { check_variable = { global.pww_t5b_day = 3 } }
+		TUR = {
+			give_resource_rights = { receiver = GER state = global.pww_t5b_land resources = { chromium } }
+			give_resource_rights = { receiver = USA state = global.pww_t5b_sea }
+		}
+	}
+	if = {
+		limit = {
+			OR = {
+				check_variable = { global.pww_t5b_day = 6 }
+				check_variable = { global.pww_t5b_day = 15 }
+			}
+		}
+		pww_t5b_report = yes
+	}
+	if = {
+		limit = { check_variable = { global.pww_t5b_day = 16 } }
+		log = "PWW_DONE t5b_rights_filter"
+	}
+}

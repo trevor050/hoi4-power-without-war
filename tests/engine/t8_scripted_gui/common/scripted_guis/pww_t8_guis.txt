@@ -1,0 +1,31 @@
+scripted_gui = {
+	pww_t8_trade_gui = {
+		context_type = player_context
+		window_name = "pww_t8_trade_window"
+		parent_window_token = trade_tab
+		visible = { always = yes }
+		dirty = pww_t8_dirty
+		effects = {
+			pww_t8_trade_button_click = { log = "PWW_RESULT t8.click INFO trade_tab button clicked" }
+		}
+	}
+	pww_t8_topbar_gui = {
+		context_type = player_context
+		window_name = "pww_t8_topbar_window"
+		parent_window_token = top_bar
+		visible = { always = yes }
+		dirty = pww_t8_dirty
+		effects = {
+			pww_t8_topbar_button_click = { log = "PWW_RESULT t8.click INFO top_bar button clicked" }
+		}
+	}
+	pww_t8_diplo_gui = {
+		context_type = diplomacy_target_context
+		window_name = "pww_t8_diplo_window"
+		visible = { always = yes }
+		dirty = pww_t8_dirty
+		effects = {
+			pww_t8_diplo_button_click = { log = "PWW_RESULT t8.click INFO diplomacy target button clicked for [THIS.GetTag]" }
+		}
+	}
+}

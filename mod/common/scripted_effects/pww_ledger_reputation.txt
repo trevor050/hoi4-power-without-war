@@ -1,0 +1,122 @@
+###############################################################################
+# Power Without War: agreements ledger, reputation
+#
+# COUNTRY VARIABLES
+#   pww_reliability   0..100, starts at global.pww_ledger_c_rel_start (50).
+#                     "Do you honor deals?" Owned by the ledger.
+#   pww_credibility   0..100. "Are your threats real?" RESERVED for the
+#                     coercion lane, which owns every write. The ledger only
+#                     seeds it (pww_ledger_rep_ensure) so readers never see an
+#                     unset value.
+#   pww_rel_n@<country>    honored agreements with that counterparty in the
+#                          current 365-day window (diminishing returns)
+#   pww_rel_day@<country>  num_days that window opened
+#
+# Reliability gain on an honored (fully served) agreement, per party:
+#   gain = 1.5 * clamp(value, 0.5, 5) * clamp(years, 0.25, 5)
+#          / (1 + honored deals with this counterparty this year)
+#          * (100 - reliability) / 100
+# Reliability loss on breach (breaching party only):
+#   loss = 5 + 2 * clamp(value, 0, 5)       (5 to 15 points)
+#
+# PUBLIC EFFECTS
+#   pww_ledger_rep_ensure = yes        (country) seeds both variables
+#   pww_ledger_rep_on_honored = yes    temp in pww_lrp_ag
+#   pww_ledger_rep_on_breach = yes     temp in pww_lrp_ag, pww_lrp_breacher
+#   Hooks for other lanes: listen to queue kind 1 with status 3 (cause 9) or
+#   status 5 to apply their own reputation effects (Credibility, Regional
+#   Alarm); do not write pww_reliability directly.
+###############################################################################
+
+pww_ledger_rep_ensure = {
+	if = {
+		limit = { NOT = { has_variable = pww_reliability } }
+		set_variable = { pww_reliability = global.pww_ledger_c_rel_start }
+	}
+	if = {
+		limit = { NOT = { has_variable = pww_credibility } }
+		set_variable = { pww_credibility = 50 }
+	}
+}
+
+pww_ledger_rep_on_honored = {
+	set_temp_variable = { pww_lrp_s = global.pww_ag_seller^pww_lrp_ag }
+	set_temp_variable = { pww_lrp_b = global.pww_ag_buyer^pww_lrp_ag }
+	set_temp_variable = { pww_lrp_value = global.pww_ag_value^pww_lrp_ag }
+	clamp_temp_variable = { var = pww_lrp_value min = 0.5 max = 5 }
+	set_temp_variable = { pww_lrp_years = global.num_days }
+	subtract_from_temp_variable = { pww_lrp_years = global.pww_ag_start^pww_lrp_ag }
+	divide_temp_variable = { pww_lrp_years = 365 }
+	clamp_temp_variable = { var = pww_lrp_years min = 0.25 max = 5 }
+	set_temp_variable = { pww_lrp_raw = pww_lrp_value }
+	multiply_temp_variable = { pww_lrp_raw = pww_lrp_years }
+	multiply_temp_variable = { pww_lrp_raw = 1.5 }
+
+	var:pww_lrp_s = {
+		if = {
+			limit = { exists = yes }
+			set_temp_variable = { pww_lrp_other = pww_lrp_b }
+			pww_ledger_rep_gain = yes
+		}
+	}
+	var:pww_lrp_b = {
+		if = {
+			limit = { exists = yes }
+			set_temp_variable = { pww_lrp_other = pww_lrp_s }
+			pww_ledger_rep_gain = yes
+		}
+	}
+}
+
+# Internal, country scope. In: pww_lrp_raw, pww_lrp_other.
+pww_ledger_rep_gain = {
+	pww_ledger_rep_ensure = yes
+	set_temp_variable = { pww_lrp_age = global.num_days }
+	subtract_from_temp_variable = { pww_lrp_age = pww_rel_day@var:pww_lrp_other }
+	if = {
+		limit = {
+			OR = {
+				check_variable = { pww_lrp_age > 365 }
+				check_variable = { pww_rel_day@var:pww_lrp_other = 0 }
+			}
+		}
+		set_variable = { pww_rel_n@var:pww_lrp_other = 0 }
+		set_variable = { pww_rel_day@var:pww_lrp_other = global.num_days }
+	}
+	set_temp_variable = { pww_lrp_div = pww_rel_n@var:pww_lrp_other }
+	add_to_temp_variable = { pww_lrp_div = 1 }
+	set_temp_variable = { pww_lrp_gain = pww_lrp_raw }
+	divide_temp_variable = { pww_lrp_gain = pww_lrp_div }
+	set_temp_variable = { pww_lrp_room = 100 }
+	subtract_from_temp_variable = { pww_lrp_room = pww_reliability }
+	divide_temp_variable = { pww_lrp_room = 100 }
+	multiply_temp_variable = { pww_lrp_gain = pww_lrp_room }
+	add_to_variable = { pww_reliability = pww_lrp_gain }
+	clamp_variable = { var = pww_reliability min = 0 max = 100 }
+	add_to_variable = { pww_rel_n@var:pww_lrp_other = 1 }
+	if = {
+		limit = { pww_ledger_debug_on = yes }
+		log = "[GetDateText] PWW_LEDGER reliability [THIS.GetTag] +[?pww_lrp_gain|2] -> [?pww_reliability|2] (with [?pww_lrp_other.GetTag], n=[?pww_rel_n@var:pww_lrp_other|0])"
+	}
+}
+
+pww_ledger_rep_on_breach = {
+	set_temp_variable = { pww_lrp_value = global.pww_ag_value^pww_lrp_ag }
+	clamp_temp_variable = { var = pww_lrp_value min = 0 max = 5 }
+	set_temp_variable = { pww_lrp_loss = pww_lrp_value }
+	multiply_temp_variable = { pww_lrp_loss = 2 }
+	add_to_temp_variable = { pww_lrp_loss = 5 }
+	# pww_lrp_breacher was validated as a party by pww_ledger_set_status
+	var:pww_lrp_breacher = {
+		if = {
+			limit = { exists = yes }
+			pww_ledger_rep_ensure = yes
+			subtract_from_variable = { pww_reliability = pww_lrp_loss }
+			clamp_variable = { var = pww_reliability min = 0 max = 100 }
+			if = {
+				limit = { pww_ledger_debug_on = yes }
+				log = "[GetDateText] PWW_LEDGER reliability [THIS.GetTag] -[?pww_lrp_loss|2] -> [?pww_reliability|2] (breach of [?pww_lrp_ag|0])"
+			}
+		}
+	}
+}

@@ -1,0 +1,17 @@
+# Phase 0 test 7: send_embargo against targets that generated no world tension.
+# FRA -> YUG (trading partners), USA -> SWI (unrelated minor). Then break_embargo.
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = GER }
+				add_to_variable = { global.pww_t7_day = 1 }
+				pww_t7_tick = yes
+			}
+			if = {
+				limit = { tag = FRA check_variable = { global.pww_t7_day = 21 } }
+				break_embargo = YUG
+			}
+		}
+	}
+}

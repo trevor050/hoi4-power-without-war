@@ -1,0 +1,49 @@
+###############################################################################
+# Power Without War: agreements ledger on_actions
+#
+#   on_startup                 pww_ledger_init (idempotent; the ticks also
+#                              init lazily for saves where this did not fire)
+#   on_capitulation            ROOT capitulated, FROM winner
+#   on_annex                   ROOT winner, FROM annexed (also fires at the end
+#                              of a civil war, so on_civil_war_end is not used:
+#                              handling both would double-process)
+#   on_war_relation_added      ROOT attacking side, FROM defending side
+#   on_state_control_changed   ROOT new controller, FROM old, FROM.FROM state
+# Handlers live in common/scripted_effects/pww_ledger_ticks.txt.
+###############################################################################
+
+on_actions = {
+	on_startup = {
+		# on_startup has no scope; run init inside any existing country.
+		effect = {
+			random_country = {
+				limit = { exists = yes }
+				pww_ledger_init = yes
+			}
+		}
+	}
+
+	on_capitulation = {
+		effect = {
+			pww_ledger_oa_capitulation = yes
+		}
+	}
+
+	on_annex = {
+		effect = {
+			pww_ledger_oa_annex = yes
+		}
+	}
+
+	on_war_relation_added = {
+		effect = {
+			pww_ledger_oa_war_relation = yes
+		}
+	}
+
+	on_state_control_changed = {
+		effect = {
+			pww_ledger_oa_control_changed = yes
+		}
+	}
+}

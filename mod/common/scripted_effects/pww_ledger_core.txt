@@ -1,0 +1,1117 @@
+###############################################################################
+# Power Without War: agreements ledger, core (storage, creation, lifecycle)
+#
+# The ledger is the single source of truth for every mod agreement. Other
+# lanes create and mutate agreements ONLY through the public effects below.
+#
+# Related files
+#   pww_ledger_flows.txt       per-country flow aggregation, dynamic modifier,
+#                              civilian factory receipt
+#   pww_ledger_tranches.txt    irreversible payments on a schedule, escrow
+#   pww_ledger_leases.txt      named-state resource rights (give/remove)
+#   pww_ledger_ticks.txt       country tick, monthly tick, reconciliation,
+#                              lifecycle on_action handlers, debug scenario
+#   pww_ledger_reputation.txt  Reliability (and the Credibility hook)
+#   scripted_triggers/pww_ledger_triggers.txt
+#   dynamic_modifiers/pww_ledger_dynamic_modifiers.txt (pww_ledger_flows)
+#   on_actions/pww_ledger_on_actions.txt
+#
+# ===========================================================================
+# STORAGE
+# An agreement id is an integer 0..global.pww_next_agreement_id-1. Every field
+# is a global array indexed by id (parallel arrays, appended together in
+# pww_ledger_alloc_record, never removed or reordered, so id == index forever).
+# Read a field with  global.pww_ag_<field>^<temp var holding the id>.
+#
+#   seller        country. Supply: delivers the resource. Lease: the host
+#                 (state owner). Receives positive civ/pp payments.
+#   buyer         country. Supply: receives the resource. Lease: the holder.
+#                 Pays positive civ/pp payments.
+#   kind          0 supply agreement, 1 named-state lease (mod grants and
+#                 removes the right), 2 adopted concession (a vanilla right
+#                 registered in the ledger; never granted or removed by us)
+#   res           resource index 0 oil, 1 aluminium, 2 rubber, 3 tungsten,
+#                 4 steel, 5 chromium, 6 coal. Lease: -1 = every resource in
+#                 the state.
+#   amount        supply: resource units per day-equivalent (same unit as
+#                 country_resource_<res>). Lease: unused (0).
+#   state         lease: state (stored as state id). Supply: 0.
+#   status        0 draft, 1 active, 2 suspended, 3 completed, 4 terminated,
+#                 5 defaulted, 6 nationalized, 7 reserved
+#   committal     0 non-committal (flows only, either side may end it), 1
+#                 committal (fixed term, may carry tranches and leases)
+#   term          term in days (0 = open-ended, non-committal only)
+#   start / end   global.num_days at activation / expiry (end 0 = open)
+#   civ           signed civilian factories. Positive: buyer pays seller.
+#                 Negative: seller pays buyer.
+#   pp            signed political power per day, same direction rule.
+#   ideo          ideology drift per day in popularity points (0, or clamped
+#                 to 0.01..0.03). Applied on ticks, halved within 180 days of
+#                 the drifting country's election.
+#   ideo_giver    0 the seller drifts toward the buyer's ruling ideology,
+#                 1 the buyer drifts toward the seller's.
+#   ideo_last     num_days drift was last applied
+#   cond          reserved-condition id (0 none). Status 7 until
+#                 pww_ledger_fire_reserved fires that id.
+#   reserve_until num_days after which an unfired reserved agreement lapses
+#                 (0 never)
+#   revert_days   timed clause length requested at creation (0 none)
+#   revert_day    num_days the timed clause reverts (set on activation)
+#   repair_until  num_days the suspension repair window closes
+#   rev           revision counter, +1 on every mutation (use it to make
+#                 acceptances apply once: pass pww_l_expect_rev)
+#   cause         cause code of the last status change (see CAUSES)
+#   value         civilian-factory-equivalent value at creation (resource
+#                 units / 8 + |civ|), used by reputation
+#   notice        1 once the renewal notice was queued for the current term
+#   last_change   num_days of the last status change
+#   convoys       convoys the seller holds in escrow while active (sea risk
+#                 substrate for the quarantine lane; returned on any end)
+#
+# Country arrays: pww_ag_ids (agreements the country is party to),
+#                 pww_lt_ids (tranches of those agreements).
+# State array:    pww_ls_ids (lease/concession agreements on the state).
+# Tranches:       global.pww_lt_* (see pww_ledger_tranches.txt).
+# Counters:       global.pww_next_agreement_id, global.pww_next_tranche_id,
+#                 global.pww_next_cond_id, global.pww_lq_next_seq.
+#
+# ===========================================================================
+# CAUSES (global.pww_ag_cause, pww_l_cause)
+#   0 none / caller-defined        9 expired (full term served)
+#   1 owner change                 10 withdrawn (non-committal exit)
+#   2 war between the parties      11 repair window lapsed
+#   3 depleted state               12 timed clause reverted
+#   4 nationalization              13 breach (default)
+#   5 capitulation                 14 a party no longer exists
+#   6 annexation                   15 provisional suspension (external)
+#   7 civil war                    16 quarantine / interdiction (external)
+#   8 occupation of a leased state 17 reserved agreement lapsed
+#                                  18 cancelled before activation
+#
+# FAIL CODES (pww_l_fail, when pww_l_result = 0)
+#   1 bad parties (same country, missing, or does not exist)
+#   2 parties at war with each other
+#   3 bad kind / resource / amount / state input
+#   4 seller lacks capacity for the amount
+#   5 lease state not owned and controlled by the seller, or no resource
+#   6 duplicate mod lease for this (holder, state)
+#   7 holder already has a vanilla right in the state (kind 1), or lacks the
+#     right to adopt (kind 2)
+#   8 bad term (committal needs 1..max term; nothing exceeds max term)
+#   9 agreement not in a status that allows this action
+#   10 revision mismatch (stale acceptance)
+#   11 tranche schedule pays everything on day one
+#   12 escrow unavailable (convoys or equipment)
+#   14 bad agreement id
+#
+# ===========================================================================
+# EVENT QUEUE (for other lanes; poll, never edit)
+#   global.pww_lq_seq^n     monotonic sequence number (remember the last one
+#                           you consumed; the queue drops its oldest entries
+#                           past global.pww_ledger_c_queue_cap)
+#   global.pww_lq_kind^n    1 status changed, 2 renewal due (notice days
+#                           before end), 3 tranche delivered, 4 tranche
+#                           cancelled or forfeited, 5 agreement created,
+#                           6 agreement renewed, 7 reconciliation found a
+#                           vanished right (cause in pww_lq_cause)
+#   global.pww_lq_ag^n      agreement id
+#   global.pww_lq_status^n  status after the event
+#   global.pww_lq_cause^n   cause code
+#   global.pww_lq_day^n     num_days
+#
+# ===========================================================================
+# PUBLIC EFFECTS (inputs are temp variables; set them right before the call)
+# Every public effect sets temp pww_l_result (1 ok, 0 refused) and, when
+# refused, pww_l_fail. Effects never partially apply on refusal.
+#
+#   pww_ledger_init = yes
+#       Idempotent. Runs from on_startup and lazily from the ticks.
+#
+#   pww_ledger_create_agreement = yes
+#       in : pww_l_seller, pww_l_buyer      countries
+#            pww_l_kind                     0 supply, 1 lease, 2 adopt
+#            pww_l_res                      0..6 (lease: -1 all)
+#            pww_l_amount                   supply amount (> 0)
+#            pww_l_state                    lease state
+#            pww_l_committal                0/1
+#            pww_l_term_days                0..global.pww_ledger_c_max_term
+#            pww_l_civ, pww_l_pp            signed payments (see STORAGE)
+#            pww_l_ideo, pww_l_ideo_giver   drift per day, side
+#            pww_l_cond                     0, or a condition id -> reserved
+#            pww_l_reserve_days             reserved lapse window (0 never)
+#            pww_l_revert_days              timed clause (0 none)
+#            pww_l_convoys                  convoys held from the seller
+#            pww_l_activate                 1 = activate now (only when no
+#                                           tranches are needed; otherwise
+#                                           create a draft, add tranches,
+#                                           then pww_ledger_activate)
+#       out: pww_l_new_id (-1 on refusal), pww_l_result, pww_l_fail
+#       Unset optional inputs read as 0. Inputs are validated: owner,
+#       control, availability, war, duplicate lease, vanilla rights, term.
+#
+#   pww_ledger_add_tranche = yes        (pww_ledger_tranches.txt)
+#   pww_ledger_activate = yes
+#       in : pww_l_ag, pww_l_expect_rev (0 = do not check)
+#       Draft or reserved -> active. Rechecks every term, arms tranches,
+#       takes escrow, grants lease rights, pays on-signing tranches.
+#       Applies once: a second call finds status active and is refused.
+#   pww_ledger_set_status = yes
+#       in : pww_l_ag, pww_l_status, pww_l_cause, pww_l_by (defaults only),
+#            pww_l_repair_days (suspensions only, 0 = default window)
+#       The single state machine. Allowed: active <-> suspended, any live
+#       status -> 3/4/5/6, draft/reserved -> 4. Activation goes through
+#       pww_ledger_activate. Prefer the wrappers below.
+#   pww_ledger_suspend = yes            in: pww_l_ag, pww_l_cause (0 -> 15),
+#                                           pww_l_repair_days
+#   pww_ledger_resume = yes             in: pww_l_ag (rechecks terms)
+#   pww_ledger_complete = yes           in: pww_l_ag, pww_l_cause
+#   pww_ledger_terminate = yes          in: pww_l_ag, pww_l_cause
+#   pww_ledger_default = yes            in: pww_l_ag, pww_l_by (breacher)
+#   pww_ledger_nationalize = yes        in: pww_l_ag, pww_l_cause (0 -> 4)
+#       Hand-off hook for the nationalization lane: status 6, rights
+#       removed, tranches cancelled, escrow returned. The settlement menu is
+#       owned by that lane (listen for queue kind 1, status 6).
+#   pww_ledger_withdraw = yes           in: pww_l_ag, pww_l_by
+#       Non-committal: clean termination (cause 10). Committal: default.
+#   pww_ledger_renew = yes              in: pww_l_ag, pww_l_term_days
+#       Active: extends the end date. Completed within
+#       global.pww_ledger_c_renew_grace days: re-activates (rechecks terms).
+#   pww_ledger_new_condition_id = yes   out: pww_l_cond_new
+#   pww_ledger_fire_reserved = yes      in: pww_l_cond. out: pww_l_fired
+#       Activates every reserved agreement waiting on that condition.
+#   pww_ledger_adopt_right = yes        in: pww_l_seller (host), pww_l_buyer
+#       (holder), pww_l_state. Registers an existing vanilla right as a
+#       permanent kind 2 concession so reconciliation tracks it.
+#   pww_ledger_recompute_flows = yes    (pww_ledger_flows.txt, country scope)
+#   pww_ledger_country_tick = yes       (pww_ledger_ticks.txt, country scope)
+#   pww_ledger_monthly_tick = yes       (pww_ledger_ticks.txt)
+#
+# TUNABLES (globals set in pww_ledger_init; a balance patch may overwrite)
+#   global.pww_ledger_c_repair_days 90   global.pww_ledger_c_max_term 1825
+#   global.pww_ledger_c_notice_days 60   global.pww_ledger_c_renew_grace 90
+#   global.pww_ledger_c_queue_cap 256    global.pww_ledger_c_prune_days 365
+#   global.pww_ledger_c_ideo_min 0.01    global.pww_ledger_c_ideo_max 0.03
+#
+# DEBUG: set global.pww_ledger_debug = 1 (or global flag pww_ledger_debug)
+#   to log "PWW_LEDGER ..." lines to game.log.
+#
+# TEMP VARIABLES: public inputs/outputs use pww_l_*. Internal temps use
+#   pww_l<xx>_* per effect so nested calls never clobber each other.
+###############################################################################
+
+pww_ledger_init = {
+	if = {
+		limit = { NOT = { has_global_flag = pww_ledger_initialized } }
+		set_global_flag = pww_ledger_initialized
+		set_variable = { global.pww_ledger_version = 1 }
+		set_variable = { global.pww_next_agreement_id = 0 }
+		set_variable = { global.pww_next_tranche_id = 0 }
+		set_variable = { global.pww_next_cond_id = 1 }
+		set_variable = { global.pww_lq_next_seq = 1 }
+		set_variable = { global.pww_ledger_c_repair_days = 90 }
+		set_variable = { global.pww_ledger_c_max_term = 1825 }
+		set_variable = { global.pww_ledger_c_notice_days = 60 }
+		set_variable = { global.pww_ledger_c_renew_grace = 90 }
+		set_variable = { global.pww_ledger_c_queue_cap = 256 }
+		set_variable = { global.pww_ledger_c_prune_days = 365 }
+		set_variable = { global.pww_ledger_c_ideo_min = 0.01 }
+		set_variable = { global.pww_ledger_c_ideo_max = 0.03 }
+		set_variable = { global.pww_ledger_c_rel_start = 50 }
+		if = {
+			limit = { pww_ledger_debug_on = yes }
+			log = "[GetDateText] PWW_LEDGER init v1"
+		}
+	}
+}
+
+###############################################################################
+# Validation (internal). Reads pww_lv_*; writes pww_l_fail (0 = valid).
+#   pww_lv_seller, pww_lv_buyer, pww_lv_kind, pww_lv_res, pww_lv_amount,
+#   pww_lv_state, pww_lv_committal, pww_lv_term,
+#   pww_lv_ag  (-1 when creating, else the id being activated or resumed;
+#               excluded from the duplicate-lease scan)
+###############################################################################
+pww_ledger_validate = {
+	set_temp_variable = { pww_l_fail = 0 }
+
+	# Parties
+	if = {
+		limit = {
+			OR = {
+				check_variable = { pww_lv_seller = pww_lv_buyer }
+				var:pww_lv_seller = { exists = no }
+				var:pww_lv_buyer = { exists = no }
+			}
+		}
+		set_temp_variable = { pww_l_fail = 1 }
+	}
+	else_if = {
+		limit = {
+			var:pww_lv_seller = {
+				var:pww_lv_buyer = { has_war_with = PREV }
+			}
+		}
+		set_temp_variable = { pww_l_fail = 2 }
+	}
+
+	# Term
+	if = {
+		limit = {
+			check_variable = { pww_l_fail = 0 }
+			OR = {
+				check_variable = { pww_lv_term < 0 }
+				check_variable = { pww_lv_term > global.pww_ledger_c_max_term }
+				AND = {
+					check_variable = { pww_lv_committal = 1 }
+					check_variable = { pww_lv_term < 1 }
+					# adopted historical concessions are permanent
+					NOT = { check_variable = { pww_lv_kind = 2 } }
+				}
+			}
+		}
+		set_temp_variable = { pww_l_fail = 8 }
+	}
+
+	# Supply agreement
+	if = {
+		limit = {
+			check_variable = { pww_l_fail = 0 }
+			check_variable = { pww_lv_kind = 0 }
+		}
+		if = {
+			limit = {
+				OR = {
+					check_variable = { pww_lv_res < 0 }
+					check_variable = { pww_lv_res > 6 }
+					check_variable = { pww_lv_amount < 0.001 }
+				}
+			}
+			set_temp_variable = { pww_l_fail = 3 }
+		}
+		else = {
+			var:pww_lv_seller = { pww_ledger_calc_seller_avail = yes }
+			if = {
+				limit = { check_variable = { pww_lfa_avail < pww_lv_amount } }
+				set_temp_variable = { pww_l_fail = 4 }
+			}
+		}
+	}
+
+	# Lease or adopted concession
+	if = {
+		limit = {
+			check_variable = { pww_l_fail = 0 }
+			OR = {
+				check_variable = { pww_lv_kind = 1 }
+				check_variable = { pww_lv_kind = 2 }
+			}
+		}
+		if = {
+			limit = {
+				OR = {
+					check_variable = { pww_lv_state < 1 }
+					check_variable = { pww_lv_res < -1 }
+					check_variable = { pww_lv_res > 6 }
+				}
+			}
+			set_temp_variable = { pww_l_fail = 3 }
+		}
+		else_if = {
+			limit = {
+				var:pww_lv_state = {
+					OR = {
+						NOT = { OWNER = { check_variable = { pww_lv_seller = THIS } } }
+						NOT = { CONTROLLER = { check_variable = { pww_lv_seller = THIS } } }
+						pww_ledger_state_lacks_lease_resource = yes
+					}
+				}
+			}
+			set_temp_variable = { pww_l_fail = 5 }
+		}
+		else_if = {
+			limit = { pww_ledger_lease_duplicate_exists = yes }
+			set_temp_variable = { pww_l_fail = 6 }
+		}
+		else = {
+			set_variable = { global.pww_l_meta_state = pww_lv_state }
+			if = {
+				limit = {
+					check_variable = { pww_lv_kind = 1 }
+					var:pww_lv_buyer = { pww_ledger_holder_has_right_in_meta_state = yes }
+				}
+				set_temp_variable = { pww_l_fail = 7 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { pww_lv_kind = 2 }
+					var:pww_lv_buyer = { NOT = { pww_ledger_holder_has_right_in_meta_state = yes } }
+				}
+				set_temp_variable = { pww_l_fail = 7 }
+			}
+		}
+	}
+
+	if = {
+		limit = {
+			NOT = { check_variable = { pww_lv_kind = 0 } }
+			NOT = { check_variable = { pww_lv_kind = 1 } }
+			NOT = { check_variable = { pww_lv_kind = 2 } }
+		}
+		set_temp_variable = { pww_l_fail = 3 }
+	}
+}
+
+# Internal. Loads the record pww_lv_ag into pww_lv_* for validation.
+pww_ledger_load_for_validation = {
+	set_temp_variable = { pww_lv_seller = global.pww_ag_seller^pww_lv_ag }
+	set_temp_variable = { pww_lv_buyer = global.pww_ag_buyer^pww_lv_ag }
+	set_temp_variable = { pww_lv_kind = global.pww_ag_kind^pww_lv_ag }
+	set_temp_variable = { pww_lv_res = global.pww_ag_res^pww_lv_ag }
+	set_temp_variable = { pww_lv_amount = global.pww_ag_amount^pww_lv_ag }
+	set_temp_variable = { pww_lv_state = global.pww_ag_state^pww_lv_ag }
+	set_temp_variable = { pww_lv_committal = global.pww_ag_committal^pww_lv_ag }
+	set_temp_variable = { pww_lv_term = global.pww_ag_term^pww_lv_ag }
+}
+
+###############################################################################
+# Record allocation (internal). Appends one element to every field array.
+# In: pww_lv_* (validated), pww_lcr_* extra fields. Out: pww_lcr_id.
+###############################################################################
+pww_ledger_alloc_record = {
+	set_temp_variable = { pww_lcr_id = global.pww_next_agreement_id }
+	if = {
+		limit = {
+			NOT = { check_variable = { global.pww_ag_status^num = global.pww_next_agreement_id } }
+		}
+		log = "[GetDateText] PWW_LEDGER ERROR storage misaligned: status^num=[?global.pww_ag_status^num|0] next_id=[?global.pww_next_agreement_id|0]"
+	}
+	add_to_array = { array = global.pww_ag_seller value = pww_lv_seller }
+	add_to_array = { array = global.pww_ag_buyer value = pww_lv_buyer }
+	add_to_array = { array = global.pww_ag_kind value = pww_lv_kind }
+	add_to_array = { array = global.pww_ag_res value = pww_lv_res }
+	add_to_array = { array = global.pww_ag_amount value = pww_lv_amount }
+	add_to_array = { array = global.pww_ag_state value = pww_lv_state }
+	add_to_array = { array = global.pww_ag_status value = pww_lcr_status }
+	add_to_array = { array = global.pww_ag_committal value = pww_lv_committal }
+	add_to_array = { array = global.pww_ag_term value = pww_lv_term }
+	add_to_array = { array = global.pww_ag_start value = 0 }
+	add_to_array = { array = global.pww_ag_end value = 0 }
+	add_to_array = { array = global.pww_ag_civ value = pww_lcr_civ }
+	add_to_array = { array = global.pww_ag_pp value = pww_lcr_pp }
+	add_to_array = { array = global.pww_ag_ideo value = pww_lcr_ideo }
+	add_to_array = { array = global.pww_ag_ideo_giver value = pww_lcr_ideo_giver }
+	add_to_array = { array = global.pww_ag_ideo_last value = 0 }
+	add_to_array = { array = global.pww_ag_cond value = pww_lcr_cond }
+	add_to_array = { array = global.pww_ag_reserve_until value = pww_lcr_reserve_until }
+	add_to_array = { array = global.pww_ag_revert_days value = pww_lcr_revert_days }
+	add_to_array = { array = global.pww_ag_revert_day value = 0 }
+	add_to_array = { array = global.pww_ag_repair_until value = 0 }
+	add_to_array = { array = global.pww_ag_rev value = 1 }
+	add_to_array = { array = global.pww_ag_cause value = 0 }
+	add_to_array = { array = global.pww_ag_value value = pww_lcr_value }
+	add_to_array = { array = global.pww_ag_notice value = 0 }
+	add_to_array = { array = global.pww_ag_last_change value = global.num_days }
+	add_to_array = { array = global.pww_ag_convoys value = pww_lcr_convoys }
+	add_to_variable = { global.pww_next_agreement_id = 1 }
+
+	var:pww_lv_seller = {
+		add_to_array = { array = pww_ag_ids value = pww_lcr_id }
+		pww_ledger_rep_ensure = yes
+	}
+	var:pww_lv_buyer = {
+		add_to_array = { array = pww_ag_ids value = pww_lcr_id }
+		pww_ledger_rep_ensure = yes
+	}
+	if = {
+		limit = { check_variable = { pww_lv_state > 0 } }
+		var:pww_lv_state = {
+			add_to_array = { array = pww_ls_ids value = pww_lcr_id }
+		}
+	}
+}
+
+###############################################################################
+pww_ledger_create_agreement = {
+	pww_ledger_init = yes
+	set_temp_variable = { pww_l_result = 0 }
+	set_temp_variable = { pww_l_new_id = -1 }
+
+	set_temp_variable = { pww_lv_seller = pww_l_seller }
+	set_temp_variable = { pww_lv_buyer = pww_l_buyer }
+	set_temp_variable = { pww_lv_kind = pww_l_kind }
+	set_temp_variable = { pww_lv_res = pww_l_res }
+	set_temp_variable = { pww_lv_amount = pww_l_amount }
+	set_temp_variable = { pww_lv_state = pww_l_state }
+	set_temp_variable = { pww_lv_committal = pww_l_committal }
+	set_temp_variable = { pww_lv_term = pww_l_term_days }
+	set_temp_variable = { pww_lv_ag = -1 }
+	if = {
+		limit = { check_variable = { pww_lv_kind = 0 } }
+		set_temp_variable = { pww_lv_state = 0 }
+	}
+	else = {
+		set_temp_variable = { pww_lv_amount = 0 }
+	}
+	if = {
+		limit = { check_variable = { pww_lv_kind = 2 } }
+		set_temp_variable = { pww_lv_committal = 1 }
+		set_temp_variable = { pww_lv_term = 0 }
+	}
+
+	pww_ledger_validate = yes
+
+	if = {
+		limit = { check_variable = { pww_l_fail = 0 } }
+
+		# Normalize optional terms
+		set_temp_variable = { pww_lcr_civ = pww_l_civ }
+		round_temp_variable = pww_lcr_civ
+		set_temp_variable = { pww_lcr_pp = pww_l_pp }
+		set_temp_variable = { pww_lcr_ideo = pww_l_ideo }
+		if = {
+			limit = { check_variable = { pww_lcr_ideo > 0 } }
+			clamp_temp_variable = {
+				var = pww_lcr_ideo
+				min = global.pww_ledger_c_ideo_min
+				max = global.pww_ledger_c_ideo_max
+			}
+		}
+		else = {
+			set_temp_variable = { pww_lcr_ideo = 0 }
+		}
+		set_temp_variable = { pww_lcr_ideo_giver = pww_l_ideo_giver }
+		clamp_temp_variable = { var = pww_lcr_ideo_giver min = 0 max = 1 }
+		set_temp_variable = { pww_lcr_cond = pww_l_cond }
+		set_temp_variable = { pww_lcr_reserve_until = 0 }
+		if = {
+			limit = {
+				check_variable = { pww_lcr_cond > 0 }
+				check_variable = { pww_l_reserve_days > 0 }
+			}
+			set_temp_variable = { pww_lcr_reserve_until = global.num_days }
+			add_to_temp_variable = { pww_lcr_reserve_until = pww_l_reserve_days }
+		}
+		set_temp_variable = { pww_lcr_revert_days = pww_l_revert_days }
+		clamp_temp_variable = { var = pww_lcr_revert_days min = 0 max = global.pww_ledger_c_max_term }
+		set_temp_variable = { pww_lcr_convoys = pww_l_convoys }
+		clamp_temp_variable = { var = pww_lcr_convoys min = 0 max = 1000 }
+		round_temp_variable = pww_lcr_convoys
+		set_temp_variable = { pww_lcr_status = 0 }
+		if = {
+			limit = { check_variable = { pww_lcr_cond > 0 } }
+			set_temp_variable = { pww_lcr_status = 7 }
+		}
+
+		# Value in civilian-factory equivalents (8 resource units per factory)
+		set_temp_variable = { pww_lcr_value = pww_lv_amount }
+		if = {
+			limit = { check_variable = { pww_lv_kind > 0 } }
+			var:pww_lv_state = { pww_ledger_calc_state_lease_units = yes }
+			set_temp_variable = { pww_lcr_value = pww_lls_units }
+		}
+		divide_temp_variable = { pww_lcr_value = 8 }
+		set_temp_variable = { pww_lcr_abs_civ = pww_lcr_civ }
+		if = {
+			limit = { check_variable = { pww_lcr_abs_civ < 0 } }
+			multiply_temp_variable = { pww_lcr_abs_civ = -1 }
+		}
+		add_to_temp_variable = { pww_lcr_value = pww_lcr_abs_civ }
+
+		pww_ledger_alloc_record = yes
+
+		set_temp_variable = { pww_l_new_id = pww_lcr_id }
+		set_temp_variable = { pww_l_result = 1 }
+
+		set_temp_variable = { pww_lq_kind_in = 5 }
+		set_temp_variable = { pww_lq_ag_in = pww_lcr_id }
+		set_temp_variable = { pww_lq_status_in = pww_lcr_status }
+		set_temp_variable = { pww_lq_cause_in = 0 }
+		pww_ledger_queue_push = yes
+
+		if = {
+			limit = { pww_ledger_debug_on = yes }
+			log = "[GetDateText] PWW_LEDGER create id=[?pww_lcr_id|0] seller=[?pww_lv_seller.GetTag] buyer=[?pww_lv_buyer.GetTag] kind=[?pww_lv_kind|0] res=[?pww_lv_res|0] amount=[?pww_lv_amount|2] state=[?pww_lv_state|0] committal=[?pww_lv_committal|0] term=[?pww_lv_term|0] civ=[?pww_lcr_civ|0] pp=[?pww_lcr_pp|2] status=[?pww_lcr_status|0]"
+		}
+
+		if = {
+			limit = {
+				check_variable = { pww_l_activate = 1 }
+				check_variable = { pww_lcr_status = 0 }
+			}
+			set_temp_variable = { pww_l_ag = pww_lcr_id }
+			set_temp_variable = { pww_l_expect_rev = 0 }
+			pww_ledger_activate = yes
+			set_temp_variable = { pww_l_new_id = pww_lcr_id }
+		}
+	}
+	else = {
+		if = {
+			limit = { pww_ledger_debug_on = yes }
+			log = "[GetDateText] PWW_LEDGER create REFUSED fail=[?pww_l_fail|0] kind=[?pww_lv_kind|0] res=[?pww_lv_res|0] amount=[?pww_lv_amount|2]"
+		}
+	}
+}
+
+###############################################################################
+# Activation: draft (0) or reserved (7) -> active. Renewal of a completed
+# agreement also comes through here (internal temp pww_lac_allow_completed).
+###############################################################################
+pww_ledger_activate = {
+	pww_ledger_init = yes
+	set_temp_variable = { pww_l_result = 0 }
+	set_temp_variable = { pww_l_fail = 0 }
+	set_temp_variable = { pww_lac_id = pww_l_ag }
+
+	if = {
+		limit = { NOT = { pww_ledger_ag_exists = yes } }
+		set_temp_variable = { pww_l_fail = 14 }
+	}
+	else = {
+		set_temp_variable = { pww_lac_old = global.pww_ag_status^pww_lac_id }
+		if = {
+			limit = {
+				NOT = { check_variable = { pww_lac_old = 0 } }
+				NOT = { check_variable = { pww_lac_old = 7 } }
+				NOT = {
+					AND = {
+						check_variable = { pww_lac_old = 3 }
+						check_variable = { pww_lac_allow_completed = 1 }
+					}
+				}
+			}
+			set_temp_variable = { pww_l_fail = 9 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { pww_l_expect_rev > 0 }
+				NOT = { check_variable = { global.pww_ag_rev^pww_lac_id = pww_l_expect_rev } }
+			}
+			set_temp_variable = { pww_l_fail = 10 }
+		}
+		else = {
+			set_temp_variable = { pww_lv_ag = pww_lac_id }
+			pww_ledger_load_for_validation = yes
+			pww_ledger_validate = yes
+		}
+	}
+
+	# Tranche schedule and escrow availability
+	if = {
+		limit = { check_variable = { pww_l_fail = 0 } }
+		set_temp_variable = { pww_lta_ag = pww_lac_id }
+		pww_ledger_tranches_precheck = yes
+		if = {
+			limit = {
+				check_variable = { pww_lta_count > 0 }
+				check_variable = { pww_lta_later < 1 }
+			}
+			set_temp_variable = { pww_l_fail = 11 }
+		}
+		else_if = {
+			limit = { check_variable = { pww_lta_escrow_short > 0 } }
+			set_temp_variable = { pww_l_fail = 12 }
+		}
+		else = {
+			set_temp_variable = { pww_lac_conv = global.pww_ag_convoys^pww_lac_id }
+			if = {
+				limit = { check_variable = { pww_lac_conv > 0 } }
+				var:pww_lv_seller = {
+					set_temp_variable = { pww_lac_have = num_equipment@convoy }
+				}
+				if = {
+					limit = { check_variable = { pww_lac_have < pww_lac_conv } }
+					set_temp_variable = { pww_l_fail = 12 }
+				}
+			}
+		}
+	}
+
+	if = {
+		limit = { check_variable = { pww_l_fail = 0 } }
+
+		# Dates
+		set_variable = { global.pww_ag_start^pww_lac_id = global.num_days }
+		set_temp_variable = { pww_lac_term = global.pww_ag_term^pww_lac_id }
+		if = {
+			limit = { check_variable = { pww_lac_term > 0 } }
+			set_temp_variable = { pww_lac_end = global.num_days }
+			add_to_temp_variable = { pww_lac_end = pww_lac_term }
+			set_variable = { global.pww_ag_end^pww_lac_id = pww_lac_end }
+		}
+		else = {
+			set_variable = { global.pww_ag_end^pww_lac_id = 0 }
+		}
+		set_temp_variable = { pww_lac_rd = global.pww_ag_revert_days^pww_lac_id }
+		if = {
+			limit = { check_variable = { pww_lac_rd > 0 } }
+			add_to_temp_variable = { pww_lac_rd = global.num_days }
+			set_variable = { global.pww_ag_revert_day^pww_lac_id = pww_lac_rd }
+		}
+		else = {
+			set_variable = { global.pww_ag_revert_day^pww_lac_id = 0 }
+		}
+		set_variable = { global.pww_ag_ideo_last^pww_lac_id = global.num_days }
+		set_variable = { global.pww_ag_repair_until^pww_lac_id = 0 }
+		set_variable = { global.pww_ag_notice^pww_lac_id = 0 }
+
+		# Status (before flows are recomputed)
+		set_variable = { global.pww_ag_status^pww_lac_id = 1 }
+		set_variable = { global.pww_ag_cause^pww_lac_id = 0 }
+		set_variable = { global.pww_ag_last_change^pww_lac_id = global.num_days }
+		add_to_variable = { global.pww_ag_rev^pww_lac_id = 1 }
+
+		# Convoy escrow from the seller
+		if = {
+			limit = { check_variable = { pww_lac_conv > 0 } }
+			set_temp_variable = { pww_lac_neg = pww_lac_conv }
+			multiply_temp_variable = { pww_lac_neg = -1 }
+			var:pww_lv_seller = {
+				add_equipment_to_stockpile = { type = convoy amount = var:pww_lac_neg }
+			}
+		}
+
+		# Lease rights
+		if = {
+			limit = { check_variable = { pww_lv_kind = 1 } }
+			set_temp_variable = { pww_llg_ag = pww_lac_id }
+			pww_ledger_lease_grant = yes
+		}
+
+		# Arm tranches (due dates, escrow) and pay the on-signing ones
+		set_temp_variable = { pww_lta_ag = pww_lac_id }
+		pww_ledger_tranches_arm = yes
+
+		var:pww_lv_seller = { pww_ledger_recompute_flows = yes }
+		var:pww_lv_buyer = { pww_ledger_recompute_flows = yes }
+
+		set_temp_variable = { pww_lq_kind_in = 1 }
+		set_temp_variable = { pww_lq_ag_in = pww_lac_id }
+		set_temp_variable = { pww_lq_status_in = 1 }
+		set_temp_variable = { pww_lq_cause_in = 0 }
+		pww_ledger_queue_push = yes
+
+		set_temp_variable = { pww_l_result = 1 }
+		if = {
+			limit = { pww_ledger_debug_on = yes }
+			log = "[GetDateText] PWW_LEDGER activate id=[?pww_lac_id|0] from=[?pww_lac_old|0] end=[?global.pww_ag_end^pww_lac_id|0] rev=[?global.pww_ag_rev^pww_lac_id|0]"
+		}
+	}
+	else = {
+		if = {
+			limit = { pww_ledger_debug_on = yes }
+			log = "[GetDateText] PWW_LEDGER activate REFUSED id=[?pww_lac_id|0] fail=[?pww_l_fail|0]"
+		}
+	}
+	set_temp_variable = { pww_lac_allow_completed = 0 }
+}
+
+###############################################################################
+# The state machine. See header for the allowed transitions.
+###############################################################################
+pww_ledger_set_status = {
+	pww_ledger_init = yes
+	set_temp_variable = { pww_l_result = 0 }
+	set_temp_variable = { pww_l_fail = 0 }
+	set_temp_variable = { pww_lss_id = pww_l_ag }
+	set_temp_variable = { pww_lss_new = pww_l_status }
+	set_temp_variable = { pww_lss_cause = pww_l_cause }
+	set_temp_variable = { pww_lss_by = pww_l_by }
+	set_temp_variable = { pww_lss_repair = pww_l_repair_days }
+
+	if = {
+		limit = { NOT = { pww_ledger_ag_exists = yes } }
+		set_temp_variable = { pww_l_fail = 14 }
+	}
+	else = {
+		set_temp_variable = { pww_lss_old = global.pww_ag_status^pww_lss_id }
+		set_temp_variable = { pww_lss_kind = global.pww_ag_kind^pww_lss_id }
+		set_temp_variable = { pww_lss_s = global.pww_ag_seller^pww_lss_id }
+		set_temp_variable = { pww_lss_b = global.pww_ag_buyer^pww_lss_id }
+		if = {
+			limit = {
+				OR = {
+					check_variable = { pww_lss_old = pww_lss_new }
+					# terminal statuses never change here (renewal uses activate)
+					AND = {
+						check_variable = { pww_lss_old > 2 }
+						check_variable = { pww_lss_old < 7 }
+					}
+					# activation only through pww_ledger_activate; resume is 2 -> 1
+					AND = {
+						check_variable = { pww_lss_new = 1 }
+						NOT = { check_variable = { pww_lss_old = 2 } }
+					}
+					check_variable = { pww_lss_new = 0 }
+					check_variable = { pww_lss_new = 7 }
+					check_variable = { pww_lss_new < 0 }
+					check_variable = { pww_lss_new > 7 }
+					# only active agreements can be suspended
+					AND = {
+						check_variable = { pww_lss_new = 2 }
+						NOT = { check_variable = { pww_lss_old = 1 } }
+					}
+				}
+			}
+			set_temp_variable = { pww_l_fail = 9 }
+		}
+		else_if = {
+			# A default needs a breacher who is one of the parties
+			limit = {
+				check_variable = { pww_lss_new = 5 }
+				NOT = { check_variable = { pww_lss_by = pww_lss_s } }
+				NOT = { check_variable = { pww_lss_by = pww_lss_b } }
+			}
+			set_temp_variable = { pww_l_fail = 1 }
+		}
+		else_if = {
+			limit = { check_variable = { pww_lss_new = 1 } }
+			# Resume: every term is rechecked
+			set_temp_variable = { pww_lv_ag = pww_lss_id }
+			pww_ledger_load_for_validation = yes
+			pww_ledger_validate = yes
+		}
+	}
+
+	if = {
+		limit = { check_variable = { pww_l_fail = 0 } }
+
+		# Write the status first: flows and tranches read it.
+		set_variable = { global.pww_ag_status^pww_lss_id = pww_lss_new }
+		set_variable = { global.pww_ag_cause^pww_lss_id = pww_lss_cause }
+		set_variable = { global.pww_ag_last_change^pww_lss_id = global.num_days }
+		add_to_variable = { global.pww_ag_rev^pww_lss_id = 1 }
+
+		# Leaving active: a mod lease stops delivering
+		if = {
+			limit = {
+				check_variable = { pww_lss_old = 1 }
+				check_variable = { pww_lss_kind = 1 }
+			}
+			set_temp_variable = { pww_llr_ag = pww_lss_id }
+			pww_ledger_lease_revoke = yes
+		}
+
+		# Resume
+		if = {
+			limit = { check_variable = { pww_lss_new = 1 } }
+			set_variable = { global.pww_ag_ideo_last^pww_lss_id = global.num_days }
+			set_variable = { global.pww_ag_repair_until^pww_lss_id = 0 }
+			if = {
+				limit = { check_variable = { pww_lss_kind = 1 } }
+				set_temp_variable = { pww_llg_ag = pww_lss_id }
+				pww_ledger_lease_grant = yes
+			}
+		}
+
+		# Suspend: dated repair window
+		if = {
+			limit = { check_variable = { pww_lss_new = 2 } }
+			if = {
+				limit = { check_variable = { pww_lss_repair < 1 } }
+				set_temp_variable = { pww_lss_repair = global.pww_ledger_c_repair_days }
+			}
+			add_to_temp_variable = { pww_lss_repair = global.num_days }
+			set_variable = { global.pww_ag_repair_until^pww_lss_id = pww_lss_repair }
+		}
+
+		# Terminal statuses
+		if = {
+			limit = {
+				check_variable = { pww_lss_new > 2 }
+				check_variable = { pww_lss_new < 7 }
+			}
+			# Tranche settlement mode
+			#   0 cancel pending, return escrow   1 deliver due, cancel rest
+			#   2 deliver every pending           3 default (pww_lts_by)
+			set_temp_variable = { pww_lts_mode = 0 }
+			if = {
+				limit = {
+					OR = {
+						check_variable = { pww_lss_old = 1 }
+						check_variable = { pww_lss_old = 2 }
+					}
+				}
+				if = {
+					limit = { check_variable = { pww_lss_new = 3 } }
+					set_temp_variable = { pww_lts_mode = 1 }
+					if = {
+						limit = {
+							check_variable = { pww_lss_cause = 9 }
+							check_variable = { pww_lss_old = 1 }
+						}
+						set_temp_variable = { pww_lts_mode = 2 }
+					}
+				}
+				else_if = {
+					limit = { check_variable = { pww_lss_new = 5 } }
+					set_temp_variable = { pww_lts_mode = 3 }
+				}
+			}
+			set_temp_variable = { pww_lts_ag = pww_lss_id }
+			set_temp_variable = { pww_lts_by = pww_lss_by }
+			pww_ledger_tranches_settle = yes
+
+			# Convoy escrow always returns to the seller once it was taken
+			if = {
+				limit = {
+					OR = {
+						check_variable = { pww_lss_old = 1 }
+						check_variable = { pww_lss_old = 2 }
+					}
+					check_variable = { global.pww_ag_convoys^pww_lss_id > 0 }
+				}
+				set_temp_variable = { pww_lss_conv = global.pww_ag_convoys^pww_lss_id }
+				var:pww_lss_s = {
+					if = {
+						limit = { exists = yes }
+						add_equipment_to_stockpile = { type = convoy amount = var:pww_lss_conv }
+					}
+				}
+			}
+
+			# Reputation
+			if = {
+				limit = {
+					check_variable = { pww_lss_new = 3 }
+					check_variable = { pww_lss_cause = 9 }
+				}
+				set_temp_variable = { pww_lrp_ag = pww_lss_id }
+				pww_ledger_rep_on_honored = yes
+			}
+			if = {
+				limit = { check_variable = { pww_lss_new = 5 } }
+				set_temp_variable = { pww_lrp_ag = pww_lss_id }
+				set_temp_variable = { pww_lrp_breacher = pww_lss_by }
+				pww_ledger_rep_on_breach = yes
+			}
+		}
+
+		var:pww_lss_s = {
+			if = {
+				limit = { exists = yes }
+				pww_ledger_recompute_flows = yes
+			}
+		}
+		var:pww_lss_b = {
+			if = {
+				limit = { exists = yes }
+				pww_ledger_recompute_flows = yes
+			}
+		}
+
+		set_temp_variable = { pww_lq_kind_in = 1 }
+		set_temp_variable = { pww_lq_ag_in = pww_lss_id }
+		set_temp_variable = { pww_lq_status_in = pww_lss_new }
+		set_temp_variable = { pww_lq_cause_in = pww_lss_cause }
+		pww_ledger_queue_push = yes
+
+		set_temp_variable = { pww_l_result = 1 }
+		if = {
+			limit = { pww_ledger_debug_on = yes }
+			log = "[GetDateText] PWW_LEDGER status id=[?pww_lss_id|0] [?pww_lss_old|0]->[?pww_lss_new|0] cause=[?pww_lss_cause|0] rev=[?global.pww_ag_rev^pww_lss_id|0]"
+		}
+	}
+	else = {
+		if = {
+			limit = { pww_ledger_debug_on = yes }
+			log = "[GetDateText] PWW_LEDGER status REFUSED id=[?pww_lss_id|0] to=[?pww_lss_new|0] fail=[?pww_l_fail|0]"
+		}
+	}
+	# Clear one-shot inputs so they never leak into the next call
+	set_temp_variable = { pww_l_by = 0 }
+	set_temp_variable = { pww_l_repair_days = 0 }
+	set_temp_variable = { pww_l_cause = 0 }
+}
+
+###############################################################################
+# Lifecycle wrappers
+###############################################################################
+pww_ledger_suspend = {
+	set_temp_variable = { pww_l_status = 2 }
+	if = {
+		limit = { check_variable = { pww_l_cause = 0 } }
+		set_temp_variable = { pww_l_cause = 15 }
+	}
+	pww_ledger_set_status = yes
+}
+
+pww_ledger_resume = {
+	set_temp_variable = { pww_l_status = 1 }
+	set_temp_variable = { pww_l_cause = 0 }
+	pww_ledger_set_status = yes
+}
+
+pww_ledger_complete = {
+	set_temp_variable = { pww_l_status = 3 }
+	pww_ledger_set_status = yes
+}
+
+pww_ledger_terminate = {
+	set_temp_variable = { pww_l_status = 4 }
+	pww_ledger_set_status = yes
+}
+
+pww_ledger_default = {
+	set_temp_variable = { pww_l_status = 5 }
+	set_temp_variable = { pww_l_cause = 13 }
+	pww_ledger_set_status = yes
+}
+
+pww_ledger_nationalize = {
+	set_temp_variable = { pww_l_status = 6 }
+	if = {
+		limit = { check_variable = { pww_l_cause = 0 } }
+		set_temp_variable = { pww_l_cause = 4 }
+	}
+	pww_ledger_set_status = yes
+}
+
+pww_ledger_withdraw = {
+	set_temp_variable = { pww_l_result = 0 }
+	if = {
+		limit = { pww_ledger_ag_exists = yes }
+		if = {
+			limit = { check_variable = { global.pww_ag_committal^pww_l_ag = 1 } }
+			# A committal agreement cannot be left early: that is a breach.
+			if = {
+				limit = { check_variable = { global.pww_ag_status^pww_l_ag = 0 } }
+				set_temp_variable = { pww_l_cause = 18 }
+				pww_ledger_terminate = yes
+			}
+			else = {
+				pww_ledger_default = yes
+			}
+		}
+		else = {
+			set_temp_variable = { pww_l_cause = 10 }
+			pww_ledger_terminate = yes
+		}
+	}
+}
+
+pww_ledger_renew = {
+	pww_ledger_init = yes
+	set_temp_variable = { pww_l_result = 0 }
+	set_temp_variable = { pww_l_fail = 9 }
+	set_temp_variable = { pww_lrn_id = pww_l_ag }
+	set_temp_variable = { pww_lrn_term = pww_l_term_days }
+	clamp_temp_variable = { var = pww_lrn_term min = 0 max = global.pww_ledger_c_max_term }
+	if = {
+		limit = {
+			pww_ledger_ag_exists = yes
+			check_variable = { pww_lrn_term > 0 }
+		}
+		set_temp_variable = { pww_lrn_status = global.pww_ag_status^pww_lrn_id }
+		if = {
+			limit = { check_variable = { pww_lrn_status = 1 } }
+			set_temp_variable = { pww_lrn_end = global.pww_ag_end^pww_lrn_id }
+			if = {
+				limit = { check_variable = { pww_lrn_end < global.num_days } }
+				set_temp_variable = { pww_lrn_end = global.num_days }
+			}
+			add_to_temp_variable = { pww_lrn_end = pww_lrn_term }
+			set_variable = { global.pww_ag_end^pww_lrn_id = pww_lrn_end }
+			set_variable = { global.pww_ag_term^pww_lrn_id = pww_lrn_term }
+			set_variable = { global.pww_ag_notice^pww_lrn_id = 0 }
+			add_to_variable = { global.pww_ag_rev^pww_lrn_id = 1 }
+			set_temp_variable = { pww_l_result = 1 }
+			set_temp_variable = { pww_l_fail = 0 }
+		}
+		else_if = {
+			limit = { check_variable = { pww_lrn_status = 3 } }
+			set_temp_variable = { pww_lrn_since = global.num_days }
+			subtract_from_temp_variable = { pww_lrn_since = global.pww_ag_last_change^pww_lrn_id }
+			if = {
+				limit = { NOT = { check_variable = { pww_lrn_since > global.pww_ledger_c_renew_grace } } }
+				set_variable = { global.pww_ag_term^pww_lrn_id = pww_lrn_term }
+				set_temp_variable = { pww_lac_allow_completed = 1 }
+				set_temp_variable = { pww_l_ag = pww_lrn_id }
+				set_temp_variable = { pww_l_expect_rev = 0 }
+				pww_ledger_activate = yes
+			}
+		}
+		if = {
+			limit = { check_variable = { pww_l_result = 1 } }
+			set_temp_variable = { pww_lq_kind_in = 6 }
+			set_temp_variable = { pww_lq_ag_in = pww_lrn_id }
+			set_temp_variable = { pww_lq_status_in = 1 }
+			set_temp_variable = { pww_lq_cause_in = 0 }
+			pww_ledger_queue_push = yes
+			if = {
+				limit = { pww_ledger_debug_on = yes }
+				log = "[GetDateText] PWW_LEDGER renew id=[?pww_lrn_id|0] end=[?global.pww_ag_end^pww_lrn_id|0]"
+			}
+		}
+	}
+}
+
+pww_ledger_new_condition_id = {
+	pww_ledger_init = yes
+	set_temp_variable = { pww_l_cond_new = global.pww_next_cond_id }
+	add_to_variable = { global.pww_next_cond_id = 1 }
+}
+
+pww_ledger_fire_reserved = {
+	pww_ledger_init = yes
+	set_temp_variable = { pww_l_fired = 0 }
+	set_temp_variable = { pww_lfr_cond = pww_l_cond }
+	if = {
+		limit = { check_variable = { pww_lfr_cond > 0 } }
+		for_each_loop = {
+			array = global.pww_ag_cond
+			value = pww_lfr_c
+			index = pww_lfr_id
+			if = {
+				limit = {
+					check_variable = { pww_lfr_c = pww_lfr_cond }
+					check_variable = { global.pww_ag_status^pww_lfr_id = 7 }
+				}
+				set_temp_variable = { pww_l_ag = pww_lfr_id }
+				set_temp_variable = { pww_l_expect_rev = 0 }
+				pww_ledger_activate = yes
+				if = {
+					limit = { check_variable = { pww_l_result = 1 } }
+					add_to_temp_variable = { pww_l_fired = 1 }
+				}
+			}
+		}
+		if = {
+			limit = { pww_ledger_debug_on = yes }
+			log = "[GetDateText] PWW_LEDGER fire_reserved cond=[?pww_lfr_cond|0] fired=[?pww_l_fired|0]"
+		}
+	}
+}
+
+pww_ledger_adopt_right = {
+	set_temp_variable = { pww_l_kind = 2 }
+	set_temp_variable = { pww_l_res = -1 }
+	set_temp_variable = { pww_l_amount = 0 }
+	set_temp_variable = { pww_l_committal = 1 }
+	set_temp_variable = { pww_l_term_days = 0 }
+	set_temp_variable = { pww_l_cond = 0 }
+	set_temp_variable = { pww_l_activate = 1 }
+	pww_ledger_create_agreement = yes
+}
+
+###############################################################################
+# Event queue (internal). In: pww_lq_kind_in, pww_lq_ag_in, pww_lq_status_in,
+# pww_lq_cause_in.
+###############################################################################
+pww_ledger_queue_push = {
+	add_to_array = { array = global.pww_lq_seq value = global.pww_lq_next_seq }
+	add_to_array = { array = global.pww_lq_kind value = pww_lq_kind_in }
+	add_to_array = { array = global.pww_lq_ag value = pww_lq_ag_in }
+	add_to_array = { array = global.pww_lq_status value = pww_lq_status_in }
+	add_to_array = { array = global.pww_lq_cause value = pww_lq_cause_in }
+	add_to_array = { array = global.pww_lq_day value = global.num_days }
+	add_to_variable = { global.pww_lq_next_seq = 1 }
+	if = {
+		limit = { check_variable = { global.pww_lq_seq^num > global.pww_ledger_c_queue_cap } }
+		remove_from_array = { array = global.pww_lq_seq index = 0 }
+		remove_from_array = { array = global.pww_lq_kind index = 0 }
+		remove_from_array = { array = global.pww_lq_ag index = 0 }
+		remove_from_array = { array = global.pww_lq_status index = 0 }
+		remove_from_array = { array = global.pww_lq_cause index = 0 }
+		remove_from_array = { array = global.pww_lq_day index = 0 }
+	}
+}

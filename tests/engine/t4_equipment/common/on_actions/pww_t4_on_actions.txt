@@ -1,0 +1,14 @@
+# Phase 0 test 4: equipment transfers. Seller ENG, buyer IRQ.
+# send_equipment in tranches (and an over-ask), add_equipment_subsidy with seller_tags,
+# create_purchase_contract with civilian_factories = 0.
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = GER }
+				add_to_variable = { global.pww_t4_day = 1 }
+				pww_t4_tick = yes
+			}
+		}
+	}
+}

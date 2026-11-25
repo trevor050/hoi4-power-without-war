@@ -1,0 +1,25 @@
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = POR }
+				add_to_variable = { global.pww_smoke_day = 1 }
+				if = {
+					limit = { check_variable = { global.pww_smoke_day = 1 } }
+					set_global_flag = pww_core_debug
+					set_global_flag = pww_ledger_debug
+				}
+				if = {
+					limit = { check_variable = { global.pww_smoke_day = 70 } }
+					if = {
+						limit = { has_global_flag = pww_initialized }
+						log = "PWW_RESULT smoke.init PASS initialized"
+					}
+					else = { log = "PWW_RESULT smoke.init FAIL not initialized" }
+					log = "PWW_RESULT smoke.por_desp_tungsten INFO [?POR.pww_desp_tungsten] ger_desp_tungsten [?GER.pww_desp_tungsten] ger_desp_oil [?GER.pww_desp_oil]"
+					log = "PWW_DONE pww_smoke"
+				}
+			}
+		}
+	}
+}

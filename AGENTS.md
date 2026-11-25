@@ -29,13 +29,14 @@ Per-resource country variables use the resource name suffix: `pww_desp_oil`, `pw
 - **ledger**: `mod/common/scripted_effects/pww_ledger_*`, `mod/common/scripted_triggers/pww_ledger_*`, `mod/common/script_values/pww_ledger_*`, `mod/common/dynamic_modifiers/pww_ledger_*`, `mod/common/on_actions/pww_ledger_*`, `mod/localisation/english/pww_ledger_*`.
 
 ## Cross-lane interfaces (contract; owners document final signatures in their files' headers)
-**core provides**
-- On startup: `pww_core_init` (sets `global.pww_initialized`, assigns each country `pww_bucket` 0..29, resolves map data).
-- Daily staggered tick: on_daily runs countries whose `pww_bucket` equals `global.pww_day_mod30`, firing scripted effect hook `pww_on_country_tick` (other lanes append via their own scripted effect called from core's list: core calls `pww_ledger_country_tick` if defined; see core header).
-- Monthly global hook: core calls `pww_ledger_monthly_tick`.
-- Country vars: `pww_desp_<res>` (0..100 desperation), `pww_is_active_trader` flag.
-- Map resolution: country array `pww_producing_states_<res>` (state scopes producing that resource), `pww_coastal_states`.
-- Utility: `pww_norm_opinion` script value (opinion normalized to +-100).
+**core provides** (full docs: header of `mod/common/scripted_effects/pww_core_effects.txt`)
+- On startup: `pww_core_init` (idempotent; also run lazily from on_daily). Sets global flag + var `pww_initialized`, `global.pww_res_<res>` index vars, `global.pww_opinion_scale` (1 or 2), assigns each country `pww_bucket` 0..29, resolves map data.
+- Daily staggered tick: on_daily runs `pww_core_country_tick` for countries whose `pww_bucket` equals `global.pww_day_mod30`; it refreshes map + desperation, then calls `pww_ledger_country_tick` (country scope). Core defines NO stub: ledger must define it.
+- Monthly global hook: `pww_ledger_monthly_tick` (arbitrary country scope, >= 28 days apart, after active traders are recomputed). Ledger must define it.
+- Country vars: `pww_desp_<res>` (0..100), `pww_desp_max`, `pww_desp_max_res` (index), flag `pww_is_active_trader` (+ `global.pww_active_traders` array, ~18).
+- Map resolution: country arrays `pww_producing_states_<res>`, `pww_coastal_states` (owned states).
+- Utility (HoI4 has no script_values folder; helpers are effects on temp vars): `pww_core_norm_opinion` (temp in `pww_opinion_target`, out `pww_norm_opinion`, +-100), `pww_core_norm_value`, `pww_core_value_to_band` (temp `pww_band_value` -> `pww_band` 0..4, loc `pww_core_band_N`).
+- Triggers: `pww_core_is_initialized`, `pww_core_is_active_trader`, `pww_core_is_desperate_any`, `pww_core_has_deficit_<res>`, `pww_core_produces_<res>`. Debug: global flag `pww_core_debug` logs `PWW_CORE` lines to game.log.
 
 **ledger provides**
 - Agreements stored in global parallel arrays keyed by agreement id (see ledger header).
@@ -43,5 +44,19 @@ Per-resource country variables use the resource name suffix: `pww_desp_oil`, `pw
 - One dynamic modifier per country carrying all agreement flows (variable-driven).
 - Status enum: 0 draft, 1 active, 2 suspended, 3 completed, 4 terminated, 5 defaulted, 6 nationalized, 7 reserved.
 
+## Engine facts (verified in game, Phase 0: docs/engine/phase0-results.md)
+- `on_startup` has NO scope and does not fire on save load. Wrap in `random_country`; make init idempotent with a lazy on_daily fallback.
+- Scripted effects cannot take `$PARAM$` arguments in v1.20. Pass inputs via temp/global variables.
+- Resource flows (`country_resource_cost_<res>` seller, `country_resource_<res>` buyer, variable-driven dynamic modifier) work and survive reload. Clamp seller cost to production. Buyer's received resource counts as production, so its export law re-exports part of it.
+- Civ payment: `civilian_factory_use` (payer) + `add_offsite_building` (receiver). `cic_to_target_factor` does NOT work in a scoped dynamic modifier; `targeted_modifier` in a dynamic modifier fails to load.
+- `send_embargo` works at 0 world tension (one-way, no PP). `break_embargo` only from the sender.
+- Resource rights: output becomes receiver production; granting twice doubles; any owner/controller change destroys it. Delivery to USA silently failed (unexplained): verify delivery after granting.
+- `has_naval_control` is always false in peacetime (needs patrol missions). Use `ships_in_area` (counts ships in port). AI naval strategies don't move fleets in peace.
+- `send_equipment` works. `create_purchase_contract` needs 1..15 civs. `add_equipment_subsidy` effect unverified.
+- Scripted GUI attachment to `trade_tab`, `top_bar`, `diplomacy_target_context` loads cleanly. Scripted diplomatic actions work AI to AI.
+- No script trigger for sea regions adjacent to a state: use offline tables from `tools/map_tables.py` (vanilla and R56). POR tungsten states 112 and 181 in both maps.
+
 ## Testing
-See `tools/README.md` (harness lane) once it exists. Run the game headless against the mod; check `error.log` for `pww` lines and the `game.log` test output. Only one game instance at a time: the harness uses a lock file.
+- Load test: `python tools/run_hoi4.py [--r56] [--days N]`. Scenario: `--test <dir>` (log `PWW_RESULT <t>.<check> PASS|FAIL|INFO`, end with `PWW_DONE <dirname>`). Exit 0 = clean.
+- Tests live in `tests/<lane>/<name>/` (a mini mod with descriptor.mod). Never in a scratchpad.
+- Isolation is via redirected USERPROFILE; the harness verifies the user's real files by sha256 after each run.

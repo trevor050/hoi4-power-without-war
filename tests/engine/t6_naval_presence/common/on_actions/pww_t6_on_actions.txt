@@ -1,0 +1,14 @@
+# Phase 0 test 6: presence detection in peacetime (vanilla region ids, 1..310 scanned).
+# ships_in_area for fleets sitting in port at game start; has_naval_control in peace;
+# num_planes_stationed_in_regions; AI naval_dominance (ITA) vs naval_blockade (FRA) on region 47.
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = GER }
+				add_to_variable = { global.pww_t6_day = 1 }
+				pww_t6_tick = yes
+			}
+		}
+	}
+}

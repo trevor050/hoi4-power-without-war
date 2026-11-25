@@ -1,0 +1,98 @@
+pww_t2_snap_country = {
+	set_variable = { global.pww_t2_civ = num_of_civilian_factories }
+	set_variable = { global.pww_t2_avail = num_of_available_civilian_factories }
+	set_variable = { global.pww_t2_proj = num_of_civilian_factories_available_for_projects }
+	set_variable = { global.pww_t2_fac = num_of_factories }
+	set_variable = { global.pww_t2_ctrl = num_of_controlled_factories }
+	set_variable = { global.pww_t2_use = modifier@civilian_factory_use }
+	set_variable = { global.pww_t2_cic = modifier@cic_to_target_factor }
+	log = "PWW_RESULT t2.snap INFO day=[?global.pww_t2_day] [GetDateText] tag=[THIS.GetTag] civ=[?global.pww_t2_civ] avail=[?global.pww_t2_avail] for_projects=[?global.pww_t2_proj] factories=[?global.pww_t2_fac] controlled=[?global.pww_t2_ctrl] mod_civ_use=[?global.pww_t2_use] mod_cic_to_target=[?global.pww_t2_cic]"
+}
+
+pww_t2_snap = {
+	ITA = { pww_t2_snap_country = yes }
+	HUN = { pww_t2_snap_country = yes }
+}
+
+pww_t2_tick = {
+	if = {
+		limit = { check_variable = { global.pww_t2_day = 2 } }
+		pww_t2_snap = yes
+	}
+	# A: pay 3 civs, receiver gets 3 offsite civs.
+	if = {
+		limit = { check_variable = { global.pww_t2_day = 3 } }
+		ITA = {
+			set_variable = { pww_t2_use = 3 }
+			add_dynamic_modifier = { modifier = pww_t2_pay_dm }
+			force_update_dynamic_modifier = yes
+		}
+		HUN = { add_offsite_building = { type = industrial_complex level = 3 } }
+		log = "PWW_RESULT t2.A INFO day=[?global.pww_t2_day] ITA civilian_factory_use=3, HUN offsite +3"
+	}
+	if = {
+		limit = { check_variable = { global.pww_t2_day = 5 } }
+		pww_t2_snap = yes
+	}
+	if = {
+		limit = { check_variable = { global.pww_t2_day = 6 } }
+		ITA = {
+			set_variable = { pww_t2_use = 0 }
+			remove_dynamic_modifier = { modifier = pww_t2_pay_dm }
+			force_update_dynamic_modifier = yes
+		}
+		HUN = { add_offsite_building = { type = industrial_complex level = -3 } }
+		log = "PWW_RESULT t2.A_remove INFO day=[?global.pww_t2_day] removed (offsite -3)"
+	}
+	if = {
+		limit = { check_variable = { global.pww_t2_day = 8 } }
+		pww_t2_snap = yes
+	}
+	# B: scoped dynamic modifier with cic_to_target_factor.
+	if = {
+		limit = { check_variable = { global.pww_t2_day = 9 } }
+		ITA = {
+			set_variable = { pww_t2_factor = 0.1 }
+			add_dynamic_modifier = { modifier = pww_t2_target_dm scope = HUN }
+			force_update_dynamic_modifier = yes
+		}
+		log = "PWW_RESULT t2.B INFO day=[?global.pww_t2_day] ITA dm cic_to_target_factor=0.1 scope=HUN"
+	}
+	if = {
+		limit = { check_variable = { global.pww_t2_day = 11 } }
+		pww_t2_snap = yes
+	}
+	# C: idea with targeted_modifier.
+	if = {
+		limit = { check_variable = { global.pww_t2_day = 12 } }
+		ITA = {
+			remove_dynamic_modifier = { modifier = pww_t2_target_dm }
+			add_ideas = pww_t2_target_idea
+		}
+		log = "PWW_RESULT t2.C INFO day=[?global.pww_t2_day] ITA idea targeted_modifier HUN cic_to_target_factor=0.1"
+	}
+	if = {
+		limit = { check_variable = { global.pww_t2_day = 14 } }
+		pww_t2_snap = yes
+	}
+	# D: targeted_modifier block inside a dynamic modifier.
+	if = {
+		limit = { check_variable = { global.pww_t2_day = 15 } }
+		ITA = {
+			remove_ideas = pww_t2_target_idea
+			add_dynamic_modifier = { modifier = pww_t2_targeted_block_dm }
+			force_update_dynamic_modifier = yes
+		}
+		log = "PWW_RESULT t2.D INFO day=[?global.pww_t2_day] ITA dm with targeted_modifier block"
+	}
+	if = {
+		limit = { check_variable = { global.pww_t2_day = 17 } }
+		pww_t2_snap = yes
+		ITA = { remove_dynamic_modifier = { modifier = pww_t2_targeted_block_dm } }
+	}
+	if = {
+		limit = { check_variable = { global.pww_t2_day = 19 } }
+		pww_t2_snap = yes
+		log = "PWW_DONE t2_factories"
+	}
+}

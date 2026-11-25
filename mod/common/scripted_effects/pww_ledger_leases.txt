@@ -1,0 +1,170 @@
+###############################################################################
+# Power Without War: agreements ledger, named-state leases
+#
+# Invariant: at most one live mod lease per (holder, state), and the ledger
+# never leases a state where the holder already holds a vanilla right
+# (checked in pww_ledger_validate). That matters because
+# remove_resource_rights strips ALL of the holder's rights in the state.
+# Known hazard: if vanilla content grants the same holder a right in the same
+# state AFTER our lease starts, our revoke also removes that right.
+#
+# give_resource_rights is executed in the host's scope with the receiver and
+# state as literal tokens built by meta_effect, because vanilla notes the
+# receiver cannot take variables (events/AAT_Finland.txt). remove_resource_
+# rights runs in the holder's scope (common/decisions/IRQ.txt,
+# common/national_focus/china_warlord_sea.txt).
+#
+# INTERNAL EFFECTS (the lifecycle calls these; other lanes should not)
+#   pww_ledger_lease_grant = yes    temp in pww_llg_ag
+#   pww_ledger_lease_revoke = yes   temp in pww_llr_ag
+# Scratch globals for meta_effect/meta_trigger text:
+#   global.pww_l_meta_state, global.pww_l_meta_holder
+###############################################################################
+
+pww_ledger_lease_grant = {
+	set_temp_variable = { pww_llg_host = global.pww_ag_seller^pww_llg_ag }
+	set_temp_variable = { pww_llg_res = global.pww_ag_res^pww_llg_ag }
+	set_variable = { global.pww_l_meta_holder = global.pww_ag_buyer^pww_llg_ag }
+	set_variable = { global.pww_l_meta_state = global.pww_ag_state^pww_llg_ag }
+	var:pww_llg_host = {
+		if = {
+			limit = { check_variable = { pww_llg_res = -1 } }
+			meta_effect = {
+				text = {
+					give_resource_rights = {
+						receiver = [H]
+						state = [S]
+					}
+				}
+				H = "[?global.pww_l_meta_holder.GetTag]"
+				S = "[?global.pww_l_meta_state|0]"
+			}
+		}
+		else_if = {
+			limit = { check_variable = { pww_llg_res = 0 } }
+			meta_effect = {
+				text = {
+					give_resource_rights = {
+						receiver = [H]
+						state = [S]
+						resources = { oil }
+					}
+				}
+				H = "[?global.pww_l_meta_holder.GetTag]"
+				S = "[?global.pww_l_meta_state|0]"
+			}
+		}
+		else_if = {
+			limit = { check_variable = { pww_llg_res = 1 } }
+			meta_effect = {
+				text = {
+					give_resource_rights = {
+						receiver = [H]
+						state = [S]
+						resources = { aluminium }
+					}
+				}
+				H = "[?global.pww_l_meta_holder.GetTag]"
+				S = "[?global.pww_l_meta_state|0]"
+			}
+		}
+		else_if = {
+			limit = { check_variable = { pww_llg_res = 2 } }
+			meta_effect = {
+				text = {
+					give_resource_rights = {
+						receiver = [H]
+						state = [S]
+						resources = { rubber }
+					}
+				}
+				H = "[?global.pww_l_meta_holder.GetTag]"
+				S = "[?global.pww_l_meta_state|0]"
+			}
+		}
+		else_if = {
+			limit = { check_variable = { pww_llg_res = 3 } }
+			meta_effect = {
+				text = {
+					give_resource_rights = {
+						receiver = [H]
+						state = [S]
+						resources = { tungsten }
+					}
+				}
+				H = "[?global.pww_l_meta_holder.GetTag]"
+				S = "[?global.pww_l_meta_state|0]"
+			}
+		}
+		else_if = {
+			limit = { check_variable = { pww_llg_res = 4 } }
+			meta_effect = {
+				text = {
+					give_resource_rights = {
+						receiver = [H]
+						state = [S]
+						resources = { steel }
+					}
+				}
+				H = "[?global.pww_l_meta_holder.GetTag]"
+				S = "[?global.pww_l_meta_state|0]"
+			}
+		}
+		else_if = {
+			limit = { check_variable = { pww_llg_res = 5 } }
+			meta_effect = {
+				text = {
+					give_resource_rights = {
+						receiver = [H]
+						state = [S]
+						resources = { chromium }
+					}
+				}
+				H = "[?global.pww_l_meta_holder.GetTag]"
+				S = "[?global.pww_l_meta_state|0]"
+			}
+		}
+		else_if = {
+			limit = { check_variable = { pww_llg_res = 6 } }
+			meta_effect = {
+				text = {
+					give_resource_rights = {
+						receiver = [H]
+						state = [S]
+						resources = { coal }
+					}
+				}
+				H = "[?global.pww_l_meta_holder.GetTag]"
+				S = "[?global.pww_l_meta_state|0]"
+			}
+		}
+	}
+	if = {
+		limit = { pww_ledger_debug_on = yes }
+		log = "[GetDateText] PWW_LEDGER lease grant id=[?pww_llg_ag|0] holder=[?global.pww_l_meta_holder.GetTag] state=[?global.pww_l_meta_state|0] res=[?pww_llg_res|0]"
+	}
+}
+
+pww_ledger_lease_revoke = {
+	set_temp_variable = { pww_llr_holder = global.pww_ag_buyer^pww_llr_ag }
+	set_variable = { global.pww_l_meta_state = global.pww_ag_state^pww_llr_ag }
+	var:pww_llr_holder = {
+		if = {
+			limit = {
+				exists = yes
+				pww_ledger_holder_has_right_in_meta_state = yes
+			}
+			meta_effect = {
+				text = {
+					remove_resource_rights = [S]
+				}
+				S = "[?global.pww_l_meta_state|0]"
+			}
+		}
+	}
+	if = {
+		limit = { pww_ledger_debug_on = yes }
+		log = "[GetDateText] PWW_LEDGER lease revoke id=[?pww_llr_ag|0] state=[?global.pww_l_meta_state|0]"
+	}
+}
+

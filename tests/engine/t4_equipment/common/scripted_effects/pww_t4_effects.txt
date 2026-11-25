@@ -1,0 +1,88 @@
+pww_t4_snap_country = {
+	set_variable = { global.pww_t4_inf = num_equipment@infantry_equipment }
+	set_variable = { global.pww_t4_army = num_equipment_in_armies@infantry_equipment }
+	set_variable = { global.pww_t4_avail = num_of_available_civilian_factories }
+	set_variable = { global.pww_t4_contracts = 0 }
+	every_purchase_contract = { add_to_variable = { global.pww_t4_contracts = 1 } }
+	log = "PWW_RESULT t4.snap INFO day=[?global.pww_t4_day] [GetDateText] tag=[THIS.GetTag] infantry_equipment stockpile=[?global.pww_t4_inf] in_armies=[?global.pww_t4_army] avail_civs=[?global.pww_t4_avail] purchase_contracts=[?global.pww_t4_contracts|0]"
+	every_purchase_contract = {
+		limit = { seller = ENG buyer = IRQ }
+		log = "PWW_RESULT t4.contract_exists INFO day=[?global.pww_t4_day] ENG->IRQ contract present"
+		if = { limit = { deal_completion > 0.99 } log = "PWW_RESULT t4.contract INFO day=[?global.pww_t4_day] ENG->IRQ completion>=1" }
+		else_if = { limit = { deal_completion > 0.5 } log = "PWW_RESULT t4.contract INFO day=[?global.pww_t4_day] ENG->IRQ completion 0.5..1" }
+		else_if = { limit = { deal_completion > 0 } log = "PWW_RESULT t4.contract INFO day=[?global.pww_t4_day] ENG->IRQ completion 0..0.5" }
+		else = { log = "PWW_RESULT t4.contract INFO day=[?global.pww_t4_day] ENG->IRQ completion 0" }
+	}
+}
+
+pww_t4_snap = {
+	ENG = { pww_t4_snap_country = yes }
+	IRQ = { pww_t4_snap_country = yes }
+}
+
+pww_t4_tick = {
+	if = {
+		limit = { check_variable = { global.pww_t4_day = 2 } }
+		pww_t4_snap = yes
+	}
+	if = {
+		limit = {
+			OR = {
+				check_variable = { global.pww_t4_day = 3 }
+				check_variable = { global.pww_t4_day = 5 }
+			}
+		}
+		ENG = { send_equipment = { equipment = infantry_equipment amount = 500 target = IRQ } }
+		log = "PWW_RESULT t4.tranche INFO day=[?global.pww_t4_day] ENG send_equipment 500 infantry_equipment -> IRQ"
+	}
+	if = {
+		limit = {
+			OR = {
+				check_variable = { global.pww_t4_day = 4 }
+				check_variable = { global.pww_t4_day = 6 }
+				check_variable = { global.pww_t4_day = 8 }
+			}
+		}
+		pww_t4_snap = yes
+	}
+	# Over-ask: more than the stockpile.
+	if = {
+		limit = { check_variable = { global.pww_t4_day = 7 } }
+		ENG = { send_equipment = { equipment = infantry_equipment amount = 1000000 target = IRQ } }
+		log = "PWW_RESULT t4.overask INFO day=[?global.pww_t4_day] ENG send_equipment 1000000 -> IRQ"
+	}
+	if = {
+		limit = { check_variable = { global.pww_t4_day = 9 } }
+		IRQ = {
+			add_equipment_subsidy = {
+				cic = 100
+				equipment_type = infantry_equipment
+				seller_tags = { ENG }
+			}
+		}
+		create_purchase_contract = {
+			seller = ENG
+			buyer = IRQ
+			civilian_factories = 1
+			equipment = {
+				type = infantry_equipment
+				amount = 200
+			}
+		}
+		log = "PWW_RESULT t4.contract_created INFO day=[?global.pww_t4_day] subsidy cic=100 + contract civs=1 amount=200"
+	}
+	if = {
+		limit = {
+			OR = {
+				check_variable = { global.pww_t4_day = 10 }
+				check_variable = { global.pww_t4_day = 20 }
+				check_variable = { global.pww_t4_day = 35 }
+			}
+		}
+		pww_t4_snap = yes
+	}
+	if = {
+		limit = { check_variable = { global.pww_t4_day = 36 } }
+		log = "PWW_DONE t4_equipment"
+	}
+}

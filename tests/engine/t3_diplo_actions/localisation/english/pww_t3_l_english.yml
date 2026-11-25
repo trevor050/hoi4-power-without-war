@@ -1,0 +1,6 @@
+﻿l_english:
+ pww_t3_offer:0 "PWW Test Offer"
+ pww_t3_offer_desc:0 "Phase 0 test action."
+ pww_t3_offer_send_desc:0 "Send the test offer?"
+ pww_t3_offer_receive_desc:0 "Accept the test offer?"
+ pww_t3_acceptance_base:0 "Test acceptance"

@@ -1,0 +1,72 @@
+# Ledger scenario test (scratch, not shipped). Driven from GER on_daily.
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = GER }
+				add_to_variable = { global.pww_ltest_day = 1 }
+				if = {
+					limit = { check_variable = { global.pww_ltest_day = 3 } }
+					pww_ledger_debug_scenario_tungsten = yes
+				}
+				if = {
+					limit = { check_variable = { global.pww_ltest_day = 70 } }
+					if = {
+						limit = { check_variable = { global.pww_lt_status^1 = 2 } }
+						log = "PWW_RESULT ledger.tranche_after_service PASS rifles delivered by tick"
+					}
+					else = {
+						log = "PWW_RESULT ledger.tranche_after_service FAIL status=[?global.pww_lt_status^1|0] due=[?global.pww_lt_due^1|0] now=[?global.num_days|0]"
+					}
+					# Suspend, check flows stop, resume, check they return
+					set_temp_variable = { pww_l_ag = 0 }
+					set_temp_variable = { pww_l_cause = 15 }
+					pww_ledger_suspend = yes
+					if = {
+						limit = {
+							check_variable = { global.pww_ag_status^0 = 2 }
+							GER = { check_variable = { pww_lf_in_tungsten = 0 } check_variable = { pww_lf_civ_use = 0 } }
+							POR = { check_variable = { pww_lf_civ_offsite = 0 } }
+						}
+						log = "PWW_RESULT ledger.suspend PASS flows paused"
+					}
+					else = {
+						log = "PWW_RESULT ledger.suspend FAIL status=[?global.pww_ag_status^0|0] in=[?GER.pww_lf_in_tungsten|2] offsite=[?POR.pww_lf_civ_offsite|0]"
+					}
+					set_temp_variable = { pww_l_ag = 0 }
+					pww_ledger_resume = yes
+					if = {
+						limit = {
+							check_variable = { global.pww_ag_status^0 = 1 }
+							GER = { check_variable = { pww_lf_in_tungsten = 4 } }
+							POR = { check_variable = { pww_lf_civ_offsite = 1 } }
+						}
+						log = "PWW_RESULT ledger.resume PASS flows restored"
+					}
+					else = {
+						log = "PWW_RESULT ledger.resume FAIL status=[?global.pww_ag_status^0|0] fail=[?pww_l_fail|0]"
+					}
+					# GER breaches: remaining late tranche cancelled, reliability drops
+					set_temp_variable = { pww_ltest_rel = GER.pww_reliability }
+					set_temp_variable = { pww_l_ag = 0 }
+					GER = { set_temp_variable = { pww_l_by = THIS } }
+					pww_ledger_default = yes
+					if = {
+						limit = {
+							check_variable = { global.pww_ag_status^0 = 5 }
+							check_variable = { global.pww_lt_status^2 = 3 }
+							GER = { check_variable = { pww_reliability < pww_ltest_rel } check_variable = { pww_lf_in_tungsten = 0 } }
+							POR = { check_variable = { pww_lf_civ_offsite = 0 } }
+						}
+						log = "PWW_RESULT ledger.default PASS rel [?pww_ltest_rel|2] -> [?GER.pww_reliability|2]"
+					}
+					else = {
+						log = "PWW_RESULT ledger.default FAIL status=[?global.pww_ag_status^0|0] t2=[?global.pww_lt_status^2|0] rel=[?GER.pww_reliability|2]"
+					}
+					pww_ledger_debug_dump = yes
+					log = "PWW_DONE ledger_t1"
+				}
+			}
+		}
+	}
+}

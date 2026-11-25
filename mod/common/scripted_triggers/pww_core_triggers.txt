@@ -1,0 +1,56 @@
+###############################################################################
+# Power Without War: core scripted triggers
+#
+# PUBLIC TRIGGERS
+#   pww_core_is_initialized = yes        (any) core init has run
+#   pww_core_debug_enabled = yes         (any) global flag pww_core_debug is set
+#   pww_core_is_active_trader = yes      (country) flagged active trader
+#   pww_core_is_desperate_any = yes      (country) any resource desperation
+#                                        >= 50 (pww_desp_max)
+#   pww_core_is_frantic_any = yes        (country) any resource desperation
+#                                        >= 75
+#   pww_core_has_deficit_<res> = yes     (country) <res> desperation >= 25,
+#                                        i.e. a filtered (sustained) shortage
+#                                        or heavy import exposure
+#   pww_core_produces_<res> = yes        (country) owns at least one state
+#                                        producing <res> (from map resolution)
+#
+# Desperation thresholds are placeholders for playtest tuning; other lanes
+# should use these triggers rather than repeat the numbers.
+###############################################################################
+
+pww_core_is_initialized = {
+	has_global_flag = pww_initialized
+}
+
+pww_core_debug_enabled = {
+	has_global_flag = pww_core_debug
+}
+
+pww_core_is_active_trader = {
+	has_country_flag = pww_is_active_trader
+}
+
+pww_core_is_desperate_any = {
+	check_variable = { pww_desp_max > 49.999 }
+}
+
+pww_core_is_frantic_any = {
+	check_variable = { pww_desp_max > 74.999 }
+}
+
+pww_core_has_deficit_oil = { check_variable = { pww_desp_oil > 24.999 } }
+pww_core_has_deficit_aluminium = { check_variable = { pww_desp_aluminium > 24.999 } }
+pww_core_has_deficit_rubber = { check_variable = { pww_desp_rubber > 24.999 } }
+pww_core_has_deficit_tungsten = { check_variable = { pww_desp_tungsten > 24.999 } }
+pww_core_has_deficit_steel = { check_variable = { pww_desp_steel > 24.999 } }
+pww_core_has_deficit_chromium = { check_variable = { pww_desp_chromium > 24.999 } }
+pww_core_has_deficit_coal = { check_variable = { pww_desp_coal > 24.999 } }
+
+pww_core_produces_oil = { check_variable = { pww_producing_states_oil^num > 0 } }
+pww_core_produces_aluminium = { check_variable = { pww_producing_states_aluminium^num > 0 } }
+pww_core_produces_rubber = { check_variable = { pww_producing_states_rubber^num > 0 } }
+pww_core_produces_tungsten = { check_variable = { pww_producing_states_tungsten^num > 0 } }
+pww_core_produces_steel = { check_variable = { pww_producing_states_steel^num > 0 } }
+pww_core_produces_chromium = { check_variable = { pww_producing_states_chromium^num > 0 } }
+pww_core_produces_coal = { check_variable = { pww_producing_states_coal^num > 0 } }

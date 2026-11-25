@@ -1,0 +1,17 @@
+pww_t2_pay_dm = {
+	icon = GFX_idea_generic_production_bonus
+	civilian_factory_use = pww_t2_use
+}
+
+pww_t2_target_dm = {
+	icon = GFX_idea_generic_production_bonus
+	cic_to_target_factor = pww_t2_factor
+}
+
+pww_t2_targeted_block_dm = {
+	icon = GFX_idea_generic_production_bonus
+	targeted_modifier = {
+		tag = HUN
+		cic_to_target_factor = 0.1
+	}
+}
