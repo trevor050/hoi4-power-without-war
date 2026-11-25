@@ -67,27 +67,27 @@ Covers all seven actions in section 9 (with Quiet and Public variants for Issue 
 | Loc Key | Text |
 |---|---|
 | `pww_act_pledge_support_title` | `Pledge Commercial Support` |
-| `pww_act_pledge_support_desc` | `Sign a reserved agreement underwriting [FROM.GetName]'s output if a coercer cuts them off. Costs nothing unless triggered, but binds real factories or equipment if [FROM.GetCapitalName] calls it in.` |
+| `pww_act_pledge_support_desc` | `Sign a reserved agreement underwriting this country's output if a coercer cuts them off. Costs nothing unless triggered, but binds real factories or equipment if they call it in.` |
 | `pww_act_pledge_support_wolfram_hint` | `Assure Lisbon that Britain will buy its unsold wolfram if Berlin imposes an embargo or withdraws clearing credit.` |
 
 ### 2.6 Declare Quarantine
 | Loc Key | Text |
 |---|---|
 | `pww_act_quarantine_title` | `Declare Naval Quarantine` |
-| `pww_act_quarantine_desc` | `Declare a peacetime naval quarantine on [FROM.GetName]. Costs political power upkeep. While your committed ships hold naval control of their sea approaches, their exposed sea contracts are suspended and strangulation rises. Losing sea control lapses the quarantine.` |
+| `pww_act_quarantine_desc` | `Declare a peacetime naval quarantine on this country. Costs political power upkeep. While your committed ships hold their sea approaches, their exposed sea contracts are suspended and strangulation rises. Lose the approaches and the quarantine lapses.` |
 | `pww_act_quarantine_wolfram_hint` | `Holding the Atlantic approaches off Lisbon will sever maritime deliveries and test whether London's pledge can actually reach port.` |
 
 ### 2.7 Demand Settlement (Post-Nationalization)
 | Loc Key | Text |
 |---|---|
 | `pww_act_demand_settlement_title` | `Demand Settlement` |
-| `pww_act_demand_settlement_desc` | `Confront [FROM.GetName] over seized concessions. Forces a choice between staged factory compensation, settlement in kind, reversal, or open refusal.` |
+| `pww_act_demand_settlement_desc` | `Confront this country over seized concessions. Forces a choice between staged factory compensation, settlement in kind, reversal, or open refusal.` |
 
 ### 2.8 Join Our Embargo
 | Loc Key | Text |
 |---|---|
 | `pww_act_join_embargo_title` | `Request Embargo Compliance` |
-| `pww_act_join_embargo_desc` | `Call on [FROM.GetName] to embargo our target by a set deadline. Punishing non-compliance raises Credibility at the cost of Reliability.` |
+| `pww_act_join_embargo_desc` | `Call on this country to join our embargo by a set deadline. Punishing non-compliance raises Credibility at the cost of Reliability.` |
 
 ---
 

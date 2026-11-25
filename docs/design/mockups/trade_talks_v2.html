@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trade Talks Mockup</title>
+<style>
+  :root {
+    --bg: #15171a;
+    --panel: #23262b;
+    --panel-2: #1b1d21;
+    --rule: #3a3d42;
+    --frame: #6b6347;
+    --text: #d9d6cc;
+    --muted: #8f8b80;
+    --gold: #e8c547;
+    --green: #8fc46a;
+    --red: #d46a5a;
+    --btn: #3b4a3a;
+    --btn-hi: #4c5e4a;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #15171a; } }
+  :root[data-theme="dark"] { --bg: #15171a; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0; color: var(--text);
+    font: 13px/1.4 "Trebuchet MS", Verdana, sans-serif;
+  }
+  .note { max-width: 760px; margin: 0 auto 16px; color: var(--muted); }
+  .window {
+    max-width: 760px; margin: 0 auto; background: var(--panel);
+    border: 2px solid var(--frame); box-shadow: 0 0 0 1px #000, 0 12px 40px #000a;
+  }
+  .title {
+    text-align: center; letter-spacing: .25em; text-transform: uppercase;
+    font-size: 15px; padding: 12px; border-bottom: 1px solid var(--rule);
+    background: linear-gradient(#2e3136, #23262b);
+  }
+  .parties {
+    display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+    padding: 12px 18px; border-bottom: 1px solid var(--rule);
+  }
+  .party { display: flex; align-items: center; gap: 10px; }
+  .party.right { justify-content: flex-end; }
+  .flag { width: 34px; height: 22px; border: 1px solid #000; }
+  .ger { background: linear-gradient(#000 33%, #d00 33% 66%, #fc0 66%); }
+  .swe { background:
+      linear-gradient(90deg, transparent 30%, #fc0 30% 42%, transparent 42%),
+      linear-gradient(transparent 40%, #fc0 40% 60%, transparent 60%), #06a; }
+  .pname { font-size: 14px; }
+  .psub { color: var(--muted); font-size: 11px; }
+  .vs { color: var(--muted); padding: 0 12px; }
+  .table { display: grid; grid-template-columns: 1fr 1fr; }
+  .col { padding: 12px 18px 16px; }
+  .col + .col { border-left: 1px solid var(--rule); }
+  .col h3 {
+    margin: 0 0 8px; font-size: 11px; letter-spacing: .15em; text-transform: uppercase;
+    color: var(--muted); font-weight: normal;
+  }
+  .item {
+    display: grid; grid-template-columns: 22px 1fr auto 18px; gap: 8px; align-items: center;
+    padding: 7px 8px; margin-bottom: 4px; background: var(--panel-2); border: 1px solid #2c2f34;
+  }
+  .ico { width: 18px; height: 18px; border-radius: 3px; background: #444; }
+  .ico.steel { background: #7d8a99; } .ico.civ { background: #b8892c; } .ico.pp { background: #5f7fb3; }
+  .ico.lic { background: #7a5ea8; }
+  .amt { color: var(--gold); white-space: nowrap; }
+  .step { color: var(--muted); font-size: 11px; display: flex; gap: 4px; }
+  .step span { border: 1px solid var(--rule); padding: 0 5px; cursor: pointer; }
+  .x { color: var(--muted); cursor: pointer; text-align: center; }
+  .add {
+    display: block; width: 100%; margin-top: 6px; padding: 6px; text-align: left;
+    background: transparent; color: var(--muted); border: 1px dashed var(--rule); cursor: pointer;
+    font: inherit;
+  }
+  .menu {
+    margin-top: 4px; background: #111316; border: 1px solid var(--frame); padding: 4px 0;
+  }
+  .menu div { padding: 5px 10px; display: flex; justify-content: space-between; }
+  .menu div:hover { background: #22262b; }
+  .menu small { color: var(--muted); }
+  .menu .off { color: #555; }
+  .terms {
+    display: grid; grid-template-columns: auto 1fr auto 1fr; gap: 6px 12px; align-items: center;
+    padding: 10px 18px; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+    background: var(--panel-2);
+  }
+  .terms label { color: var(--muted); font-size: 12px; }
+  .seg { display: flex; }
+  .seg span { padding: 3px 8px; border: 1px solid var(--rule); margin-right: -1px; cursor: pointer; font-size: 12px; }
+  .seg .on { background: var(--btn-hi); color: #fff; }
+  .summary { padding: 12px 18px 4px; }
+  .summary p { margin: 0 0 6px; }
+  .market { color: var(--muted); font-size: 12px; }
+  .market b { color: var(--red); font-weight: normal; }
+  .envoy {
+    margin: 10px 18px; padding: 10px 12px; border-left: 3px solid var(--frame); background: #1d1f23;
+  }
+  .envoy .quote { font-style: italic; }
+  .clues { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .clue { font-size: 11px; padding: 2px 7px; border: 1px solid var(--rule); }
+  .clue.want { border-color: #4f6b3a; color: var(--green); }
+  .clue.no { border-color: #6b3a35; color: var(--red); }
+  .buttons { display: flex; justify-content: space-between; padding: 12px 18px 16px; }
+  .b {
+    padding: 7px 22px; border: 1px solid #000; background: var(--btn); color: #eee; cursor: pointer;
+    box-shadow: inset 0 1px 0 #ffffff22; font: inherit;
+  }
+  .round { color: var(--muted); align-self: center; font-size: 12px; }
+  @media (max-width: 600px) {
+    .table { grid-template-columns: 1fr; }
+    .col + .col { border-left: 0; border-top: 1px solid var(--rule); }
+    .terms { grid-template-columns: auto 1fr; }
+  }
+</style>
+</head>
+<body>
+<p class="note">Mockup only (not game code). A two-column deal table like Civ or EU4: each side is a list of real items with real amounts. Click "Add" to see the menu.</p>
+
+<div class="window">
+  <div class="title">Trade Talks</div>
+
+  <div class="parties">
+    <div class="party"><div class="flag ger"></div><div><div class="pname">German Reich</div><div class="psub">You</div></div></div>
+    <div class="vs">and</div>
+    <div class="party right"><div><div class="pname">Sweden</div><div class="psub">Steel surplus: 112</div></div><div class="flag swe"></div></div>
+  </div>
+
+  <div class="table">
+    <div class="col">
+      <h3>We give</h3>
+      <div class="item"><div class="ico civ"></div><div>Civilian factories</div><div class="amt">2</div><div class="x">×</div></div>
+      <div class="item"><div class="ico pp"></div><div>Political power</div><div class="amt">0.10 / day</div><div class="x">×</div></div>
+      <button class="add" onclick="document.getElementById('m1').hidden=!document.getElementById('m1').hidden">+ Add to our side</button>
+      <div class="menu" id="m1" hidden>
+        <div>Civilian factories <small>14 free</small></div>
+        <div>Political power per day <small>we gain 1.20</small></div>
+        <div>Equipment shipment <small>rifles, trucks, aircraft</small></div>
+        <div>Production licence <small>let them build our designs</small></div>
+        <div>Resource <small>from our surplus</small></div>
+        <div class="off">Resource rights <small>we own no surplus mines</small></div>
+      </div>
+    </div>
+    <div class="col">
+      <h3>They give</h3>
+      <div class="item"><div class="ico steel"></div><div>Steel</div>
+        <div class="step"><span>−</span><span class="amt">24</span><span>+</span></div><div class="x">×</div></div>
+      <button class="add">+ Ask for something</button>
+    </div>
+  </div>
+
+  <div class="terms">
+    <label>Length</label>
+    <div class="seg"><span>6 months</span><span class="on">1 year</span><span>2 years</span><span>5 years</span></div>
+    <label>Binding</label>
+    <div class="seg"><span class="on">Either side may end it</span><span>Fixed contract</span></div>
+  </div>
+
+  <div class="summary">
+    <p>You get <b style="color:var(--gold);font-weight:normal">24 steel</b> a day for one year. You pay <b style="color:var(--gold);font-weight:normal">2 civilian factories</b> and <b style="color:var(--gold);font-weight:normal">0.10 political power</b> a day.</p>
+    <p class="market">At market, 24 steel costs 3 factories. Your offer is <b>below market</b>.</p>
+  </div>
+
+  <div class="envoy">
+    <div class="quote">"Stockholm will not sell its ore below the going rate while London is asking too."</div>
+    <div class="clues">
+      <span class="clue no">Won't: go below market</span>
+      <span class="clue want">Wants: trucks</span>
+      <span class="clue">Patience: running thin</span>
+    </div>
+  </div>
+
+  <div class="buttons">
+    <button class="b">Walk away</button>
+    <span class="round">Round 2 of 3</span>
+    <button class="b">Send offer</button>
+  </div>
+</div>
+</body>
+</html>

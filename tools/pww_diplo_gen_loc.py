@@ -284,7 +284,7 @@ ACTIONS = {
     "pww_diplo_quarantine": ("Quarantine", "$pww_act_quarantine_desc$"),
     "pww_diplo_demand_settlement": ("Demand Settlement", "$pww_act_demand_settlement_desc$"),
     "pww_diplo_join_embargo": ("Join Our Embargo", "$pww_act_join_embargo_desc$"),
-    "pww_diplo_submit_bid": ("Submit Bid", "Bid once on a lot [THIS.GetName] has put up. The holder awards each lot when bidding closes."),
+    "pww_diplo_submit_bid": ("Submit Bid", "Bid once on a lot this country has put up. The holder awards each lot when bidding closes."),
 }
 for k, (t, d) in ACTIONS.items():
     K = k.upper()
