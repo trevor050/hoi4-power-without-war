@@ -1,0 +1,27 @@
+###############################################################################
+# Power Without War: situations on_actions
+#
+#   on_startup   pww_sit_init inside any country (idempotent). Saves where it
+#                did not fire init lazily from the daily tick.
+#   on_daily     pww_sit_daily: the first country each day runs the global
+#                situations tick (anchor triggers, ledger queue poll, clocks,
+#                weekly AI, delivery checks). Live situations are few, so the
+#                tick is not staggered by core's pww_bucket.
+###############################################################################
+
+on_actions = {
+	on_startup = {
+		effect = {
+			random_country = {
+				limit = { exists = yes }
+				pww_sit_init = yes
+			}
+		}
+	}
+
+	on_daily = {
+		effect = {
+			pww_sit_daily = yes
+		}
+	}
+}

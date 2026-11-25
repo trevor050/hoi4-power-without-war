@@ -1,0 +1,13 @@
+###############################################################################
+# Power Without War: situations opinion modifiers
+#   pww_sit_lost_bid   the aggrieved party of a Situation outcome toward the
+#                      country that denied it (applied by
+#                      pww_sit_add_grievance); decays over about 15 months.
+###############################################################################
+
+opinion_modifiers = {
+	pww_sit_lost_bid = {
+		value = -15
+		decay = 1
+	}
+}

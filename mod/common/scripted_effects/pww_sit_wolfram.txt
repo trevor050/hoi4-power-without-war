@@ -1,0 +1,269 @@
+###############################################################################
+# Power Without War: The Wolfram Question (design 12, Phase 1) and situation
+# event dispatch
+#
+# TRIGGER (checked daily until it opens; pww_sit_wolfram_check)
+#   GER, POR and ENG exist, GER is not at war with POR, POR still owns a
+#   tungsten-producing state, and one of:
+#     - GER pww_desp_tungsten >= global.pww_sit_c_wolfram_desp (core value)
+#     - global.year >= global.pww_sit_c_wolfram_fallback_year (1 January)
+#     - global flag pww_sit_debug_open_wolfram and situations day >= 2
+#   Seats: GER claimant, POR holder, ENG patron. Prize: POR's owned and
+#   controlled tungsten states from core's pww_producing_states_tungsten
+#   (vanilla and R56: Lisbon and Guarda). Interior states form the claimant
+#   lot of a split, coastal states the patron lot. Clock:
+#   global.pww_sit_c_wolfram_days. A refused open retries 30 days later.
+#   Sets global flag pww_sit_wolfram_opened and global.pww_sit_wolfram_id.
+#
+# EVENTS (events/pww_sit_events.txt, namespace pww_sit; only human seats
+#   receive popups). Recipient country variables: pww_sit_ev_id (situation),
+#   pww_sit_ev_seat (0/1/2), pww_sit_ev_role (renewal: 0 holder, 1 lessee,
+#   2 rival), pww_sit_ev_outcome, pww_sit_ev_can_split / _can_c / _can_p.
+#   Event targets for loc: pww_claimant, pww_holder, pww_patron, pww_lessee.
+#   pww_sit.1   Wolfram opening (seat brief; fallback moves when diplomacy
+#               is not loaded)
+#   pww_sit.2   Wolfram renewal opening
+#   pww_sit.10  Wolfram holder decision (human holder; it is also the
+#               holder's resolution popup)
+#   pww_sit.11  Renewal holder decision
+#   pww_sit.20  Wolfram resolution popup (one per human seat)
+#   pww_sit.21  Renewal resolution popup
+###############################################################################
+
+pww_sit_wolfram_check = {
+	if = {
+		limit = {
+			country_exists = GER
+			country_exists = POR
+			country_exists = ENG
+			GER = { NOT = { has_war_with = POR } }
+			POR = { check_variable = { pww_producing_states_tungsten^num > 0 } }
+			NOT = { check_variable = { global.num_days < global.pww_sit_wolfram_retry } }
+			OR = {
+				AND = {
+					has_global_flag = pww_sit_debug_open_wolfram
+					check_variable = { global.pww_sit_day > 1 }
+				}
+				GER = { NOT = { check_variable = { pww_desp_tungsten < global.pww_sit_c_wolfram_desp } } }
+				NOT = { check_variable = { global.year < global.pww_sit_c_wolfram_fallback_year } }
+			}
+		}
+		GER = { set_temp_variable = { pww_in_claimant = THIS } }
+		POR = { set_temp_variable = { pww_in_holder = THIS } }
+		ENG = { set_temp_variable = { pww_in_patron = THIS } }
+		set_temp_variable = { pww_in_template = 1 }
+		set_temp_variable = { pww_in_no_patron = 0 }
+		set_temp_variable = { pww_in_resource = 3 }
+		set_temp_variable = { pww_in_days = global.pww_sit_c_wolfram_days }
+		set_temp_variable = { pww_in_parent = -1 }
+		pww_sit_open = yes
+		if = {
+			limit = { check_variable = { pww_out_result = 1 } }
+			set_global_flag = pww_sit_wolfram_opened
+			set_variable = { global.pww_sit_wolfram_id = pww_out_sit_id }
+			log = "[GetDateText] PWW_SIT wolfram opened id=[?pww_out_sit_id|0] ger_desp=[?GER.pww_desp_tungsten|0] debug=[?global.pww_sit_day|0]"
+		}
+		else = {
+			set_variable = { global.pww_sit_wolfram_retry = global.num_days }
+			add_to_variable = { global.pww_sit_wolfram_retry = 30 }
+		}
+	}
+}
+
+###############################################################################
+# Event dispatch
+###############################################################################
+
+# Internal. In: pww_se_id. Saves the seat event targets.
+pww_sit_ev_targets = {
+	set_temp_variable = { pww_se_c = global.pww_sit_claimant^pww_se_id }
+	set_temp_variable = { pww_se_h = global.pww_sit_holder^pww_se_id }
+	set_temp_variable = { pww_se_p = global.pww_sit_patron^pww_se_id }
+	var:pww_se_c = { save_event_target_as = pww_claimant }
+	var:pww_se_h = { save_event_target_as = pww_holder }
+	var:pww_se_p = { save_event_target_as = pww_patron }
+	set_temp_variable = { pww_se_les = global.pww_sit_lessee^pww_se_id }
+	if = {
+		limit = { check_variable = { pww_se_les = 2 } }
+		var:pww_se_p = { save_event_target_as = pww_lessee }
+	}
+	else = {
+		var:pww_se_c = { save_event_target_as = pww_lessee }
+	}
+}
+
+# Internal (recipient scope). In: pww_se_id, pww_se_seat.
+pww_sit_ev_set_vars = {
+	set_variable = { pww_sit_ev_id = pww_se_id }
+	set_variable = { pww_sit_ev_seat = pww_se_seat }
+	set_variable = { pww_sit_ev_role = 2 }
+	if = {
+		limit = { check_variable = { pww_se_seat = 1 } }
+		set_variable = { pww_sit_ev_role = 0 }
+	}
+	else_if = {
+		limit = {
+			OR = {
+				check_variable = { pww_se_les = 3 }
+				AND = {
+					check_variable = { pww_se_seat = 0 }
+					check_variable = { pww_se_les = 0 }
+				}
+				AND = {
+					check_variable = { pww_se_seat = 2 }
+					check_variable = { pww_se_les = 2 }
+				}
+			}
+		}
+		set_variable = { pww_sit_ev_role = 1 }
+	}
+	set_variable = { pww_sit_ev_outcome = global.pww_sit_outcome^pww_se_id }
+}
+
+# In: pww_se_id.
+pww_sit_send_opening_events = {
+	set_temp_variable = { pww_se_tpl = global.pww_sit_template^pww_se_id }
+	if = {
+		limit = { check_variable = { pww_se_tpl > 0 } }
+		pww_sit_ev_targets = yes
+		set_temp_variable = { pww_se_seat = 0 }
+		var:pww_se_c = { pww_sit_ev_open_seat = yes }
+		set_temp_variable = { pww_se_seat = 1 }
+		var:pww_se_h = { pww_sit_ev_open_seat = yes }
+		if = {
+			limit = { check_variable = { global.pww_sit_has_patron^pww_se_id = 1 } }
+			set_temp_variable = { pww_se_seat = 2 }
+			var:pww_se_p = { pww_sit_ev_open_seat = yes }
+		}
+	}
+}
+
+# Internal (seat scope).
+pww_sit_ev_open_seat = {
+	if = {
+		limit = { is_ai = no }
+		pww_sit_ev_set_vars = yes
+		if = {
+			limit = { check_variable = { pww_se_tpl = 2 } }
+			country_event = { id = pww_sit.2 }
+		}
+		else = {
+			country_event = { id = pww_sit.1 }
+		}
+	}
+}
+
+# In: pww_se_id. Human holder decision popup.
+pww_sit_send_holder_decision = {
+	set_temp_variable = { pww_se_tpl = global.pww_sit_template^pww_se_id }
+	pww_sit_ev_targets = yes
+	set_temp_variable = { pww_se_seat = 1 }
+	set_temp_variable = { pww_se_np = 0 }
+	for_each_loop = {
+		array = global.pww_sitp_sit
+		value = pww_se_sv
+		index = pww_se_k
+		if = {
+			limit = { check_variable = { pww_se_sv = pww_se_id } }
+			add_to_temp_variable = { pww_se_np = 1 }
+		}
+	}
+	var:pww_se_h = {
+		pww_sit_ev_set_vars = yes
+		set_variable = { pww_sit_ev_can_c = 0 }
+		set_variable = { pww_sit_ev_can_p = 0 }
+		set_variable = { pww_sit_ev_can_split = 0 }
+		if = {
+			limit = { check_variable = { global.pww_sit_bid_c^pww_se_id > 0 } }
+			set_variable = { pww_sit_ev_can_c = 1 }
+		}
+		if = {
+			limit = {
+				check_variable = { global.pww_sit_has_patron^pww_se_id = 1 }
+				check_variable = { global.pww_sit_bid_p^pww_se_id > 0 }
+			}
+			set_variable = { pww_sit_ev_can_p = 1 }
+		}
+		if = {
+			limit = {
+				check_variable = { pww_sit_ev_can_c = 1 }
+				check_variable = { pww_sit_ev_can_p = 1 }
+				check_variable = { pww_se_np > 1 }
+			}
+			set_variable = { pww_sit_ev_can_split = 1 }
+		}
+		if = {
+			limit = { check_variable = { pww_se_tpl = 2 } }
+			country_event = { id = pww_sit.11 }
+		}
+		else = {
+			country_event = { id = pww_sit.10 }
+		}
+	}
+}
+
+# In: pww_se_id. Optional one-shot temp pww_se_skip_holder (1 = the holder
+# already answered through its decision popup).
+pww_sit_send_resolution_events = {
+	set_temp_variable = { pww_se_tpl = global.pww_sit_template^pww_se_id }
+	if = {
+		limit = { check_variable = { pww_se_tpl > 0 } }
+		pww_sit_ev_targets = yes
+		set_temp_variable = { pww_se_seat = 0 }
+		var:pww_se_c = { pww_sit_ev_res_seat = yes }
+		if = {
+			limit = { NOT = { check_variable = { pww_se_skip_holder = 1 } } }
+			set_temp_variable = { pww_se_seat = 1 }
+			var:pww_se_h = { pww_sit_ev_res_seat = yes }
+		}
+		if = {
+			limit = { check_variable = { global.pww_sit_has_patron^pww_se_id = 1 } }
+			set_temp_variable = { pww_se_seat = 2 }
+			var:pww_se_p = { pww_sit_ev_res_seat = yes }
+		}
+	}
+	set_temp_variable = { pww_se_skip_holder = 0 }
+}
+
+# Internal (seat scope).
+pww_sit_ev_res_seat = {
+	if = {
+		limit = {
+			exists = yes
+			is_ai = no
+		}
+		pww_sit_ev_set_vars = yes
+		if = {
+			limit = { check_variable = { pww_se_tpl = 2 } }
+			country_event = { id = pww_sit.21 }
+		}
+		else = {
+			country_event = { id = pww_sit.20 }
+		}
+	}
+}
+
+# Event option helper (recipient scope): resolve the recipient's situation.
+# In: pww_in_outcome.
+pww_sit_ev_resolve_mine = {
+	set_temp_variable = { pww_in_sit_id = pww_sit_ev_id }
+	set_temp_variable = { pww_se_skip_holder = 1 }
+	pww_sit_resolve = yes
+}
+
+# Event option helper (recipient scope): an offer from this seat.
+# In: pww_in_bid_band.
+pww_sit_ev_bid_mine = {
+	set_temp_variable = { pww_in_sit_id = pww_sit_ev_id }
+	set_temp_variable = { pww_in_bidder = THIS }
+	pww_sit_on_bid = yes
+}
+
+# Event option helper (patron scope): a pledge from this seat.
+pww_sit_ev_pledge_mine = {
+	if = {
+		limit = { check_variable = { global.pww_sit_status^pww_sit_ev_id = 1 } }
+		set_temp_variable = { pww_sm_id = pww_sit_ev_id }
+		pww_sit_make_pledge = yes
+	}
+}

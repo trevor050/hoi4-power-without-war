@@ -1,0 +1,691 @@
+###############################################################################
+# Power Without War: situations, outcomes
+#
+# pww_sit_apply_outcome (called by pww_sit_resolve; in pww_sr_id, pww_sr_out)
+#   1 split        lot 0 states leased to the claimant, lot 1 to the patron
+#   2 claimant     every prize state leased to the claimant
+#   3 patron       every prize state leased to the patron
+#   4 holds out    the patron's reserved pledge fires (it buys the holder's
+#                  unsold output); grievance claimant -> holder if it offered
+#   5 war          the claimant declares war on the holder (unless the war
+#                  already exists or pww_sit_c_allow_war = 0). The ledger's
+#                  war hook handles their agreements.
+#   6 renewed      every live lease of the prize is renewed for a new term
+#   7 outbid       incumbent leases complete (honored); the rival seat gets
+#                  new leases on the same states
+#   8 reverted     nothing: leases complete at their end date
+#   Outcomes 1, 2, 3, 5, 6, 7, 8 withdraw an unused pledge (terminate,
+#   cause 18).
+#
+# Leases (named-state, ledger kind 1, committal, pww_sit_c_lease_days):
+#   - Engine: give_resource_rights stacks if granted twice and any owner or
+#     controller change destroys it. The ledger refuses a duplicate mod lease
+#     for (holder, state) (fail 6) and a state where the holder already has
+#     a vanilla right (fail 7), and requires the host to own and control the
+#     state (fail 5); refusals are logged and the state stays unleased.
+#   - Delivery is verified pww_sit_c_verify_days later per lessee: its
+#     resource_produced must have risen by at least a quarter of the leased
+#     states' output. On failure (phase 0 saw rights silently deliver nothing
+#     to USA) every lease of that lessee in the situation is terminated and,
+#     three days later (once the output is back with the host), replaced by
+#     a committal supply agreement for the same amount (halved if the host
+#     lacks capacity) for the remaining term.
+#   - Resource filter: while global.pww_sit_c_lease_all_res = 1 (default)
+#     leases cover the whole state (ledger res -1). Reason: the ledger's
+#     reconcile trigger pww_ledger_holder_has_right_in_meta_state calls
+#     has_resources_rights = { state = X } without resources = { }, which
+#     reads false for a resource-filtered right (verified in game,
+#     tests/situations/sit_wolfram_ai rights_probe), so a filtered lease is
+#     "nationalized" at the next monthly reconcile. Set it to 0 once the
+#     ledger passes the resource filter.
+#   - Payment: the lessee pays civ = max(1, offer band x
+#     pww_sit_c_civ_per_band) civilian factories per lease.
+#
+# Grievances: aggrieved country var pww_sit_grievance@<against> (0..100) plus
+#   opinion modifier pww_sit_lost_bid (aggrieved's opinion of the other).
+#   Queue kind 5 entries carry val = amount, who = aggrieved, whom = target.
+# Reputation: Reliability moves through the ledger lifecycle of the leases
+#   (honored on completion, breach on default). Credibility belongs to the
+#   coercion lane; only when coercion is NOT loaded does a public claimant
+#   that loses (outcome 3 or 4) lose 5 pww_credibility here.
+#
+# Renewal follow-up: pww_sit_poll_ledger_queue reads ledger queue kind 2
+#   (renewal notice, global.pww_ledger_c_notice_days before the end) for
+#   agreements linked to a resolved anchor situation and opens one template 2
+#   situation per parent, deciding 5 days before the lease ends.
+###############################################################################
+
+pww_sit_apply_outcome = {
+	set_temp_variable = { pww_sao_c = global.pww_sit_claimant^pww_sr_id }
+	set_temp_variable = { pww_sao_h = global.pww_sit_holder^pww_sr_id }
+	set_temp_variable = { pww_sao_p = global.pww_sit_patron^pww_sr_id }
+	set_temp_variable = { pww_sao_res = global.pww_sit_res^pww_sr_id }
+	set_temp_variable = { pww_sao_bc = global.pww_sit_bid_c^pww_sr_id }
+	set_temp_variable = { pww_sao_bp = global.pww_sit_bid_p^pww_sr_id }
+	set_temp_variable = { pww_sao_hp = global.pww_sit_has_patron^pww_sr_id }
+	set_temp_variable = { pww_sao_leases = 0 }
+
+	# Lessee production snapshots for the delivery check
+	if = {
+		limit = {
+			OR = {
+				check_variable = { pww_sr_out = 1 }
+				check_variable = { pww_sr_out = 2 }
+				check_variable = { pww_sr_out = 3 }
+				check_variable = { pww_sr_out = 7 }
+			}
+		}
+		set_temp_variable = { pww_sh_res = pww_sao_res }
+		var:pww_sao_c = { pww_sit_country_res_produced = yes }
+		set_variable = { global.pww_sit_vbase_c^pww_sr_id = pww_sh_val }
+		set_variable = { global.pww_sit_vexp_c^pww_sr_id = 0 }
+		if = {
+			limit = { check_variable = { pww_sao_hp = 1 } }
+			set_temp_variable = { pww_sh_res = pww_sao_res }
+			var:pww_sao_p = { pww_sit_country_res_produced = yes }
+			set_variable = { global.pww_sit_vbase_p^pww_sr_id = pww_sh_val }
+			set_variable = { global.pww_sit_vexp_p^pww_sr_id = 0 }
+		}
+	}
+
+	if = {
+		limit = { check_variable = { pww_sr_out = 1 } }
+		set_temp_variable = { pww_sl_lot = 0 }
+		set_temp_variable = { pww_sl_seat = 0 }
+		pww_sit_lease_prize = yes
+		set_temp_variable = { pww_sl_lot = 1 }
+		set_temp_variable = { pww_sl_seat = 2 }
+		pww_sit_lease_prize = yes
+	}
+	else_if = {
+		limit = { check_variable = { pww_sr_out = 2 } }
+		set_temp_variable = { pww_sl_lot = -1 }
+		set_temp_variable = { pww_sl_seat = 0 }
+		pww_sit_lease_prize = yes
+		if = {
+			limit = {
+				check_variable = { pww_sao_hp = 1 }
+				OR = {
+					check_variable = { pww_sao_bp > 0 }
+					check_variable = { global.pww_sit_pledge^pww_sr_id = 1 }
+				}
+			}
+			set_temp_variable = { pww_sg_from = pww_sao_p }
+			set_temp_variable = { pww_sg_against = pww_sao_h }
+			set_temp_variable = { pww_sg_amt = 10 }
+			pww_sit_add_grievance = yes
+		}
+	}
+	else_if = {
+		limit = { check_variable = { pww_sr_out = 3 } }
+		set_temp_variable = { pww_sl_lot = -1 }
+		set_temp_variable = { pww_sl_seat = 2 }
+		pww_sit_lease_prize = yes
+		if = {
+			limit = { check_variable = { pww_sao_bc > 0 } }
+			set_temp_variable = { pww_sg_from = pww_sao_c }
+			set_temp_variable = { pww_sg_against = pww_sao_h }
+			set_temp_variable = { pww_sg_amt = 20 }
+			pww_sit_add_grievance = yes
+			set_temp_variable = { pww_sg_from = pww_sao_c }
+			set_temp_variable = { pww_sg_against = pww_sao_p }
+			set_temp_variable = { pww_sg_amt = 10 }
+			pww_sit_add_grievance = yes
+		}
+		pww_sit_credibility_fallback = yes
+	}
+	else_if = {
+		limit = { check_variable = { pww_sr_out = 4 } }
+		set_temp_variable = { pww_sao_pag = global.pww_sit_pledge_ag^pww_sr_id }
+		if = {
+			limit = { check_variable = { pww_sao_pag > -1 } }
+			set_temp_variable = { pww_l_cond = global.pww_ag_cond^pww_sao_pag }
+			pww_ledger_fire_reserved = yes
+			log = "[GetDateText] PWW_SIT pledge fired id=[?pww_sr_id|0] ag=[?pww_sao_pag|0] fired=[?pww_l_fired|0]"
+		}
+		if = {
+			limit = {
+				OR = {
+					check_variable = { pww_sao_bc > 0 }
+					check_variable = { global.pww_sit_pressure^pww_sr_id > 0 }
+				}
+			}
+			set_temp_variable = { pww_sg_amt = 10 }
+			if = {
+				limit = { check_variable = { global.pww_sit_public^pww_sr_id = 1 } }
+				set_temp_variable = { pww_sg_amt = 20 }
+			}
+			set_temp_variable = { pww_sg_from = pww_sao_c }
+			set_temp_variable = { pww_sg_against = pww_sao_h }
+			pww_sit_add_grievance = yes
+		}
+		pww_sit_credibility_fallback = yes
+	}
+	else_if = {
+		limit = { check_variable = { pww_sr_out = 5 } }
+		if = {
+			limit = {
+				NOT = { check_variable = { pww_sr_already_war = 1 } }
+				check_variable = { global.pww_sit_c_allow_war = 1 }
+				var:pww_sao_h = { var:pww_sao_c = { NOT = { has_war_with = PREV } } }
+			}
+			var:pww_sao_h = {
+				var:pww_sao_c = {
+					declare_war_on = { target = PREV type = annex_everything }
+				}
+			}
+			log = "[GetDateText] PWW_SIT war declared id=[?pww_sr_id|0] [?pww_sao_c.GetTag] -> [?pww_sao_h.GetTag]"
+		}
+	}
+	else_if = {
+		limit = { check_variable = { pww_sr_out = 6 } }
+		for_each_loop = {
+			array = global.pww_sitp_sit
+			value = pww_sao_sv
+			index = pww_sao_k
+			if = {
+				limit = {
+					check_variable = { pww_sao_sv = pww_sr_id }
+					check_variable = { global.pww_sitp_ag^pww_sao_k > -1 }
+				}
+				set_temp_variable = { pww_l_ag = global.pww_sitp_ag^pww_sao_k }
+				set_temp_variable = { pww_l_term_days = global.pww_sit_c_lease_days }
+				pww_ledger_renew = yes
+				log = "[GetDateText] PWW_SIT renew id=[?pww_sr_id|0] ag=[?pww_l_ag|0] result=[?pww_l_result|0] end=[?global.pww_ag_end^pww_l_ag|0]"
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { pww_sr_out = 7 } }
+		# The rival is whichever bidding seat is not the incumbent
+		set_temp_variable = { pww_sl_seat = 0 }
+		if = {
+			limit = { check_variable = { global.pww_sit_lessee^pww_sr_id = 0 } }
+			set_temp_variable = { pww_sl_seat = 2 }
+		}
+		for_each_loop = {
+			array = global.pww_sitp_sit
+			value = pww_sao_sv
+			index = pww_sao_k
+			if = {
+				limit = {
+					check_variable = { pww_sao_sv = pww_sr_id }
+					check_variable = { global.pww_sitp_ag^pww_sao_k > -1 }
+				}
+				set_temp_variable = { pww_l_ag = global.pww_sitp_ag^pww_sao_k }
+				if = {
+					limit = { pww_ledger_ag_is_live = yes }
+					set_temp_variable = { pww_l_cause = 9 }
+					pww_ledger_complete = yes
+				}
+				set_variable = { global.pww_sitp_ag^pww_sao_k = -1 }
+				set_variable = { global.pww_sitp_to^pww_sao_k = -1 }
+			}
+		}
+		set_temp_variable = { pww_sl_lot = -1 }
+		pww_sit_lease_prize = yes
+	}
+
+	# Unused pledge withdrawn
+	if = {
+		limit = { NOT = { check_variable = { pww_sr_out = 4 } } }
+		set_temp_variable = { pww_so2_ag = global.pww_sit_pledge_ag^pww_sr_id }
+		pww_sit_drop_pledge = yes
+	}
+
+	if = {
+		limit = { check_variable = { pww_sao_leases > 0 } }
+		set_temp_variable = { pww_sao_vd = global.num_days }
+		add_to_temp_variable = { pww_sao_vd = global.pww_sit_c_verify_days }
+		set_variable = { global.pww_sit_vday^pww_sr_id = pww_sao_vd }
+	}
+}
+
+# Internal. Leases the prize entries of pww_sr_id whose lot is pww_sl_lot
+# (-1 = all) to seat pww_sl_seat (0 claimant, 2 patron).
+pww_sit_lease_prize = {
+	set_temp_variable = { pww_sl_buyer = pww_sao_c }
+	set_temp_variable = { pww_sl_band = pww_sao_bc }
+	if = {
+		limit = { check_variable = { pww_sl_seat = 2 } }
+		set_temp_variable = { pww_sl_buyer = pww_sao_p }
+		set_temp_variable = { pww_sl_band = pww_sao_bp }
+	}
+	set_temp_variable = { pww_sl_civ = pww_sl_band }
+	multiply_temp_variable = { pww_sl_civ = global.pww_sit_c_civ_per_band }
+	round_temp_variable = pww_sl_civ
+	if = {
+		limit = { check_variable = { pww_sl_civ < 1 } }
+		set_temp_variable = { pww_sl_civ = 1 }
+	}
+	for_each_loop = {
+		array = global.pww_sitp_sit
+		value = pww_sl_sv
+		index = pww_sl_k
+		if = {
+			limit = {
+				check_variable = { pww_sl_sv = pww_sr_id }
+				OR = {
+					check_variable = { pww_sl_lot = -1 }
+					check_variable = { global.pww_sitp_lot^pww_sl_k = pww_sl_lot }
+				}
+				check_variable = { global.pww_sitp_ag^pww_sl_k < 0 }
+			}
+			pww_sit_lease_entry = yes
+		}
+	}
+}
+
+# Internal. In: pww_sl_k (prize entry), pww_sl_buyer, pww_sl_seat, pww_sl_civ,
+# pww_sao_h (host), pww_sao_res, pww_sr_id.
+pww_sit_lease_entry = {
+	set_temp_variable = { pww_l_seller = pww_sao_h }
+	set_temp_variable = { pww_l_buyer = pww_sl_buyer }
+	set_temp_variable = { pww_l_kind = 1 }
+	set_temp_variable = { pww_l_res = pww_sao_res }
+	if = {
+		limit = { check_variable = { global.pww_sit_c_lease_all_res = 1 } }
+		set_temp_variable = { pww_l_res = -1 }
+	}
+	set_temp_variable = { pww_l_amount = 0 }
+	set_temp_variable = { pww_l_state = global.pww_sitp_state^pww_sl_k }
+	set_temp_variable = { pww_l_committal = 1 }
+	set_temp_variable = { pww_l_term_days = global.pww_sit_c_lease_days }
+	set_temp_variable = { pww_l_civ = pww_sl_civ }
+	set_temp_variable = { pww_l_pp = 0 }
+	set_temp_variable = { pww_l_ideo = 0 }
+	set_temp_variable = { pww_l_ideo_giver = 0 }
+	set_temp_variable = { pww_l_cond = 0 }
+	set_temp_variable = { pww_l_reserve_days = 0 }
+	set_temp_variable = { pww_l_revert_days = 0 }
+	set_temp_variable = { pww_l_convoys = 0 }
+	set_temp_variable = { pww_l_activate = 1 }
+	pww_ledger_create_agreement = yes
+	set_temp_variable = { pww_sle_ag = pww_l_new_id }
+	set_temp_variable = { pww_l_ag = pww_sle_ag }
+	if = {
+		limit = {
+			check_variable = { pww_l_result = 1 }
+			pww_ledger_ag_is_active = yes
+		}
+		set_variable = { global.pww_sitp_ag^pww_sl_k = pww_sle_ag }
+		set_variable = { global.pww_sitp_to^pww_sl_k = pww_sl_seat }
+		add_to_temp_variable = { pww_sao_leases = 1 }
+		set_temp_variable = { pww_sle_amt = global.pww_sitp_amt^pww_sl_k }
+		if = {
+			limit = { check_variable = { pww_sl_seat = 0 } }
+			add_to_variable = { global.pww_sit_vexp_c^pww_sr_id = pww_sle_amt }
+		}
+		else = {
+			add_to_variable = { global.pww_sit_vexp_p^pww_sr_id = pww_sle_amt }
+		}
+		log = "[GetDateText] PWW_SIT lease id=[?pww_sr_id|0] state=[?pww_l_state|0] to=[?pww_sl_buyer.GetTag] ag=[?pww_sle_ag|0] civ=[?pww_sl_civ|0] amt=[?pww_sle_amt|1]"
+	}
+	else = {
+		log = "[GetDateText] PWW_SIT lease REFUSED id=[?pww_sr_id|0] state=[?pww_l_state|0] to=[?pww_sl_buyer.GetTag] fail=[?pww_l_fail|0]"
+	}
+}
+
+###############################################################################
+# Delivery verification. In: pww_sv_id.
+###############################################################################
+pww_sit_verify_delivery = {
+	set_temp_variable = { pww_sv_c = global.pww_sit_claimant^pww_sv_id }
+	set_temp_variable = { pww_sv_p = global.pww_sit_patron^pww_sv_id }
+	set_temp_variable = { pww_sv_h = global.pww_sit_holder^pww_sv_id }
+	set_temp_variable = { pww_sv_res = global.pww_sit_res^pww_sv_id }
+	set_variable = { global.pww_sit_vday^pww_sv_id = 0 }
+
+	# Phase 2: supply fallbacks for terminated leases (entries marked -2)
+	for_each_loop = {
+		array = global.pww_sitp_sit
+		value = pww_sv_sv
+		index = pww_sv_k
+		if = {
+			limit = {
+				check_variable = { pww_sv_sv = pww_sv_id }
+				check_variable = { global.pww_sitp_ag^pww_sv_k = -2 }
+			}
+			pww_sit_supply_fallback = yes
+		}
+	}
+
+	# Phase 1: check each lessee
+	set_temp_variable = { pww_sv_fail_c = 0 }
+	set_temp_variable = { pww_sv_fail_p = 0 }
+	if = {
+		limit = { check_variable = { global.pww_sit_vexp_c^pww_sv_id > 0 } }
+		set_temp_variable = { pww_sh_res = pww_sv_res }
+		var:pww_sv_c = { pww_sit_country_res_produced = yes }
+		set_temp_variable = { pww_sv_delta = pww_sh_val }
+		subtract_from_temp_variable = { pww_sv_delta = global.pww_sit_vbase_c^pww_sv_id }
+		set_temp_variable = { pww_sv_need = global.pww_sit_vexp_c^pww_sv_id }
+		multiply_temp_variable = { pww_sv_need = 0.25 }
+		if = {
+			limit = { check_variable = { pww_sv_delta < pww_sv_need } }
+			set_temp_variable = { pww_sv_fail_c = 1 }
+		}
+		log = "[GetDateText] PWW_SIT verify id=[?pww_sv_id|0] lessee=[?pww_sv_c.GetTag] gain=[?pww_sv_delta|1] expected=[?global.pww_sit_vexp_c^pww_sv_id|1] failed=[?pww_sv_fail_c|0]"
+		set_variable = { global.pww_sit_vexp_c^pww_sv_id = 0 }
+	}
+	if = {
+		limit = { check_variable = { global.pww_sit_vexp_p^pww_sv_id > 0 } }
+		set_temp_variable = { pww_sh_res = pww_sv_res }
+		var:pww_sv_p = { pww_sit_country_res_produced = yes }
+		set_temp_variable = { pww_sv_delta = pww_sh_val }
+		subtract_from_temp_variable = { pww_sv_delta = global.pww_sit_vbase_p^pww_sv_id }
+		set_temp_variable = { pww_sv_need = global.pww_sit_vexp_p^pww_sv_id }
+		multiply_temp_variable = { pww_sv_need = 0.25 }
+		if = {
+			limit = { check_variable = { pww_sv_delta < pww_sv_need } }
+			set_temp_variable = { pww_sv_fail_p = 1 }
+		}
+		log = "[GetDateText] PWW_SIT verify id=[?pww_sv_id|0] lessee=[?pww_sv_p.GetTag] gain=[?pww_sv_delta|1] expected=[?global.pww_sit_vexp_p^pww_sv_id|1] failed=[?pww_sv_fail_p|0]"
+		set_variable = { global.pww_sit_vexp_p^pww_sv_id = 0 }
+	}
+
+	set_temp_variable = { pww_sv_any = pww_sv_fail_c }
+	add_to_temp_variable = { pww_sv_any = pww_sv_fail_p }
+	if = {
+		limit = { check_variable = { pww_sv_any > 0 } }
+		for_each_loop = {
+			array = global.pww_sitp_sit
+			value = pww_sv_sv
+			index = pww_sv_k
+			if = {
+				limit = {
+					check_variable = { pww_sv_sv = pww_sv_id }
+					check_variable = { global.pww_sitp_ag^pww_sv_k > -1 }
+					OR = {
+						AND = {
+							check_variable = { pww_sv_fail_c = 1 }
+							check_variable = { global.pww_sitp_to^pww_sv_k = 0 }
+						}
+						AND = {
+							check_variable = { pww_sv_fail_p = 1 }
+							check_variable = { global.pww_sitp_to^pww_sv_k = 2 }
+						}
+					}
+				}
+				set_temp_variable = { pww_l_ag = global.pww_sitp_ag^pww_sv_k }
+				if = {
+					limit = { pww_ledger_ag_is_active = yes }
+					# Remember the old terms for the replacement
+					set_variable = { global.pww_sit_fb_civ = global.pww_ag_civ^pww_l_ag }
+					set_variable = { global.pww_sit_fb_end = global.pww_ag_end^pww_l_ag }
+					set_temp_variable = { pww_l_cause = 0 }
+					pww_ledger_terminate = yes
+					set_variable = { global.pww_sitp_ag^pww_sv_k = -2 }
+				}
+			}
+		}
+		set_temp_variable = { pww_sv_vd = global.num_days }
+		add_to_temp_variable = { pww_sv_vd = 3 }
+		set_variable = { global.pww_sit_vday^pww_sv_id = pww_sv_vd }
+		set_temp_variable = { pww_in_sit_id = pww_sv_id }
+		set_temp_variable = { pww_in_dev = 12 }
+		pww_sit_set_dev = yes
+	}
+	else_if = {
+		limit = { check_variable = { global.pww_sit_dev^pww_sv_id = 10 } }
+		set_temp_variable = { pww_in_sit_id = pww_sv_id }
+		set_temp_variable = { pww_in_dev = 15 }
+		pww_sit_set_dev = yes
+	}
+}
+
+# Internal. In: pww_sv_k, pww_sv_* (one prize entry marked -2).
+pww_sit_supply_fallback = {
+	set_temp_variable = { pww_sfb_to = global.pww_sitp_to^pww_sv_k }
+	set_temp_variable = { pww_sfb_buyer = pww_sv_c }
+	if = {
+		limit = { check_variable = { pww_sfb_to = 2 } }
+		set_temp_variable = { pww_sfb_buyer = pww_sv_p }
+	}
+	set_temp_variable = { pww_sfb_term = global.pww_sit_fb_end }
+	subtract_from_temp_variable = { pww_sfb_term = global.num_days }
+	if = {
+		limit = { check_variable = { pww_sfb_term < 30 } }
+		set_temp_variable = { pww_sfb_term = 30 }
+	}
+	set_temp_variable = { pww_sfb_amt = global.pww_sitp_amt^pww_sv_k }
+	set_temp_variable = { pww_sfb_try = 0 }
+	set_temp_variable = { pww_sfb_done = 0 }
+	while_loop_effect = {
+		limit = {
+			check_variable = { pww_sfb_done = 0 }
+			check_variable = { pww_sfb_try < 2 }
+		}
+		set_temp_variable = { pww_l_seller = pww_sv_h }
+		set_temp_variable = { pww_l_buyer = pww_sfb_buyer }
+		set_temp_variable = { pww_l_kind = 0 }
+		set_temp_variable = { pww_l_res = pww_sv_res }
+		set_temp_variable = { pww_l_amount = pww_sfb_amt }
+		set_temp_variable = { pww_l_state = 0 }
+		set_temp_variable = { pww_l_committal = 1 }
+		set_temp_variable = { pww_l_term_days = pww_sfb_term }
+		set_temp_variable = { pww_l_civ = global.pww_sit_fb_civ }
+		set_temp_variable = { pww_l_pp = 0 }
+		set_temp_variable = { pww_l_ideo = 0 }
+		set_temp_variable = { pww_l_ideo_giver = 0 }
+		set_temp_variable = { pww_l_cond = 0 }
+		set_temp_variable = { pww_l_reserve_days = 0 }
+		set_temp_variable = { pww_l_revert_days = 0 }
+		set_temp_variable = { pww_l_convoys = 0 }
+		set_temp_variable = { pww_l_activate = 1 }
+		pww_ledger_create_agreement = yes
+		if = {
+			limit = { check_variable = { pww_l_result = 1 } }
+			set_temp_variable = { pww_sfb_done = 1 }
+			set_variable = { global.pww_sitp_ag^pww_sv_k = pww_l_new_id }
+		}
+		else = {
+			multiply_temp_variable = { pww_sfb_amt = 0.5 }
+		}
+		add_to_temp_variable = { pww_sfb_try = 1 }
+	}
+	if = {
+		limit = { check_variable = { pww_sfb_done = 0 } }
+		set_variable = { global.pww_sitp_ag^pww_sv_k = -1 }
+		set_variable = { global.pww_sitp_to^pww_sv_k = -1 }
+	}
+	log = "[GetDateText] PWW_SIT supply fallback id=[?pww_sv_id|0] to=[?pww_sfb_buyer.GetTag] amount=[?pww_sfb_amt|1] ok=[?pww_sfb_done|0] ag=[?global.pww_sitp_ag^pww_sv_k|0]"
+}
+
+###############################################################################
+# Pledges (fallback when diplomacy does not provide one)
+###############################################################################
+
+# In: pww_sm_id. Creates a reserved, committal supply agreement: the patron
+# buys pww_sit_c_pledge_share of the holder's output for one lease term if
+# the condition fires (the holder holds out).
+pww_sit_make_pledge = {
+	set_temp_variable = { pww_smp_h = global.pww_sit_holder^pww_sm_id }
+	set_temp_variable = { pww_smp_p = global.pww_sit_patron^pww_sm_id }
+	set_temp_variable = { pww_smp_res = global.pww_sit_res^pww_sm_id }
+	set_temp_variable = { pww_sh_res = pww_smp_res }
+	var:pww_smp_h = { pww_sit_country_res_produced = yes }
+	set_temp_variable = { pww_smp_amt = pww_sh_val }
+	multiply_temp_variable = { pww_smp_amt = global.pww_sit_c_pledge_share }
+	round_temp_variable = pww_smp_amt
+	if = {
+		limit = { check_variable = { pww_smp_amt < 1 } }
+		set_temp_variable = { pww_smp_amt = 1 }
+	}
+	pww_ledger_new_condition_id = yes
+	set_temp_variable = { pww_smp_reserve = global.pww_sit_days_left^pww_sm_id }
+	add_to_temp_variable = { pww_smp_reserve = 60 }
+	set_temp_variable = { pww_l_seller = pww_smp_h }
+	set_temp_variable = { pww_l_buyer = pww_smp_p }
+	set_temp_variable = { pww_l_kind = 0 }
+	set_temp_variable = { pww_l_res = pww_smp_res }
+	set_temp_variable = { pww_l_amount = pww_smp_amt }
+	set_temp_variable = { pww_l_state = 0 }
+	set_temp_variable = { pww_l_committal = 1 }
+	set_temp_variable = { pww_l_term_days = global.pww_sit_c_lease_days }
+	set_temp_variable = { pww_l_civ = 1 }
+	set_temp_variable = { pww_l_pp = 0 }
+	set_temp_variable = { pww_l_ideo = 0 }
+	set_temp_variable = { pww_l_ideo_giver = 0 }
+	set_temp_variable = { pww_l_cond = pww_l_cond_new }
+	set_temp_variable = { pww_l_reserve_days = pww_smp_reserve }
+	set_temp_variable = { pww_l_revert_days = 0 }
+	set_temp_variable = { pww_l_convoys = 0 }
+	set_temp_variable = { pww_l_activate = 0 }
+	pww_ledger_create_agreement = yes
+	if = {
+		limit = { check_variable = { pww_l_result = 1 } }
+		set_variable = { global.pww_sit_pledge^pww_sm_id = 1 }
+		set_variable = { global.pww_sit_pledge_ag^pww_sm_id = pww_l_new_id }
+		set_temp_variable = { pww_in_sit_id = pww_sm_id }
+		set_temp_variable = { pww_in_dev = 4 }
+		pww_sit_set_dev = yes
+		log = "[GetDateText] PWW_SIT pledge id=[?pww_sm_id|0] patron=[?pww_smp_p.GetTag] ag=[?pww_l_new_id|0] amount=[?pww_smp_amt|1]"
+	}
+	else = {
+		# A pledge without a ledger agreement still counts as backing
+		set_variable = { global.pww_sit_pledge^pww_sm_id = 1 }
+		set_temp_variable = { pww_in_sit_id = pww_sm_id }
+		set_temp_variable = { pww_in_dev = 4 }
+		pww_sit_set_dev = yes
+		log = "[GetDateText] PWW_SIT pledge without agreement id=[?pww_sm_id|0] fail=[?pww_l_fail|0]"
+	}
+	set_temp_variable = { pww_l_cond = 0 }
+}
+
+# In: pww_so2_ag (-1 = nothing). Terminates a still-reserved pledge.
+pww_sit_drop_pledge = {
+	if = {
+		limit = { check_variable = { pww_so2_ag > -1 } }
+		set_temp_variable = { pww_l_ag = pww_so2_ag }
+		if = {
+			limit = {
+				pww_ledger_ag_exists = yes
+				check_variable = { global.pww_ag_status^pww_l_ag = 7 }
+			}
+			set_temp_variable = { pww_l_cause = 18 }
+			pww_ledger_terminate = yes
+		}
+	}
+}
+
+###############################################################################
+# Grievances and the credibility fallback
+###############################################################################
+
+# In: pww_sg_from (aggrieved), pww_sg_against, pww_sg_amt; pww_sr_id.
+pww_sit_add_grievance = {
+	var:pww_sg_from = {
+		if = {
+			limit = { exists = yes }
+			set_temp_variable = { pww_sg_cur = pww_sit_grievance@var:pww_sg_against }
+			add_to_temp_variable = { pww_sg_cur = pww_sg_amt }
+			clamp_temp_variable = { var = pww_sg_cur min = 0 max = 100 }
+			set_variable = { pww_sit_grievance@var:pww_sg_against = pww_sg_cur }
+		}
+	}
+	var:pww_sg_against = {
+		if = {
+			limit = { exists = yes }
+			var:pww_sg_from = {
+				if = {
+					limit = { exists = yes }
+					add_opinion_modifier = { target = PREV modifier = pww_sit_lost_bid }
+				}
+			}
+		}
+	}
+	set_temp_variable = { pww_sq_kind_in = 5 }
+	set_temp_variable = { pww_sq_sit_in = pww_sr_id }
+	set_temp_variable = { pww_sq_val_in = pww_sg_amt }
+	pww_sit_queue_push = yes
+	add_to_array = { array = global.pww_sitq_g_seq value = global.pww_sitq_next_seq }
+	add_to_array = { array = global.pww_sitq_g_who value = pww_sg_from }
+	add_to_array = { array = global.pww_sitq_g_whom value = pww_sg_against }
+	log = "[GetDateText] PWW_SIT grievance id=[?pww_sr_id|0] [?pww_sg_from.GetTag] against [?pww_sg_against.GetTag] +[?pww_sg_amt|0]"
+}
+
+# In: pww_sao_c, pww_sr_id. Only without the coercion lane.
+pww_sit_credibility_fallback = {
+	if = {
+		limit = {
+			NOT = { has_global_flag = pww_coer_loaded }
+			check_variable = { global.pww_sit_public^pww_sr_id = 1 }
+		}
+		var:pww_sao_c = {
+			if = {
+				limit = { has_variable = pww_credibility }
+				subtract_from_variable = { pww_credibility = 5 }
+				clamp_variable = { var = pww_credibility min = 0 max = 100 }
+			}
+		}
+	}
+}
+
+###############################################################################
+# Renewal follow-ups from the ledger queue
+###############################################################################
+pww_sit_poll_ledger_queue = {
+	set_temp_variable = { pww_spl_max = global.pww_sit_lq_seen }
+	for_each_loop = {
+		array = global.pww_lq_seq
+		value = pww_spl_seq
+		index = pww_spl_i
+		if = {
+			limit = { check_variable = { pww_spl_seq > global.pww_sit_lq_seen } }
+			if = {
+				limit = { check_variable = { pww_spl_seq > pww_spl_max } }
+				set_temp_variable = { pww_spl_max = pww_spl_seq }
+			}
+			if = {
+				limit = { check_variable = { global.pww_lq_kind^pww_spl_i = 2 } }
+				set_temp_variable = { pww_spl_ag = global.pww_lq_ag^pww_spl_i }
+				pww_sit_open_renewal_for_ag = yes
+			}
+		}
+	}
+	set_variable = { global.pww_sit_lq_seen = pww_spl_max }
+}
+
+# Internal. In: pww_spl_ag.
+pww_sit_open_renewal_for_ag = {
+	set_temp_variable = { pww_sor_parent = -1 }
+	for_each_loop = {
+		array = global.pww_sitp_ag
+		value = pww_sor_ag
+		index = pww_sor_k
+		if = {
+			limit = { check_variable = { pww_sor_ag = pww_spl_ag } }
+			set_temp_variable = { pww_sor_parent = global.pww_sitp_sit^pww_sor_k }
+		}
+	}
+	if = {
+		limit = {
+			check_variable = { pww_sor_parent > -1 }
+			check_variable = { global.pww_sit_status^pww_sor_parent = 2 }
+			check_variable = { global.pww_sit_followup^pww_sor_parent = -1 }
+			check_variable = { global.pww_sit_template^pww_sor_parent > 0 }
+		}
+		set_temp_variable = { pww_sor_days = global.pww_ag_end^pww_spl_ag }
+		subtract_from_temp_variable = { pww_sor_days = global.num_days }
+		subtract_from_temp_variable = { pww_sor_days = 5 }
+		if = {
+			limit = { check_variable = { pww_sor_days < 7 } }
+			set_temp_variable = { pww_sor_days = 7 }
+		}
+		set_temp_variable = { pww_in_template = 2 }
+		set_temp_variable = { pww_in_claimant = global.pww_sit_claimant^pww_sor_parent }
+		set_temp_variable = { pww_in_holder = global.pww_sit_holder^pww_sor_parent }
+		set_temp_variable = { pww_in_patron = global.pww_sit_patron^pww_sor_parent }
+		set_temp_variable = { pww_in_no_patron = 0 }
+		if = {
+			limit = { check_variable = { global.pww_sit_has_patron^pww_sor_parent = 0 } }
+			set_temp_variable = { pww_in_no_patron = 1 }
+		}
+		set_temp_variable = { pww_in_resource = global.pww_sit_res^pww_sor_parent }
+		set_temp_variable = { pww_in_days = pww_sor_days }
+		set_temp_variable = { pww_in_parent = pww_sor_parent }
+		pww_sit_open = yes
+		log = "[GetDateText] PWW_SIT renewal opened parent=[?pww_sor_parent|0] new=[?pww_out_sit_id|0] ag=[?pww_spl_ag|0] days=[?pww_sor_days|0]"
+	}
+}

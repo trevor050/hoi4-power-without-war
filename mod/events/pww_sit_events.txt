@@ -1,0 +1,340 @@
+###############################################################################
+# Power Without War: situation events (namespace pww_sit)
+#
+# Fired only to human seats by common/scripted_effects/pww_sit_wolfram.txt,
+# which sets the recipient variables (pww_sit_ev_id, pww_sit_ev_seat,
+# pww_sit_ev_role, pww_sit_ev_outcome, pww_sit_ev_can_*) and the event
+# targets pww_claimant, pww_holder, pww_patron, pww_lessee.
+# Seat moves offered here are the fallback used while the diplomacy lane is
+# not loaded (global flag pww_diplo_loaded); with it, seats act through the
+# diplomacy panel and these popups only brief.
+###############################################################################
+
+add_namespace = pww_sit
+
+# The Wolfram Question: opening brief per seat
+country_event = {
+	id = pww_sit.1
+	title = pww_sit_wolfram_title
+	desc = {
+		text = pww_sit_ev_open_claimant
+		trigger = { check_variable = { pww_sit_ev_seat = 0 } }
+	}
+	desc = {
+		text = pww_sit_ev_open_holder
+		trigger = { check_variable = { pww_sit_ev_seat = 1 } }
+	}
+	desc = {
+		text = pww_sit_ev_open_patron
+		trigger = { check_variable = { pww_sit_ev_seat = 2 } }
+	}
+	picture = GFX_report_event_generic_sign_treaty1
+	is_triggered_only = yes
+
+	# Claimant
+	option = {
+		name = pww_sit_opt_c_offer
+		trigger = {
+			check_variable = { pww_sit_ev_seat = 0 }
+			NOT = { has_global_flag = pww_diplo_loaded }
+		}
+		set_temp_variable = { pww_in_bid_band = 2 }
+		pww_sit_ev_bid_mine = yes
+	}
+	option = {
+		name = pww_sit_opt_c_press
+		trigger = {
+			check_variable = { pww_sit_ev_seat = 0 }
+			NOT = { has_global_flag = pww_diplo_loaded }
+		}
+		add_political_power = -25
+		set_country_flag = pww_sit_human_press
+		set_temp_variable = { pww_in_bid_band = 3 }
+		pww_sit_ev_bid_mine = yes
+	}
+	option = {
+		name = pww_sit_opt_c_aside
+		trigger = {
+			check_variable = { pww_sit_ev_seat = 0 }
+			NOT = { has_global_flag = pww_diplo_loaded }
+		}
+	}
+	# Holder
+	option = {
+		name = pww_sit_opt_h_hear
+		trigger = {
+			check_variable = { pww_sit_ev_seat = 1 }
+			NOT = { has_global_flag = pww_diplo_loaded }
+		}
+	}
+	# Patron
+	option = {
+		name = pww_sit_opt_p_pledge
+		trigger = {
+			check_variable = { pww_sit_ev_seat = 2 }
+			NOT = { has_global_flag = pww_diplo_loaded }
+		}
+		pww_sit_ev_pledge_mine = yes
+	}
+	option = {
+		name = pww_sit_opt_p_bid
+		trigger = {
+			check_variable = { pww_sit_ev_seat = 2 }
+			NOT = { has_global_flag = pww_diplo_loaded }
+		}
+		set_temp_variable = { pww_in_bid_band = 2 }
+		pww_sit_ev_bid_mine = yes
+	}
+	option = {
+		name = pww_sit_opt_p_out
+		trigger = {
+			check_variable = { pww_sit_ev_seat = 2 }
+			NOT = { has_global_flag = pww_diplo_loaded }
+		}
+	}
+	# Diplomacy panel available
+	option = {
+		name = pww_sit_opt_ack
+		trigger = { has_global_flag = pww_diplo_loaded }
+	}
+}
+
+# Wolfram lease renewal: opening brief per role
+country_event = {
+	id = pww_sit.2
+	title = pww_renew_wolfram_title
+	desc = {
+		text = pww_renew_wolfram_desc_holder
+		trigger = { check_variable = { pww_sit_ev_role = 0 } }
+	}
+	desc = {
+		text = pww_renew_wolfram_desc_lessee
+		trigger = { check_variable = { pww_sit_ev_role = 1 } }
+	}
+	desc = {
+		text = pww_renew_wolfram_desc_rival
+		trigger = { check_variable = { pww_sit_ev_role = 2 } }
+	}
+	picture = GFX_report_event_generic_read_write
+	is_triggered_only = yes
+
+	option = {
+		name = pww_renew_btn_extend
+		trigger = {
+			check_variable = { pww_sit_ev_role = 1 }
+			NOT = { has_global_flag = pww_diplo_loaded }
+		}
+		set_temp_variable = { pww_in_bid_band = 2 }
+		pww_sit_ev_bid_mine = yes
+	}
+	option = {
+		name = pww_renew_btn_outbid
+		trigger = {
+			check_variable = { pww_sit_ev_role = 2 }
+			NOT = { has_global_flag = pww_diplo_loaded }
+		}
+		add_political_power = -25
+		set_temp_variable = { pww_in_bid_band = 3 }
+		pww_sit_ev_bid_mine = yes
+	}
+	option = {
+		name = pww_sit_opt_ack
+	}
+}
+
+# Human holder decides The Wolfram Question (also its resolution popup).
+# Holding out is first so that a timeout keeps the mines.
+country_event = {
+	id = pww_sit.10
+	title = pww_sit_wolfram_title
+	desc = pww_sit_ev_decide_desc
+	picture = GFX_report_event_generic_sign_treaty2
+	is_triggered_only = yes
+	timeout_days = 14
+
+	option = {
+		name = pww_sit_opt_h_hold
+		set_temp_variable = { pww_in_outcome = 4 }
+		pww_sit_ev_resolve_mine = yes
+	}
+	option = {
+		name = pww_sit_opt_h_split
+		trigger = { check_variable = { pww_sit_ev_can_split = 1 } }
+		set_temp_variable = { pww_in_outcome = 1 }
+		pww_sit_ev_resolve_mine = yes
+	}
+	option = {
+		name = pww_sit_opt_h_lease_c
+		trigger = { check_variable = { pww_sit_ev_can_c = 1 } }
+		set_temp_variable = { pww_in_outcome = 2 }
+		pww_sit_ev_resolve_mine = yes
+	}
+	option = {
+		name = pww_sit_opt_h_lease_p
+		trigger = { check_variable = { pww_sit_ev_can_p = 1 } }
+		set_temp_variable = { pww_in_outcome = 3 }
+		pww_sit_ev_resolve_mine = yes
+	}
+}
+
+# Human holder decides a lease renewal.
+country_event = {
+	id = pww_sit.11
+	title = pww_renew_wolfram_title
+	desc = pww_renew_wolfram_desc_holder
+	picture = GFX_report_event_generic_read_write
+	is_triggered_only = yes
+	timeout_days = 14
+
+	option = {
+		name = pww_renew_btn_reclaim
+		set_temp_variable = { pww_in_outcome = 8 }
+		pww_sit_ev_resolve_mine = yes
+	}
+	option = {
+		name = pww_renew_btn_extend
+		set_temp_variable = { pww_in_outcome = 6 }
+		pww_sit_ev_resolve_mine = yes
+	}
+	option = {
+		name = pww_renew_btn_rebid
+		trigger = {
+			OR = {
+				AND = {
+					check_variable = { global.pww_sit_lessee^pww_sit_ev_id = 0 }
+					check_variable = { pww_sit_ev_can_p = 1 }
+				}
+				AND = {
+					check_variable = { global.pww_sit_lessee^pww_sit_ev_id = 2 }
+					check_variable = { pww_sit_ev_can_c = 1 }
+				}
+			}
+		}
+		set_temp_variable = { pww_in_outcome = 7 }
+		pww_sit_ev_resolve_mine = yes
+	}
+}
+
+# The Wolfram Question: resolution popup (one per human seat)
+country_event = {
+	id = pww_sit.20
+	title = {
+		text = pww_res_wolfram_split_title
+		trigger = { check_variable = { pww_sit_ev_outcome = 1 } }
+	}
+	title = {
+		text = pww_res_wolfram_ger_title
+		trigger = { check_variable = { pww_sit_ev_outcome = 2 } }
+	}
+	title = {
+		text = pww_res_wolfram_eng_title
+		trigger = { check_variable = { pww_sit_ev_outcome = 3 } }
+	}
+	title = {
+		text = pww_res_wolfram_por_title
+		trigger = { check_variable = { pww_sit_ev_outcome = 4 } }
+	}
+	title = {
+		text = pww_res_wolfram_war_title
+		trigger = { check_variable = { pww_sit_ev_outcome = 5 } }
+	}
+	desc = {
+		text = pww_res_wolfram_split_desc
+		trigger = { check_variable = { pww_sit_ev_outcome = 1 } }
+	}
+	desc = {
+		text = pww_res_wolfram_ger_desc
+		trigger = { check_variable = { pww_sit_ev_outcome = 2 } }
+	}
+	desc = {
+		text = pww_res_wolfram_eng_desc
+		trigger = { check_variable = { pww_sit_ev_outcome = 3 } }
+	}
+	desc = {
+		text = pww_res_wolfram_por_desc
+		trigger = { check_variable = { pww_sit_ev_outcome = 4 } }
+	}
+	desc = {
+		text = pww_res_wolfram_war_desc
+		trigger = { check_variable = { pww_sit_ev_outcome = 5 } }
+	}
+	picture = GFX_report_event_generic_sign_treaty2
+	is_triggered_only = yes
+
+	option = {
+		name = pww_res_wolfram_split_opt_ger
+		trigger = { check_variable = { pww_sit_ev_outcome = 1 } check_variable = { pww_sit_ev_seat = 0 } }
+	}
+	option = {
+		name = pww_res_wolfram_split_opt_por
+		trigger = { check_variable = { pww_sit_ev_outcome = 1 } check_variable = { pww_sit_ev_seat = 1 } }
+	}
+	option = {
+		name = pww_res_wolfram_split_opt_eng
+		trigger = { check_variable = { pww_sit_ev_outcome = 1 } check_variable = { pww_sit_ev_seat = 2 } }
+	}
+	option = {
+		name = pww_res_wolfram_ger_opt_ger
+		trigger = { check_variable = { pww_sit_ev_outcome = 2 } check_variable = { pww_sit_ev_seat = 0 } }
+	}
+	option = {
+		name = pww_res_wolfram_ger_opt_por
+		trigger = { check_variable = { pww_sit_ev_outcome = 2 } check_variable = { pww_sit_ev_seat = 1 } }
+	}
+	option = {
+		name = pww_res_wolfram_ger_opt_eng
+		trigger = { check_variable = { pww_sit_ev_outcome = 2 } check_variable = { pww_sit_ev_seat = 2 } }
+	}
+	option = {
+		name = pww_res_wolfram_eng_opt_ger
+		trigger = { check_variable = { pww_sit_ev_outcome = 3 } check_variable = { pww_sit_ev_seat = 0 } }
+	}
+	option = {
+		name = pww_res_wolfram_eng_opt_por
+		trigger = { check_variable = { pww_sit_ev_outcome = 3 } check_variable = { pww_sit_ev_seat = 1 } }
+	}
+	option = {
+		name = pww_res_wolfram_eng_opt_eng
+		trigger = { check_variable = { pww_sit_ev_outcome = 3 } check_variable = { pww_sit_ev_seat = 2 } }
+	}
+	option = {
+		name = pww_res_wolfram_por_opt_ger
+		trigger = { check_variable = { pww_sit_ev_outcome = 4 } check_variable = { pww_sit_ev_seat = 0 } }
+	}
+	option = {
+		name = pww_res_wolfram_por_opt_por
+		trigger = { check_variable = { pww_sit_ev_outcome = 4 } check_variable = { pww_sit_ev_seat = 1 } }
+	}
+	option = {
+		name = pww_res_wolfram_por_opt_eng
+		trigger = { check_variable = { pww_sit_ev_outcome = 4 } check_variable = { pww_sit_ev_seat = 2 } }
+	}
+	option = {
+		name = pww_res_wolfram_war_opt_all
+		trigger = { check_variable = { pww_sit_ev_outcome = 5 } }
+	}
+}
+
+# Lease renewal: resolution popup
+country_event = {
+	id = pww_sit.21
+	title = pww_renew_wolfram_title
+	desc = {
+		text = pww_sit_renew_res_6
+		trigger = { check_variable = { pww_sit_ev_outcome = 6 } }
+	}
+	desc = {
+		text = pww_sit_renew_res_7
+		trigger = { check_variable = { pww_sit_ev_outcome = 7 } }
+	}
+	desc = {
+		text = pww_sit_renew_res_8
+		trigger = { check_variable = { pww_sit_ev_outcome = 8 } }
+	}
+	picture = GFX_report_event_generic_read_write
+	is_triggered_only = yes
+
+	option = {
+		name = pww_sit_opt_ack
+	}
+}

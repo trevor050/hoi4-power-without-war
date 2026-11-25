@@ -1,0 +1,47 @@
+###############################################################################
+# Power Without War: situations triggers
+#
+# PUBLIC TRIGGERS (temp inputs)
+#   pww_sit_is_live = yes        (any) temp pww_in_sit_id is a live situation
+#   pww_sit_is_valid = yes       (any) temp pww_in_sit_id is an existing id
+#   pww_sit_is_queued = yes      (any) temp pww_in_sit_id waits on the cap
+#   pww_sit_this_has_seat = yes  (country) THIS holds a seat in pww_in_sit_id
+#   pww_sit_has_live = yes       (country) THIS holds a seat in any live
+#                                situation
+#   pww_sit_is_loaded = yes      (any) the situations lane is initialized
+###############################################################################
+
+pww_sit_is_loaded = {
+	has_global_flag = pww_sit_loaded
+}
+
+pww_sit_is_valid = {
+	check_variable = { pww_in_sit_id > -1 }
+	check_variable = { pww_in_sit_id < global.pww_next_sit_id }
+}
+
+pww_sit_is_live = {
+	pww_sit_is_valid = yes
+	check_variable = { global.pww_sit_status^pww_in_sit_id = 1 }
+}
+
+pww_sit_is_queued = {
+	pww_sit_is_valid = yes
+	check_variable = { global.pww_sit_status^pww_in_sit_id = 0 }
+}
+
+pww_sit_this_has_seat = {
+	pww_sit_is_valid = yes
+	OR = {
+		check_variable = { global.pww_sit_claimant^pww_in_sit_id = THIS }
+		check_variable = { global.pww_sit_holder^pww_in_sit_id = THIS }
+		AND = {
+			check_variable = { global.pww_sit_has_patron^pww_in_sit_id = 1 }
+			check_variable = { global.pww_sit_patron^pww_in_sit_id = THIS }
+		}
+	}
+}
+
+pww_sit_has_live = {
+	check_variable = { pww_my_situations^num > 0 }
+}

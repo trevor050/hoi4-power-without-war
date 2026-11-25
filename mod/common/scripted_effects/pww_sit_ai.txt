@@ -1,0 +1,768 @@
+###############################################################################
+# Power Without War: situations, AI seats, holder decision, inbound hooks
+#
+# WEEKLY AI (pww_sit_ai_week, every 7 days after a situation goes live; human
+# seats are skipped). Offer bands: 1 Small .. 4 Huge.
+#
+#   Claimant (wants the prize)
+#     - No offer yet: offers a band from its desperation for the resource:
+#       band = round(desp / 30 + 0.5), clamped 1..4 (clearing credit, the
+#       non-force lever).
+#     - Has offered, desperation >= pww_sit_c_press_desp, three weeks in, at
+#       peace, and the patron has pledged or offered at least as much:
+#       escalates. Public if a pledge exists and desperation >= 70.
+#       With coercion loaded: one demand via pww_coer_issue_demand; the
+#       target state then arrives through pww_sit_on_target_state.
+#       Without: pressure +10 per week (+15 public) in the fallback model.
+#     - War route (always through a visible Cornered): holder Cornered AND
+#       hardened, claimant desperation >= 90, world tension > 50%, and
+#       pww_sit_c_allow_war = 1 -> outcome 5. Refusal alone never fires war.
+#   Patron (third power with a stake)
+#     - Pledges (reserved agreement: buys the holder's unsold output if the
+#       holder holds out) once pressure is visible (tstate >= Strained, a
+#       public demand, or a Large claimant offer).
+#     - Offers for the prize itself once the claimant has offered (band 2 if
+#       a major, else 1).
+#   Holder
+#     - Hardens when Cornered with a pledge behind it.
+#     - Decides early only when Ready to fold (lease to the claimant) or when
+#       Cornered without hardening and both buyers have offered (takes the
+#       split, the smaller concession). Otherwise decides on the date:
+#         both offered and 2+ states  -> split
+#         both offered, one state     -> the higher offer (tie: patron)
+#         only the claimant offered   -> holds out if pledged and pressure is
+#                                        low (Defiant/Strained); leases to the
+#                                        claimant if Wavering+ or offer >= Fair;
+#                                        else holds out
+#         only the patron offered     -> leases to the patron if offer >= Fair
+#         nobody                      -> holds out
+#   Renewal (template 2): incumbents offer Fair (claimant: at least its
+#   desperation band); a rival claimant offers if desperation >= 25; a rival
+#   patron offers Fair against a claimant incumbent. On the date: split
+#   incumbents renew; otherwise the rival wins only by outbidding, else the
+#   incumbent renews, else the lease lapses.
+#
+# FALLBACK PRESSURE MODEL (only while global.pww_sit_coer^id = 0)
+#   resistance = 15 + 25 pledge + 10 patron guarantee + 10 hardened
+#   score = pressure - resistance -> tstate: < 15 Defiant, < 35 Strained,
+#   < 55 Wavering, < 75 Cornered, else Ready to fold. Capped at Wavering
+#   while the claimant's offer is below Fair (force alone tops out at
+#   Wavering; folding needs a non-force lever).
+#
+# INBOUND HOOKS (called by diplomacy and coercion; temp inputs)
+#   pww_sit_on_bid = yes            in: pww_in_sit_id, pww_in_bidder
+#       (country, claimant or patron seat), pww_in_bid_band (1..4).
+#       out: pww_out_result. A later offer replaces an earlier one.
+#   pww_sit_on_pledge = yes         in: pww_in_sit_id, pww_in_ag (reserved
+#       ledger agreement whose condition fires if the holder holds out; -1 =
+#       a pledge without an agreement). out: pww_out_result.
+#   pww_sit_on_target_state = yes   in: pww_in_sit_id, pww_in_demand_id,
+#       pww_in_tstate (0..4), pww_in_public (0/1). Coercion owns tstate from
+#       then on. Ready to fold resolves as a lease to the claimant on the
+#       holder's next weekly check (or coercion calls pww_sit_resolve with
+#       outcome 2 itself).
+#   pww_sit_on_hardened = yes       in: pww_in_sit_id (holder hardened)
+#   Diplomacy reads AI intents: country flags pww_sit_ai_wants_bid /
+#   pww_sit_ai_wants_pledge with country var pww_sit_ai_sit (situation id),
+#   set while diplomacy is loaded and the grace period runs; cleared when
+#   the matching hook arrives or the AI acts directly.
+###############################################################################
+
+pww_sit_ai_week = {
+	set_temp_variable = { pww_sw_id = pww_s_id }
+	set_temp_variable = { pww_sw_tpl = global.pww_sit_template^pww_sw_id }
+	set_temp_variable = { pww_sw_c = global.pww_sit_claimant^pww_sw_id }
+	set_temp_variable = { pww_sw_h = global.pww_sit_holder^pww_sw_id }
+	set_temp_variable = { pww_sw_p = global.pww_sit_patron^pww_sw_id }
+	set_temp_variable = { pww_sw_hp = global.pww_sit_has_patron^pww_sw_id }
+	set_temp_variable = { pww_sw_res = global.pww_sit_res^pww_sw_id }
+	set_temp_variable = { pww_sw_since = global.num_days }
+	subtract_from_temp_variable = { pww_sw_since = global.pww_sit_open_day^pww_sw_id }
+	set_temp_variable = { pww_sw_grace = 0 }
+	if = {
+		limit = {
+			has_global_flag = pww_diplo_loaded
+			check_variable = { pww_sw_since < global.pww_sit_c_diplo_grace }
+		}
+		set_temp_variable = { pww_sw_grace = 1 }
+	}
+
+	var:pww_sw_c = {
+		if = {
+			limit = { is_ai = yes }
+			pww_sit_ai_claimant = yes
+		}
+		else_if = {
+			limit = {
+				has_country_flag = pww_sit_human_press
+				check_variable = { global.pww_sit_coer^pww_sw_id = 0 }
+				check_variable = { global.pww_sit_status^pww_sw_id = 1 }
+			}
+			set_temp_variable = { pww_sw_pr = global.pww_sit_pressure^pww_sw_id }
+			add_to_temp_variable = { pww_sw_pr = 10 }
+			clamp_temp_variable = { var = pww_sw_pr min = 0 max = 100 }
+			set_variable = { global.pww_sit_pressure^pww_sw_id = pww_sw_pr }
+		}
+	}
+	if = {
+		limit = {
+			check_variable = { pww_sw_hp = 1 }
+			check_variable = { global.pww_sit_status^pww_sw_id = 1 }
+		}
+		var:pww_sw_p = {
+			if = {
+				limit = { is_ai = yes }
+				pww_sit_ai_patron = yes
+			}
+		}
+	}
+	if = {
+		limit = {
+			check_variable = { global.pww_sit_coer^pww_sw_id = 0 }
+			check_variable = { global.pww_sit_status^pww_sw_id = 1 }
+		}
+		pww_sit_fallback_tstate = yes
+	}
+	if = {
+		limit = { check_variable = { global.pww_sit_status^pww_sw_id = 1 } }
+		var:pww_sw_h = {
+			if = {
+				limit = { is_ai = yes }
+				pww_sit_ai_holder_week = yes
+			}
+		}
+	}
+	if = {
+		limit = { has_global_flag = pww_sit_debug }
+		log = "[GetDateText] PWW_SIT ai id=[?pww_sw_id|0] week=[?pww_sw_since|0] bid_c=[?global.pww_sit_bid_c^pww_sw_id|0] bid_p=[?global.pww_sit_bid_p^pww_sw_id|0] pledge=[?global.pww_sit_pledge^pww_sw_id|0] pressure=[?global.pww_sit_pressure^pww_sw_id|0] tstate=[?global.pww_sit_tstate^pww_sw_id|0] status=[?global.pww_sit_status^pww_sw_id|0]"
+	}
+}
+
+# Claimant scope. In: pww_sw_*.
+pww_sit_ai_claimant = {
+	set_temp_variable = { pww_sh_res = pww_sw_res }
+	pww_sit_country_desp = yes
+	set_temp_variable = { pww_sw_desp = pww_sh_val }
+	set_temp_variable = { pww_sw_band = pww_sw_desp }
+	divide_temp_variable = { pww_sw_band = 30 }
+	add_to_temp_variable = { pww_sw_band = 0.5 }
+	round_temp_variable = pww_sw_band
+	clamp_temp_variable = { var = pww_sw_band min = 1 max = 4 }
+
+	if = {
+		limit = { check_variable = { pww_sw_tpl = 2 } }
+		set_temp_variable = { pww_sw_lessee = global.pww_sit_lessee^pww_sw_id }
+		if = {
+			limit = { check_variable = { global.pww_sit_bid_c^pww_sw_id = 0 } }
+			if = {
+				limit = {
+					OR = {
+						check_variable = { pww_sw_lessee = 0 }
+						check_variable = { pww_sw_lessee = 3 }
+					}
+				}
+				if = {
+					limit = { check_variable = { pww_sw_band < 2 } }
+					set_temp_variable = { pww_sw_band = 2 }
+				}
+				pww_sit_ai_record_bid_c = yes
+			}
+			else_if = {
+				limit = { check_variable = { pww_sw_desp > 24.999 } }
+				pww_sit_ai_record_bid_c = yes
+			}
+		}
+	}
+	else = {
+		if = {
+			limit = { check_variable = { global.pww_sit_bid_c^pww_sw_id = 0 } }
+			if = {
+				limit = { check_variable = { pww_sw_grace = 1 } }
+				set_country_flag = pww_sit_ai_wants_bid
+				set_variable = { pww_sit_ai_sit = pww_sw_id }
+			}
+			else = {
+				clr_country_flag = pww_sit_ai_wants_bid
+				pww_sit_ai_record_bid_c = yes
+			}
+		}
+		else_if = {
+			limit = {
+				has_war = no
+				NOT = { check_variable = { pww_sw_desp < global.pww_sit_c_press_desp } }
+				check_variable = { pww_sw_since > 20 }
+				check_variable = { global.pww_sit_tstate^pww_sw_id < 4 }
+				OR = {
+					check_variable = { global.pww_sit_pledge^pww_sw_id = 1 }
+					NOT = { check_variable = { global.pww_sit_bid_p^pww_sw_id < global.pww_sit_bid_c^pww_sw_id } }
+				}
+			}
+			pww_sit_ai_escalate = yes
+		}
+
+		# War route
+		if = {
+			limit = {
+				check_variable = { global.pww_sit_c_allow_war = 1 }
+				check_variable = { global.pww_sit_tstate^pww_sw_id = 3 }
+				check_variable = { global.pww_sit_hardened^pww_sw_id = 1 }
+				check_variable = { pww_sw_desp > 89.999 }
+				threat > 0.5
+				has_war = no
+			}
+			log = "[GetDateText] PWW_SIT war route id=[?pww_sw_id|0] claimant=[THIS.GetTag] desp=[?pww_sw_desp|0]"
+			set_temp_variable = { pww_in_sit_id = pww_sw_id }
+			set_temp_variable = { pww_in_outcome = 5 }
+			pww_sit_resolve = yes
+		}
+	}
+}
+
+# Internal (claimant scope). Records the claimant's offer pww_sw_band.
+pww_sit_ai_record_bid_c = {
+	set_variable = { global.pww_sit_bid_c^pww_sw_id = pww_sw_band }
+	if = {
+		limit = { check_variable = { global.pww_sit_phase^pww_sw_id = 0 } }
+		set_variable = { global.pww_sit_phase^pww_sw_id = 1 }
+	}
+	set_temp_variable = { pww_in_sit_id = pww_sw_id }
+	set_temp_variable = { pww_in_dev = 2 }
+	pww_sit_set_dev = yes
+}
+
+# Internal (claimant scope). One escalation step.
+pww_sit_ai_escalate = {
+	set_temp_variable = { pww_sw_pub = 0 }
+	if = {
+		limit = {
+			check_variable = { global.pww_sit_pledge^pww_sw_id = 1 }
+			check_variable = { pww_sw_desp > 69.999 }
+		}
+		set_temp_variable = { pww_sw_pub = 1 }
+	}
+	if = {
+		limit = { has_global_flag = pww_coer_loaded }
+		if = {
+			limit = { check_variable = { global.pww_sit_demand^pww_sw_id < 0 } }
+			# Contract: coercion lane's demand entry point
+			set_temp_variable = { pww_in_claimant = pww_sw_c }
+			set_temp_variable = { pww_in_target = pww_sw_h }
+			set_temp_variable = { pww_in_sit_id = pww_sw_id }
+			# 1 = lease of the situation's prize states
+			set_temp_variable = { pww_in_demand_type = 1 }
+			set_temp_variable = { pww_in_channel = pww_sw_pub }
+			set_temp_variable = { pww_in_res = pww_sw_res }
+			set_temp_variable = { pww_in_days = global.pww_sit_days_left^pww_sw_id }
+			set_temp_variable = { pww_in_term = global.pww_sit_c_lease_days }
+			# First prize state (coercion's lease demand names one state; the
+			# situation leases the whole prize on a fold)
+			for_each_loop = {
+				array = global.pww_sitp_sit
+				value = pww_sw_psv
+				index = pww_sw_pk
+				break = pww_sw_pbrk
+				if = {
+					limit = { check_variable = { pww_sw_psv = pww_sw_id } }
+					set_temp_variable = { pww_in_state = global.pww_sitp_state^pww_sw_pk }
+					set_temp_variable = { pww_sw_pbrk = 1 }
+				}
+			}
+			set_temp_variable = { pww_out_demand_id = -1 }
+			meta_effect = {
+				text = { pww_coer_issue_demand = [Y] }
+				Y = "yes"
+			}
+			if = {
+				limit = { check_variable = { pww_out_demand_id > -1 } }
+				set_variable = { global.pww_sit_demand^pww_sw_id = pww_out_demand_id }
+				set_variable = { global.pww_sit_coer^pww_sw_id = 1 }
+				set_variable = { global.pww_sit_public^pww_sw_id = pww_sw_pub }
+				set_variable = { global.pww_sit_phase^pww_sw_id = 2 }
+				set_temp_variable = { pww_in_sit_id = pww_sw_id }
+				set_temp_variable = { pww_in_dev = 5 }
+				if = {
+					limit = { check_variable = { pww_sw_pub = 1 } }
+					set_temp_variable = { pww_in_dev = 6 }
+				}
+				pww_sit_set_dev = yes
+			}
+		}
+	}
+	else = {
+		set_temp_variable = { pww_sw_add = 10 }
+		if = {
+			limit = { check_variable = { pww_sw_pub = 1 } }
+			set_temp_variable = { pww_sw_add = 15 }
+		}
+		set_temp_variable = { pww_sw_pr = global.pww_sit_pressure^pww_sw_id }
+		add_to_temp_variable = { pww_sw_pr = pww_sw_add }
+		clamp_temp_variable = { var = pww_sw_pr min = 0 max = 100 }
+		set_variable = { global.pww_sit_pressure^pww_sw_id = pww_sw_pr }
+		set_temp_variable = { pww_sw_newdev = 0 }
+		if = {
+			limit = { NOT = { check_variable = { global.pww_sit_phase^pww_sw_id = 2 } } }
+			set_variable = { global.pww_sit_phase^pww_sw_id = 2 }
+			set_temp_variable = { pww_sw_newdev = 5 }
+		}
+		if = {
+			limit = {
+				check_variable = { pww_sw_pub = 1 }
+				check_variable = { global.pww_sit_public^pww_sw_id = 0 }
+			}
+			set_variable = { global.pww_sit_public^pww_sw_id = 1 }
+			set_temp_variable = { pww_sw_newdev = 6 }
+		}
+		if = {
+			limit = { check_variable = { pww_sw_newdev > 0 } }
+			set_temp_variable = { pww_in_sit_id = pww_sw_id }
+			set_temp_variable = { pww_in_dev = pww_sw_newdev }
+			pww_sit_set_dev = yes
+		}
+	}
+}
+
+# Patron scope. In: pww_sw_*.
+pww_sit_ai_patron = {
+	set_temp_variable = { pww_sw_pband = 1 }
+	if = {
+		limit = { is_major = yes }
+		set_temp_variable = { pww_sw_pband = 2 }
+	}
+	if = {
+		limit = { check_variable = { pww_sw_tpl = 2 } }
+		set_temp_variable = { pww_sw_lessee = global.pww_sit_lessee^pww_sw_id }
+		if = {
+			limit = {
+				check_variable = { global.pww_sit_bid_p^pww_sw_id = 0 }
+				OR = {
+					check_variable = { pww_sw_lessee = 2 }
+					check_variable = { pww_sw_lessee = 3 }
+					check_variable = { pww_sw_lessee = 0 }
+				}
+			}
+			set_variable = { global.pww_sit_bid_p^pww_sw_id = 2 }
+			set_temp_variable = { pww_in_sit_id = pww_sw_id }
+			set_temp_variable = { pww_in_dev = 3 }
+			pww_sit_set_dev = yes
+		}
+	}
+	else_if = {
+		limit = { has_war = no }
+		# Pledge when pressure on the holder becomes visible
+		if = {
+			limit = {
+				check_variable = { global.pww_sit_pledge^pww_sw_id = 0 }
+				OR = {
+					check_variable = { global.pww_sit_tstate^pww_sw_id > 0 }
+					check_variable = { global.pww_sit_public^pww_sw_id = 1 }
+					check_variable = { global.pww_sit_bid_c^pww_sw_id > 2 }
+				}
+			}
+			if = {
+				limit = { check_variable = { pww_sw_grace = 1 } }
+				set_country_flag = pww_sit_ai_wants_pledge
+				set_variable = { pww_sit_ai_sit = pww_sw_id }
+			}
+			else = {
+				clr_country_flag = pww_sit_ai_wants_pledge
+				set_temp_variable = { pww_sm_id = pww_sw_id }
+				pww_sit_make_pledge = yes
+			}
+		}
+		# Compete for the prize once the claimant has moved
+		if = {
+			limit = {
+				check_variable = { global.pww_sit_bid_p^pww_sw_id = 0 }
+				check_variable = { global.pww_sit_bid_c^pww_sw_id > 0 }
+			}
+			if = {
+				limit = { check_variable = { pww_sw_grace = 1 } }
+				set_country_flag = pww_sit_ai_wants_bid
+				set_variable = { pww_sit_ai_sit = pww_sw_id }
+			}
+			else = {
+				clr_country_flag = pww_sit_ai_wants_bid
+				set_variable = { global.pww_sit_bid_p^pww_sw_id = pww_sw_pband }
+				if = {
+					limit = { check_variable = { global.pww_sit_phase^pww_sw_id = 0 } }
+					set_variable = { global.pww_sit_phase^pww_sw_id = 1 }
+				}
+				set_temp_variable = { pww_in_sit_id = pww_sw_id }
+				set_temp_variable = { pww_in_dev = 3 }
+				pww_sit_set_dev = yes
+			}
+		}
+	}
+}
+
+# Holder scope (AI). In: pww_sw_*.
+pww_sit_ai_holder_week = {
+	if = {
+		limit = {
+			NOT = { check_variable = { pww_sw_tpl = 2 } }
+			check_variable = { global.pww_sit_tstate^pww_sw_id > 2 }
+			check_variable = { global.pww_sit_pledge^pww_sw_id = 1 }
+			check_variable = { global.pww_sit_hardened^pww_sw_id = 0 }
+		}
+		set_variable = { global.pww_sit_hardened^pww_sw_id = 1 }
+		set_temp_variable = { pww_in_sit_id = pww_sw_id }
+		set_temp_variable = { pww_in_dev = 8 }
+		pww_sit_set_dev = yes
+	}
+	set_temp_variable = { pww_sd_id = pww_sw_id }
+	set_temp_variable = { pww_sd_final = 0 }
+	pww_sit_holder_decide = yes
+	if = {
+		limit = { check_variable = { pww_sd_choice > 0 } }
+		set_temp_variable = { pww_in_sit_id = pww_sw_id }
+		set_temp_variable = { pww_in_outcome = pww_sd_choice }
+		pww_sit_resolve = yes
+	}
+}
+
+# Fallback target state. In: pww_sw_* (any scope).
+pww_sit_fallback_tstate = {
+	set_temp_variable = { pww_sf_old = global.pww_sit_tstate^pww_sw_id }
+	set_temp_variable = { pww_sf_res = 15 }
+	if = {
+		limit = { check_variable = { global.pww_sit_pledge^pww_sw_id = 1 } }
+		add_to_temp_variable = { pww_sf_res = 25 }
+	}
+	if = {
+		limit = {
+			check_variable = { pww_sw_hp = 1 }
+			var:pww_sw_p = { var:pww_sw_h = { is_guaranteed_by = PREV } }
+		}
+		add_to_temp_variable = { pww_sf_res = 10 }
+	}
+	if = {
+		limit = { check_variable = { global.pww_sit_hardened^pww_sw_id = 1 } }
+		add_to_temp_variable = { pww_sf_res = 10 }
+	}
+	set_temp_variable = { pww_sf_score = global.pww_sit_pressure^pww_sw_id }
+	subtract_from_temp_variable = { pww_sf_score = pww_sf_res }
+	set_temp_variable = { pww_sf_new = 4 }
+	if = {
+		limit = { check_variable = { pww_sf_score < 15 } }
+		set_temp_variable = { pww_sf_new = 0 }
+	}
+	else_if = {
+		limit = { check_variable = { pww_sf_score < 35 } }
+		set_temp_variable = { pww_sf_new = 1 }
+	}
+	else_if = {
+		limit = { check_variable = { pww_sf_score < 55 } }
+		set_temp_variable = { pww_sf_new = 2 }
+	}
+	else_if = {
+		limit = { check_variable = { pww_sf_score < 75 } }
+		set_temp_variable = { pww_sf_new = 3 }
+	}
+	if = {
+		limit = {
+			check_variable = { pww_sf_new > 2 }
+			check_variable = { global.pww_sit_bid_c^pww_sw_id < 2 }
+		}
+		set_temp_variable = { pww_sf_new = 2 }
+	}
+	if = {
+		limit = { NOT = { check_variable = { pww_sf_new = pww_sf_old } } }
+		set_variable = { global.pww_sit_tstate^pww_sw_id = pww_sf_new }
+		set_temp_variable = { pww_in_sit_id = pww_sw_id }
+		set_temp_variable = { pww_in_dev = 7 }
+		pww_sit_set_dev = yes
+	}
+}
+
+###############################################################################
+# Holder decision. In: pww_sd_id, pww_sd_final (1 on the date). Any scope.
+# Out: pww_sd_choice (0 = no decision yet, else an outcome).
+###############################################################################
+pww_sit_holder_decide = {
+	set_temp_variable = { pww_sd_choice = 0 }
+	set_temp_variable = { pww_sd_tpl = global.pww_sit_template^pww_sd_id }
+	set_temp_variable = { pww_sd_bc = global.pww_sit_bid_c^pww_sd_id }
+	set_temp_variable = { pww_sd_bp = global.pww_sit_bid_p^pww_sd_id }
+	if = {
+		limit = { check_variable = { global.pww_sit_has_patron^pww_sd_id = 0 } }
+		set_temp_variable = { pww_sd_bp = 0 }
+	}
+	set_temp_variable = { pww_sd_ts = global.pww_sit_tstate^pww_sd_id }
+
+	if = {
+		limit = { check_variable = { pww_sd_tpl = 2 } }
+		if = {
+			limit = { check_variable = { pww_sd_final = 1 } }
+			set_temp_variable = { pww_sd_les = global.pww_sit_lessee^pww_sd_id }
+			if = {
+				limit = { check_variable = { pww_sd_les = 3 } }
+				set_temp_variable = { pww_sd_choice = 8 }
+				if = {
+					limit = {
+						OR = {
+							check_variable = { pww_sd_bc > 0 }
+							check_variable = { pww_sd_bp > 0 }
+						}
+					}
+					set_temp_variable = { pww_sd_choice = 6 }
+				}
+			}
+			else = {
+				set_temp_variable = { pww_sd_inc = pww_sd_bc }
+				set_temp_variable = { pww_sd_riv = pww_sd_bp }
+				if = {
+					limit = { check_variable = { pww_sd_les = 2 } }
+					set_temp_variable = { pww_sd_inc = pww_sd_bp }
+					set_temp_variable = { pww_sd_riv = pww_sd_bc }
+				}
+				if = {
+					limit = { check_variable = { pww_sd_riv > pww_sd_inc } }
+					set_temp_variable = { pww_sd_choice = 7 }
+				}
+				else_if = {
+					limit = { check_variable = { pww_sd_inc > 0 } }
+					set_temp_variable = { pww_sd_choice = 6 }
+				}
+				else = {
+					set_temp_variable = { pww_sd_choice = 8 }
+				}
+			}
+		}
+	}
+	else = {
+		set_temp_variable = { pww_sd_np = 0 }
+		for_each_loop = {
+			array = global.pww_sitp_sit
+			value = pww_sd_sv
+			index = pww_sd_k
+			if = {
+				limit = { check_variable = { pww_sd_sv = pww_sd_id } }
+				add_to_temp_variable = { pww_sd_np = 1 }
+			}
+		}
+		set_temp_variable = { pww_sd_both = 0 }
+		if = {
+			limit = {
+				check_variable = { pww_sd_bc > 0 }
+				check_variable = { pww_sd_bp > 0 }
+			}
+			set_temp_variable = { pww_sd_both = 1 }
+		}
+		if = {
+			limit = {
+				check_variable = { pww_sd_ts > 3 }
+				check_variable = { pww_sd_bc > 0 }
+			}
+			set_temp_variable = { pww_sd_choice = 2 }
+		}
+		else_if = {
+			limit = {
+				OR = {
+					check_variable = { pww_sd_final = 1 }
+					AND = {
+						check_variable = { pww_sd_ts = 3 }
+						check_variable = { global.pww_sit_hardened^pww_sd_id = 0 }
+						check_variable = { pww_sd_both = 1 }
+					}
+				}
+			}
+			if = {
+				limit = {
+					check_variable = { pww_sd_both = 1 }
+					check_variable = { pww_sd_np > 1 }
+				}
+				set_temp_variable = { pww_sd_choice = 1 }
+			}
+			else_if = {
+				limit = { check_variable = { pww_sd_both = 1 } }
+				set_temp_variable = { pww_sd_choice = 3 }
+				if = {
+					limit = { check_variable = { pww_sd_bc > pww_sd_bp } }
+					set_temp_variable = { pww_sd_choice = 2 }
+				}
+			}
+			else_if = {
+				limit = { check_variable = { pww_sd_bc > 0 } }
+				if = {
+					limit = {
+						check_variable = { global.pww_sit_pledge^pww_sd_id = 1 }
+						check_variable = { pww_sd_ts < 2 }
+					}
+					set_temp_variable = { pww_sd_choice = 4 }
+				}
+				else_if = {
+					limit = {
+						OR = {
+							check_variable = { pww_sd_ts > 1 }
+							check_variable = { pww_sd_bc > 1 }
+						}
+					}
+					set_temp_variable = { pww_sd_choice = 2 }
+				}
+				else = {
+					set_temp_variable = { pww_sd_choice = 4 }
+				}
+			}
+			else_if = {
+				limit = { check_variable = { pww_sd_bp > 1 } }
+				set_temp_variable = { pww_sd_choice = 3 }
+			}
+			else = {
+				set_temp_variable = { pww_sd_choice = 4 }
+			}
+		}
+	}
+}
+
+# Decision date reached. In: pww_s_id. A human holder gets the decision
+# event (which is also its resolution popup); an AI holder decides now.
+pww_sit_decision_due = {
+	set_temp_variable = { pww_sdd2_id = pww_s_id }
+	set_temp_variable = { pww_sdd2_h = global.pww_sit_holder^pww_sdd2_id }
+	set_temp_variable = { pww_sdd2_human = 0 }
+	var:pww_sdd2_h = {
+		if = {
+			limit = { is_ai = no }
+			set_temp_variable = { pww_sdd2_human = 1 }
+		}
+	}
+	if = {
+		limit = {
+			check_variable = { pww_sdd2_human = 1 }
+			check_variable = { global.pww_sit_template^pww_sdd2_id > 0 }
+		}
+		set_variable = { global.pww_sit_phase^pww_sdd2_id = 3 }
+		set_temp_variable = { pww_sdd2_wait = global.num_days }
+		add_to_temp_variable = { pww_sdd2_wait = global.pww_sit_c_human_wait }
+		add_to_temp_variable = { pww_sdd2_wait = 2 }
+		set_variable = { global.pww_sit_wait_day^pww_sdd2_id = pww_sdd2_wait }
+		set_temp_variable = { pww_in_sit_id = pww_sdd2_id }
+		set_temp_variable = { pww_in_dev = 9 }
+		pww_sit_set_dev = yes
+		set_temp_variable = { pww_se_id = pww_sdd2_id }
+		pww_sit_send_holder_decision = yes
+	}
+	else = {
+		set_temp_variable = { pww_sd_id = pww_sdd2_id }
+		set_temp_variable = { pww_sd_final = 1 }
+		pww_sit_holder_decide = yes
+		set_temp_variable = { pww_in_sit_id = pww_sdd2_id }
+		set_temp_variable = { pww_in_outcome = pww_sd_choice }
+		pww_sit_resolve = yes
+	}
+}
+
+###############################################################################
+# Inbound hooks
+###############################################################################
+pww_sit_on_bid = {
+	set_temp_variable = { pww_out_result = 0 }
+	set_temp_variable = { pww_sib_id = pww_in_sit_id }
+	if = {
+		limit = {
+			check_variable = { pww_sib_id > -1 }
+			check_variable = { pww_sib_id < global.pww_next_sit_id }
+			check_variable = { global.pww_sit_status^pww_sib_id = 1 }
+		}
+		set_temp_variable = { pww_sib_band = pww_in_bid_band }
+		clamp_temp_variable = { var = pww_sib_band min = 1 max = 4 }
+		var:pww_in_bidder = {
+			pww_sit_seat_of_this = yes
+			clr_country_flag = pww_sit_ai_wants_bid
+		}
+		if = {
+			limit = { check_variable = { pww_out_seat = 0 } }
+			set_variable = { global.pww_sit_bid_c^pww_sib_id = pww_sib_band }
+			set_temp_variable = { pww_in_dev = 2 }
+			set_temp_variable = { pww_out_result = 1 }
+		}
+		else_if = {
+			limit = { check_variable = { pww_out_seat = 2 } }
+			set_variable = { global.pww_sit_bid_p^pww_sib_id = pww_sib_band }
+			set_temp_variable = { pww_in_dev = 3 }
+			set_temp_variable = { pww_out_result = 1 }
+		}
+		if = {
+			limit = { check_variable = { pww_out_result = 1 } }
+			if = {
+				limit = { check_variable = { global.pww_sit_phase^pww_sib_id = 0 } }
+				set_variable = { global.pww_sit_phase^pww_sib_id = 1 }
+			}
+			set_temp_variable = { pww_in_sit_id = pww_sib_id }
+			pww_sit_set_dev = yes
+		}
+	}
+}
+
+pww_sit_on_pledge = {
+	set_temp_variable = { pww_out_result = 0 }
+	set_temp_variable = { pww_sip_id = pww_in_sit_id }
+	if = {
+		limit = {
+			check_variable = { pww_sip_id > -1 }
+			check_variable = { pww_sip_id < global.pww_next_sit_id }
+			check_variable = { global.pww_sit_status^pww_sip_id = 1 }
+			check_variable = { global.pww_sit_has_patron^pww_sip_id = 1 }
+		}
+		set_variable = { global.pww_sit_pledge^pww_sip_id = 1 }
+		set_variable = { global.pww_sit_pledge_ag^pww_sip_id = pww_in_ag }
+		set_temp_variable = { pww_sip_p = global.pww_sit_patron^pww_sip_id }
+		var:pww_sip_p = { clr_country_flag = pww_sit_ai_wants_pledge }
+		set_temp_variable = { pww_in_sit_id = pww_sip_id }
+		set_temp_variable = { pww_in_dev = 4 }
+		pww_sit_set_dev = yes
+		set_temp_variable = { pww_out_result = 1 }
+	}
+}
+
+pww_sit_on_target_state = {
+	set_temp_variable = { pww_sit_id2 = pww_in_sit_id }
+	if = {
+		limit = {
+			check_variable = { pww_sit_id2 > -1 }
+			check_variable = { pww_sit_id2 < global.pww_next_sit_id }
+			check_variable = { global.pww_sit_status^pww_sit_id2 = 1 }
+		}
+		set_variable = { global.pww_sit_coer^pww_sit_id2 = 1 }
+		set_variable = { global.pww_sit_demand^pww_sit_id2 = pww_in_demand_id }
+		set_variable = { global.pww_sit_phase^pww_sit_id2 = 2 }
+		set_temp_variable = { pww_sit_ts2 = pww_in_tstate }
+		clamp_temp_variable = { var = pww_sit_ts2 min = 0 max = 4 }
+		set_temp_variable = { pww_in_dev = 0 }
+		if = {
+			limit = {
+				check_variable = { pww_in_public = 1 }
+				check_variable = { global.pww_sit_public^pww_sit_id2 = 0 }
+			}
+			set_variable = { global.pww_sit_public^pww_sit_id2 = 1 }
+			set_temp_variable = { pww_in_dev = 6 }
+		}
+		if = {
+			limit = { NOT = { check_variable = { global.pww_sit_tstate^pww_sit_id2 = pww_sit_ts2 } } }
+			set_variable = { global.pww_sit_tstate^pww_sit_id2 = pww_sit_ts2 }
+			if = {
+				limit = { check_variable = { pww_in_dev = 0 } }
+				set_temp_variable = { pww_in_dev = 7 }
+			}
+		}
+		if = {
+			limit = { check_variable = { pww_in_dev > 0 } }
+			set_temp_variable = { pww_in_sit_id = pww_sit_id2 }
+			pww_sit_set_dev = yes
+		}
+	}
+	set_temp_variable = { pww_in_public = 0 }
+}
+
+pww_sit_on_hardened = {
+	if = {
+		limit = {
+			check_variable = { pww_in_sit_id > -1 }
+			check_variable = { pww_in_sit_id < global.pww_next_sit_id }
+			check_variable = { global.pww_sit_status^pww_in_sit_id = 1 }
+		}
+		set_variable = { global.pww_sit_hardened^pww_in_sit_id = 1 }
+		set_temp_variable = { pww_in_dev = 8 }
+		pww_sit_set_dev = yes
+	}
+}

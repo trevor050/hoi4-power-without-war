@@ -101,7 +101,18 @@ pww_ledger_has_live_agreement_with = {
 pww_ledger_holder_has_right_in_meta_state = {
 	meta_trigger = {
 		text = {
-			has_resources_rights = { state = [S] }
+			OR = {
+				# The bare form reads false for resource-filtered rights, so
+				# check every resource explicitly as well (verified in game).
+				has_resources_rights = { state = [S] }
+				has_resources_rights = { state = [S] resources = { oil } }
+				has_resources_rights = { state = [S] resources = { aluminium } }
+				has_resources_rights = { state = [S] resources = { rubber } }
+				has_resources_rights = { state = [S] resources = { tungsten } }
+				has_resources_rights = { state = [S] resources = { steel } }
+				has_resources_rights = { state = [S] resources = { chromium } }
+				has_resources_rights = { state = [S] resources = { coal } }
+			}
 		}
 		S = "[?global.pww_l_meta_state|0]"
 	}

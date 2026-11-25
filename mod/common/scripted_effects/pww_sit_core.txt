@@ -1,0 +1,1079 @@
+###############################################################################
+# Power Without War: situations, core (storage, open, activate, resolve,
+# noise cap, clock, development log, outcome queue)
+#
+# Related files
+#   pww_sit_ai.txt          weekly AI seat logic, fallback pressure model,
+#                           holder decision, inbound hooks for other lanes
+#   pww_sit_outcomes.txt    outcome application (leases, pledges, war,
+#                           grievances, renewal), delivery verification
+#   pww_sit_wolfram.txt     The Wolfram Question anchor (trigger, renewal
+#                           follow-up, events dispatch)
+#   scripted_triggers/pww_sit_triggers.txt
+#   on_actions/pww_sit_on_actions.txt
+#   events/pww_sit_events.txt (namespace pww_sit)
+#   opinion_modifiers/pww_sit_opinion_modifiers.txt
+#   localisation/english/pww_sit_l_english.yml
+#
+# ===========================================================================
+# ENUMS
+#   template   0 generic (no popups; tests and future generator)
+#              1 The Wolfram Question (anchor)
+#              2 Wolfram lease renewal (follow-up; prize copied from parent)
+#   status     0 queued (noise cap), 1 live, 2 resolved, 3 cancelled
+#   seat       0 claimant, 1 holder, 2 patron (-1 no seat)
+#   prize kind 0 named states' output of one resource (implemented)
+#              1 route, 2 flow (reserved; pww_sit_open refuses them for now)
+#   outcome    0 none / cancelled
+#              1 split award (lot 0 to the claimant, lot 1 to the patron)
+#              2 lease to the claimant      3 lease to the patron
+#              4 holder holds out (a patron pledge, if any, fires)
+#              5 crisis goes to war         6 renewed (template 2)
+#              7 outbid: the rival takes the lease (template 2)
+#              8 reverted: the lease lapses to the holder (template 2)
+#   phase      alert-row selector (UI): 0 opening (no bids yet), 1 bidding
+#              (offers on the table; holder: write lots), 2 demand pressing,
+#              3 awaiting the human holder's decision, 4 closed
+#   tstate     holder's target state, same enum as coercion: 0 Defiant,
+#              1 Strained, 2 Wavering, 3 Cornered, 4 Ready to fold
+#              (loc keys pww_state_defiant .. pww_state_ready_to_fold are
+#              owned by the coercion lane)
+#   dev        latest development id, loc key pww_sit_dev_<n>:
+#              1 opened, 2 claimant offer, 3 patron offer, 4 patron pledge,
+#              5 quiet pressure, 6 public pressure, 7 target state moved,
+#              8 holder hardened, 9 awaiting holder, 10 resolved, 11 queued,
+#              12 lease delivery failed (supply fallback), 13 renewal due,
+#              14 cancelled, 15 lease delivery confirmed
+#
+# ===========================================================================
+# STORAGE: a situation id is an integer 0..global.pww_next_sit_id-1. Every
+# field is a global array indexed by id (parallel, appended together in
+# pww_sit_alloc, never reordered). Read with global.pww_sit_<field>^<id var>.
+#   template, status, claimant, holder, patron (countries), has_patron (0/1),
+#   res (resource index), prize_kind, days (clock length),
+#   open_day / decision_day (global.num_days; the decision date is
+#     decision_day; set when the situation goes live, so queued ones get a
+#     full clock), days_left (decision_day - num_days, refreshed daily),
+#   dev, dev_day, phase, outcome, resolved_day, human (1 if a human held a
+#     seat when it went live), parent (renewal: parent id, else -1),
+#   followup (renewal situation opened from this one, else -1),
+#   bid_c / bid_p (claimant / patron offer band 0 none, 1..4 Small..Huge),
+#   pledge (0/1), pledge_ag (reserved ledger agreement id, -1),
+#   pressure (fallback pressure 0..100), public (claimant went public 0/1),
+#   tstate, demand (coercion demand id, -1), coer (1 = coercion drives
+#   tstate), hardened (holder hardened 0/1),
+#   lessee (template 2: incumbent seat 0 claimant, 2 patron, 3 both),
+#   vday (num_days of the delivery check, 0 none), vbase_c / vexp_c /
+#   vbase_p / vexp_p (lessee production before grant / expected gain),
+#   wait_day (human holder decision deadline, 0 none), rev (+1 on change)
+#
+# Prize entries (flat parallel arrays, one entry per named state):
+#   global.pww_sitp_sit    situation id
+#   global.pww_sitp_state  plain numeric state id (converted from core's
+#                          state scopes with [THIS.GetID]; the ledger's
+#                          lease validation and meta_effect grants need it)
+#   global.pww_sitp_lot    0 interior lot (claimant side of a split),
+#                          1 coastal lot (patron side)
+#   global.pww_sitp_amt    resource amount at open (state resource@<res>)
+#   global.pww_sitp_ag     ledger agreement serving this state, -1 none
+#   global.pww_sitp_to     seat that leases it: -1 none, 0 claimant, 2 patron
+#
+# Per-country arrays (alert strip data, one row per entry):
+#   pww_my_situations      LIVE situation ids where the country holds a seat
+#                          (added on going live, removed on resolve/cancel).
+#                          Seat: pww_sit_seat_of_this.
+# Global array global.pww_sit_live: live ids (same invariant).
+#
+# UI contract (alert strip, Trade Desk rows). Per row, read:
+#   template (title key pww_sit_wolfram_title for 1 and 2), the seat,
+#   days_left, phase, tstate, pledge, dev (loc pww_sit_dev_<dev>).
+#   Alert key by seat: claimant -> tstate 3 pww_alert_claimant_cornered,
+#   tstate 4 pww_alert_claimant_fold, else pww_alert_claimant_active;
+#   holder -> phase 1 pww_alert_holder_auction, else
+#   pww_alert_holder_demand; patron -> pledge 1 pww_alert_patron_pledged,
+#   else pww_alert_patron_open; template 2 -> pww_alert_lease_expiring.
+#   Dirty variable: global.pww_sit_rev (+1 on any situation change).
+#
+# ===========================================================================
+# OUTCOME QUEUE (for other lanes and UI; poll, never edit)
+#   global.pww_sitq_seq^n   monotonic sequence (global.pww_sitq_next_seq)
+#   global.pww_sitq_kind^n  1 opened (queued or live), 2 went live,
+#                           3 resolved (val = outcome), 4 cancelled,
+#                           5 grievance (val = amount; see pww_sitq_who),
+#                           6 development (val = dev id)
+#   global.pww_sitq_sit^n   situation id
+#   global.pww_sitq_val^n   value as above
+#   global.pww_sitq_day^n   num_days
+#   Capped at global.pww_sit_c_queue_cap entries (oldest dropped).
+#
+# ===========================================================================
+# PUBLIC EFFECTS (inputs are temp variables)
+#   pww_sit_init = yes        idempotent; sets global flag pww_sit_loaded
+#   pww_sit_open = yes
+#       in : pww_in_template, pww_in_claimant, pww_in_holder, pww_in_patron,
+#            pww_in_no_patron (optional, 1 = no patron seat),
+#            pww_in_resource (0..6), pww_in_days (clock, >= 1),
+#            pww_in_parent (template 2 only)
+#       out: pww_out_sit_id (-1 on refusal), pww_out_result (1/0),
+#            pww_out_fail (1 bad seats, 2 seats at war, 3 no prize states,
+#            4 bad resource/days/template), pww_out_queued (1 = noise cap)
+#       Prize: the holder's owned and controlled states producing the
+#       resource, from core's pww_producing_states_<res> (never hardcoded).
+#   pww_sit_resolve = yes     in : pww_in_sit_id, pww_in_outcome
+#       out: pww_out_result. Applies once: only live situations resolve.
+#   pww_sit_cancel = yes      in : pww_in_sit_id (live or queued)
+#   pww_sit_seat_of_this = yes  (country) in pww_in_sit_id, out pww_out_seat
+#   pww_sit_set_dev = yes     in pww_in_sit_id, pww_in_dev
+#   pww_sit_daily = yes       on_daily entry point (any country; runs the
+#                             global tick once per day)
+#   Inbound hooks for diplomacy/coercion: see pww_sit_ai.txt header.
+#
+# TUNABLES (globals; pww_sit_init sets them only when unset, so a balance
+#   patch or a test may set them first or overwrite them later)
+#   pww_sit_c_cap 4                live situations per human seat holder
+#   pww_sit_c_wolfram_days 120     Wolfram clock
+#   pww_sit_c_wolfram_desp 50      GER tungsten desperation trigger
+#   pww_sit_c_wolfram_fallback_year 1938   opens on 1 January of this year
+#   pww_sit_c_lease_days 365       lease term
+#   pww_sit_c_civ_per_band 1       civilian factories per offer band
+#   pww_sit_c_diplo_grace 21       days AI seats wait for diplomacy actions
+#   pww_sit_c_human_wait 14        days a human holder has to decide (the
+#                                  popup times out to holding out at 14; the
+#                                  script backstop resolves 2 days later)
+#   pww_sit_c_verify_days 7        delivery check delay after a lease
+#   pww_sit_c_allow_war 1          0 disables the war outcome
+#   pww_sit_c_pledge_share 0.25    share of holder output a pledge buys
+#   pww_sit_c_press_desp 40        claimant desperation to escalate
+#   pww_sit_c_queue_cap 128
+#   pww_sit_c_lease_all_res 1      leases cover the whole state (ledger res
+#                                  -1) until the ledger reconcile honors a
+#                                  resource filter; see pww_sit_outcomes.txt
+#
+# GUARDS (other lanes; calls go through meta_effect so this lane loads
+#   cleanly when their files are absent)
+#   has_global_flag pww_coer_loaded  -> AI claimant escalates through
+#       pww_coer_issue_demand; tstate then comes from coercion through
+#       pww_sit_on_target_state. Without it: built-in pressure model.
+#   has_global_flag pww_diplo_loaded -> AI seats publish intents and wait
+#       pww_sit_c_diplo_grace days for diplomacy's actions to call
+#       pww_sit_on_bid / pww_sit_on_pledge; then act directly. Human seats
+#       use diplomacy actions instead of the opening-event fallback options.
+#       Without it: AI acts directly; human seats get fallback options.
+#
+# DEBUG: global flag pww_sit_debug logs PWW_SIT AI lines. Open/resolve lines
+#   are always logged. Global flag pww_sit_debug_open_wolfram opens the
+#   Wolfram Question on day 2 of the situations clock.
+#
+# TEMP VARIABLES: pww_in_* / pww_out_* are the public interface; internals
+#   use pww_s<xx>_* per effect.
+###############################################################################
+
+pww_sit_init = {
+	if = {
+		limit = { NOT = { has_global_flag = pww_sit_initialized } }
+		set_global_flag = pww_sit_initialized
+		set_global_flag = pww_sit_loaded
+		set_variable = { global.pww_sit_version = 1 }
+		set_variable = { global.pww_next_sit_id = 0 }
+		set_variable = { global.pww_sitq_next_seq = 1 }
+		set_variable = { global.pww_sit_day = 0 }
+		set_variable = { global.pww_sit_rev = 1 }
+		# Ledger queue entries before this point are not ours
+		set_variable = { global.pww_sit_lq_seen = global.pww_lq_next_seq }
+		subtract_from_variable = { global.pww_sit_lq_seen = 1 }
+		log = "[GetDateText] PWW_SIT init v1"
+	}
+	if = {
+		limit = { NOT = { has_variable = global.pww_sit_c_cap } }
+		set_variable = { global.pww_sit_c_cap = 4 }
+	}
+	if = {
+		limit = { NOT = { has_variable = global.pww_sit_c_wolfram_days } }
+		set_variable = { global.pww_sit_c_wolfram_days = 120 }
+	}
+	if = {
+		limit = { NOT = { has_variable = global.pww_sit_c_wolfram_desp } }
+		set_variable = { global.pww_sit_c_wolfram_desp = 50 }
+	}
+	if = {
+		limit = { NOT = { has_variable = global.pww_sit_c_wolfram_fallback_year } }
+		set_variable = { global.pww_sit_c_wolfram_fallback_year = 1938 }
+	}
+	if = {
+		limit = { NOT = { has_variable = global.pww_sit_c_lease_days } }
+		set_variable = { global.pww_sit_c_lease_days = 365 }
+	}
+	if = {
+		limit = { NOT = { has_variable = global.pww_sit_c_civ_per_band } }
+		set_variable = { global.pww_sit_c_civ_per_band = 1 }
+	}
+	if = {
+		limit = { NOT = { has_variable = global.pww_sit_c_diplo_grace } }
+		set_variable = { global.pww_sit_c_diplo_grace = 21 }
+	}
+	if = {
+		limit = { NOT = { has_variable = global.pww_sit_c_human_wait } }
+		set_variable = { global.pww_sit_c_human_wait = 14 }
+	}
+	if = {
+		limit = { NOT = { has_variable = global.pww_sit_c_verify_days } }
+		set_variable = { global.pww_sit_c_verify_days = 7 }
+	}
+	if = {
+		limit = { NOT = { has_variable = global.pww_sit_c_allow_war } }
+		set_variable = { global.pww_sit_c_allow_war = 1 }
+	}
+	if = {
+		limit = { NOT = { has_variable = global.pww_sit_c_pledge_share } }
+		set_variable = { global.pww_sit_c_pledge_share = 0.25 }
+	}
+	if = {
+		limit = { NOT = { has_variable = global.pww_sit_c_press_desp } }
+		set_variable = { global.pww_sit_c_press_desp = 40 }
+	}
+	if = {
+		limit = { NOT = { has_variable = global.pww_sit_c_lease_all_res } }
+		set_variable = { global.pww_sit_c_lease_all_res = 0 }
+	}
+	if = {
+		limit = { NOT = { has_variable = global.pww_sit_c_queue_cap } }
+		set_variable = { global.pww_sit_c_queue_cap = 128 }
+	}
+}
+
+###############################################################################
+# Daily entry point (country scope, every country). The global tick runs once
+# per day, in whichever country fires first; core and ledger must be up.
+###############################################################################
+pww_sit_daily = {
+	if = {
+		limit = {
+			has_global_flag = pww_initialized
+			NOT = { check_variable = { global.pww_sit_last_day = global.num_days } }
+		}
+		set_variable = { global.pww_sit_last_day = global.num_days }
+		pww_ledger_init = yes
+		pww_sit_init = yes
+		pww_sit_global_tick = yes
+	}
+}
+
+pww_sit_global_tick = {
+	add_to_variable = { global.pww_sit_day = 1 }
+
+	# Anchors
+	if = {
+		limit = { NOT = { has_global_flag = pww_sit_wolfram_opened } }
+		pww_sit_wolfram_check = yes
+	}
+
+	# Ledger queue: renewal notices for situation leases
+	set_temp_variable = { pww_st_last = global.pww_lq_next_seq }
+	subtract_from_temp_variable = { pww_st_last = 1 }
+	if = {
+		limit = { check_variable = { pww_st_last > global.pww_sit_lq_seen } }
+		pww_sit_poll_ledger_queue = yes
+	}
+
+	# Per situation work
+	for_each_loop = {
+		array = global.pww_sit_template
+		value = pww_st_tpl
+		index = pww_st_id
+		set_temp_variable = { pww_st_status = global.pww_sit_status^pww_st_id }
+		if = {
+			limit = { check_variable = { pww_st_status = 1 } }
+			set_temp_variable = { pww_s_id = pww_st_id }
+			pww_sit_tick_live = yes
+		}
+		else_if = {
+			limit = {
+				check_variable = { pww_st_status = 2 }
+				check_variable = { global.pww_sit_vday^pww_st_id > 0 }
+				NOT = { check_variable = { global.pww_sit_vday^pww_st_id > global.num_days } }
+			}
+			set_temp_variable = { pww_sv_id = pww_st_id }
+			pww_sit_verify_delivery = yes
+		}
+	}
+}
+
+# Internal. One live situation per day. In: pww_s_id.
+pww_sit_tick_live = {
+	set_temp_variable = { pww_stl_id = pww_s_id }
+	set_temp_variable = { pww_stl_left = global.pww_sit_decision_day^pww_stl_id }
+	subtract_from_temp_variable = { pww_stl_left = global.num_days }
+	set_variable = { global.pww_sit_days_left^pww_stl_id = pww_stl_left }
+
+	set_temp_variable = { pww_stl_c = global.pww_sit_claimant^pww_stl_id }
+	set_temp_variable = { pww_stl_h = global.pww_sit_holder^pww_stl_id }
+	set_temp_variable = { pww_stl_p = global.pww_sit_patron^pww_stl_id }
+
+	# Validity: seats gone, or the prize slipped away -> cancel.
+	# Claimant and holder at war -> the crisis went to war.
+	if = {
+		limit = {
+			OR = {
+				var:pww_stl_c = { exists = no }
+				var:pww_stl_h = { exists = no }
+			}
+		}
+		set_temp_variable = { pww_in_sit_id = pww_stl_id }
+		pww_sit_cancel = yes
+	}
+	else_if = {
+		limit = { var:pww_stl_c = { var:pww_stl_h = { has_war_with = PREV } } }
+		set_temp_variable = { pww_sr_already_war = 1 }
+		set_temp_variable = { pww_in_sit_id = pww_stl_id }
+		set_temp_variable = { pww_in_outcome = 5 }
+		pww_sit_resolve = yes
+	}
+	else = {
+		set_temp_variable = { pww_stl_since = global.num_days }
+		subtract_from_temp_variable = { pww_stl_since = global.pww_sit_open_day^pww_stl_id }
+		set_temp_variable = { pww_stl_wk = pww_stl_since }
+		modulo_temp_variable = { var = pww_stl_wk value = 7 }
+
+		# Human holder decision pending
+		if = {
+			limit = { check_variable = { global.pww_sit_phase^pww_stl_id = 3 } }
+			if = {
+				limit = { check_variable = { global.num_days > global.pww_sit_wait_day^pww_stl_id } }
+				# Backstop when the popup's own timeout did not answer (for
+				# example a lost event): the holder keeps the mines. The holder
+				# already had its decision popup, so no second popup.
+				set_temp_variable = { pww_se_skip_holder = 1 }
+				set_temp_variable = { pww_in_sit_id = pww_stl_id }
+				set_temp_variable = { pww_in_outcome = 4 }
+				if = {
+					limit = { check_variable = { global.pww_sit_template^pww_stl_id = 2 } }
+					set_temp_variable = { pww_in_outcome = 8 }
+				}
+				pww_sit_resolve = yes
+			}
+		}
+		# Decision date
+		else_if = {
+			limit = { NOT = { check_variable = { pww_stl_left > 0 } } }
+			set_temp_variable = { pww_s_id = pww_stl_id }
+			pww_sit_decision_due = yes
+		}
+		# Weekly AI
+		else_if = {
+			limit = {
+				check_variable = { pww_stl_wk = 0 }
+				check_variable = { pww_stl_since > 0 }
+			}
+			set_temp_variable = { pww_s_id = pww_stl_id }
+			pww_sit_ai_week = yes
+		}
+	}
+}
+
+###############################################################################
+# Open
+###############################################################################
+pww_sit_open = {
+	pww_sit_init = yes
+	set_temp_variable = { pww_out_sit_id = -1 }
+	set_temp_variable = { pww_out_result = 0 }
+	set_temp_variable = { pww_out_fail = 0 }
+	set_temp_variable = { pww_out_queued = 0 }
+
+	set_temp_variable = { pww_so_tpl = pww_in_template }
+	set_temp_variable = { pww_so_c = pww_in_claimant }
+	set_temp_variable = { pww_so_h = pww_in_holder }
+	set_temp_variable = { pww_so_p = pww_in_patron }
+	set_temp_variable = { pww_so_hp = 1 }
+	if = {
+		limit = { check_variable = { pww_in_no_patron = 1 } }
+		set_temp_variable = { pww_so_hp = 0 }
+		set_temp_variable = { pww_so_p = pww_in_holder }
+	}
+	set_temp_variable = { pww_so_res = pww_in_resource }
+	set_temp_variable = { pww_so_days = pww_in_days }
+	set_temp_variable = { pww_so_parent = -1 }
+	if = {
+		limit = { check_variable = { pww_so_tpl = 2 } }
+		set_temp_variable = { pww_so_parent = pww_in_parent }
+	}
+	# One-shot optional inputs
+	set_temp_variable = { pww_in_no_patron = 0 }
+
+	# Validate
+	if = {
+		limit = {
+			OR = {
+				check_variable = { pww_so_tpl < 0 }
+				check_variable = { pww_so_tpl > 2 }
+				check_variable = { pww_so_res < 0 }
+				check_variable = { pww_so_res > 6 }
+				check_variable = { pww_so_days < 1 }
+			}
+		}
+		set_temp_variable = { pww_out_fail = 4 }
+	}
+	else_if = {
+		limit = {
+			OR = {
+				check_variable = { pww_so_c = pww_so_h }
+				var:pww_so_c = { exists = no }
+				var:pww_so_h = { exists = no }
+				AND = {
+					check_variable = { pww_so_hp = 1 }
+					OR = {
+						check_variable = { pww_so_p = pww_so_c }
+						check_variable = { pww_so_p = pww_so_h }
+						var:pww_so_p = { exists = no }
+					}
+				}
+			}
+		}
+		set_temp_variable = { pww_out_fail = 1 }
+	}
+	else_if = {
+		limit = { var:pww_so_c = { var:pww_so_h = { has_war_with = PREV } } }
+		set_temp_variable = { pww_out_fail = 2 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { pww_so_tpl = 2 }
+			OR = {
+				check_variable = { pww_so_parent < 0 }
+				check_variable = { pww_so_parent > global.pww_next_sit_id }
+				check_variable = { pww_so_parent = global.pww_next_sit_id }
+			}
+		}
+		set_temp_variable = { pww_out_fail = 4 }
+	}
+
+	# Prize states into temp arrays (committed only on success)
+	if = {
+		limit = { check_variable = { pww_out_fail = 0 } }
+		clear_temp_array = pww_so_st
+		clear_temp_array = pww_so_amt
+		clear_temp_array = pww_so_lot
+		clear_temp_array = pww_so_ag
+		clear_temp_array = pww_so_to
+		if = {
+			limit = { check_variable = { pww_so_tpl = 2 } }
+			pww_sit_copy_parent_prize = yes
+		}
+		else = {
+			pww_sit_collect_prize = yes
+		}
+		if = {
+			limit = { NOT = { check_variable = { pww_so_st^num > 0 } } }
+			set_temp_variable = { pww_out_fail = 3 }
+		}
+	}
+
+	if = {
+		limit = { check_variable = { pww_out_fail = 0 } }
+		pww_sit_alloc = yes
+		# Commit prize entries
+		for_each_loop = {
+			array = pww_so_st
+			value = pww_so_sv
+			index = pww_so_si
+			add_to_array = { array = global.pww_sitp_sit value = pww_so_id }
+			add_to_array = { array = global.pww_sitp_state value = pww_so_sv }
+			add_to_array = { array = global.pww_sitp_lot value = pww_so_lot^pww_so_si }
+			add_to_array = { array = global.pww_sitp_amt value = pww_so_amt^pww_so_si }
+			add_to_array = { array = global.pww_sitp_ag value = pww_so_ag^pww_so_si }
+			add_to_array = { array = global.pww_sitp_to value = pww_so_to^pww_so_si }
+		}
+		set_temp_variable = { pww_out_sit_id = pww_so_id }
+		set_temp_variable = { pww_out_result = 1 }
+
+		set_temp_variable = { pww_sq_kind_in = 1 }
+		set_temp_variable = { pww_sq_sit_in = pww_so_id }
+		set_temp_variable = { pww_sq_val_in = 0 }
+		pww_sit_queue_push = yes
+
+		log = "[GetDateText] PWW_SIT open id=[?pww_so_id|0] tpl=[?pww_so_tpl|0] claimant=[?pww_so_c.GetTag] holder=[?pww_so_h.GetTag] patron=[?pww_so_p.GetTag] has_patron=[?pww_so_hp|0] res=[?pww_so_res|0] days=[?pww_so_days|0] states=[?pww_so_st^num|0]"
+
+		# Noise cap
+		set_temp_variable = { pww_sc_id = pww_so_id }
+		pww_sit_cap_check = yes
+		if = {
+			limit = { check_variable = { pww_sc_ok = 1 } }
+			set_temp_variable = { pww_sa_id = pww_so_id }
+			pww_sit_activate = yes
+		}
+		else = {
+			set_temp_variable = { pww_out_queued = 1 }
+			set_temp_variable = { pww_in_sit_id = pww_so_id }
+			set_temp_variable = { pww_in_dev = 11 }
+			pww_sit_set_dev = yes
+			log = "[GetDateText] PWW_SIT queued id=[?pww_so_id|0] (noise cap [?global.pww_sit_c_cap|0])"
+		}
+	}
+	else = {
+		log = "[GetDateText] PWW_SIT open REFUSED fail=[?pww_out_fail|0] tpl=[?pww_so_tpl|0] res=[?pww_so_res|0]"
+	}
+}
+
+# Internal. Appends one record. In: pww_so_*. Out: pww_so_id.
+pww_sit_alloc = {
+	set_temp_variable = { pww_so_id = global.pww_next_sit_id }
+	add_to_array = { array = global.pww_sit_template value = pww_so_tpl }
+	add_to_array = { array = global.pww_sit_status value = 0 }
+	add_to_array = { array = global.pww_sit_claimant value = pww_so_c }
+	add_to_array = { array = global.pww_sit_holder value = pww_so_h }
+	add_to_array = { array = global.pww_sit_patron value = pww_so_p }
+	add_to_array = { array = global.pww_sit_has_patron value = pww_so_hp }
+	add_to_array = { array = global.pww_sit_res value = pww_so_res }
+	add_to_array = { array = global.pww_sit_prize_kind value = 0 }
+	add_to_array = { array = global.pww_sit_days value = pww_so_days }
+	add_to_array = { array = global.pww_sit_open_day value = 0 }
+	add_to_array = { array = global.pww_sit_decision_day value = 0 }
+	add_to_array = { array = global.pww_sit_days_left value = pww_so_days }
+	add_to_array = { array = global.pww_sit_dev value = 0 }
+	add_to_array = { array = global.pww_sit_dev_day value = global.num_days }
+	add_to_array = { array = global.pww_sit_phase value = 0 }
+	add_to_array = { array = global.pww_sit_outcome value = 0 }
+	add_to_array = { array = global.pww_sit_resolved_day value = 0 }
+	add_to_array = { array = global.pww_sit_human value = 0 }
+	add_to_array = { array = global.pww_sit_parent value = pww_so_parent }
+	add_to_array = { array = global.pww_sit_followup value = -1 }
+	add_to_array = { array = global.pww_sit_bid_c value = 0 }
+	add_to_array = { array = global.pww_sit_bid_p value = 0 }
+	add_to_array = { array = global.pww_sit_pledge value = 0 }
+	add_to_array = { array = global.pww_sit_pledge_ag value = -1 }
+	add_to_array = { array = global.pww_sit_pressure value = 0 }
+	add_to_array = { array = global.pww_sit_public value = 0 }
+	add_to_array = { array = global.pww_sit_tstate value = 0 }
+	add_to_array = { array = global.pww_sit_demand value = -1 }
+	add_to_array = { array = global.pww_sit_coer value = 0 }
+	add_to_array = { array = global.pww_sit_hardened value = 0 }
+	add_to_array = { array = global.pww_sit_lessee value = -1 }
+	add_to_array = { array = global.pww_sit_vday value = 0 }
+	add_to_array = { array = global.pww_sit_vbase_c value = 0 }
+	add_to_array = { array = global.pww_sit_vexp_c value = 0 }
+	add_to_array = { array = global.pww_sit_vbase_p value = 0 }
+	add_to_array = { array = global.pww_sit_vexp_p value = 0 }
+	add_to_array = { array = global.pww_sit_wait_day value = 0 }
+	add_to_array = { array = global.pww_sit_rev value = 1 }
+	add_to_variable = { global.pww_next_sit_id = 1 }
+	add_to_variable = { global.pww_sit_rev = 1 }
+	# Template 2: the incumbent seat comes from the parent's leases
+	if = {
+		limit = { check_variable = { pww_so_tpl = 2 } }
+		set_variable = { global.pww_sit_lessee^pww_so_id = pww_so_lessee }
+		set_variable = { global.pww_sit_followup^pww_so_parent = pww_so_id }
+	}
+}
+
+# Internal. Holder's owned and controlled producing states of pww_so_res.
+pww_sit_collect_prize = {
+	var:pww_so_h = {
+		if = {
+			limit = { NOT = { has_variable = pww_map_owned_states } }
+			pww_core_resolve_country_map = yes
+		}
+		if = {
+			limit = { check_variable = { pww_so_res = 0 } }
+			for_each_loop = { array = pww_producing_states_oil value = pww_sp_st index = pww_sp_si pww_sit_prize_candidate = yes }
+		}
+		else_if = {
+			limit = { check_variable = { pww_so_res = 1 } }
+			for_each_loop = { array = pww_producing_states_aluminium value = pww_sp_st index = pww_sp_si pww_sit_prize_candidate = yes }
+		}
+		else_if = {
+			limit = { check_variable = { pww_so_res = 2 } }
+			for_each_loop = { array = pww_producing_states_rubber value = pww_sp_st index = pww_sp_si pww_sit_prize_candidate = yes }
+		}
+		else_if = {
+			limit = { check_variable = { pww_so_res = 3 } }
+			for_each_loop = { array = pww_producing_states_tungsten value = pww_sp_st index = pww_sp_si pww_sit_prize_candidate = yes }
+		}
+		else_if = {
+			limit = { check_variable = { pww_so_res = 4 } }
+			for_each_loop = { array = pww_producing_states_steel value = pww_sp_st index = pww_sp_si pww_sit_prize_candidate = yes }
+		}
+		else_if = {
+			limit = { check_variable = { pww_so_res = 5 } }
+			for_each_loop = { array = pww_producing_states_chromium value = pww_sp_st index = pww_sp_si pww_sit_prize_candidate = yes }
+		}
+		else_if = {
+			limit = { check_variable = { pww_so_res = 6 } }
+			for_each_loop = { array = pww_producing_states_coal value = pww_sp_st index = pww_sp_si pww_sit_prize_candidate = yes }
+		}
+	}
+	# Lots: interior states form lot 0, coastal states lot 1. If every state
+	# is on one side, alternate (first state to lot 0).
+	set_temp_variable = { pww_sp_n0 = 0 }
+	set_temp_variable = { pww_sp_n1 = 0 }
+	for_each_loop = {
+		array = pww_so_lot
+		value = pww_sp_l
+		index = pww_sp_i1
+		if = {
+			limit = { check_variable = { pww_sp_l = 0 } }
+			add_to_temp_variable = { pww_sp_n0 = 1 }
+		}
+		else = {
+			add_to_temp_variable = { pww_sp_n1 = 1 }
+		}
+	}
+	if = {
+		limit = {
+			check_variable = { pww_so_lot^num > 1 }
+			OR = {
+				check_variable = { pww_sp_n0 = 0 }
+				check_variable = { pww_sp_n1 = 0 }
+			}
+		}
+		for_each_loop = {
+			array = pww_so_lot
+			value = pww_sp_lv
+			index = pww_sp_li
+			set_temp_variable = { pww_sp_alt = pww_sp_li }
+			modulo_temp_variable = { var = pww_sp_alt value = 2 }
+			set_temp_variable = { pww_so_lot^pww_sp_li = pww_sp_alt }
+		}
+	}
+}
+
+# Internal (inside the holder's scope). In: pww_sp_st (state), pww_so_h,
+# pww_so_res. Appends to the pww_so_* temp arrays.
+pww_sit_prize_candidate = {
+	var:pww_sp_st = {
+		if = {
+			limit = {
+				OWNER = { check_variable = { pww_so_h = THIS } }
+				CONTROLLER = { check_variable = { pww_so_h = THIS } }
+			}
+			set_temp_variable = { pww_sh_res = pww_so_res }
+			pww_sit_state_res_amount = yes
+			if = {
+				limit = { check_variable = { pww_sh_val > 0 } }
+				# Core's arrays hold state scopes; the ledger and meta_effect
+				# text need the plain numeric state id.
+				meta_effect = {
+					text = { set_temp_variable = { pww_sp_sid = [ID] } }
+					ID = "[THIS.GetID]"
+				}
+				add_to_temp_array = { pww_so_st = pww_sp_sid }
+				add_to_temp_array = { pww_so_amt = pww_sh_val }
+				add_to_temp_array = { pww_so_ag = -1 }
+				add_to_temp_array = { pww_so_to = -1 }
+				if = {
+					limit = { is_coastal = yes }
+					add_to_temp_array = { pww_so_lot = 1 }
+				}
+				else = {
+					add_to_temp_array = { pww_so_lot = 0 }
+				}
+			}
+		}
+	}
+}
+
+# Internal. Template 2: copies the parent's leased prize entries (live
+# agreements only) and derives the incumbent seat (pww_so_lessee).
+pww_sit_copy_parent_prize = {
+	set_temp_variable = { pww_sn_has_c = 0 }
+	set_temp_variable = { pww_sn_has_p = 0 }
+	for_each_loop = {
+		array = global.pww_sitp_sit
+		value = pww_sn_sv
+		index = pww_sn_k
+		if = {
+			limit = {
+				check_variable = { pww_sn_sv = pww_so_parent }
+				check_variable = { global.pww_sitp_ag^pww_sn_k > -1 }
+			}
+			set_temp_variable = { pww_l_ag = global.pww_sitp_ag^pww_sn_k }
+			if = {
+				limit = { pww_ledger_ag_is_live = yes }
+				add_to_temp_array = { pww_so_st = global.pww_sitp_state^pww_sn_k }
+				add_to_temp_array = { pww_so_amt = global.pww_sitp_amt^pww_sn_k }
+				add_to_temp_array = { pww_so_lot = global.pww_sitp_lot^pww_sn_k }
+				add_to_temp_array = { pww_so_ag = global.pww_sitp_ag^pww_sn_k }
+				add_to_temp_array = { pww_so_to = global.pww_sitp_to^pww_sn_k }
+				if = {
+					limit = { check_variable = { global.pww_sitp_to^pww_sn_k = 0 } }
+					set_temp_variable = { pww_sn_has_c = 1 }
+				}
+				if = {
+					limit = { check_variable = { global.pww_sitp_to^pww_sn_k = 2 } }
+					set_temp_variable = { pww_sn_has_p = 1 }
+				}
+			}
+		}
+	}
+	set_temp_variable = { pww_so_lessee = -1 }
+	if = {
+		limit = {
+			check_variable = { pww_sn_has_c = 1 }
+			check_variable = { pww_sn_has_p = 1 }
+		}
+		set_temp_variable = { pww_so_lessee = 3 }
+	}
+	else_if = {
+		limit = { check_variable = { pww_sn_has_c = 1 } }
+		set_temp_variable = { pww_so_lessee = 0 }
+	}
+	else_if = {
+		limit = { check_variable = { pww_sn_has_p = 1 } }
+		set_temp_variable = { pww_so_lessee = 2 }
+	}
+}
+
+###############################################################################
+# Noise cap. In: pww_sc_id. Out: pww_sc_ok (1 = may go live), pww_sc_human.
+# A situation may go live only if every human seat holder has fewer than
+# global.pww_sit_c_cap live situations. AI-only situations are never capped.
+###############################################################################
+pww_sit_cap_check = {
+	set_temp_variable = { pww_sc_ok = 1 }
+	set_temp_variable = { pww_sc_human = 0 }
+	set_temp_variable = { pww_sc_c = global.pww_sit_claimant^pww_sc_id }
+	set_temp_variable = { pww_sc_h = global.pww_sit_holder^pww_sc_id }
+	set_temp_variable = { pww_sc_p = global.pww_sit_patron^pww_sc_id }
+	var:pww_sc_c = { pww_sit_cap_seat = yes }
+	var:pww_sc_h = { pww_sit_cap_seat = yes }
+	if = {
+		limit = { check_variable = { global.pww_sit_has_patron^pww_sc_id = 1 } }
+		var:pww_sc_p = { pww_sit_cap_seat = yes }
+	}
+}
+
+# Internal, country scope.
+pww_sit_cap_seat = {
+	if = {
+		limit = { exists = yes is_ai = no }
+		set_temp_variable = { pww_sc_human = 1 }
+		if = {
+			limit = {
+				check_variable = { pww_my_situations^num > 0 }
+				NOT = { check_variable = { pww_my_situations^num < global.pww_sit_c_cap } }
+			}
+			set_temp_variable = { pww_sc_ok = 0 }
+		}
+	}
+}
+
+###############################################################################
+# Activation: queued -> live. In: pww_sa_id.
+###############################################################################
+pww_sit_activate = {
+	set_variable = { global.pww_sit_status^pww_sa_id = 1 }
+	set_variable = { global.pww_sit_open_day^pww_sa_id = global.num_days }
+	set_temp_variable = { pww_sa_dd = global.num_days }
+	add_to_temp_variable = { pww_sa_dd = global.pww_sit_days^pww_sa_id }
+	set_variable = { global.pww_sit_decision_day^pww_sa_id = pww_sa_dd }
+	set_variable = { global.pww_sit_days_left^pww_sa_id = global.pww_sit_days^pww_sa_id }
+	set_variable = { global.pww_sit_phase^pww_sa_id = 0 }
+	add_to_array = { array = global.pww_sit_live value = pww_sa_id }
+
+	set_temp_variable = { pww_sa_c = global.pww_sit_claimant^pww_sa_id }
+	set_temp_variable = { pww_sa_h = global.pww_sit_holder^pww_sa_id }
+	set_temp_variable = { pww_sa_p = global.pww_sit_patron^pww_sa_id }
+	set_temp_variable = { pww_sa_human = 0 }
+	var:pww_sa_c = {
+		add_to_array = { array = pww_my_situations value = pww_sa_id }
+		if = { limit = { is_ai = no } set_temp_variable = { pww_sa_human = 1 } }
+	}
+	var:pww_sa_h = {
+		add_to_array = { array = pww_my_situations value = pww_sa_id }
+		if = { limit = { is_ai = no } set_temp_variable = { pww_sa_human = 1 } }
+	}
+	if = {
+		limit = { check_variable = { global.pww_sit_has_patron^pww_sa_id = 1 } }
+		var:pww_sa_p = {
+			add_to_array = { array = pww_my_situations value = pww_sa_id }
+			if = { limit = { is_ai = no } set_temp_variable = { pww_sa_human = 1 } }
+		}
+	}
+	set_variable = { global.pww_sit_human^pww_sa_id = pww_sa_human }
+
+	set_temp_variable = { pww_in_sit_id = pww_sa_id }
+	set_temp_variable = { pww_in_dev = 1 }
+	if = {
+		limit = { check_variable = { global.pww_sit_template^pww_sa_id = 2 } }
+		set_temp_variable = { pww_in_dev = 13 }
+	}
+	pww_sit_set_dev = yes
+
+	set_temp_variable = { pww_sq_kind_in = 2 }
+	set_temp_variable = { pww_sq_sit_in = pww_sa_id }
+	set_temp_variable = { pww_sq_val_in = 0 }
+	pww_sit_queue_push = yes
+
+	log = "[GetDateText] PWW_SIT live id=[?pww_sa_id|0] tpl=[?global.pww_sit_template^pww_sa_id|0] decision_day=[?pww_sa_dd|0] human=[?pww_sa_human|0]"
+
+	# Opening popups for human seats (anchor templates only)
+	set_temp_variable = { pww_se_id = pww_sa_id }
+	pww_sit_send_opening_events = yes
+}
+
+###############################################################################
+# Resolve. In: pww_in_sit_id, pww_in_outcome. Out: pww_out_result.
+# Optional one-shot temp pww_sr_already_war (1 = the war already exists).
+###############################################################################
+pww_sit_resolve = {
+	set_temp_variable = { pww_out_result = 0 }
+	set_temp_variable = { pww_sr_id = pww_in_sit_id }
+	set_temp_variable = { pww_sr_out = pww_in_outcome }
+	if = {
+		limit = {
+			check_variable = { pww_sr_id > -1 }
+			check_variable = { pww_sr_id < global.pww_next_sit_id }
+			check_variable = { global.pww_sit_status^pww_sr_id = 1 }
+			check_variable = { pww_sr_out > 0 }
+			check_variable = { pww_sr_out < 9 }
+		}
+		# Mark first: anything below that re-enters sees a closed situation
+		set_variable = { global.pww_sit_status^pww_sr_id = 2 }
+		set_variable = { global.pww_sit_outcome^pww_sr_id = pww_sr_out }
+		set_variable = { global.pww_sit_resolved_day^pww_sr_id = global.num_days }
+		set_variable = { global.pww_sit_phase^pww_sr_id = 4 }
+		set_variable = { global.pww_sit_days_left^pww_sr_id = 0 }
+
+		pww_sit_apply_outcome = yes
+
+		set_temp_variable = { pww_in_sit_id = pww_sr_id }
+		set_temp_variable = { pww_in_dev = 10 }
+		pww_sit_set_dev = yes
+		set_temp_variable = { pww_sx_id = pww_sr_id }
+		pww_sit_detach = yes
+
+		set_temp_variable = { pww_sq_kind_in = 3 }
+		set_temp_variable = { pww_sq_sit_in = pww_sr_id }
+		set_temp_variable = { pww_sq_val_in = pww_sr_out }
+		pww_sit_queue_push = yes
+
+		log = "[GetDateText] PWW_SIT resolve id=[?pww_sr_id|0] tpl=[?global.pww_sit_template^pww_sr_id|0] outcome=[?pww_sr_out|0] bid_c=[?global.pww_sit_bid_c^pww_sr_id|0] bid_p=[?global.pww_sit_bid_p^pww_sr_id|0] pledge=[?global.pww_sit_pledge^pww_sr_id|0] tstate=[?global.pww_sit_tstate^pww_sr_id|0]"
+
+		set_temp_variable = { pww_se_id = pww_sr_id }
+		pww_sit_send_resolution_events = yes
+
+		set_temp_variable = { pww_out_result = 1 }
+		pww_sit_promote_queued = yes
+	}
+	else = {
+		log = "[GetDateText] PWW_SIT resolve REFUSED id=[?pww_sr_id|0] outcome=[?pww_sr_out|0]"
+	}
+	set_temp_variable = { pww_sr_already_war = 0 }
+}
+
+# Cancel a live or queued situation. In: pww_in_sit_id.
+pww_sit_cancel = {
+	set_temp_variable = { pww_scx_id = pww_in_sit_id }
+	if = {
+		limit = {
+			check_variable = { pww_scx_id > -1 }
+			check_variable = { pww_scx_id < global.pww_next_sit_id }
+			check_variable = { global.pww_sit_status^pww_scx_id < 2 }
+		}
+		set_temp_variable = { pww_scx_was = global.pww_sit_status^pww_scx_id }
+		set_variable = { global.pww_sit_status^pww_scx_id = 3 }
+		set_variable = { global.pww_sit_outcome^pww_scx_id = 0 }
+		set_variable = { global.pww_sit_resolved_day^pww_scx_id = global.num_days }
+		set_variable = { global.pww_sit_phase^pww_scx_id = 4 }
+		# An unused pledge is withdrawn
+		set_temp_variable = { pww_so2_ag = global.pww_sit_pledge_ag^pww_scx_id }
+		pww_sit_drop_pledge = yes
+		set_temp_variable = { pww_in_sit_id = pww_scx_id }
+		set_temp_variable = { pww_in_dev = 14 }
+		pww_sit_set_dev = yes
+		if = {
+			limit = { check_variable = { pww_scx_was = 1 } }
+			set_temp_variable = { pww_sx_id = pww_scx_id }
+			pww_sit_detach = yes
+		}
+		set_temp_variable = { pww_sq_kind_in = 4 }
+		set_temp_variable = { pww_sq_sit_in = pww_scx_id }
+		set_temp_variable = { pww_sq_val_in = 0 }
+		pww_sit_queue_push = yes
+		log = "[GetDateText] PWW_SIT cancel id=[?pww_scx_id|0]"
+		if = {
+			limit = { check_variable = { pww_scx_was = 1 } }
+			pww_sit_promote_queued = yes
+		}
+	}
+}
+
+# Internal. Removes a situation from the live list and every seat's array.
+# In: pww_sx_id.
+pww_sit_detach = {
+	remove_from_array = { array = global.pww_sit_live value = pww_sx_id }
+	set_temp_variable = { pww_sx_c = global.pww_sit_claimant^pww_sx_id }
+	set_temp_variable = { pww_sx_h = global.pww_sit_holder^pww_sx_id }
+	set_temp_variable = { pww_sx_p = global.pww_sit_patron^pww_sx_id }
+	var:pww_sx_c = { remove_from_array = { array = pww_my_situations value = pww_sx_id } }
+	var:pww_sx_h = { remove_from_array = { array = pww_my_situations value = pww_sx_id } }
+	var:pww_sx_p = { remove_from_array = { array = pww_my_situations value = pww_sx_id } }
+}
+
+# Internal. Promotes queued situations (oldest first) while the cap allows;
+# drops queued ones whose seats no longer exist.
+pww_sit_promote_queued = {
+	for_each_loop = {
+		array = global.pww_sit_template
+		value = pww_spq_tpl
+		index = pww_spq_id
+		set_temp_variable = { pww_spq_st = global.pww_sit_status^pww_spq_id }
+		if = {
+			limit = { check_variable = { pww_spq_st = 0 } }
+			set_temp_variable = { pww_spq_c = global.pww_sit_claimant^pww_spq_id }
+			set_temp_variable = { pww_spq_h = global.pww_sit_holder^pww_spq_id }
+			if = {
+				limit = {
+					OR = {
+						var:pww_spq_c = { exists = no }
+						var:pww_spq_h = { exists = no }
+						var:pww_spq_c = { var:pww_spq_h = { has_war_with = PREV } }
+					}
+				}
+				set_temp_variable = { pww_in_sit_id = pww_spq_id }
+				pww_sit_cancel_queued_quiet = yes
+			}
+			else = {
+				set_temp_variable = { pww_sc_id = pww_spq_id }
+				pww_sit_cap_check = yes
+				if = {
+					limit = { check_variable = { pww_sc_ok = 1 } }
+					set_temp_variable = { pww_sa_id = pww_spq_id }
+					log = "[GetDateText] PWW_SIT promote id=[?pww_spq_id|0]"
+					pww_sit_activate = yes
+				}
+			}
+		}
+	}
+}
+
+# Internal. Cancels a queued situation without re-running promotion.
+pww_sit_cancel_queued_quiet = {
+	set_variable = { global.pww_sit_status^pww_in_sit_id = 3 }
+	set_variable = { global.pww_sit_phase^pww_in_sit_id = 4 }
+	set_variable = { global.pww_sit_resolved_day^pww_in_sit_id = global.num_days }
+	set_temp_variable = { pww_sq_kind_in = 4 }
+	set_temp_variable = { pww_sq_sit_in = pww_in_sit_id }
+	set_temp_variable = { pww_sq_val_in = 0 }
+	pww_sit_queue_push = yes
+	add_to_variable = { global.pww_sit_rev = 1 }
+	log = "[GetDateText] PWW_SIT cancel queued id=[?pww_in_sit_id|0]"
+}
+
+###############################################################################
+# Helpers
+###############################################################################
+
+# Development. In: pww_in_sit_id, pww_in_dev.
+pww_sit_set_dev = {
+	set_variable = { global.pww_sit_dev^pww_in_sit_id = pww_in_dev }
+	set_variable = { global.pww_sit_dev_day^pww_in_sit_id = global.num_days }
+	add_to_variable = { global.pww_sit_rev^pww_in_sit_id = 1 }
+	add_to_variable = { global.pww_sit_rev = 1 }
+	set_temp_variable = { pww_sq_kind_in = 6 }
+	set_temp_variable = { pww_sq_sit_in = pww_in_sit_id }
+	set_temp_variable = { pww_sq_val_in = pww_in_dev }
+	pww_sit_queue_push = yes
+	if = {
+		limit = { has_global_flag = pww_sit_debug }
+		log = "[GetDateText] PWW_SIT dev id=[?pww_in_sit_id|0] dev=[?pww_in_dev|0]"
+	}
+}
+
+# Country scope. In: pww_in_sit_id. Out: pww_out_seat (-1 none).
+pww_sit_seat_of_this = {
+	set_temp_variable = { pww_out_seat = -1 }
+	if = {
+		limit = {
+			check_variable = { pww_in_sit_id > -1 }
+			check_variable = { pww_in_sit_id < global.pww_next_sit_id }
+		}
+		set_temp_variable = { pww_ss_c = global.pww_sit_claimant^pww_in_sit_id }
+		set_temp_variable = { pww_ss_h = global.pww_sit_holder^pww_in_sit_id }
+		set_temp_variable = { pww_ss_p = global.pww_sit_patron^pww_in_sit_id }
+		if = {
+			limit = { check_variable = { pww_ss_c = THIS } }
+			set_temp_variable = { pww_out_seat = 0 }
+		}
+		else_if = {
+			limit = { check_variable = { pww_ss_h = THIS } }
+			set_temp_variable = { pww_out_seat = 1 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { global.pww_sit_has_patron^pww_in_sit_id = 1 }
+				check_variable = { pww_ss_p = THIS }
+			}
+			set_temp_variable = { pww_out_seat = 2 }
+		}
+	}
+}
+
+# Outcome queue push. In: pww_sq_kind_in, pww_sq_sit_in, pww_sq_val_in.
+pww_sit_queue_push = {
+	add_to_array = { array = global.pww_sitq_seq value = global.pww_sitq_next_seq }
+	add_to_array = { array = global.pww_sitq_kind value = pww_sq_kind_in }
+	add_to_array = { array = global.pww_sitq_sit value = pww_sq_sit_in }
+	add_to_array = { array = global.pww_sitq_val value = pww_sq_val_in }
+	add_to_array = { array = global.pww_sitq_day value = global.num_days }
+	add_to_variable = { global.pww_sitq_next_seq = 1 }
+	if = {
+		limit = { check_variable = { global.pww_sitq_seq^num > global.pww_sit_c_queue_cap } }
+		remove_from_array = { array = global.pww_sitq_seq index = 0 }
+		remove_from_array = { array = global.pww_sitq_kind index = 0 }
+		remove_from_array = { array = global.pww_sitq_sit index = 0 }
+		remove_from_array = { array = global.pww_sitq_val index = 0 }
+		remove_from_array = { array = global.pww_sitq_day index = 0 }
+	}
+}
+
+# State scope. In: pww_sh_res. Out: pww_sh_val (resource@<res> in the state).
+pww_sit_state_res_amount = {
+	set_temp_variable = { pww_sh_val = 0 }
+	if = { limit = { check_variable = { pww_sh_res = 0 } } set_temp_variable = { pww_sh_val = resource@oil } }
+	else_if = { limit = { check_variable = { pww_sh_res = 1 } } set_temp_variable = { pww_sh_val = resource@aluminium } }
+	else_if = { limit = { check_variable = { pww_sh_res = 2 } } set_temp_variable = { pww_sh_val = resource@rubber } }
+	else_if = { limit = { check_variable = { pww_sh_res = 3 } } set_temp_variable = { pww_sh_val = resource@tungsten } }
+	else_if = { limit = { check_variable = { pww_sh_res = 4 } } set_temp_variable = { pww_sh_val = resource@steel } }
+	else_if = { limit = { check_variable = { pww_sh_res = 5 } } set_temp_variable = { pww_sh_val = resource@chromium } }
+	else_if = { limit = { check_variable = { pww_sh_res = 6 } } set_temp_variable = { pww_sh_val = resource@coal } }
+}
+
+# Country scope. In: pww_sh_res. Out: pww_sh_val (resource_produced@<res>).
+pww_sit_country_res_produced = {
+	set_temp_variable = { pww_sh_val = 0 }
+	if = { limit = { check_variable = { pww_sh_res = 0 } } set_temp_variable = { pww_sh_val = resource_produced@oil } }
+	else_if = { limit = { check_variable = { pww_sh_res = 1 } } set_temp_variable = { pww_sh_val = resource_produced@aluminium } }
+	else_if = { limit = { check_variable = { pww_sh_res = 2 } } set_temp_variable = { pww_sh_val = resource_produced@rubber } }
+	else_if = { limit = { check_variable = { pww_sh_res = 3 } } set_temp_variable = { pww_sh_val = resource_produced@tungsten } }
+	else_if = { limit = { check_variable = { pww_sh_res = 4 } } set_temp_variable = { pww_sh_val = resource_produced@steel } }
+	else_if = { limit = { check_variable = { pww_sh_res = 5 } } set_temp_variable = { pww_sh_val = resource_produced@chromium } }
+	else_if = { limit = { check_variable = { pww_sh_res = 6 } } set_temp_variable = { pww_sh_val = resource_produced@coal } }
+}
+
+# Country scope. In: pww_sh_res. Out: pww_sh_val (pww_desp_<res>).
+pww_sit_country_desp = {
+	set_temp_variable = { pww_sh_val = 0 }
+	if = { limit = { check_variable = { pww_sh_res = 0 } } set_temp_variable = { pww_sh_val = pww_desp_oil } }
+	else_if = { limit = { check_variable = { pww_sh_res = 1 } } set_temp_variable = { pww_sh_val = pww_desp_aluminium } }
+	else_if = { limit = { check_variable = { pww_sh_res = 2 } } set_temp_variable = { pww_sh_val = pww_desp_rubber } }
+	else_if = { limit = { check_variable = { pww_sh_res = 3 } } set_temp_variable = { pww_sh_val = pww_desp_tungsten } }
+	else_if = { limit = { check_variable = { pww_sh_res = 4 } } set_temp_variable = { pww_sh_val = pww_desp_steel } }
+	else_if = { limit = { check_variable = { pww_sh_res = 5 } } set_temp_variable = { pww_sh_val = pww_desp_chromium } }
+	else_if = { limit = { check_variable = { pww_sh_res = 6 } } set_temp_variable = { pww_sh_val = pww_desp_coal } }
+}
+
+# Debug: logs every situation record.
+pww_sit_debug_dump = {
+	for_each_loop = {
+		array = global.pww_sit_template
+		value = pww_sdd_t
+		index = pww_sdd_i
+		log = "[GetDateText] PWW_SIT dump id=[?pww_sdd_i|0] tpl=[?pww_sdd_t|0] status=[?global.pww_sit_status^pww_sdd_i|0] outcome=[?global.pww_sit_outcome^pww_sdd_i|0] dev=[?global.pww_sit_dev^pww_sdd_i|0] phase=[?global.pww_sit_phase^pww_sdd_i|0] left=[?global.pww_sit_days_left^pww_sdd_i|0] bid_c=[?global.pww_sit_bid_c^pww_sdd_i|0] bid_p=[?global.pww_sit_bid_p^pww_sdd_i|0] pledge=[?global.pww_sit_pledge^pww_sdd_i|0] tstate=[?global.pww_sit_tstate^pww_sdd_i|0] followup=[?global.pww_sit_followup^pww_sdd_i|0]"
+	}
+	for_each_loop = {
+		array = global.pww_sitp_sit
+		value = pww_sdd_s
+		index = pww_sdd_k
+		log = "[GetDateText] PWW_SIT dump prize k=[?pww_sdd_k|0] sit=[?pww_sdd_s|0] state=[?global.pww_sitp_state^pww_sdd_k|0] lot=[?global.pww_sitp_lot^pww_sdd_k|0] amt=[?global.pww_sitp_amt^pww_sdd_k|1] ag=[?global.pww_sitp_ag^pww_sdd_k|0] to=[?global.pww_sitp_to^pww_sdd_k|0]"
+	}
+}

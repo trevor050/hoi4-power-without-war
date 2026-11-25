@@ -1,0 +1,107 @@
+# Situations test (c): a live Wolfram Question survives save and reload.
+# Session 1 (stops at the session1 marker, after the 1 February autosave):
+#   python tools/run_hoi4.py --tag HAI --test tests/situations/sit_reload --autosave MONTHLY --clear-saves --until "sit_reload.session1_done"
+# Session 2 (continues the autosave, runs to resolution):
+#   python tools/run_hoi4.py --test tests/situations/sit_reload --continue-last-save
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = GER }
+				add_to_variable = { global.pww_tsr_day = 1 }
+
+				if = {
+					limit = { check_variable = { global.pww_tsr_day = 1 } }
+					set_global_flag = pww_sit_debug_open_wolfram
+					set_variable = { global.pww_sit_c_wolfram_days = 60 }
+				}
+
+				# Runs in both sessions; in session 2 it is the first check after
+				# the reload of the 1 February autosave.
+				if = {
+					limit = { check_variable = { global.pww_tsr_day = 34 } }
+					set_temp_variable = { pww_tsr_exp = global.pww_sit_decision_day^0 }
+					subtract_from_temp_variable = { pww_tsr_exp = global.num_days }
+					if = {
+						limit = {
+							has_global_flag = pww_sit_loaded
+							check_variable = { global.pww_sit_status^0 = 1 }
+							check_variable = { global.pww_sit_template^0 = 1 }
+							GER = { check_variable = { global.pww_sit_claimant^0 = THIS } }
+							POR = { check_variable = { global.pww_sit_holder^0 = THIS } }
+							ENG = { check_variable = { global.pww_sit_patron^0 = THIS } }
+							check_variable = { global.pww_sitp_sit^num > 0 }
+							check_variable = { global.pww_sit_live^num = 1 }
+							GER = { is_in_array = { array = pww_my_situations value = 0 } }
+							check_variable = { global.pww_sit_days_left^0 = pww_tsr_exp }
+							check_variable = { global.pww_sit_bid_c^0 > 0 }
+						}
+						log = "PWW_RESULT sit_reload.live_after_save PASS [GetDateText] left=[?global.pww_sit_days_left^0|0] bid_c=[?global.pww_sit_bid_c^0|0] bid_p=[?global.pww_sit_bid_p^0|0] dev=[?global.pww_sit_dev^0|0] states=[?global.pww_sitp_sit^num|0]"
+					}
+					else = {
+						log = "PWW_RESULT sit_reload.live_after_save FAIL [GetDateText] status=[?global.pww_sit_status^0|0] left=[?global.pww_sit_days_left^0|0] exp=[?pww_tsr_exp|0] live=[?global.pww_sit_live^num|0] bid_c=[?global.pww_sit_bid_c^0|0]"
+					}
+				}
+				if = {
+					limit = { check_variable = { global.pww_tsr_day = 36 } }
+					log = "PWW_RESULT sit_reload.session1_done INFO [GetDateText]"
+				}
+
+				# Session 2 continues to the decision date
+				if = {
+					limit = {
+						NOT = { has_global_flag = pww_tsr_resolved }
+						check_variable = { global.pww_sit_status^0 = 2 }
+					}
+					set_global_flag = pww_tsr_resolved
+					set_variable = { global.pww_tsr_res_day = global.pww_tsr_day }
+					add_to_variable = { global.pww_tsr_res_day = 2 }
+					log = "PWW_RESULT sit_reload.resolved PASS [GetDateText] outcome=[?global.pww_sit_outcome^0|0]"
+				}
+				if = {
+					limit = {
+						has_global_flag = pww_tsr_resolved
+						check_variable = { global.pww_tsr_day = global.pww_tsr_res_day }
+					}
+					set_temp_variable = { pww_tsr_active = 0 }
+					for_each_loop = {
+						array = global.pww_sitp_sit
+						value = pww_tsr_sv
+						index = pww_tsr_k
+						if = {
+							limit = {
+								check_variable = { pww_tsr_sv = 0 }
+								check_variable = { global.pww_sitp_ag^pww_tsr_k > -1 }
+							}
+							set_temp_variable = { pww_tsr_ag = global.pww_sitp_ag^pww_tsr_k }
+							if = {
+								limit = { check_variable = { global.pww_ag_status^pww_tsr_ag = 1 } }
+								add_to_temp_variable = { pww_tsr_active = 1 }
+							}
+						}
+					}
+					if = {
+						limit = { check_variable = { global.pww_sit_outcome^0 = 4 } }
+						set_temp_variable = { pww_tsr_pag = global.pww_sit_pledge_ag^0 }
+						if = {
+							limit = {
+								check_variable = { pww_tsr_pag > -1 }
+								check_variable = { global.pww_ag_status^pww_tsr_pag = 1 }
+							}
+							add_to_temp_variable = { pww_tsr_active = 1 }
+						}
+					}
+					if = {
+						limit = { check_variable = { pww_tsr_active > 0 } }
+						log = "PWW_RESULT sit_reload.agreement_after_reload PASS active=[?pww_tsr_active|0]"
+					}
+					else = {
+						log = "PWW_RESULT sit_reload.agreement_after_reload FAIL outcome=[?global.pww_sit_outcome^0|0]"
+					}
+					pww_sit_debug_dump = yes
+					log = "PWW_DONE sit_reload"
+				}
+			}
+		}
+	}
+}

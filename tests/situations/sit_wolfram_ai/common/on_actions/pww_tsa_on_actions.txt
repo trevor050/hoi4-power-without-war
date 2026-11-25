@@ -1,0 +1,215 @@
+# Situations test (a): all-AI run (start tag HAI). The debug flag opens The
+# Wolfram Question on day 2; it must resolve with a logged outcome and an
+# active ledger lease, verify delivery, and reopen as a renewal follow-up.
+# Run: python tools/run_hoi4.py --tag HAI --test tests/situations/sit_wolfram_ai
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = GER }
+				add_to_variable = { global.pww_tsa_day = 1 }
+
+				if = {
+					limit = { check_variable = { global.pww_tsa_day = 1 } }
+					set_global_flag = pww_sit_debug_open_wolfram
+					set_global_flag = pww_sit_debug
+					set_variable = { global.pww_sit_c_wolfram_days = 35 }
+					set_variable = { global.pww_sit_c_lease_days = 90 }
+				}
+
+				# Opened, with dynamically resolved prize states
+				if = {
+					limit = { check_variable = { global.pww_tsa_day = 4 } }
+					if = {
+						limit = {
+							has_global_flag = pww_sit_wolfram_opened
+							check_variable = { global.pww_sit_template^0 = 1 }
+							check_variable = { global.pww_sit_status^0 = 1 }
+							GER = { check_variable = { global.pww_sit_claimant^0 = THIS } }
+							POR = { check_variable = { global.pww_sit_holder^0 = THIS } }
+							ENG = { check_variable = { global.pww_sit_patron^0 = THIS } }
+							check_variable = { global.pww_sitp_sit^num > 0 }
+							GER = { is_in_array = { array = pww_my_situations value = 0 } }
+							POR = { is_in_array = { array = pww_my_situations value = 0 } }
+							ENG = { is_in_array = { array = pww_my_situations value = 0 } }
+						}
+						log = "PWW_RESULT sit_wolfram_ai.opened PASS states=[?global.pww_sitp_sit^num|0] first=[?global.pww_sitp_state^0|0] lot0=[?global.pww_sitp_lot^0|0] left=[?global.pww_sit_days_left^0|0]"
+					}
+					else = {
+						log = "PWW_RESULT sit_wolfram_ai.opened FAIL status=[?global.pww_sit_status^0|0] tpl=[?global.pww_sit_template^0|0] states=[?global.pww_sitp_sit^num|0]"
+					}
+				}
+
+				# Resolution
+				if = {
+					limit = {
+						NOT = { has_global_flag = pww_tsa_resolved }
+						check_variable = { global.pww_sit_status^0 = 2 }
+					}
+					set_global_flag = pww_tsa_resolved
+					set_variable = { global.pww_tsa_res_day = global.pww_tsa_day }
+					if = {
+						limit = {
+							check_variable = { global.pww_sit_outcome^0 > 0 }
+							check_variable = { global.pww_sit_outcome^0 < 6 }
+							GER = { NOT = { is_in_array = { array = pww_my_situations value = 0 } } }
+						}
+						log = "PWW_RESULT sit_wolfram_ai.resolved PASS outcome=[?global.pww_sit_outcome^0|0] day=[?global.pww_tsa_day|0] bid_c=[?global.pww_sit_bid_c^0|0] bid_p=[?global.pww_sit_bid_p^0|0] pledge=[?global.pww_sit_pledge^0|0]"
+					}
+					else = {
+						log = "PWW_RESULT sit_wolfram_ai.resolved FAIL outcome=[?global.pww_sit_outcome^0|0]"
+					}
+				}
+
+				# Two days later: an active ledger agreement serves the outcome
+				if = {
+					limit = {
+						has_global_flag = pww_tsa_resolved
+						NOT = { has_global_flag = pww_tsa_lease_checked }
+						set_temp_variable = { pww_tsa_t = global.pww_tsa_res_day }
+						add_to_temp_variable = { pww_tsa_t = 2 }
+						check_variable = { global.pww_tsa_day = pww_tsa_t }
+					}
+					set_global_flag = pww_tsa_lease_checked
+					# Probe (vanilla ids, test only): which has_resources_rights forms see a
+					# tungsten-filtered lease? The ledger's reconcile uses the first form.
+					set_temp_variable = { pww_tsa_f1 = 0 }
+					set_temp_variable = { pww_tsa_f2 = 0 }
+					set_temp_variable = { pww_tsa_f3 = 0 }
+					if = { limit = { GER = { has_resources_rights = { state = 181 } } } set_temp_variable = { pww_tsa_f1 = 1 } }
+					if = { limit = { GER = { has_resources_rights = { state = 181 resources = { tungsten } } } } set_temp_variable = { pww_tsa_f2 = 1 } }
+					if = { limit = { 181 = { has_resources_rights = { receiver = GER resources = { tungsten } } } } set_temp_variable = { pww_tsa_f3 = 1 } }
+					181 = {
+						set_temp_variable = { pww_tsa_st = resource@steel }
+						set_temp_variable = { pww_tsa_tu = resource@tungsten }
+						set_temp_variable = { pww_tsa_al = resource@aluminium }
+					}
+					log = "PWW_RESULT sit_wolfram_ai.rights_probe INFO country_state=[?pww_tsa_f1|0] country_state_res=[?pww_tsa_f2|0] state_receiver_res=[?pww_tsa_f3|0] guarda steel=[?pww_tsa_st|1] tungsten=[?pww_tsa_tu|1] aluminium=[?pww_tsa_al|1]"
+					set_temp_variable = { pww_tsa_active = 0 }
+					set_temp_variable = { pww_tsa_leases = 0 }
+					for_each_loop = {
+						array = global.pww_sitp_sit
+						value = pww_tsa_sv
+						index = pww_tsa_k
+						if = {
+							limit = {
+								check_variable = { pww_tsa_sv = 0 }
+								check_variable = { global.pww_sitp_ag^pww_tsa_k > -1 }
+							}
+							set_temp_variable = { pww_tsa_ag = global.pww_sitp_ag^pww_tsa_k }
+							set_temp_variable = { pww_tsa_b = global.pww_ag_buyer^pww_tsa_ag }
+							if = {
+								limit = { check_variable = { global.pww_ag_status^pww_tsa_ag = 1 } }
+								add_to_temp_variable = { pww_tsa_active = 1 }
+								if = {
+									limit = { check_variable = { global.pww_ag_kind^pww_tsa_ag = 1 } }
+									add_to_temp_variable = { pww_tsa_leases = 1 }
+								}
+							}
+							log = "PWW_RESULT sit_wolfram_ai.agreement INFO k=[?pww_tsa_k|0] ag=[?pww_tsa_ag|0] kind=[?global.pww_ag_kind^pww_tsa_ag|0] status=[?global.pww_ag_status^pww_tsa_ag|0] buyer=[?pww_tsa_b.GetTag] state=[?global.pww_ag_state^pww_tsa_ag|0] end=[?global.pww_ag_end^pww_tsa_ag|0]"
+						}
+					}
+					# Holding out fires the patron's pledge instead of a lease
+					if = {
+						limit = { check_variable = { global.pww_sit_outcome^0 = 4 } }
+						set_temp_variable = { pww_tsa_pag = global.pww_sit_pledge_ag^0 }
+						if = {
+							limit = {
+								check_variable = { pww_tsa_pag > -1 }
+								check_variable = { global.pww_ag_status^pww_tsa_pag = 1 }
+							}
+							add_to_temp_variable = { pww_tsa_active = 1 }
+						}
+					}
+					if = {
+						limit = { check_variable = { pww_tsa_active > 0 } }
+						log = "PWW_RESULT sit_wolfram_ai.lease_active PASS active=[?pww_tsa_active|0] leases=[?pww_tsa_leases|0]"
+					}
+					else = {
+						log = "PWW_RESULT sit_wolfram_ai.lease_active FAIL active=0 outcome=[?global.pww_sit_outcome^0|0]"
+					}
+				}
+
+				# Delivery verified (or replaced by a supply fallback)
+				if = {
+					limit = {
+						has_global_flag = pww_tsa_lease_checked
+						NOT = { has_global_flag = pww_tsa_verify_checked }
+						set_temp_variable = { pww_tsa_t = global.pww_tsa_res_day }
+						add_to_temp_variable = { pww_tsa_t = 14 }
+						check_variable = { global.pww_tsa_day = pww_tsa_t }
+					}
+					set_global_flag = pww_tsa_verify_checked
+					if = {
+						limit = {
+							check_variable = { global.pww_sit_vday^0 = 0 }
+							OR = {
+								check_variable = { global.pww_sit_dev^0 = 15 }
+								check_variable = { global.pww_sit_dev^0 = 12 }
+								check_variable = { global.pww_sit_outcome^0 = 4 }
+								check_variable = { global.pww_sit_outcome^0 = 5 }
+							}
+						}
+						log = "PWW_RESULT sit_wolfram_ai.verified PASS dev=[?global.pww_sit_dev^0|0] (15 confirmed, 12 supply fallback)"
+					}
+					else = {
+						log = "PWW_RESULT sit_wolfram_ai.verified FAIL vday=[?global.pww_sit_vday^0|0] dev=[?global.pww_sit_dev^0|0]"
+					}
+				}
+
+				# Renewal follow-up
+				if = {
+					limit = {
+						NOT = { has_global_flag = pww_tsa_renewal_seen }
+						check_variable = { global.pww_sit_followup^0 > 0 }
+					}
+					set_global_flag = pww_tsa_renewal_seen
+					set_temp_variable = { pww_tsa_r = global.pww_sit_followup^0 }
+					if = {
+						limit = {
+							check_variable = { global.pww_sit_template^pww_tsa_r = 2 }
+							check_variable = { global.pww_sit_parent^pww_tsa_r = 0 }
+						}
+						log = "PWW_RESULT sit_wolfram_ai.renewal_opened PASS id=[?pww_tsa_r|0] day=[?global.pww_tsa_day|0] lessee=[?global.pww_sit_lessee^pww_tsa_r|0] left=[?global.pww_sit_days_left^pww_tsa_r|0]"
+					}
+					else = {
+						log = "PWW_RESULT sit_wolfram_ai.renewal_opened FAIL id=[?pww_tsa_r|0]"
+					}
+				}
+				if = {
+					limit = {
+						has_global_flag = pww_tsa_renewal_seen
+						NOT = { has_global_flag = pww_tsa_renewal_done }
+						set_temp_variable = { pww_tsa_r = global.pww_sit_followup^0 }
+						check_variable = { global.pww_sit_status^pww_tsa_r = 2 }
+					}
+					set_global_flag = pww_tsa_renewal_done
+					set_temp_variable = { pww_tsa_r = global.pww_sit_followup^0 }
+					log = "PWW_RESULT sit_wolfram_ai.renewal_resolved PASS outcome=[?global.pww_sit_outcome^pww_tsa_r|0] day=[?global.pww_tsa_day|0]"
+					set_variable = { global.pww_tsa_end_day = global.pww_tsa_day }
+					add_to_variable = { global.pww_tsa_end_day = 3 }
+				}
+
+				# Finish
+				if = {
+					limit = {
+						OR = {
+							check_variable = { global.pww_tsa_day = 170 }
+							AND = {
+								has_global_flag = pww_tsa_renewal_done
+								check_variable = { global.pww_tsa_day = global.pww_tsa_end_day }
+							}
+						}
+					}
+					if = {
+						limit = { NOT = { has_global_flag = pww_tsa_renewal_done } }
+						log = "PWW_RESULT sit_wolfram_ai.renewal_resolved FAIL renewal not resolved by day 170 followup=[?global.pww_sit_followup^0|0]"
+					}
+					pww_sit_debug_dump = yes
+					pww_ledger_debug_dump = yes
+					log = "PWW_DONE sit_wolfram_ai"
+				}
+			}
+		}
+	}
+}

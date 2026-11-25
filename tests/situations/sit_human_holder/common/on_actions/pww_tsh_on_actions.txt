@@ -1,0 +1,87 @@
+# Situations test (d): human holder. Start tag POR (human). The Wolfram
+# Question opens on day 2; ENG pledges (fallback pledge, a reserved ledger
+# agreement); on the date POR gets the decision popup (phase 3) and does not
+# answer, so the holder keeps the mines through the popup timeout (14 days) and
+# the pledge fires as an active supply agreement POR -> ENG.
+# Run: python tools/run_hoi4.py --test tests/situations/sit_human_holder
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = GER }
+				add_to_variable = { global.pww_tsh_day = 1 }
+
+				if = {
+					limit = { check_variable = { global.pww_tsh_day = 1 } }
+					set_global_flag = pww_sit_debug_open_wolfram
+					set_variable = { global.pww_sit_c_wolfram_days = 20 }
+					set_variable = { global.pww_sit_c_human_wait = 14 }
+				}
+				if = {
+					limit = { check_variable = { global.pww_tsh_day = 4 } }
+					set_temp_variable = { pww_sm_id = 0 }
+					pww_sit_make_pledge = yes
+					set_temp_variable = { pww_tsh_pag = global.pww_sit_pledge_ag^0 }
+					if = {
+						limit = {
+							check_variable = { global.pww_sit_human^0 = 1 }
+							check_variable = { global.pww_sit_pledge^0 = 1 }
+							check_variable = { pww_tsh_pag > -1 }
+							check_variable = { global.pww_ag_status^pww_tsh_pag = 7 }
+						}
+						log = "PWW_RESULT sit_human_holder.pledge_reserved PASS ag=[?pww_tsh_pag|0] amount=[?global.pww_ag_amount^pww_tsh_pag|1]"
+					}
+					else = {
+						log = "PWW_RESULT sit_human_holder.pledge_reserved FAIL human=[?global.pww_sit_human^0|0] pledge=[?global.pww_sit_pledge^0|0] ag=[?pww_tsh_pag|0]"
+					}
+				}
+				if = {
+					limit = {
+						NOT = { has_global_flag = pww_tsh_waiting }
+						check_variable = { global.pww_sit_phase^0 = 3 }
+					}
+					set_global_flag = pww_tsh_waiting
+					if = {
+						limit = {
+							check_variable = { global.pww_sit_status^0 = 1 }
+							check_variable = { global.pww_sit_dev^0 = 9 }
+							POR = { check_variable = { pww_sit_ev_id = 0 } check_variable = { pww_sit_ev_seat = 1 } }
+						}
+						log = "PWW_RESULT sit_human_holder.awaiting_holder PASS day=[?global.pww_tsh_day|0] can_split=[?POR.pww_sit_ev_can_split|0]"
+					}
+					else = {
+						log = "PWW_RESULT sit_human_holder.awaiting_holder FAIL dev=[?global.pww_sit_dev^0|0]"
+					}
+				}
+				if = {
+					limit = {
+						NOT = { has_global_flag = pww_tsh_done }
+						check_variable = { global.pww_sit_status^0 = 2 }
+					}
+					set_global_flag = pww_tsh_done
+					set_temp_variable = { pww_tsh_pag = global.pww_sit_pledge_ag^0 }
+					if = {
+						limit = {
+							has_global_flag = pww_tsh_waiting
+							check_variable = { global.pww_sit_outcome^0 = 4 }
+							check_variable = { global.pww_ag_status^pww_tsh_pag = 1 }
+							check_variable = { global.pww_ag_kind^pww_tsh_pag = 0 }
+						}
+						log = "PWW_RESULT sit_human_holder.holds_out_pledge_fires PASS day=[?global.pww_tsh_day|0] ag=[?pww_tsh_pag|0]"
+					}
+					else = {
+						log = "PWW_RESULT sit_human_holder.holds_out_pledge_fires FAIL outcome=[?global.pww_sit_outcome^0|0] ag_status=[?global.pww_ag_status^pww_tsh_pag|0]"
+					}
+					pww_sit_debug_dump = yes
+					pww_ledger_debug_dump = yes
+					log = "PWW_DONE sit_human_holder"
+				}
+				if = {
+					limit = { check_variable = { global.pww_tsh_day = 60 } }
+					log = "PWW_RESULT sit_human_holder.holds_out_pledge_fires FAIL not resolved by day 60 phase=[?global.pww_sit_phase^0|0]"
+					log = "PWW_DONE sit_human_holder"
+				}
+			}
+		}
+	}
+}
