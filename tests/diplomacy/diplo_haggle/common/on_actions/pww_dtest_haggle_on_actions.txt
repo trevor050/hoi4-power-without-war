@@ -1,0 +1,210 @@
+# Diplomacy test: haggling balance. Run with --tag GER (GER is the human
+# player drafting Propose Agreement terms to AI minors). Each case evaluates
+# a draft with the same code the target's ai_acceptance reads and logs the
+# values, then one PASS/FAIL row:
+#   A below_market   GER buys POR tungsten 30% below market, POR not
+#                    desperate: refused even at the most lenient seeded
+#                    reserve, and the refusal carries an envoy reason line.
+#   B at_market      the same deal at market with neutral relations clears
+#                    for some seeded reserves but not most (first answer is
+#                    usually a counter); good relations clear more often;
+#                    an above-market draft clears for most reserves.
+#   C desperate      GER sells steel to POR above market: refused while POR
+#                    is comfortable, accepted while POR is desperate for steel.
+#   D dislike        at market with a lenient reserve: accepted at POR's own
+#                    relations, refused once POR dislikes GER (snub -80),
+#                    accepted again when GER pays above market.
+#   E partners       INFO: natural at-market verdicts with five other minors.
+# Day 32 so core has computed every country's desperation once.
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = GER }
+				add_to_variable = { global.pww_dtest_day = 1 }
+				if = {
+					limit = { check_variable = { global.pww_dtest_day = 32 } }
+					set_global_flag = pww_diplo_debug
+					POR = {
+						set_temp_variable = { pww_dtest_hg_tgt = THIS }
+						set_variable = { pww_desp_tungsten = 0 }
+						set_variable = { pww_desp_steel = 0 }
+					}
+
+					# --- A: below market, comfortable seller ------------------
+					set_temp_variable = { pww_dtest_hg_res = 3 }
+					set_temp_variable = { pww_dtest_hg_dir = 0 }
+					set_temp_variable = { pww_dtest_hg_pay = 0 }
+					set_temp_variable = { pww_dtest_hg_price = 0 }
+					pww_dtest_hg_draft = yes
+					set_temp_variable = { pww_dtest_hg_tag = 1 }
+					pww_dtest_hg_log = yes
+					set_temp_variable = { pww_dtest_hg_a_nat = pww_do_ok }
+					set_temp_variable = { pww_dtest_hg_t = pww_do_talk }
+					set_temp_variable = { pww_dtest_hg_nat_rsv = global.pww_dt_reserve^pww_dtest_hg_t }
+					set_temp_variable = { pww_dtest_hg_rsv = 2 }
+					pww_dtest_hg_set_reserve = yes
+					set_temp_variable = { pww_dtest_hg_tag = 11 }
+					pww_dtest_hg_log = yes
+					set_temp_variable = { pww_dtest_hg_a_min = pww_do_ok }
+					set_temp_variable = { pww_dtest_hg_a_terms = pww_do_e_terms }
+					# The receiver declines: what reject_effect runs.
+					pww_diplo_eval_offer = yes
+					pww_diplo_talk_reply = yes
+					set_temp_variable = { pww_dtest_hg_a_line = global.pww_dt_line^pww_dtest_hg_t }
+					set_temp_variable = { pww_dtest_hg_a_st = global.pww_dt_status^pww_dtest_hg_t }
+					set_variable = { global.pww_dt_reserve^pww_dtest_hg_t = pww_dtest_hg_nat_rsv }
+					if = {
+						limit = {
+							check_variable = { pww_dtest_hg_a_nat = 0 }
+							check_variable = { pww_dtest_hg_a_min = 0 }
+							check_variable = { pww_dtest_hg_a_terms < 0 }
+							check_variable = { pww_dtest_hg_a_line > 0 }
+							NOT = { check_variable = { pww_dtest_hg_a_line = 94 } }
+							check_variable = { pww_dtest_hg_a_st = 0 }
+						}
+						log = "PWW_RESULT diplo_haggle.A_below_market PASS refused (seeded reserve [?pww_dtest_hg_nat_rsv|0] and lenient reserve 2), terms=[?pww_dtest_hg_a_terms|0], reason line=[?pww_dtest_hg_a_line|0], talks still open"
+					}
+					else = {
+						log = "PWW_RESULT diplo_haggle.A_below_market FAIL accepts natural=[?pww_dtest_hg_a_nat|0] lenient=[?pww_dtest_hg_a_min|0] terms=[?pww_dtest_hg_a_terms|0] line=[?pww_dtest_hg_a_line|0] status=[?pww_dtest_hg_a_st|0]"
+					}
+
+					# --- B: at market, neutral / friendly / generous ----------
+					# A fresh talk: the first answer, nothing revealed yet.
+					set_temp_variable = { pww_dtest_hg_price = 1 }
+					pww_dtest_hg_close_talk = yes
+					pww_dtest_hg_draft = yes
+					set_temp_variable = { pww_dtest_hg_relv = 0 }
+					pww_dtest_hg_set_rel = yes
+					set_temp_variable = { pww_dtest_hg_tag = 2 }
+					pww_dtest_hg_log = yes
+					set_temp_variable = { pww_dtest_hg_b_want = pww_do_e_want }
+					pww_dtest_hg_sweep = yes
+					set_temp_variable = { pww_dtest_hg_b_neu = pww_dtest_hg_n }
+					set_temp_variable = { pww_dtest_hg_relv = 15 }
+					pww_dtest_hg_set_rel = yes
+					pww_dtest_hg_sweep = yes
+					set_temp_variable = { pww_dtest_hg_b_fr = pww_dtest_hg_n }
+					set_temp_variable = { pww_dtest_hg_relv = 0 }
+					pww_dtest_hg_set_rel = yes
+					set_temp_variable = { pww_dtest_hg_price = 2 }
+					pww_dtest_hg_draft = yes
+					set_temp_variable = { pww_dtest_hg_tag = 21 }
+					pww_dtest_hg_log = yes
+					pww_dtest_hg_sweep = yes
+					set_temp_variable = { pww_dtest_hg_b_gen = pww_dtest_hg_n }
+					# A plain at-market first draft should usually be countered
+					# (under half the seeds clear it).
+					set_temp_variable = { pww_dtest_hg_b_cap = 11 }
+					if = {
+						limit = {
+							check_variable = { pww_dtest_hg_b_neu > 0 }
+							NOT = { check_variable = { pww_dtest_hg_b_neu > pww_dtest_hg_b_cap } }
+							check_variable = { pww_dtest_hg_b_fr > pww_dtest_hg_b_neu }
+							check_variable = { pww_dtest_hg_b_gen > 12 }
+						}
+						log = "PWW_RESULT diplo_haggle.B_at_market PASS of 24 seeded reserves: at market neutral accepts [?pww_dtest_hg_b_neu|0] (counters the rest), friendly (+15) accepts [?pww_dtest_hg_b_fr|0], above market neutral accepts [?pww_dtest_hg_b_gen|0]; want part=[?pww_dtest_hg_b_want|0]"
+					}
+					else = {
+						log = "PWW_RESULT diplo_haggle.B_at_market FAIL of 24 reserves: neutral=[?pww_dtest_hg_b_neu|0] (cap [?pww_dtest_hg_b_cap|0]) friendly=[?pww_dtest_hg_b_fr|0] generous=[?pww_dtest_hg_b_gen|0] want=[?pww_dtest_hg_b_want|0]"
+					}
+
+					# --- C: desperate counterparty accepts worse terms --------
+					set_temp_variable = { pww_dtest_hg_res = 4 }
+					set_temp_variable = { pww_dtest_hg_dir = 1 }
+					set_temp_variable = { pww_dtest_hg_price = 2 }
+					pww_dtest_hg_draft = yes
+					set_temp_variable = { pww_dtest_hg_rsv = 14 }
+					pww_dtest_hg_set_reserve = yes
+					set_temp_variable = { pww_dtest_hg_tag = 3 }
+					pww_dtest_hg_log = yes
+					set_temp_variable = { pww_dtest_hg_c_calm = pww_do_ok }
+					POR = { set_variable = { pww_desp_steel = 80 } }
+					pww_diplo_offer_changed = yes
+					set_temp_variable = { pww_dtest_hg_tag = 31 }
+					pww_dtest_hg_log = yes
+					set_temp_variable = { pww_dtest_hg_c_desp = pww_do_ok }
+					POR = { set_variable = { pww_desp_steel = 0 } }
+					if = {
+						limit = {
+							check_variable = { pww_dtest_hg_c_calm = 0 }
+							check_variable = { pww_dtest_hg_c_desp = 1 }
+						}
+						log = "PWW_RESULT diplo_haggle.C_desperate PASS steel 35% above market: comfortable POR refuses, POR at steel desperation 80 accepts (reserve 14, neutral relations)"
+					}
+					else = {
+						log = "PWW_RESULT diplo_haggle.C_desperate FAIL comfortable accepts=[?pww_dtest_hg_c_calm|0] desperate accepts=[?pww_dtest_hg_c_desp|0]"
+					}
+
+					# --- D: dislike demands more -------------------------------
+					set_temp_variable = { pww_dtest_hg_res = 3 }
+					set_temp_variable = { pww_dtest_hg_dir = 0 }
+					set_temp_variable = { pww_dtest_hg_price = 1 }
+					pww_dtest_hg_close_talk = yes
+					pww_dtest_hg_draft = yes
+					set_temp_variable = { pww_dtest_hg_rsv = 3 }
+					pww_dtest_hg_set_reserve = yes
+					set_temp_variable = { pww_dtest_hg_tag = 4 }
+					pww_dtest_hg_log = yes
+					set_temp_variable = { pww_dtest_hg_d_neu = pww_do_ok }
+					set_temp_variable = { pww_dtest_hg_d_rel0 = pww_do_e_rel }
+					pww_dtest_hg_close_talk = yes
+					POR = { add_opinion_modifier = { target = GER modifier = pww_dtest_hg_snub } }
+					pww_dtest_hg_draft = yes
+					set_temp_variable = { pww_dtest_hg_rsv = 3 }
+					pww_dtest_hg_set_reserve = yes
+					set_temp_variable = { pww_dtest_hg_tag = 41 }
+					pww_dtest_hg_log = yes
+					set_temp_variable = { pww_dtest_hg_d_dis = pww_do_ok }
+					set_temp_variable = { pww_dtest_hg_d_rel1 = pww_do_e_rel }
+					set_variable = { pww_do_price = 2 }
+					pww_diplo_offer_changed = yes
+					set_temp_variable = { pww_dtest_hg_tag = 42 }
+					pww_dtest_hg_log = yes
+					set_temp_variable = { pww_dtest_hg_d_high = pww_do_ok }
+					if = {
+						limit = {
+							check_variable = { pww_dtest_hg_d_neu = 1 }
+							check_variable = { pww_dtest_hg_d_dis = 0 }
+							check_variable = { pww_dtest_hg_d_high = 1 }
+							check_variable = { pww_dtest_hg_d_rel1 < pww_dtest_hg_d_rel0 }
+						}
+						log = "PWW_RESULT diplo_haggle.D_dislike PASS at market (reserve 3): accepted at relations [?pww_dtest_hg_d_rel0|0], refused at relations [?pww_dtest_hg_d_rel1|0] after the snub, accepted again above market"
+					}
+					else = {
+						log = "PWW_RESULT diplo_haggle.D_dislike FAIL neutral=[?pww_dtest_hg_d_neu|0] (rel [?pww_dtest_hg_d_rel0|0]) disliked=[?pww_dtest_hg_d_dis|0] (rel [?pww_dtest_hg_d_rel1|0]) disliked_above=[?pww_dtest_hg_d_high|0]"
+					}
+
+					# --- E: natural at-market verdicts, other minors -----------
+					set_temp_variable = { pww_dtest_hg_price = 1 }
+					set_temp_variable = { pww_dtest_hg_tag = 5 }
+					ROM = { set_temp_variable = { pww_dtest_hg_tgt = THIS } }
+					set_temp_variable = { pww_dtest_hg_res = 0 }
+					pww_dtest_hg_draft = yes
+					pww_dtest_hg_log = yes
+					TUR = { set_temp_variable = { pww_dtest_hg_tgt = THIS } }
+					set_temp_variable = { pww_dtest_hg_res = 5 }
+					pww_dtest_hg_draft = yes
+					pww_dtest_hg_log = yes
+					SWE = { set_temp_variable = { pww_dtest_hg_tgt = THIS } }
+					set_temp_variable = { pww_dtest_hg_res = 4 }
+					pww_dtest_hg_draft = yes
+					pww_dtest_hg_log = yes
+					YUG = { set_temp_variable = { pww_dtest_hg_tgt = THIS } }
+					set_temp_variable = { pww_dtest_hg_res = 1 }
+					pww_dtest_hg_draft = yes
+					pww_dtest_hg_log = yes
+					SPR = { set_temp_variable = { pww_dtest_hg_tgt = THIS } }
+					set_temp_variable = { pww_dtest_hg_res = 3 }
+					pww_dtest_hg_draft = yes
+					pww_dtest_hg_log = yes
+					set_temp_variable = { pww_dtest_hg_price = 0 }
+					set_temp_variable = { pww_dtest_hg_tag = 50 }
+					pww_dtest_hg_draft = yes
+					pww_dtest_hg_log = yes
+					log = "PWW_DONE diplo_haggle"
+				}
+			}
+		}
+	}
+}

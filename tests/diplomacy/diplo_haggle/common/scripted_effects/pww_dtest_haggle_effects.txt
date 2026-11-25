@@ -1,0 +1,81 @@
+# Diplomacy test helpers: human-side drafts (GER is the player) scored by the
+# same evaluation the target's ai_acceptance reads (pww_do_e_* on the sender;
+# the engine sums exactly those parts and accepts above zero).
+#
+# Test hooks: the hidden reserve and the frozen relations of a talk are
+# overwritten (global.pww_dt_reserve / pww_dt_rel) where a case needs a
+# controlled value; every other part comes from the live game.
+
+# GER scope. in: pww_dtest_hg_tgt (country), pww_dtest_hg_res, pww_dtest_hg_dir,
+# pww_dtest_hg_price, pww_dtest_hg_pay. Opens (or resumes) talks and
+# evaluates a Fair one-year agreement.
+pww_dtest_hg_draft = {
+	set_temp_variable = { pww_dk_target = pww_dtest_hg_tgt }
+	set_temp_variable = { pww_dk_act = 0 }
+	pww_diplo_offer_begin = yes
+	set_variable = { pww_do_dir = pww_dtest_hg_dir }
+	set_variable = { pww_do_res = pww_dtest_hg_res }
+	set_variable = { pww_do_amt = 1 }
+	set_variable = { pww_do_dur = 2 }
+	set_variable = { pww_do_pay = pww_dtest_hg_pay }
+	set_variable = { pww_do_price = pww_dtest_hg_price }
+	set_variable = { pww_do_sweet = 0 }
+	set_variable = { pww_do_fig = 0 }
+	pww_diplo_offer_changed = yes
+}
+
+# GER scope, after a draft. in: pww_dtest_hg_rsv (forced hidden reserve).
+pww_dtest_hg_set_reserve = {
+	set_temp_variable = { pww_dtest_hg_t = pww_do_talk }
+	set_variable = { global.pww_dt_reserve^pww_dtest_hg_t = pww_dtest_hg_rsv }
+	pww_diplo_offer_changed = yes
+}
+
+# GER scope, after a draft. in: pww_dtest_hg_relv (forced frozen relations).
+pww_dtest_hg_set_rel = {
+	set_temp_variable = { pww_dtest_hg_t = pww_do_talk }
+	set_variable = { global.pww_dt_rel^pww_dtest_hg_t = pww_dtest_hg_relv }
+	pww_diplo_offer_changed = yes
+}
+
+# GER scope. Logs the current draft's values and every acceptance part.
+# in: pww_dtest_hg_tag (log label number, see the on_actions file)
+pww_dtest_hg_log = {
+	set_temp_variable = { pww_dtest_hg_t = pww_do_talk }
+	set_temp_variable = { pww_dg_res = pww_do_res }
+	var:pww_do_seller = { pww_diplo_read_res = yes }
+	set_temp_variable = { pww_dtest_hg_sd = pww_dg_desp }
+	var:pww_do_buyer = { pww_diplo_read_res = yes }
+	set_temp_variable = { pww_dtest_hg_bd = pww_dg_desp }
+	log = "PWW_RESULT diplo_haggle.values INFO case=[?pww_dtest_hg_tag|0] GER->[?pww_do_target.GetTag] dir=[?pww_do_dir|0] res=[?pww_do_res|0] pay=[?pww_do_pay|0] price=[?pww_do_price|0] units=[?pww_do_units|1] vres=[?pww_do_vres|2] vpay=[?pww_do_vpay|2] civ=[?pww_do_civ|0] seller_desp=[?pww_dtest_hg_sd|0] buyer_desp=[?pww_dtest_hg_bd|0] | total=[?pww_do_e_total|0] terms=[?pww_do_e_terms|0] need=[?pww_do_e_need|0] want=[?pww_do_e_want|0] sweet=[?pww_do_e_sweet|0] red=[?pww_do_e_red|0] trust=[?pww_do_e_trust|0] rel=[?pww_do_e_rel|0] patron=[?pww_do_e_patron|0] reserve=[?pww_do_e_reserve|0] repeat=[?pww_do_e_repeat|0] invalid=[?pww_do_e_invalid|0] accepts=[?pww_do_ok|0] | talk=[?pww_dtest_hg_t|0] hidden_reserve=[?global.pww_dt_reserve^pww_dtest_hg_t|0] hidden_want=[?global.pww_dt_want^pww_dtest_hg_t|0] redline=[?global.pww_dt_redline^pww_dtest_hg_t|0]"
+}
+
+# GER scope, after a draft. Counts how many of the 24 possible seeded
+# reserves (2..25) accept the current draft. out: pww_dtest_hg_n.
+# Restores the talk's own reserve afterwards.
+pww_dtest_hg_sweep = {
+	set_temp_variable = { pww_dtest_hg_t = pww_do_talk }
+	set_temp_variable = { pww_dtest_hg_keep = global.pww_dt_reserve^pww_dtest_hg_t }
+	set_temp_variable = { pww_dtest_hg_n = 0 }
+	for_loop_effect = {
+		start = 2
+		end = 26
+		value = pww_dtest_hg_r
+		set_variable = { global.pww_dt_reserve^pww_dtest_hg_t = pww_dtest_hg_r }
+		pww_diplo_eval_offer = yes
+		if = {
+			limit = { check_variable = { pww_do_ok = 1 } }
+			add_to_temp_variable = { pww_dtest_hg_n = 1 }
+		}
+	}
+	set_variable = { global.pww_dt_reserve^pww_dtest_hg_t = pww_dtest_hg_keep }
+	pww_diplo_offer_changed = yes
+}
+
+# GER scope. Closes the open Propose talk with the current target so the next
+# draft opens a fresh one (status 4 superseded: no cooldown).
+pww_dtest_hg_close_talk = {
+	set_temp_variable = { pww_dtc_t = pww_do_talk }
+	set_temp_variable = { pww_dtc_status = 4 }
+	pww_diplo_talk_close = yes
+}

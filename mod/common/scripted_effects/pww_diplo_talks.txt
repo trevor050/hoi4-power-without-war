@@ -22,22 +22,33 @@
 # Values (hidden; the player sees bands only). Civilian-factory equivalents:
 #   resource value = units / 8 (fixed vanilla price, 8 units per factory)
 #   payment value  = resource value x price factor (0.7 / 1.0 / 1.35);
-#                    a license is valued 1.5 x price factor regardless of size
+#                    civilian factories are whole: rounded down below
+#                    market, up above it, at least 1; the real count is
+#                    what gets valued. A license is 1.5 x price factor.
 #   The receiver discounts payment forms it cannot use freely (clearing
 #   credit 0.75, equipment 0.85, political power 0.9) and weighs its own
-#   desperation: a seller in need loses more, a desperate buyer gains more.
+#   desperation: a seller in need loses more (x 1 + desp/100), a desperate
+#   buyer gains more (x 1 + desp/50). A lease costs the seller +30% of the
+#   value (foreign rights on home soil), 15 points less with a fig leaf.
 # Acceptance points (the AI accepts when the total is above zero):
-#   terms     (gain - loss) x 10, clamped -60..60
+#   terms     (gain - loss) / resource value x 100, clamped -100..100: a
+#             percentage, so price cards weigh the same on any deal size
+#             (30% below market = -30, 35% above = +35)
 #   need      buyer's desperation / 4; a factory-poor seller paid in
-#             factories +8
-#   want      +25 when the draft carries their hidden want
+#             factories +6 (0 when factories are also its hidden want)
+#   want      +15 when the draft carries their hidden want once it is
+#             known (revealed, or acknowledged on a counter), +6 before;
+#             payment-form wants count only when they are the side paid
 #   sweet     sweeteners and fig leaves
 #   red line  -1000 when the draft crosses it
 #   trust     sender Reliability (frozen at opening), halved if non-committal
 #   relations normalized opinion / 4 (frozen at opening)
 #   patron    -20 when a patron underwrites them against this sender
-#   reserve   their hidden reservation (5..20)
+#   reserve   their hidden reservation (2..25)
 #   repeat    -1000 when the exact draft was already refused
+# So below market never clears a neutral, comfortable seller; a plain
+# at-market draft clears about one seed in four (more with good relations
+# or their want); above market usually clears.
 ###############################################################################
 
 ###############################################################################
@@ -249,7 +260,8 @@ pww_diplo_talk_create = {
 	divide_temp_variable = { pww_dk_trust = 2 }
 	round_temp_variable = pww_dk_trust
 
-	# Patience 45..80 shifted by relations; reserve 5..20
+	# Patience 45..80 shifted by relations; reserve 2..25 (on a plain
+	# at-market deal about one seed in four signs at once)
 	set_temp_variable = { pww_dk_pat = pww_dk_seed }
 	multiply_temp_variable = { pww_dk_pat = 11 }
 	add_to_temp_variable = { pww_dk_pat = 3 }
@@ -263,8 +275,8 @@ pww_diplo_talk_create = {
 	set_temp_variable = { pww_dk_res = pww_dk_seed }
 	multiply_temp_variable = { pww_dk_res = 13 }
 	add_to_temp_variable = { pww_dk_res = 41 }
-	modulo_temp_variable = { var = pww_dk_res value = 16 }
-	add_to_temp_variable = { pww_dk_res = 5 }
+	modulo_temp_variable = { var = pww_dk_res value = 24 }
+	add_to_temp_variable = { pww_dk_res = 2 }
 
 	# Shared situation
 	set_temp_variable = { pww_dg_a = THIS }
@@ -575,7 +587,18 @@ pww_diplo_eval_offer = {
 	set_variable = { pww_do_cic = 0 }
 	if = {
 		limit = { check_variable = { pww_do_pay = 0 } }
+		# Whole factories, rounded in the direction of the price card (down
+		# below market, up above it) so the three prices stay distinct where
+		# the deal is large enough. The evaluation uses the real count.
 		set_temp_variable = { pww_dv_civ = pww_dv_vpay }
+		if = {
+			limit = { check_variable = { pww_do_price = 0 } }
+			subtract_from_temp_variable = { pww_dv_civ = 0.499 }
+		}
+		else_if = {
+			limit = { check_variable = { pww_do_price = 2 } }
+			add_to_temp_variable = { pww_dv_civ = 0.499 }
+		}
 		round_temp_variable = pww_dv_civ
 		if = {
 			limit = { check_variable = { pww_dv_civ < 1 } }
@@ -647,7 +670,7 @@ pww_diplo_eval_offer = {
 	set_temp_variable = { pww_dv_fig_cut = 0 }
 	if = {
 		limit = { check_variable = { pww_do_fig > 0 } }
-		set_temp_variable = { pww_dv_fig_cut = 0.4 }
+		set_temp_variable = { pww_dv_fig_cut = 0.15 }
 	}
 	if = {
 		limit = { check_variable = { pww_dv_rcv_sells = 1 } }
@@ -656,13 +679,14 @@ pww_diplo_eval_offer = {
 		set_temp_variable = { pww_dv_loss = pww_dv_s_desp }
 		divide_temp_variable = { pww_dv_loss = 100 }
 		add_to_temp_variable = { pww_dv_loss = 1 }
-		multiply_temp_variable = { pww_dv_loss = pww_dv_vres }
 		if = {
 			limit = { check_variable = { pww_do_act = 1 } }
-			# Foreign rights on home soil
-			add_to_temp_variable = { pww_dv_loss = 1 }
+			# Foreign rights on home soil: +30% of the value, a fig leaf
+			# takes back 15 points.
+			add_to_temp_variable = { pww_dv_loss = 0.3 }
 			subtract_from_temp_variable = { pww_dv_loss = pww_dv_fig_cut }
 		}
+		multiply_temp_variable = { pww_dv_loss = pww_dv_vres }
 	}
 	else = {
 		set_temp_variable = { pww_dv_gain = pww_dv_b_desp }
@@ -672,10 +696,19 @@ pww_diplo_eval_offer = {
 		set_temp_variable = { pww_dv_loss = pww_dv_vpay }
 		multiply_temp_variable = { pww_dv_loss = pww_dv_mult }
 	}
+	# Terms are the receiver's surplus as a percentage of the goods' market
+	# value, so a price card means the same on a one-factory deal as on a
+	# ten-factory one: 30% below market is -30, 35% above is +35.
 	set_temp_variable = { pww_dv_terms = pww_dv_gain }
 	subtract_from_temp_variable = { pww_dv_terms = pww_dv_loss }
-	multiply_temp_variable = { pww_dv_terms = 10 }
-	clamp_temp_variable = { var = pww_dv_terms min = -60 max = 60 }
+	set_temp_variable = { pww_dv_base = pww_dv_vres }
+	if = {
+		limit = { check_variable = { pww_dv_base < 0.25 } }
+		set_temp_variable = { pww_dv_base = 0.25 }
+	}
+	divide_temp_variable = { pww_dv_terms = pww_dv_base }
+	multiply_temp_variable = { pww_dv_terms = 100 }
+	clamp_temp_variable = { var = pww_dv_terms min = -100 max = 100 }
 	round_temp_variable = pww_dv_terms
 	set_variable = { pww_do_e_terms = pww_dv_terms }
 
@@ -692,7 +725,7 @@ pww_diplo_eval_offer = {
 			check_variable = { pww_do_pay = 0 }
 			var:pww_dv_t = { num_of_civilian_factories < 20 }
 		}
-		set_variable = { pww_do_e_need = 8 }
+		set_variable = { pww_do_e_need = 6 }
 	}
 
 	# Talk-dependent parts
@@ -712,7 +745,18 @@ pww_diplo_eval_offer = {
 		pww_diplo_draft_meets_want = yes
 		if = {
 			limit = { check_variable = { pww_dv_meets = 1 } }
-			set_variable = { pww_do_e_want = 25 }
+			# Full weight once they have told us (the haggle loop: counter,
+			# reveal, redraft); a lucky guess before that counts for less.
+			set_variable = { pww_do_e_want = 6 }
+			if = {
+				limit = { check_variable = { global.pww_dt_want_seen^pww_dv_talk = 1 } }
+				set_variable = { pww_do_e_want = 15 }
+			}
+			# A factory-poor seller that wants factories counts them once.
+			if = {
+				limit = { check_variable = { pww_dv_w = 1 } }
+				set_variable = { pww_do_e_need = 0 }
+			}
 		}
 		pww_diplo_draft_crosses_redline = yes
 		if = {
@@ -820,26 +864,41 @@ pww_diplo_eval_offer = {
 	set_variable = { pww_do_rcv_sells = pww_dv_rcv_sells }
 }
 
-# Sender scope. in: pww_dv_w (want). out: pww_dv_meets.
+# Sender scope. in: pww_dv_w (want), pww_dv_rcv_sells. out: pww_dv_meets.
+# Payment-form wants count only when the receiver is the side being paid.
 pww_diplo_draft_meets_want = {
 	set_temp_variable = { pww_dv_meets = 0 }
 	if = {
 		limit = {
 			OR = {
-				AND = { check_variable = { pww_dv_w = 0 } check_variable = { pww_do_pay = 2 } }
-				AND = { check_variable = { pww_dv_w = 1 } check_variable = { pww_do_pay = 0 } }
+				AND = {
+					check_variable = { pww_dv_w = 0 }
+					check_variable = { pww_do_pay = 2 }
+					check_variable = { pww_dv_rcv_sells = 1 }
+				}
+				AND = {
+					check_variable = { pww_dv_w = 1 }
+					check_variable = { pww_do_pay = 0 }
+					check_variable = { pww_dv_rcv_sells = 1 }
+				}
 				AND = { check_variable = { pww_dv_w = 2 } check_variable = { pww_do_sweet = 1 } }
 				AND = {
 					check_variable = { pww_dv_w = 3 }
 					OR = {
-						check_variable = { pww_do_pay = 3 }
+						AND = {
+							check_variable = { pww_do_pay = 3 }
+							check_variable = { pww_dv_rcv_sells = 1 }
+						}
 						check_variable = { pww_do_sweet = 3 }
 					}
 				}
 				AND = {
 					check_variable = { pww_dv_w = 4 }
 					OR = {
-						check_variable = { pww_do_pay = 4 }
+						AND = {
+							check_variable = { pww_do_pay = 4 }
+							check_variable = { pww_dv_rcv_sells = 1 }
+						}
 						check_variable = { pww_do_sweet = 2 }
 					}
 				}
@@ -961,6 +1020,12 @@ pww_diplo_talk_reply = {
 		else = {
 			add_to_temp_variable = { pww_dr_round = 1 }
 			set_variable = { global.pww_dt_last_sig^pww_dr_t = pww_do_sig }
+			# A draft that already carries their want: the want counts as
+			# known from now on (full weight next round).
+			if = {
+				limit = { check_variable = { pww_do_e_want > 0 } }
+				set_variable = { global.pww_dt_want_seen^pww_dr_t = 1 }
+			}
 			set_temp_variable = { pww_dr_k = pww_dr_seed }
 			add_to_temp_variable = { pww_dr_k = pww_dr_round }
 			if = {
@@ -979,14 +1044,22 @@ pww_diplo_talk_reply = {
 				}
 			}
 			else_if = {
-				limit = { check_variable = { global.pww_dt_want_seen^pww_dr_t = 0 } }
+				# Reveal the hidden want, unless the draft already carries it
+				# (then they acknowledge it below and name the real obstacle).
+				limit = {
+					check_variable = { global.pww_dt_want_seen^pww_dr_t = 0 }
+					check_variable = { pww_do_e_want = 0 }
+				}
 				set_variable = { global.pww_dt_want_seen^pww_dr_t = 1 }
 				subtract_from_temp_variable = { pww_dr_pat = 10 }
 				set_temp_variable = { pww_dr_line = 40 }
 				add_to_temp_variable = { pww_dr_line = global.pww_dt_want^pww_dr_t }
 			}
 			else_if = {
-				limit = { check_variable = { pww_do_e_want > 0 } }
+				limit = {
+					check_variable = { pww_do_e_want > 0 }
+					check_variable = { pww_do_e_terms > -1 }
+				}
 				add_to_temp_variable = { pww_dr_pat = 20 }
 				modulo_temp_variable = { var = pww_dr_k value = 5 }
 				set_temp_variable = { pww_dr_line = 21 }
@@ -1005,6 +1078,14 @@ pww_diplo_talk_reply = {
 					modulo_temp_variable = { var = pww_dr_k value = 6 }
 					set_temp_variable = { pww_dr_line = 51 }
 					add_to_temp_variable = { pww_dr_line = pww_dr_k }
+				}
+				else_if = {
+					# The price is the obstacle: "sweeten the pot".
+					limit = {
+						check_variable = { pww_do_e_terms < 0 }
+						check_variable = { pww_dr_pat > 14 }
+					}
+					set_temp_variable = { pww_dr_line = 86 }
 				}
 				else_if = {
 					limit = { check_variable = { pww_dr_pat < 35 } }
@@ -1538,7 +1619,14 @@ pww_diplo_ai_consider_counter = {
 	add_to_temp_variable = { pww_dac_f = 1 }
 	multiply_temp_variable = { pww_dac_own = pww_dac_f }
 	subtract_from_temp_variable = { pww_dac_own = pww_do_vpay }
-	multiply_temp_variable = { pww_dac_own = 10 }
+	# Same scale as the terms part: percent of the goods' market value.
+	set_temp_variable = { pww_dac_base = pww_do_vres }
+	if = {
+		limit = { check_variable = { pww_dac_base < 0.25 } }
+		set_temp_variable = { pww_dac_base = 0.25 }
+	}
+	divide_temp_variable = { pww_dac_own = pww_dac_base }
+	multiply_temp_variable = { pww_dac_own = 100 }
 	set_temp_variable = { pww_dac_need = 5 }
 	if = {
 		limit = {
