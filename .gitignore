@@ -1,0 +1,4 @@
+.vs/
+*.log
+tests/engine/**/userdir/
+.hoi4-userdir/
