@@ -1,0 +1,6 @@
+﻿l_english:
+ pww_uipr_desk:0 "Desk probe [ROOT.GetTag] [?global.pww_uipr_d1.GetDateStringNoHourLong]"
+ pww_uipr_btn_t:0 "Probe"
+ pww_uipr_dtext:0 "THIS=[THIS.GetName] ROOT=[ROOT.GetName] FROM=[FROM.GetName]"
+ pww_uipr_k_ok:0 "SL ok FROM=[FROM.GetName] THIS=[THIS.GetName]"
+ pww_uipr_k_bad:0 "SL wrong scope"

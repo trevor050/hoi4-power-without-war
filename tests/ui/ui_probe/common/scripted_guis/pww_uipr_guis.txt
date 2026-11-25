@@ -1,0 +1,41 @@
+scripted_gui = {
+	pww_uipr_trade_gui = {
+		context_type = player_context
+		window_name = "pww_uipr_win"
+		parent_window_token = trade_tab
+		visible = { always = yes }
+		dirty = pww_uipr_dirty
+		effects = {
+			pww_uipr_btn_click = { log = "PWW_RESULT ui_probe.click INFO trade instance clicked" }
+		}
+	}
+	pww_uipr_float_gui = {
+		context_type = player_context
+		window_name = "pww_uipr_win"
+		visible = { has_country_flag = pww_uipr_float }
+		dirty = pww_uipr_dirty
+		properties = {
+			pww_uipr_body = { x = pww_uipr_x y = pww_uipr_y }
+		}
+		effects = {
+			pww_uipr_btn_click = { log = "PWW_RESULT ui_probe.click INFO float instance clicked" }
+		}
+	}
+	pww_uipr_diplo2_gui = {
+		context_type = diplomacy_target_context
+		window_name = "pww_uipr_dwin2"
+		parent_window_token = selected_country_view_diplomacy
+		visible = { always = yes }
+		dirty = pww_uipr_dirty
+	}
+	pww_uipr_diplo_gui = {
+		context_type = diplomacy_target_context
+		window_name = "pww_uipr_dwin"
+		parent_window_token = selected_country_view
+		visible = { always = yes }
+		dirty = pww_uipr_dirty
+		effects = {
+			pww_uipr_dbtn_click = { log = "PWW_RESULT ui_probe.click INFO dossier THIS=[THIS.GetTag] ROOT=[ROOT.GetTag]" }
+		}
+	}
+}

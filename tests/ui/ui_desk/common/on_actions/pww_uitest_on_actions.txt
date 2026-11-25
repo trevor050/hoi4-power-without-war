@@ -1,0 +1,24 @@
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = GER }
+				add_to_variable = { global.pww_uitest_day = 1 }
+				if = {
+					limit = { check_variable = { global.pww_uitest_day = 1 } }
+					pww_uitest_setup = yes
+				}
+				if = {
+					limit = { check_variable = { global.pww_uitest_day = 3 } }
+					pww_uitest_report = yes
+				}
+				if = {
+					limit = { check_variable = { global.pww_uitest_day = 33 } }
+					pww_uitest_report = yes
+					pww_uitest_market = yes
+					log = "PWW_DONE ui_desk"
+				}
+			}
+		}
+	}
+}

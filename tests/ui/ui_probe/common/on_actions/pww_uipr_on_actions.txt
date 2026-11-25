@@ -1,0 +1,34 @@
+# UI probe: date arithmetic, shared GUI templates, dossier loc scopes.
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = GER NOT = { has_global_flag = pww_uipr_done } }
+				set_global_flag = pww_uipr_done
+				set_variable = { global.pww_uipr_d0 = global.date }
+				set_variable = { global.pww_uipr_d1 = global.date }
+				add_to_variable = { global.pww_uipr_d1 = 30 }
+				set_variable = { global.pww_uipr_d2 = global.date }
+				add_to_variable = { global.pww_uipr_d2 = 720 }
+				set_variable = { global.pww_uipr_d3 = global.date }
+				add_to_variable = { global.pww_uipr_d3 = 0.024 }
+				set_variable = { global.pww_uipr_d4 = global.date }
+				add_to_variable = { global.pww_uipr_d4 = 0.00024 }
+				set_temp_variable = { pww_t = 45 }
+				multiply_temp_variable = { pww_t = 0.00024 }
+				set_variable = { global.pww_uipr_d5 = global.date }
+				add_to_variable = { global.pww_uipr_d5 = pww_t }
+				log = "PWW_RESULT ui_probe.date2 INFO p100d=[?global.pww_uipr_d3.GetDateStringNoHourLong] p1d=[?global.pww_uipr_d4.GetDateStringNoHourLong] p45d=[?global.pww_uipr_d5.GetDateStringNoHourLong] short=[?global.pww_uipr_d5.GetDateStringShortMonth] t=[?pww_t|5]"
+				log = "PWW_RESULT ui_probe.date INFO now=[?global.pww_uipr_d0] [?global.pww_uipr_d0.GetDateStringNoHourLong] p30=[?global.pww_uipr_d1] [?global.pww_uipr_d1.GetDateStringNoHourLong] p720=[?global.pww_uipr_d2] [?global.pww_uipr_d2.GetDateStringNoHourLong] days=[?global.num_days]"
+				POR = {
+					set_country_flag = pww_uipr_float
+					set_variable = { pww_uipr_x = 700 }
+					set_variable = { pww_uipr_y = 300 }
+					set_variable = { pww_uipr_v = 7 }
+					add_to_variable = { pww_uipr_dirty = 1 }
+				}
+				log = "PWW_DONE ui_probe"
+			}
+		}
+	}
+}

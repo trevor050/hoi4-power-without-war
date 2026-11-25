@@ -1,0 +1,100 @@
+guiTypes = {
+	containerWindowType = {
+		name = "pww_uipr_win"
+		position = { x = 0 y = 0 }
+		size = { width = 10 height = 10 }
+		clipping = no
+		containerWindowType = {
+			name = "pww_uipr_body"
+			position = { x = 689 y = 0 }
+			size = { width = 320 height = 120 }
+			clipping = no
+			background = { name = "bg" quadTextureSprite = "GFX_tiled_window_1b_border" }
+			instantTextBoxType = {
+				name = "pww_uipr_txt"
+				position = { x = 16 y = 12 }
+				font = "hoi_16mbs"
+				text = "pww_uipr_desk"
+				maxWidth = 288
+				maxHeight = 40
+				format = left
+				fixedsize = yes
+			}
+			buttonType = {
+				name = "pww_uipr_btn"
+				position = { x = 16 y = 64 }
+				quadTextureSprite = "GFX_button_148x34"
+				buttonText = "pww_uipr_btn_t"
+				buttonFont = "hoi_16mbs"
+			}
+		}
+	}
+	containerWindowType = {
+		name = "pww_uipr_dwin"
+		position = { x = 550 y = 300 }
+		size = { width = 360 height = 160 }
+		clipping = no
+		background = { name = "bg" quadTextureSprite = "GFX_tiled_window_1b_border" }
+		instantTextBoxType = {
+			name = "pww_uipr_d1"
+			position = { x = 16 y = 12 }
+			font = "hoi_16mbs"
+			text = "pww_uipr_dtext"
+			maxWidth = 328
+			maxHeight = 40
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_uipr_d2"
+			position = { x = 16 y = 56 }
+			font = "hoi_16mbs"
+			text = "[ROOT.pww_uipr_sl]"
+			maxWidth = 328
+			maxHeight = 40
+			format = left
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_uipr_dbtn"
+			position = { x = 16 y = 110 }
+			quadTextureSprite = "GFX_button_148x34"
+			buttonText = "pww_uipr_btn_t"
+			buttonFont = "hoi_16mbs"
+		}
+	}
+	containerWindowType = {
+		name = "pww_uipr_dwin2"
+		position = { x = 20 y = 20 }
+		size = { width = 360 height = 160 }
+		clipping = no
+		background = { name = "bg" quadTextureSprite = "GFX_tiled_window_1b_border" }
+		instantTextBoxType = {
+			name = "pww_uipr_d1"
+			position = { x = 16 y = 12 }
+			font = "hoi_16mbs"
+			text = "pww_uipr_dtext"
+			maxWidth = 328
+			maxHeight = 40
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_uipr_d2"
+			position = { x = 16 y = 56 }
+			font = "hoi_16mbs"
+			text = "[ROOT.pww_uipr_sl]"
+			maxWidth = 328
+			maxHeight = 40
+			format = left
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_uipr_dbtn"
+			position = { x = 16 y = 110 }
+			quadTextureSprite = "GFX_button_148x34"
+			buttonText = "pww_uipr_btn_t"
+			buttonFont = "hoi_16mbs"
+		}
+	}
+}

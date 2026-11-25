@@ -1,0 +1,5 @@
+defined_text = {
+	name = pww_uipr_sl
+	text = { trigger = { check_variable = { pww_uipr_v = 7 } } localization_key = pww_uipr_k_ok }
+	text = { localization_key = pww_uipr_k_bad }
+}

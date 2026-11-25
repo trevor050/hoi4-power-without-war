@@ -1,0 +1,11 @@
+# Power Without War: UI lane triggers.
+
+# Temp pww_ui_v holds a ledger agreement id. True for the statuses the desk
+# and the dossier list: active, suspended, reserved.
+pww_ui_ag_is_live = {
+	OR = {
+		check_variable = { global.pww_ag_status^pww_ui_v = 1 }
+		check_variable = { global.pww_ag_status^pww_ui_v = 2 }
+		check_variable = { global.pww_ag_status^pww_ui_v = 7 }
+	}
+}

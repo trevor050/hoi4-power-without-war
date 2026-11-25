@@ -1,0 +1,109 @@
+# UI scenario (tests/ui/ui_desk). Run with:
+#   python tools/run_hoi4.py --tag GER --size 1920x1080 --leave-running --test tests/ui/ui_desk
+# Gives the GER player data on every UI surface, then logs what the UI layer
+# derived. Screens are opened by hand or with tests/ui/ui_drive.py.
+#   day 1  Wolfram Question (600-day clock) opens (GER claimant); the floating
+#          desk and the dossier start open;
+#          ledger: SWE->GER steel (committal, 2 civs), GER->ITA coal (open,
+#          1 civ), ROM->GER oil (reserved), CZE->YUG steel; demand GER->CZE
+#          quiet, steel output share; CZE makes no moves.
+#   day 3  UI slots logged (situations, ledger, marks on CZE)
+#   day 34 market report logged (first turn of the month has passed)
+
+# In: pww_l_seller, pww_l_buyer, pww_l_res, pww_l_amount, pww_l_committal,
+# pww_l_term_days, pww_l_civ, pww_l_cond (0 or a condition id).
+pww_uitest_ag = {
+	set_temp_variable = { pww_l_kind = 0 }
+	set_temp_variable = { pww_l_state = 0 }
+	set_temp_variable = { pww_l_pp = 0 }
+	set_temp_variable = { pww_l_activate = 1 }
+	if = {
+		limit = { check_variable = { pww_l_cond > 0 } }
+		set_temp_variable = { pww_l_activate = 0 }
+	}
+	pww_ledger_create_agreement = yes
+	log = "PWW_RESULT ui.setup_ag INFO id=[?pww_l_new_id] result=[?pww_l_result] fail=[?pww_l_fail]"
+}
+
+pww_uitest_setup = {
+	set_global_flag = pww_sit_debug_open_wolfram
+	set_variable = { global.pww_sit_c_wolfram_days = 600 }
+	GER = {
+		set_country_flag = pww_ui_desk_float
+		set_country_flag = pww_ui_dos_open
+	}
+	set_global_flag = pww_coer_no_popups
+	pww_core_init = yes
+	pww_ledger_init = yes
+	pww_coer_init = yes
+	CZE = { set_country_flag = pww_coer_no_ai_response }
+
+	SWE = { set_temp_variable = { pww_l_seller = THIS } }
+	GER = { set_temp_variable = { pww_l_buyer = THIS } }
+	set_temp_variable = { pww_l_res = 4 }
+	set_temp_variable = { pww_l_amount = 8 }
+	set_temp_variable = { pww_l_committal = 1 }
+	set_temp_variable = { pww_l_term_days = 730 }
+	set_temp_variable = { pww_l_civ = 2 }
+	set_temp_variable = { pww_l_cond = 0 }
+	pww_uitest_ag = yes
+
+	GER = { set_temp_variable = { pww_l_seller = THIS } }
+	ITA = { set_temp_variable = { pww_l_buyer = THIS } }
+	set_temp_variable = { pww_l_res = 6 }
+	set_temp_variable = { pww_l_amount = 10 }
+	set_temp_variable = { pww_l_committal = 0 }
+	set_temp_variable = { pww_l_term_days = 0 }
+	set_temp_variable = { pww_l_civ = 1 }
+	set_temp_variable = { pww_l_cond = 0 }
+	pww_uitest_ag = yes
+
+	pww_ledger_new_condition_id = yes
+	ROM = { set_temp_variable = { pww_l_seller = THIS } }
+	GER = { set_temp_variable = { pww_l_buyer = THIS } }
+	set_temp_variable = { pww_l_res = 0 }
+	set_temp_variable = { pww_l_amount = 6 }
+	set_temp_variable = { pww_l_committal = 1 }
+	set_temp_variable = { pww_l_term_days = 365 }
+	set_temp_variable = { pww_l_civ = 1 }
+	set_temp_variable = { pww_l_cond = pww_l_cond_new }
+	pww_uitest_ag = yes
+
+	CZE = { set_temp_variable = { pww_l_seller = THIS } }
+	YUG = { set_temp_variable = { pww_l_buyer = THIS } }
+	set_temp_variable = { pww_l_res = 4 }
+	set_temp_variable = { pww_l_amount = 4 }
+	set_temp_variable = { pww_l_committal = 0 }
+	set_temp_variable = { pww_l_term_days = 0 }
+	set_temp_variable = { pww_l_civ = 1 }
+	set_temp_variable = { pww_l_cond = 0 }
+	pww_uitest_ag = yes
+
+	GER = { set_temp_variable = { pww_in_claimant = THIS } }
+	CZE = { set_temp_variable = { pww_in_target = THIS } }
+	set_temp_variable = { pww_in_sit_id = -1 }
+	set_temp_variable = { pww_in_demand_type = 0 }
+	set_temp_variable = { pww_in_channel = 0 }
+	set_temp_variable = { pww_in_res = 4 }
+	set_temp_variable = { pww_in_share = 0.2 }
+	set_temp_variable = { pww_in_days = 150 }
+	pww_coer_issue_demand = yes
+	log = "PWW_RESULT ui.setup_demand INFO id=[?pww_out_demand_id] result=[?pww_out_result] fail=[?pww_out_fail]"
+}
+
+pww_uitest_report = {
+	GER = {
+		log = "PWW_RESULT ui.sits INFO ns=[?pww_ui_ns] s0 kind=[?pww_ui_s0_kind] seat=[?pww_ui_s0_seat] tmpl=[?pww_ui_s0_tmpl] res=[?pww_ui_s0_res] days=[?pww_ui_s0_days] date=[?pww_ui_s0_date.GetDateStringNoHourLong] ho=[?pww_ui_s0_ho.GetTag] dev=[?pww_ui_s0_dev]"
+		log = "PWW_RESULT ui.ledger INFO nag=[?pww_ui_nag] pages=[?pww_ui_npages] l0 on=[?pww_ui_l0_on] st=[?pww_ui_l0_st] cp=[?pww_ui_l0_cp.GetTag] side=[?pww_ui_l0_side] amt=[?pww_ui_l0_amt] pay=[?pww_ui_l0_pay] wepay=[?pww_ui_l0_wepay] civ=[?pww_ui_l0_civ] end=[?pww_ui_l0_end.GetDateStringNoHourLong] l2 st=[?pww_ui_l2_st]"
+	}
+	CZE = {
+		log = "PWW_RESULT ui.dossier INFO rd_viewer=[?pww_ui_rd_viewer.GetTag] state=[?pww_coer_rd_state] for0=[?pww_coer_rd_for0] hold0=[?pww_coer_rd_hold0] reveal=[?pww_coer_rd_reveal] date=[?pww_ui_rd_date.GetDateStringNoHourLong] nk=[?pww_ui_nk] imp=[?pww_ui_imp_band] desp_steel=[?pww_desp_steel]"
+	}
+	POR = {
+		log = "PWW_RESULT ui.dossier_por INFO st_viewer=[?pww_ui_st_viewer.GetTag] seat=[?pww_ui_st_seat] myseat=[?pww_ui_st_myseat]"
+	}
+}
+
+pww_uitest_market = {
+	log = "PWW_RESULT ui.market INFO ready=[?global.pww_ui_mkt_day] tungsten band=[?global.pww_ui_mkt_band_tungsten] c1=[?global.pww_ui_mkt_c1_tungsten] b1=[?global.pww_ui_mkt_b1_tungsten.GetTag] c2=[?global.pww_ui_mkt_c2_tungsten] oil band=[?global.pww_ui_mkt_band_oil] c1=[?global.pww_ui_mkt_c1_oil]"
+}

@@ -1,0 +1,14 @@
+# Power Without War: UI lane sprites (vanilla textures only).
+spriteTypes = {
+	corneredTileSpriteType = {
+		name = "GFX_pww_ui_alert_row"
+		size = { x = 32 y = 32 }
+		textureFile = "gfx/interface/tiles/tiled_mini_dialog.dds"
+		borderSize = { x = 12 y = 12 }
+		effectFile = "gfx/FX/buttonstate.lua"
+	}
+	spriteType = {
+		name = "GFX_pww_ui_divider"
+		texturefile = "gfx/interface/divider.dds"
+	}
+}

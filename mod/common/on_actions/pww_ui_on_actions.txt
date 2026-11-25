@@ -1,0 +1,16 @@
+# Power Without War: UI lane hooks (see scripted_effects/pww_ui_effects.txt).
+#   on_daily    human players only: summaries when the ledger moved, refresh.
+#   on_monthly  the first country 28+ days after the last report runs the
+#               market report and the country summaries.
+on_actions = {
+	on_daily = {
+		effect = {
+			pww_ui_on_daily = yes
+		}
+	}
+	on_monthly = {
+		effect = {
+			pww_ui_on_monthly = yes
+		}
+	}
+}

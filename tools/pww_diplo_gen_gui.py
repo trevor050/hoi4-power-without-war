@@ -4,24 +4,40 @@ localisation. Output files carry a header saying they are generated; they are
 also fine to edit by hand afterwards."""
 import os, sys
 
+# --layout-only: write the .gui, .gfx and scripted GUI files only; the scripted
+# localisation file is left as it is on disk (another lane may own edits).
+LAYOUT_ONLY = "--layout-only" in sys.argv
+
 REPO = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "mod")
 GUI_OUT = os.path.join(REPO, "interface", "pww_diplo.gui")
 GFX_OUT = os.path.join(REPO, "interface", "pww_diplo_sprites.gfx")
 SG_OUT = os.path.join(REPO, "common", "scripted_guis", "pww_diplo_guis.txt")
 SL_OUT = os.path.join(REPO, "common", "scripted_localisation", "pww_diplo_scripted_loc.txt")
 
-W = 440
+# Layout grid (UI lane, 2026-11-25). The vanilla frame these windows sit in
+# (popupwindow.gui: send_/diplomacy_scripted_popup_window) is 584 wide with
+# Cancel at x 77..200 and Send at 386..509. Content uses the same verticals:
+# left edge GL = Cancel's left edge, the label/value split at Cancel's right
+# edge, right edge GR = Send's right edge. Paragraphs span GL..GR centred, so
+# they centre under the frame's centred title; values centre in their column.
+W = 584
+GL, GR = 77, 509
+CW = GR - GL
 ROW_H = 26
-LX, PX, VX, NX = 16, 144, 164, 392
-VW = 224
+LX = GL
+LW = 118                      # label column (GL..195)
+PX, NX = 204, GR - 16         # prev / next arrows (16 px)
+VX = PX + 20                  # value column between the arrows
+VW = NX - 4 - VX
 FONT = "hoi_16mbs"
+PAD_BOTTOM = 8
 
 gui = []      # guiTypes body
 effects = {}  # gui name -> list of effect blocks
 triggers = {} # gui name -> list of trigger blocks
 
 
-def tb(name, x, y, text, w=W - 32, h=22, font=FONT, fmt="left", tooltip=None):
+def tb(name, x, y, text, w=CW, h=22, font=FONT, fmt="centre", tooltip=None):
     t = f'\t\tinstantTextBoxType = {{\n\t\t\tname = "{name}"\n\t\t\tposition = {{ x = {x} y = {y} }}\n\t\t\tfont = "{font}"\n\t\t\ttext = "{text}"\n\t\t\tmaxWidth = {w}\n\t\t\tmaxHeight = {h}\n\t\t\tformat = {fmt}\n\t\t\tfixedsize = yes\n'
     if tooltip:
         t += f'\t\t\tpdx_tooltip = "{tooltip}"\n'
@@ -43,6 +59,7 @@ def icon(name, x, y, sprite, scale=None):
 
 
 def window(name, h, body):
+    h += PAD_BOTTOM
     return (f'\tcontainerWindowType = {{\n\t\tname = "{name}"\n\t\tposition = {{ x = 0 y = 0 }}\n'
             f'\t\tsize = {{ width = {W} height = {h} }}\n\t\tmoveable = no\n\t\torientation = center\n\t\tclipping = no\n\n'
             + body + "\t}\n\n")
@@ -50,7 +67,7 @@ def window(name, h, body):
 
 def cycle_row(g, pre, key, y, label, value, nxt, prv, arrows_vis=None, tooltip=None):
     """A term card: label, prev arrow, value, next arrow."""
-    body = tb(f"{pre}_{key}_label", LX, y + 3, label, w=118)
+    body = tb(f"{pre}_{key}_label", LX, y + 3, label, w=LW, fmt="left")
     body += btn(f"{pre}_{key}_prev", PX, y + 4, "GFX_pww_diplo_prev")
     body += tb(f"{pre}_{key}_value", VX, y + 3, value, w=VW, fmt="centre", tooltip=tooltip)
     body += btn(f"{pre}_{key}_next", NX, y + 4, "GFX_pww_diplo_next")
@@ -63,8 +80,8 @@ def cycle_row(g, pre, key, y, label, value, nxt, prv, arrows_vis=None, tooltip=N
 
 
 def ro_row(pre, key, y, label, value):
-    body = tb(f"{pre}_{key}_label", LX, y + 3, label, w=118)
-    body += tb(f"{pre}_{key}_value", VX, y + 3, value, w=VW + 28, fmt="left")
+    body = tb(f"{pre}_{key}_label", LX, y + 3, label, w=LW, fmt="left")
+    body += tb(f"{pre}_{key}_value", VX, y + 3, value, w=GR - VX, fmt="centre")
     return body
 
 
@@ -87,7 +104,7 @@ def checkbox(g, pre, key, y, label, var, val, tooltip=None, scope_this=True):
     """A radio/checkbox row on the receiver: off and on buttons + label."""
     body = btn(f"{pre}_{key}_off", LX, y + 4, "GFX_pww_diplo_box_off", tooltip)
     body += btn(f"{pre}_{key}_on", LX, y + 4, "GFX_pww_diplo_box_on", tooltip)
-    body += tb(f"{pre}_{key}_label", LX + 24, y + 3, label, w=W - 56, tooltip=tooltip)
+    body += tb(f"{pre}_{key}_label", LX + 24, y + 3, label, w=CW - 24, fmt="left", tooltip=tooltip)
     set_ = (f"\t\t\t\tif = {{\n\t\t\t\t\tlimit = {{ check_variable = {{ {var} = {val} }} }}\n"
             f"\t\t\t\t\tset_variable = {{ {var} = 0 }}\n\t\t\t\t}}\n"
             f"\t\t\t\telse = {{ set_variable = {{ {var} = {val} }} }}\n"
@@ -105,15 +122,15 @@ def checkbox(g, pre, key, y, label, var, val, tooltip=None, scope_this=True):
 
 
 def divider(name, y):
-    return icon(name, LX, y, "GFX_divider", scale="0.8")
+    return icon(name, LX, y, "GFX_divider", scale=f"{CW / 514:.3f}")
 
 
 # ---------------------------------------------------------------- send offer
 G = "pww_diplo_send_offer_gui"
 P = "pww_so"
 y0 = 40
-b = tb(f"{P}_title", LX, 8, "[pww_diplo_sl_o_title]", w=260, font="hoi_18mbs")
-b += tb(f"{P}_round", 280, 10, "[pww_diplo_sl_o_round]", w=144, fmt="right")
+b = tb(f"{P}_title", LX, 8, "[pww_diplo_sl_o_title]", w=CW - 150, font="hoi_18mbs", fmt="left")
+b += tb(f"{P}_round", GR - 144, 10, "[pww_diplo_sl_o_round]", w=144, fmt="right")
 rows = [
     ("deal", "pww_diplo_lbl_deal", "[pww_diplo_sl_o_deal]",
      wrap("pww_do_dir", 0, 1, 1), wrap("pww_do_dir", 0, 1, -1),
@@ -175,7 +192,7 @@ G = "pww_diplo_send_demand_gui"
 P = "pww_sd"
 locked = "\t\t\t\tROOT = { check_variable = { pww_dm_live < 0 } }\n"
 dch = "pww_diplo_demand_changed = yes"
-b = tb(f"{P}_title", LX, 8, "[pww_diplo_sl_dm_title]", w=W - 32, font="hoi_18mbs")
+b = tb(f"{P}_title", LX, 8, "[pww_diplo_sl_dm_title]", font="hoi_18mbs")
 y0 = 40
 rows = [
     ("type", "pww_diplo_lbl_demand", "[pww_diplo_sl_dm_type]",
@@ -205,7 +222,7 @@ y = y0 + len(rows) * ROW_H
 # take less (press only)
 b += btn(f"{P}_less_off", LX, y + 4, "GFX_pww_diplo_box_off", "pww_diplo_tt_less")
 b += btn(f"{P}_less_on", LX, y + 4, "GFX_pww_diplo_box_on", "pww_diplo_tt_less")
-b += tb(f"{P}_less_label", LX + 24, y + 3, "pww_diplo_lbl_less", w=W - 56)
+b += tb(f"{P}_less_label", LX + 24, y + 3, "pww_diplo_lbl_less", w=CW - 24, fmt="left")
 for s_ in ("off", "on"):
     effects[G].append(
         f"\t\t\t{P}_less_{s_}_click = {{\n\t\t\t\tROOT = {{\n"
@@ -229,7 +246,7 @@ gui.append(window("pww_diplo_send_demand", y, b))
 G = "pww_diplo_send_pledge_gui"
 P = "pww_sp"
 pch = "pww_diplo_pledge_changed = yes"
-b = tb(f"{P}_title", LX, 8, "pww_diplo_gui_pledge_title", w=W - 32, font="hoi_18mbs")
+b = tb(f"{P}_title", LX, 8, "pww_diplo_gui_pledge_title", font="hoi_18mbs")
 y0 = 40
 vs_next = ("\t\t\t\tset_temp_variable = { pww_gn = pww_dd_pressers^num }\n"
            "\t\t\t\tROOT = {\n\t\t\t\t\tadd_to_variable = { pww_dp_ci = 1 }\n"
@@ -272,7 +289,7 @@ gui.append(window("pww_diplo_send_pledge", y, b))
 G = "pww_diplo_send_embargo_gui"
 P = "pww_se"
 ech = "pww_diplo_embargo_changed = yes"
-b = tb(f"{P}_title", LX, 8, "pww_diplo_gui_embargo_title", w=W - 32, font="hoi_18mbs")
+b = tb(f"{P}_title", LX, 8, "pww_diplo_gui_embargo_title", font="hoi_18mbs")
 b += cycle_row(G, P, "tgt", 40, "pww_diplo_lbl_embargo_on", "[pww_diplo_sl_de_target]",
                wrap("pww_de_i", 0, 99, 1, after=ech),
                "\t\t\t\tROOT = {\n\t\t\t\t\tsubtract_from_variable = { pww_de_i = 1 }\n"
@@ -293,7 +310,7 @@ gui.append(window("pww_diplo_send_embargo", y, b))
 G = "pww_diplo_send_bid_gui"
 P = "pww_sb"
 bch = "pww_diplo_bid_changed = yes"
-b = tb(f"{P}_title", LX, 8, "pww_diplo_gui_bid_title", w=W - 32, font="hoi_18mbs")
+b = tb(f"{P}_title", LX, 8, "pww_diplo_gui_bid_title", font="hoi_18mbs")
 y0 = 40
 rows = [
     ("lot", "pww_diplo_lbl_lot", "[pww_diplo_sl_db_lot]",
@@ -330,7 +347,7 @@ gui.append(window("pww_diplo_send_bid", y, b))
 # ------------------------------------------------------------- receive offer
 G = "pww_diplo_recv_offer_gui"
 P = "pww_ro"
-b = tb(f"{P}_title", LX, 8, "[pww_diplo_sl_r_title]", w=W - 32, font="hoi_18mbs")
+b = tb(f"{P}_title", LX, 8, "[pww_diplo_sl_r_title]", font="hoi_18mbs")
 y0 = 40
 rows = [("deal", "pww_diplo_lbl_deal", "[pww_diplo_sl_r_deal]"),
         ("res", "pww_diplo_lbl_res", "[pww_diplo_sl_r_res]"),
@@ -341,8 +358,8 @@ rows = [("deal", "pww_diplo_lbl_deal", "[pww_diplo_sl_r_deal]"),
         ("sweet", "pww_diplo_lbl_sweet", "[pww_diplo_sl_r_sweet]"),
         ("fig", "pww_diplo_lbl_fig", "[pww_diplo_sl_r_fig]")]
 for i, (k, lab, val) in enumerate(rows):
-    b += ro_row(P, k, y0 + i * 22, lab, val)
-y = y0 + len(rows) * 22 + 4
+    b += ro_row(P, k, y0 + i * ROW_H, lab, val)
+y = y0 + len(rows) * ROW_H + 4
 b += divider(f"{P}_div", y)
 y += 12
 b += tb(f"{P}_bands", LX, y, "[pww_diplo_sl_r_bands]")
@@ -362,7 +379,7 @@ gui.append(window("pww_diplo_recv_offer", y, b))
 # ------------------------------------------------------------ receive demand
 G = "pww_diplo_recv_demand_gui"
 P = "pww_rd"
-b = tb(f"{P}_title", LX, 8, "[pww_diplo_sl_rd_title]", w=W - 32, font="hoi_18mbs")
+b = tb(f"{P}_title", LX, 8, "[pww_diplo_sl_rd_title]", font="hoi_18mbs")
 b += tb(f"{P}_terms", LX, 38, "[pww_diplo_sl_rd_terms]", h=40)
 y = 82
 b += divider(f"{P}_div", y)
@@ -383,7 +400,7 @@ gui.append(window("pww_diplo_recv_demand", y, b))
 # ------------------------------------------------------------ receive settle
 G = "pww_diplo_recv_settle_gui"
 P = "pww_rs"
-b = tb(f"{P}_title", LX, 8, "pww_rcv_settlement_title", w=W - 32, font="hoi_18mbs")
+b = tb(f"{P}_title", LX, 8, "pww_rcv_settlement_title", font="hoi_18mbs")
 b += tb(f"{P}_desc", LX, 36, "pww_diplo_gui_settle_desc", h=40)
 y = 80
 for v, key in [(0, "pww_rcv_settle_cic"), (1, "pww_rcv_settle_kind"), (2, "pww_rcv_settle_reverse")]:
@@ -633,6 +650,9 @@ dt("pww_diplo_sl_rd_dur", [(f"check_variable = {{ pww_dr_dur = {i} }}", DUR[i]) 
 dt("pww_diplo_sl_rd_fig", [("check_variable = { pww_dr_fig > 0 }", "pww_diplo_rcv_with_fig")], "pww_diplo_v_empty")
 enum("pww_diplo_sl_rd_figname", "pww_dr_fig", FIG[:5])
 
+if LAYOUT_ONLY:
+    print("layout only: scripted localisation not written")
+    sys.exit(0)
 with open(SL_OUT, "w", encoding="utf-8", newline="\n") as f:
     f.write("".join(sl))
 print("ok", len(gui), "windows")
