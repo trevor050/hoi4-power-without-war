@@ -1,0 +1,15 @@
+# Power Without War: coercion opinion modifiers (target toward the claimant)
+opinion_modifiers = {
+	pww_coer_ultimatum = {
+		value = -25
+		decay = 0.25
+	}
+	pww_coer_pressure = {
+		value = -8
+		decay = 0.1
+	}
+	pww_coer_quarantined = {
+		value = -30
+		decay = 0.25
+	}
+}

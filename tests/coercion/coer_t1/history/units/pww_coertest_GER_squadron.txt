@@ -1,0 +1,37 @@
+# Test-only naval OOB: a German squadron placed at sea in the Spanish Coast
+# region (province 4213, vanilla map), off Portugal. GER is the human tag in
+# this test so the AI does not sail it home.
+units = {
+	fleet = {
+		name = "PWW Test Squadron"
+		naval_base = 241
+		task_force = {
+			name = "PWW Test Task Force"
+			location = 4213
+			ship = { name = "PWW Test 0" definition = destroyer equipment = { ship_hull_light_1 = { amount = 1 owner = GER version_name = "Type 24" } } }
+			ship = { name = "PWW Test 1" definition = destroyer equipment = { ship_hull_light_1 = { amount = 1 owner = GER version_name = "Type 24" } } }
+			ship = { name = "PWW Test 2" definition = destroyer equipment = { ship_hull_light_1 = { amount = 1 owner = GER version_name = "Type 24" } } }
+			ship = { name = "PWW Test 3" definition = destroyer equipment = { ship_hull_light_1 = { amount = 1 owner = GER version_name = "Type 24" } } }
+			ship = { name = "PWW Test 4" definition = destroyer equipment = { ship_hull_light_1 = { amount = 1 owner = GER version_name = "Type 24" } } }
+			ship = { name = "PWW Test 5" definition = destroyer equipment = { ship_hull_light_1 = { amount = 1 owner = GER version_name = "Type 24" } } }
+			ship = { name = "PWW Test 6" definition = destroyer equipment = { ship_hull_light_1 = { amount = 1 owner = GER version_name = "Type 24" } } }
+			ship = { name = "PWW Test 7" definition = destroyer equipment = { ship_hull_light_1 = { amount = 1 owner = GER version_name = "Type 24" } } }
+			ship = { name = "PWW Test 8" definition = destroyer equipment = { ship_hull_light_1 = { amount = 1 owner = GER version_name = "Type 24" } } }
+			ship = { name = "PWW Test 9" definition = destroyer equipment = { ship_hull_light_1 = { amount = 1 owner = GER version_name = "Type 24" } } }
+			ship = { name = "PWW Test 10" definition = destroyer equipment = { ship_hull_light_1 = { amount = 1 owner = GER version_name = "Type 24" } } }
+			ship = { name = "PWW Test 11" definition = destroyer equipment = { ship_hull_light_1 = { amount = 1 owner = GER version_name = "Type 24" } } }
+			ship = { name = "PWW Test 12" definition = destroyer equipment = { ship_hull_light_1 = { amount = 1 owner = GER version_name = "Type 24" } } }
+			ship = { name = "PWW Test 13" definition = destroyer equipment = { ship_hull_light_1 = { amount = 1 owner = GER version_name = "Type 24" } } }
+			ship = { name = "PWW Test 14" definition = destroyer equipment = { ship_hull_light_1 = { amount = 1 owner = GER version_name = "Type 24" } } }
+			ship = { name = "PWW Test 15" definition = destroyer equipment = { ship_hull_light_1 = { amount = 1 owner = GER version_name = "Type 24" } } }
+			ship = { name = "PWW Test 16" definition = destroyer equipment = { ship_hull_light_1 = { amount = 1 owner = GER version_name = "Type 24" } } }
+			ship = { name = "PWW Test 17" definition = destroyer equipment = { ship_hull_light_1 = { amount = 1 owner = GER version_name = "Type 24" } } }
+			ship = { name = "PWW Test 18" definition = destroyer equipment = { ship_hull_light_1 = { amount = 1 owner = GER version_name = "Type 24" } } }
+			ship = { name = "PWW Test 19" definition = destroyer equipment = { ship_hull_light_1 = { amount = 1 owner = GER version_name = "Type 24" } } }
+			ship = { name = "PWW Test 20" definition = destroyer equipment = { ship_hull_light_1 = { amount = 1 owner = GER version_name = "Type 24" } } }
+			ship = { name = "PWW Test 21" definition = destroyer equipment = { ship_hull_light_1 = { amount = 1 owner = GER version_name = "Type 24" } } }
+			ship = { name = "PWW Test 22" definition = destroyer equipment = { ship_hull_light_1 = { amount = 1 owner = GER version_name = "Type 24" } } }
+			ship = { name = "PWW Test 23" definition = destroyer equipment = { ship_hull_light_1 = { amount = 1 owner = GER version_name = "Type 24" } } }
+		}
+	}
+}

@@ -1,0 +1,1757 @@
+###############################################################################
+# Power Without War: coercion engine, weekly evaluation
+#
+# Every live demand is evaluated once a week, on the day where
+# num_days mod 7 equals its pww_cd_dow (ids spread over the week).
+#
+# Pressure P = committed force (ramped) + non-force levers + target weakness.
+# Resistance R = 10 + allies, patrons, alternatives, pride, regime, demand
+# size, humiliation, reputation, alarm, the target's own moves.
+# Net = P - R maps to the target state with hysteresis, one step per week:
+#   >= t1 Strained, >= t2 Wavering, >= t3 Cornered, >= t4 Ready (going down
+#   needs net below the threshold minus pww_coer_c_hyst).
+# Caps:
+#   Force alone tops out at Wavering: above it needs lever points
+#   >= pww_coer_c_lever_min (reason force_cap shows while it binds).
+#   Quiet demands cap P at pww_coer_c_quiet_cap (reason quiet_ceiling).
+#   Ready only after pww_coer_c_corner_days in Cornered, and never while a
+#   route to war is open and no fig leaf is on the table.
+# Routes to war (only from Cornered, never on refusal or expiry):
+#   desperate: an embargo, quarantine or cutoff is on and the target's
+#     desperation >= 80; calculated: the target hardened, has a patron
+#     pledge >= 50, a major guarantor, a faction, or an army >= 60% of the
+#     claimant's. After pww_coer_c_war_days in Cornered with no fig leaf
+#     offered, the target gets a war goal on the claimant and AI war
+#     strategies (pww_coer_fire_war_route); the demand ends with status 4.
+# Force proxies (one force per demand, see pww_coer_commit_force):
+#   naval  claimant ships in the demand's approach regions (ships_in_area,
+#          ships in port count in the port's land region) minus half the
+#          target's ships there; 3 points per ship, max 60.
+#   air    claimant planes based in the demand's air regions
+#          (num_planes_stationed_in_regions), 1 point per 3 planes, max 45.
+#   army   claimant divisions in its states bordering the target
+#          (divisions_in_state) minus 30% of the target's divisions,
+#          2.5 points per division, max 55.
+#   Ramp: +700/ramp_days per week while present, -1400/ramp_days when absent
+#   (teleporting a fleet in for a week does nothing). Points = raw * ramp.
+###############################################################################
+
+# Any scope. Runs once per game day from the first on_daily.
+pww_coer_daily_global = {
+	set_variable = { global.pww_coer_last_day = global.num_days }
+	if = {
+		limit = { check_variable = { global.pww_coer_live^num > 0 } }
+		set_temp_variable = { pww_cdg_dow = global.num_days }
+		modulo_temp_variable = { var = pww_cdg_dow value = 7 }
+		clear_temp_array = pww_cdg_due
+		for_each_loop = {
+			array = global.pww_coer_live
+			value = pww_cdg_v
+			if = {
+				limit = { check_variable = { global.pww_cd_dow^pww_cdg_v = pww_cdg_dow } }
+				add_to_temp_array = { pww_cdg_due = pww_cdg_v }
+			}
+		}
+		for_each_loop = {
+			array = pww_cdg_due
+			value = pww_cdg_v
+			set_temp_variable = { pww_ce_id = pww_cdg_v }
+			pww_coer_eval_demand = yes
+		}
+	}
+}
+
+# Any scope. In: pww_ce_id.
+pww_coer_eval_demand = {
+	set_temp_variable = { pww_c_id = pww_ce_id }
+	set_temp_variable = { pww_ce_cl = global.pww_cd_claimant^pww_ce_id }
+	set_temp_variable = { pww_ce_tg = global.pww_cd_target^pww_ce_id }
+	set_temp_variable = { pww_ce_st = global.pww_cd_status^pww_ce_id }
+	if = {
+		limit = {
+			OR = {
+				var:pww_ce_cl = { exists = no }
+				var:pww_ce_tg = { exists = no }
+				var:pww_ce_cl = { var:pww_ce_tg = { has_war_with = PREV } }
+			}
+		}
+		set_temp_variable = { pww_ce_end_status = 6 }
+		pww_coer_end_demand = yes
+	}
+	else_if = {
+		limit = { check_variable = { pww_ce_st = 5 } }
+		if = {
+			limit = { NOT = { check_variable = { global.pww_cd_prov_until^pww_ce_id > global.num_days } } }
+			# The provisional ran out: a scheduled second decision
+			set_variable = { global.pww_cd_status^pww_ce_id = 0 }
+			set_temp_variable = { pww_ce_dl = global.num_days }
+			add_to_temp_variable = { pww_ce_dl = 60 }
+			set_variable = { global.pww_cd_deadline^pww_ce_id = pww_ce_dl }
+			set_variable = { global.pww_cd_prov_until^pww_ce_id = 0 }
+			set_variable = { global.pww_cd_framp^pww_ce_id = 0 }
+			set_temp_variable = { pww_cqp_kind = 7 }
+			set_temp_variable = { pww_cqp_dem = pww_ce_id }
+			set_temp_variable = { pww_cqp_val = 2 }
+			pww_coer_queue_push = yes
+		}
+	}
+	else_if = {
+		limit = { check_variable = { global.num_days > global.pww_cd_deadline^pww_ce_id } }
+		# Decision date passed without a fold: lapses. Never a war by itself.
+		set_temp_variable = { pww_ce_end_status = 2 }
+		pww_coer_end_demand = yes
+	}
+	else = {
+		pww_coer_eval_live = yes
+	}
+	set_variable = { global.pww_cd_last_eval^pww_ce_id = global.num_days }
+}
+
+# Internal. pww_c_id = pww_ce_id, pww_ce_cl, pww_ce_tg. One evaluation.
+pww_coer_eval_live = {
+	# ------------------------------------------------------------ leak
+	if = {
+		limit = {
+			check_variable = { global.pww_cd_channel^pww_ce_id = 0 }
+			check_variable = { global.pww_cd_leak_day^pww_ce_id > 0 }
+			NOT = { check_variable = { global.pww_cd_leak_day^pww_ce_id > global.num_days } }
+		}
+		pww_coer_make_public = yes
+		set_temp_variable = { pww_cqp_kind = 4 }
+		set_temp_variable = { pww_cqp_dem = pww_ce_id }
+		set_temp_variable = { pww_cqp_val = 1 }
+		pww_coer_queue_push = yes
+		# Going public: a democracy rallies, a dictatorship's pride is engaged
+		set_temp_variable = { pww_cev_id = 9 }
+		if = {
+			limit = { var:pww_ce_tg = { has_government = democratic } }
+			set_temp_variable = { pww_cev_id = 7 }
+		}
+		set_temp_variable = { pww_cev_side = 1 }
+		pww_coer_set_evt = yes
+		if = {
+			limit = {
+				NOT = { has_global_flag = pww_coer_no_popups }
+				var:pww_ce_cl = { is_ai = no }
+			}
+			set_temp_variable = { pww_cpu_id = pww_ce_id }
+			var:pww_ce_tg = { var:pww_ce_cl = { pww_coer_popup_prep = yes country_event = { id = pww_coer.4 } } }
+		}
+		if = {
+			limit = { has_global_flag = pww_coer_debug }
+			log = "[GetDateText] PWW_COER leak id=[?pww_ce_id] now public"
+		}
+	}
+
+	# ------------------------------------------------------------ setup
+	clear_temp_array = pww_ce_fid
+	clear_temp_array = pww_ce_fw
+	clear_temp_array = pww_ce_hid
+	clear_temp_array = pww_ce_hw
+	set_temp_variable = { pww_ce_p = 0 }
+	set_temp_variable = { pww_ce_r = 10 }
+	set_temp_variable = { pww_ce_lever = 0 }
+	set_temp_variable = { pww_ca_lever = 0 }
+	set_temp_variable = { pww_ca_show = 0 }
+	set_temp_variable = { pww_ce_s = global.pww_cd_tstate^pww_ce_id }
+	set_temp_variable = { pww_ce_ch = global.pww_cd_channel^pww_ce_id }
+	set_temp_variable = { pww_ce_ty = global.pww_cd_type^pww_ce_id }
+	set_temp_variable = { pww_ce_ft = global.pww_cd_ftype^pww_ce_id }
+	set_temp_variable = { pww_ce_quar = global.pww_cd_quar^pww_ce_id }
+	set_temp_variable = { pww_ce_fig = global.pww_cd_fig^pww_ce_id }
+	set_temp_variable = { pww_ce_tfig = global.pww_cd_tfig^pww_ce_id }
+	set_temp_variable = { pww_ce_age = global.num_days }
+	subtract_from_temp_variable = { pww_ce_age = global.pww_cd_issued^pww_ce_id }
+	set_temp_variable = { pww_ce_left = global.pww_cd_deadline^pww_ce_id }
+	subtract_from_temp_variable = { pww_ce_left = global.num_days }
+	set_temp_variable = { pww_ce_cred = 50 }
+	var:pww_ce_cl = {
+		if = {
+			limit = { has_variable = pww_credibility }
+			set_temp_variable = { pww_ce_cred = pww_credibility }
+		}
+	}
+	set_temp_variable = { pww_ce_tdem = 0 }
+	var:pww_ce_tg = {
+		if = {
+			limit = { has_government = democratic }
+			set_temp_variable = { pww_ce_tdem = 1 }
+		}
+		set_temp_variable = { pww_ce_tstab = has_stability }
+		set_temp_variable = { pww_ce_tws = has_war_support }
+		set_temp_variable = { pww_ce_tdesp = pww_desp_max }
+		set_temp_variable = { pww_ce_tenergy = energy_ratio }
+	}
+	set_temp_variable = { pww_ce_emb = 0 }
+	if = {
+		limit = { var:pww_ce_tg = { var:pww_ce_cl = { is_embargoing = PREV } } }
+		set_temp_variable = { pww_ce_emb = 1 }
+	}
+
+	pww_coer_eval_patron = yes
+	pww_coer_eval_force = yes
+	pww_coer_quarantine_tick = yes
+	pww_coer_join_tick = yes
+	pww_coer_eval_levers = yes
+	pww_coer_eval_resist = yes
+	pww_coer_strangle_tick = yes
+	pww_coer_eval_state = yes
+	pww_coer_save_reasons = yes
+	pww_coer_force_upkeep = yes
+
+	set_variable = { global.pww_cd_prev_net^pww_ce_id = global.pww_cd_net^pww_ce_id }
+	set_variable = { global.pww_cd_p^pww_ce_id = pww_ce_p }
+	set_variable = { global.pww_cd_r^pww_ce_id = pww_ce_r }
+	set_variable = { global.pww_cd_net^pww_ce_id = pww_ce_net }
+	set_variable = { global.pww_cd_lever^pww_ce_id = pww_ce_lever }
+	add_to_variable = { global.pww_coer_rev = 1 }
+
+	if = {
+		limit = { has_global_flag = pww_coer_debug }
+		log = "[GetDateText] PWW_COER eval id=[?pww_ce_id] [?pww_ce_cl.GetTag]->[?pww_ce_tg.GetTag] state=[?global.pww_cd_tstate^pww_ce_id] P=[?pww_ce_p|1] R=[?pww_ce_r|1] net=[?pww_ce_net|1] lever=[?pww_ce_lever|1] force=[?global.pww_cd_force_pts^pww_ce_id|1] raw=[?global.pww_cd_fraw^pww_ce_id|1] ramp=[?global.pww_cd_framp^pww_ce_id|0] ships=[?pww_ce_ships|0]/[?pww_ce_tships|0] for=[?global.pww_cd_for0^pww_ce_id],[?global.pww_cd_for1^pww_ce_id],[?global.pww_cd_for2^pww_ce_id],[?global.pww_cd_for3^pww_ce_id] hold=[?global.pww_cd_hold0^pww_ce_id],[?global.pww_cd_hold1^pww_ce_id],[?global.pww_cd_hold2^pww_ce_id],[?global.pww_cd_hold3^pww_ce_id] route=[?global.pww_cd_route^pww_ce_id] quar=[?global.pww_cd_quar^pww_ce_id] strangle=[?global.pww_cd_strangle^pww_ce_id|0] channel=[?global.pww_cd_channel^pww_ce_id]"
+	}
+
+	# AI moves after the readout is current
+	if = {
+		limit = { check_variable = { global.pww_cd_status^pww_ce_id = 0 } }
+		pww_coer_ai_target = yes
+	}
+	if = {
+		limit = { check_variable = { global.pww_cd_status^pww_ce_id = 0 } }
+		pww_coer_ai_claimant = yes
+	}
+}
+
+###############################################################################
+# Reason accumulation helpers
+###############################################################################
+
+# In: pww_ca_r (for-reason id), pww_ca_w (weight), pww_ca_lever (1 = a
+# non-force lever). Adds to P (and lever points) and to the display list.
+pww_coer_add_for = {
+	if = {
+		limit = { check_variable = { pww_ca_w > 0 } }
+		add_to_temp_variable = { pww_ce_p = pww_ca_w }
+		if = {
+			limit = { check_variable = { pww_ca_lever = 1 } }
+			add_to_temp_variable = { pww_ce_lever = pww_ca_w }
+		}
+		add_to_temp_array = { pww_ce_fid = pww_ca_r }
+		add_to_temp_array = { pww_ce_fw = pww_ca_w }
+	}
+	set_temp_variable = { pww_ca_lever = 0 }
+}
+
+# In: pww_ca_r (holding-out reason id), pww_ca_w, pww_ca_show (1 = display
+# only, not added to R).
+pww_coer_add_hold = {
+	if = {
+		limit = { check_variable = { pww_ca_w > 0 } }
+		if = {
+			limit = { check_variable = { pww_ca_show = 0 } }
+			add_to_temp_variable = { pww_ce_r = pww_ca_w }
+		}
+		add_to_temp_array = { pww_ce_hid = pww_ca_r }
+		add_to_temp_array = { pww_ce_hw = pww_ca_w }
+	}
+	set_temp_variable = { pww_ca_show = 0 }
+}
+
+###############################################################################
+# Patron, force, levers, resistance
+###############################################################################
+
+# Patron pledge (diplomacy lane), guarantors, factions. Sets pww_ce_pledge,
+# pww_ce_guar, pww_ce_fac and the record's patron.
+pww_coer_eval_patron = {
+	set_temp_variable = { pww_ce_pledge = 0 }
+	set_temp_variable = { pww_ce_guar = 0 }
+	set_temp_variable = { pww_ce_fac = 0 }
+	set_temp_variable = { pww_ce_pat = 0 }
+	var:pww_ce_tg = {
+		if = {
+			limit = { has_variable = pww_patron_pledge_strength }
+			set_temp_variable = { pww_ce_pledge = pww_patron_pledge_strength }
+		}
+		if = {
+			limit = {
+				has_variable = pww_patron_pledge_patron
+				check_variable = { pww_ce_pledge > 0 }
+			}
+			set_temp_variable = { pww_ce_pat = pww_patron_pledge_patron }
+		}
+		random_country = {
+			limit = {
+				is_major = yes
+				has_guaranteed = PREV
+				NOT = { check_variable = { pww_ce_cl = THIS } }
+			}
+			set_temp_variable = { pww_ce_guar = 1 }
+			if = {
+				limit = { check_variable = { pww_ce_pat = 0 } }
+				set_temp_variable = { pww_ce_pat = THIS }
+			}
+		}
+		if = {
+			limit = {
+				is_in_faction = yes
+				var:pww_ce_cl = { NOT = { is_in_faction_with = PREV } }
+			}
+			set_temp_variable = { pww_ce_fac = 1 }
+		}
+	}
+	clamp_temp_variable = { var = pww_ce_pledge min = 0 max = 100 }
+	if = {
+		limit = { NOT = { check_variable = { pww_ce_pat = 0 } } }
+		set_variable = { global.pww_cd_patron^pww_ce_id = pww_ce_pat }
+	}
+	if = {
+		limit = { check_variable = { pww_ce_pledge > global.pww_cd_pledge_max^pww_ce_id } }
+		set_variable = { global.pww_cd_pledge_max^pww_ce_id = pww_ce_pledge }
+	}
+}
+
+# Committed force: measure, ramp, points, reasons, leak. Also measures the
+# naval balance for a quarantine (pww_ce_ships, pww_ce_tships, pww_ce_eff).
+pww_coer_eval_force = {
+	set_temp_variable = { pww_ce_ships = 0 }
+	set_temp_variable = { pww_ce_tships = 0 }
+	set_temp_variable = { pww_ce_eff = 0 }
+	set_temp_variable = { pww_ce_raw = 0 }
+	if = {
+		limit = {
+			OR = {
+				check_variable = { pww_ce_ft = 1 }
+				check_variable = { pww_ce_quar > 0 }
+			}
+		}
+		var:pww_ce_cl = { pww_coer_measure_ships = yes }
+		set_temp_variable = { pww_ce_ships = pww_cms_n }
+		var:pww_ce_tg = { pww_coer_measure_ships = yes }
+		set_temp_variable = { pww_ce_tships = pww_cms_n }
+		set_temp_variable = { pww_ce_half = pww_ce_tships }
+		multiply_temp_variable = { pww_ce_half = 0.5 }
+		set_temp_variable = { pww_ce_eff = pww_ce_ships }
+		subtract_from_temp_variable = { pww_ce_eff = pww_ce_half }
+		clamp_temp_variable = { var = pww_ce_eff min = 0 max = 1000 }
+	}
+	if = {
+		limit = { check_variable = { pww_ce_ft = 1 } }
+		set_temp_variable = { pww_ce_raw = pww_ce_eff }
+		multiply_temp_variable = { pww_ce_raw = 3 }
+		clamp_temp_variable = { var = pww_ce_raw min = 0 max = 60 }
+		set_temp_variable = { pww_ce_rdays = global.pww_coer_c_ramp_naval }
+	}
+	else_if = {
+		limit = { check_variable = { pww_ce_ft = 2 } }
+		var:pww_ce_cl = { pww_coer_measure_planes = yes }
+		set_temp_variable = { pww_ce_ships = pww_cmp_n }
+		set_temp_variable = { pww_ce_raw = pww_cmp_n }
+		divide_temp_variable = { pww_ce_raw = 3 }
+		clamp_temp_variable = { var = pww_ce_raw min = 0 max = 45 }
+		set_temp_variable = { pww_ce_rdays = global.pww_coer_c_ramp_air }
+	}
+	else_if = {
+		limit = { check_variable = { pww_ce_ft = 3 } }
+		var:pww_ce_cl = { pww_coer_measure_border = yes }
+		set_temp_variable = { pww_ce_ships = pww_cmb_n }
+		var:pww_ce_tg = { set_temp_variable = { pww_ce_tships = num_divisions } }
+		set_temp_variable = { pww_ce_half = pww_ce_tships }
+		multiply_temp_variable = { pww_ce_half = 0.3 }
+		set_temp_variable = { pww_ce_raw = pww_cmb_n }
+		subtract_from_temp_variable = { pww_ce_raw = pww_ce_half }
+		multiply_temp_variable = { pww_ce_raw = 2.5 }
+		clamp_temp_variable = { var = pww_ce_raw min = 0 max = 55 }
+		set_temp_variable = { pww_ce_rdays = global.pww_coer_c_ramp_army }
+	}
+	if = {
+		limit = { check_variable = { pww_ce_ft > 0 } }
+		set_temp_variable = { pww_ce_ramp = global.pww_cd_framp^pww_ce_id }
+		set_temp_variable = { pww_ce_step = 700 }
+		divide_temp_variable = { pww_ce_step = pww_ce_rdays }
+		if = {
+			limit = { check_variable = { pww_ce_raw > 0 } }
+			add_to_temp_variable = { pww_ce_ramp = pww_ce_step }
+			# A loud tool in use: a quiet demand will leak
+			if = {
+				limit = {
+					check_variable = { pww_ce_ch = 0 }
+					check_variable = { global.pww_cd_leak_day^pww_ce_id = 0 }
+				}
+				pww_coer_schedule_leak = yes
+			}
+		}
+		else = {
+			multiply_temp_variable = { pww_ce_step = 2 }
+			subtract_from_temp_variable = { pww_ce_ramp = pww_ce_step }
+		}
+		clamp_temp_variable = { var = pww_ce_ramp min = 0 max = 100 }
+		set_variable = { global.pww_cd_framp^pww_ce_id = pww_ce_ramp }
+		set_variable = { global.pww_cd_fraw^pww_ce_id = pww_ce_raw }
+		set_temp_variable = { pww_ce_fpts = pww_ce_raw }
+		multiply_temp_variable = { pww_ce_fpts = pww_ce_ramp }
+		divide_temp_variable = { pww_ce_fpts = 100 }
+		set_variable = { global.pww_cd_force_pts^pww_ce_id = pww_ce_fpts }
+		set_temp_variable = { pww_ca_w = pww_ce_fpts }
+		# Reason by type and ramp
+		if = {
+			limit = { check_variable = { pww_ce_ft = 1 } }
+			set_temp_variable = { pww_ca_r = 2 }
+			if = {
+				limit = { check_variable = { pww_ce_ramp > 99.9 } }
+				set_temp_variable = { pww_ca_r = 1 }
+			}
+		}
+		else_if = {
+			limit = { check_variable = { pww_ce_ft = 2 } }
+			set_temp_variable = { pww_ca_r = 4 }
+			if = {
+				limit = { var:pww_ce_tg = { var:pww_ce_cl = { is_neighbor_of = PREV } } }
+				set_temp_variable = { pww_ca_r = 3 }
+			}
+		}
+		else = {
+			set_temp_variable = { pww_ca_r = 6 }
+			if = {
+				limit = { check_variable = { pww_ce_ramp > 99.9 } }
+				set_temp_variable = { pww_ca_r = 5 }
+			}
+		}
+		pww_coer_add_for = yes
+		# Holding-out side of the force
+		if = {
+			limit = {
+				check_variable = { pww_ce_raw > 0 }
+				check_variable = { pww_ce_ramp < 50 }
+			}
+			set_temp_variable = { pww_ca_r = 17 }
+			set_temp_variable = { pww_ca_w = 6 }
+			set_temp_variable = { pww_ca_show = 1 }
+			pww_coer_add_hold = yes
+		}
+		if = {
+			limit = {
+				check_variable = { pww_ce_ft = 1 }
+				OR = {
+					check_variable = { pww_ce_raw = 0 }
+					check_variable = { pww_ce_half > pww_ce_eff }
+				}
+			}
+			set_temp_variable = { pww_ca_r = 18 }
+			set_temp_variable = { pww_ca_w = 6 }
+			pww_coer_add_hold = yes
+		}
+		if = {
+			limit = {
+				check_variable = { pww_ce_ft = 2 }
+				check_variable = { pww_ce_raw = 0 }
+			}
+			set_temp_variable = { pww_ca_r = 19 }
+			set_temp_variable = { pww_ca_w = 8 }
+			set_temp_variable = { pww_ca_show = 1 }
+			pww_coer_add_hold = yes
+		}
+		if = {
+			limit = {
+				check_variable = { pww_ce_ft = 3 }
+				check_variable = { pww_ce_raw = 0 }
+			}
+			set_temp_variable = { pww_ca_r = 20 }
+			set_temp_variable = { pww_ca_w = 6 }
+			pww_coer_add_hold = yes
+		}
+	}
+}
+
+# Internal. pww_ce_id quiet: goes public pww_coer_c_leak_days from now.
+pww_coer_schedule_leak = {
+	if = {
+		limit = {
+			check_variable = { global.pww_cd_channel^pww_c_id = 0 }
+			check_variable = { global.pww_cd_leak_day^pww_c_id = 0 }
+		}
+		set_temp_variable = { pww_csl_d = global.num_days }
+		add_to_temp_variable = { pww_csl_d = global.pww_coer_c_leak_days }
+		set_variable = { global.pww_cd_leak_day^pww_c_id = pww_csl_d }
+		if = {
+			limit = { has_global_flag = pww_coer_debug }
+			log = "[GetDateText] PWW_COER leak scheduled id=[?pww_c_id] day=[?pww_csl_d]"
+		}
+	}
+}
+
+# Country scope (whose ships). In: pww_c_id. Out: pww_cms_n, ships over the
+# demand's approach regions (bucketed counts).
+pww_coer_measure_ships = {
+	set_temp_variable = { pww_cms_n = 0 }
+	set_temp_variable = { pww_cms_reg = global.pww_cd_sea0^pww_c_id }
+	pww_coer_ships_in_reg = yes
+	set_temp_variable = { pww_cms_reg = global.pww_cd_sea1^pww_c_id }
+	pww_coer_ships_in_reg = yes
+	set_temp_variable = { pww_cms_reg = global.pww_cd_sea2^pww_c_id }
+	pww_coer_ships_in_reg = yes
+	set_temp_variable = { pww_cms_reg = global.pww_cd_sea3^pww_c_id }
+	pww_coer_ships_in_reg = yes
+	set_temp_variable = { pww_cms_reg = global.pww_cd_sea4^pww_c_id }
+	pww_coer_ships_in_reg = yes
+	set_temp_variable = { pww_cms_reg = global.pww_cd_sea5^pww_c_id }
+	pww_coer_ships_in_reg = yes
+}
+
+# Country scope. In: pww_cms_reg (region id, < 1 skipped). Adds to pww_cms_n.
+pww_coer_ships_in_reg = {
+	if = {
+		limit = { check_variable = { pww_cms_reg > 0 } }
+		set_variable = { global.pww_coer_mreg = pww_cms_reg }
+		if = { limit = { meta_trigger = { text = { ships_in_area = { area = [R] size > 39 } } R = "[?global.pww_coer_mreg|0]" } } add_to_temp_variable = { pww_cms_n = 40 } }
+		else_if = { limit = { meta_trigger = { text = { ships_in_area = { area = [R] size > 29 } } R = "[?global.pww_coer_mreg|0]" } } add_to_temp_variable = { pww_cms_n = 30 } }
+		else_if = { limit = { meta_trigger = { text = { ships_in_area = { area = [R] size > 23 } } R = "[?global.pww_coer_mreg|0]" } } add_to_temp_variable = { pww_cms_n = 24 } }
+		else_if = { limit = { meta_trigger = { text = { ships_in_area = { area = [R] size > 19 } } R = "[?global.pww_coer_mreg|0]" } } add_to_temp_variable = { pww_cms_n = 20 } }
+		else_if = { limit = { meta_trigger = { text = { ships_in_area = { area = [R] size > 15 } } R = "[?global.pww_coer_mreg|0]" } } add_to_temp_variable = { pww_cms_n = 16 } }
+		else_if = { limit = { meta_trigger = { text = { ships_in_area = { area = [R] size > 12 } } R = "[?global.pww_coer_mreg|0]" } } add_to_temp_variable = { pww_cms_n = 13 } }
+		else_if = { limit = { meta_trigger = { text = { ships_in_area = { area = [R] size > 9 } } R = "[?global.pww_coer_mreg|0]" } } add_to_temp_variable = { pww_cms_n = 10 } }
+		else_if = { limit = { meta_trigger = { text = { ships_in_area = { area = [R] size > 7 } } R = "[?global.pww_coer_mreg|0]" } } add_to_temp_variable = { pww_cms_n = 8 } }
+		else_if = { limit = { meta_trigger = { text = { ships_in_area = { area = [R] size > 5 } } R = "[?global.pww_coer_mreg|0]" } } add_to_temp_variable = { pww_cms_n = 6 } }
+		else_if = { limit = { meta_trigger = { text = { ships_in_area = { area = [R] size > 3 } } R = "[?global.pww_coer_mreg|0]" } } add_to_temp_variable = { pww_cms_n = 4 } }
+		else_if = { limit = { meta_trigger = { text = { ships_in_area = { area = [R] size > 1 } } R = "[?global.pww_coer_mreg|0]" } } add_to_temp_variable = { pww_cms_n = 2 } }
+		else_if = { limit = { meta_trigger = { text = { ships_in_area = { area = [R] size > 0 } } R = "[?global.pww_coer_mreg|0]" } } add_to_temp_variable = { pww_cms_n = 1 } }
+	}
+}
+
+# Country scope (claimant). In: pww_c_id. Out: pww_cmp_n, planes based in the
+# demand's air regions (bucketed).
+pww_coer_measure_planes = {
+	set_temp_variable = { pww_cmp_n = 0 }
+	set_temp_variable = { pww_cmp_reg = global.pww_cd_air0^pww_c_id }
+	pww_coer_planes_in_reg = yes
+	set_temp_variable = { pww_cmp_reg = global.pww_cd_air1^pww_c_id }
+	pww_coer_planes_in_reg = yes
+	set_temp_variable = { pww_cmp_reg = global.pww_cd_air2^pww_c_id }
+	pww_coer_planes_in_reg = yes
+	set_temp_variable = { pww_cmp_reg = global.pww_cd_air3^pww_c_id }
+	pww_coer_planes_in_reg = yes
+	set_temp_variable = { pww_cmp_reg = global.pww_cd_air4^pww_c_id }
+	pww_coer_planes_in_reg = yes
+	set_temp_variable = { pww_cmp_reg = global.pww_cd_air5^pww_c_id }
+	pww_coer_planes_in_reg = yes
+	set_temp_variable = { pww_cmp_reg = global.pww_cd_air6^pww_c_id }
+	pww_coer_planes_in_reg = yes
+	set_temp_variable = { pww_cmp_reg = global.pww_cd_air7^pww_c_id }
+	pww_coer_planes_in_reg = yes
+}
+
+pww_coer_planes_in_reg = {
+	if = {
+		limit = { check_variable = { pww_cmp_reg > 0 } }
+		set_variable = { global.pww_coer_mreg = pww_cmp_reg }
+		if = { limit = { meta_trigger = { text = { num_planes_stationed_in_regions = { value > 199 regions = { [R] } } } R = "[?global.pww_coer_mreg|0]" } } add_to_temp_variable = { pww_cmp_n = 200 } }
+		else_if = { limit = { meta_trigger = { text = { num_planes_stationed_in_regions = { value > 99 regions = { [R] } } } R = "[?global.pww_coer_mreg|0]" } } add_to_temp_variable = { pww_cmp_n = 100 } }
+		else_if = { limit = { meta_trigger = { text = { num_planes_stationed_in_regions = { value > 49 regions = { [R] } } } R = "[?global.pww_coer_mreg|0]" } } add_to_temp_variable = { pww_cmp_n = 50 } }
+		else_if = { limit = { meta_trigger = { text = { num_planes_stationed_in_regions = { value > 24 regions = { [R] } } } R = "[?global.pww_coer_mreg|0]" } } add_to_temp_variable = { pww_cmp_n = 25 } }
+		else_if = { limit = { meta_trigger = { text = { num_planes_stationed_in_regions = { value > 9 regions = { [R] } } } R = "[?global.pww_coer_mreg|0]" } } add_to_temp_variable = { pww_cmp_n = 10 } }
+		else_if = { limit = { meta_trigger = { text = { num_planes_stationed_in_regions = { value > 0 regions = { [R] } } } R = "[?global.pww_coer_mreg|0]" } } add_to_temp_variable = { pww_cmp_n = 1 } }
+	}
+}
+
+# Country scope (claimant). Uses temp pww_ce_tg. Out: pww_cmb_n, divisions in
+# the claimant's states that border the target (bucketed per state).
+pww_coer_measure_border = {
+	set_temp_variable = { pww_cmb_n = 0 }
+	every_owned_state = {
+		limit = {
+			any_neighbor_state = { OWNER = { check_variable = { pww_ce_tg = THIS } } }
+		}
+		if = { limit = { meta_trigger = { text = { OWNER = { divisions_in_state = { state = [S] size > 9 } } } S = "[THIS.GetID]" } } add_to_temp_variable = { pww_cmb_n = 10 } }
+		else_if = { limit = { meta_trigger = { text = { OWNER = { divisions_in_state = { state = [S] size > 5 } } } S = "[THIS.GetID]" } } add_to_temp_variable = { pww_cmb_n = 6 } }
+		else_if = { limit = { meta_trigger = { text = { OWNER = { divisions_in_state = { state = [S] size > 2 } } } S = "[THIS.GetID]" } } add_to_temp_variable = { pww_cmb_n = 3 } }
+		else_if = { limit = { meta_trigger = { text = { OWNER = { divisions_in_state = { state = [S] size > 0 } } } S = "[THIS.GetID]" } } add_to_temp_variable = { pww_cmb_n = 1 } }
+	}
+}
+
+# Non-force levers and target weakness ('working for you').
+pww_coer_eval_levers = {
+	# Dependency pairs from the ledger (active agreements between the pair)
+	set_temp_variable = { pww_cel_db = 0 }
+	set_temp_variable = { pww_cel_ds = 0 }
+	var:pww_ce_cl = {
+		if = {
+			limit = { check_variable = { pww_ag_ids^num > 0 } }
+			for_each_loop = {
+				array = pww_ag_ids
+				value = pww_cel_ag
+				if = {
+					limit = { check_variable = { global.pww_ag_status^pww_cel_ag = 1 } }
+					if = {
+						limit = { check_variable = { global.pww_ag_seller^pww_cel_ag = pww_ce_tg } }
+						add_to_temp_variable = { pww_cel_db = global.pww_ag_value^pww_cel_ag }
+					}
+					else_if = {
+						limit = { check_variable = { global.pww_ag_buyer^pww_cel_ag = pww_ce_tg } }
+						add_to_temp_variable = { pww_cel_ds = global.pww_ag_value^pww_cel_ag }
+					}
+				}
+			}
+		}
+	}
+	set_temp_variable = { pww_ca_r = 7 }
+	set_temp_variable = { pww_ca_w = pww_cel_db }
+	multiply_temp_variable = { pww_ca_w = 5 }
+	clamp_temp_variable = { var = pww_ca_w min = 0 max = 20 }
+	set_temp_variable = { pww_ca_lever = 1 }
+	pww_coer_add_for = yes
+	set_temp_variable = { pww_ca_r = 8 }
+	set_temp_variable = { pww_ca_w = pww_cel_ds }
+	multiply_temp_variable = { pww_ca_w = 5 }
+	clamp_temp_variable = { var = pww_ca_w min = 0 max = 20 }
+	set_temp_variable = { pww_ca_lever = 1 }
+	pww_coer_add_for = yes
+
+	# Coercion cutoffs still suspended for this demand
+	pww_coer_scan_cutoffs = yes
+	set_temp_variable = { pww_ca_r = 10 }
+	set_temp_variable = { pww_ca_w = pww_csc_oil }
+	set_temp_variable = { pww_ca_lever = 1 }
+	pww_coer_add_for = yes
+	set_temp_variable = { pww_ca_r = 11 }
+	set_temp_variable = { pww_ca_w = pww_csc_coal }
+	set_temp_variable = { pww_ca_lever = 1 }
+	pww_coer_add_for = yes
+	set_temp_variable = { pww_ca_r = 12 }
+	set_temp_variable = { pww_ca_w = pww_csc_metal }
+	set_temp_variable = { pww_ca_lever = 1 }
+	pww_coer_add_for = yes
+	set_temp_variable = { pww_ca_r = 13 }
+	set_temp_variable = { pww_ca_w = pww_csc_rubber }
+	set_temp_variable = { pww_ca_lever = 1 }
+	pww_coer_add_for = yes
+	set_temp_variable = { pww_ca_r = 16 }
+	set_temp_variable = { pww_ca_w = pww_csc_market }
+	set_temp_variable = { pww_ca_lever = 1 }
+	pww_coer_add_for = yes
+
+	# Energy shortage (a lever only together with a coal cutoff)
+	if = {
+		limit = { check_variable = { pww_ce_tenergy < 0.9 } }
+		set_temp_variable = { pww_ca_r = 14 }
+		set_temp_variable = { pww_ca_w = 0.9 }
+		subtract_from_temp_variable = { pww_ca_w = pww_ce_tenergy }
+		multiply_temp_variable = { pww_ca_w = 40 }
+		if = {
+			limit = { check_variable = { pww_csc_coal > 0 } }
+			set_temp_variable = { pww_ca_lever = 1 }
+		}
+		pww_coer_add_for = yes
+	}
+
+	# Embargo (any embargo the claimant holds on the target)
+	if = {
+		limit = { check_variable = { pww_ce_emb = 1 } }
+		set_temp_variable = { pww_ca_r = 18 }
+		set_temp_variable = { pww_ca_w = pww_ce_tdesp }
+		multiply_temp_variable = { pww_ca_w = 0.15 }
+		add_to_temp_variable = { pww_ca_w = 10 }
+		set_temp_variable = { pww_ca_lever = 1 }
+		pww_coer_add_for = yes
+	}
+	# Join our embargo: complying third parties
+	if = {
+		limit = { check_variable = { pww_cjt_ok > 0 } }
+		set_temp_variable = { pww_ca_r = 19 }
+		set_temp_variable = { pww_ca_w = pww_cjt_ok }
+		multiply_temp_variable = { pww_ca_w = 5 }
+		clamp_temp_variable = { var = pww_ca_w min = 0 max = 15 }
+		set_temp_variable = { pww_ca_lever = 1 }
+		pww_coer_add_for = yes
+	}
+	# Quarantine holding
+	if = {
+		limit = { check_variable = { global.pww_cd_quar^pww_ce_id = 1 } }
+		set_temp_variable = { pww_ca_r = 20 }
+		set_temp_variable = { pww_ca_w = 18 }
+		set_temp_variable = { pww_ca_lever = 1 }
+		pww_coer_add_for = yes
+	}
+	# Strangulation
+	if = {
+		limit = { check_variable = { global.pww_cd_strangle^pww_ce_id > 19.9 } }
+		set_temp_variable = { pww_ca_r = 21 }
+		set_temp_variable = { pww_ca_w = global.pww_cd_strangle^pww_ce_id }
+		divide_temp_variable = { pww_ca_w = 5 }
+		set_temp_variable = { pww_ca_lever = 1 }
+		pww_coer_add_for = yes
+	}
+	# Patrons
+	set_temp_variable = { pww_cel_pm = global.pww_cd_pledge_max^pww_ce_id }
+	set_temp_variable = { pww_cel_p2 = pww_ce_pledge }
+	multiply_temp_variable = { pww_cel_p2 = 2 }
+	if = {
+		limit = {
+			check_variable = { pww_cel_pm > 19.9 }
+			check_variable = { pww_cel_p2 < pww_cel_pm }
+		}
+		set_temp_variable = { pww_ca_r = 23 }
+		set_temp_variable = { pww_ca_w = 12 }
+		set_temp_variable = { pww_ca_lever = 1 }
+		pww_coer_add_for = yes
+	}
+	if = {
+		limit = {
+			check_variable = { pww_ce_pledge > 0 }
+			check_variable = { global.pww_cd_quar^pww_ce_id = 1 }
+		}
+		set_temp_variable = { pww_ca_r = 24 }
+		set_temp_variable = { pww_ca_w = 8 }
+		set_temp_variable = { pww_ca_lever = 1 }
+		pww_coer_add_for = yes
+	}
+	if = {
+		limit = {
+			check_variable = { pww_ce_pledge = 0 }
+			check_variable = { pww_ce_guar = 0 }
+			check_variable = { pww_ce_fac = 0 }
+		}
+		set_temp_variable = { pww_ca_r = 25 }
+		set_temp_variable = { pww_ca_w = 6 }
+		pww_coer_add_for = yes
+	}
+	# Rival out of the bidding
+	if = {
+		limit = {
+			NOT = { check_variable = { global.pww_cd_rival^pww_ce_id = 0 } }
+			check_variable = { global.pww_cd_rival_on^pww_ce_id = 0 }
+		}
+		set_temp_variable = { pww_ca_r = 26 }
+		set_temp_variable = { pww_ca_w = 8 }
+		set_temp_variable = { pww_ca_lever = 1 }
+		pww_coer_add_for = yes
+	}
+	# Fig leaf offered by the claimant
+	if = {
+		limit = {
+			check_variable = { pww_ce_fig > 0 }
+			check_variable = { pww_ce_tfig = 0 }
+		}
+		set_temp_variable = { pww_ca_r = 27 }
+		if = {
+			limit = { check_variable = { pww_ce_fig = 4 } }
+			set_temp_variable = { pww_ca_r = 28 }
+		}
+		set_temp_variable = { pww_ca_w = 8 }
+		set_temp_variable = { pww_ca_lever = 1 }
+		pww_coer_add_for = yes
+	}
+	# Quiet channel lets a dictatorship bend
+	if = {
+		limit = {
+			check_variable = { pww_ce_ch = 0 }
+			check_variable = { pww_ce_tdem = 0 }
+		}
+		set_temp_variable = { pww_ca_r = 29 }
+		set_temp_variable = { pww_ca_w = 5 }
+		pww_coer_add_for = yes
+	}
+	# Credibility
+	if = {
+		limit = { check_variable = { pww_ce_cred > 65 } }
+		set_temp_variable = { pww_ca_r = 30 }
+		set_temp_variable = { pww_ca_w = pww_ce_cred }
+		subtract_from_temp_variable = { pww_ca_w = 50 }
+		divide_temp_variable = { pww_ca_w = 3 }
+		pww_coer_add_for = yes
+	}
+	# Target at war elsewhere
+	if = {
+		limit = {
+			var:pww_ce_tg = { has_war = yes }
+		}
+		set_temp_variable = { pww_ca_r = 31 }
+		set_temp_variable = { pww_ca_w = 15 }
+		pww_coer_add_for = yes
+	}
+	# Low stability
+	if = {
+		limit = { check_variable = { pww_ce_tstab < 0.4 } }
+		set_temp_variable = { pww_ca_r = 32 }
+		set_temp_variable = { pww_ca_w = 0.4 }
+		subtract_from_temp_variable = { pww_ca_w = pww_ce_tstab }
+		multiply_temp_variable = { pww_ca_w = 60 }
+		pww_coer_add_for = yes
+	}
+	# Desperation (idle plants)
+	if = {
+		limit = { check_variable = { pww_ce_tdesp > 39.9 } }
+		set_temp_variable = { pww_ca_r = 33 }
+		set_temp_variable = { pww_ca_w = pww_ce_tdesp }
+		subtract_from_temp_variable = { pww_ca_w = 30 }
+		divide_temp_variable = { pww_ca_w = 3 }
+		pww_coer_add_for = yes
+	}
+	# Clock
+	if = {
+		limit = { check_variable = { pww_ce_left < 22 } }
+		set_temp_variable = { pww_ca_r = 34 }
+		set_temp_variable = { pww_ca_w = 6 }
+		pww_coer_add_for = yes
+	}
+}
+
+# Resistance ('why they are holding out').
+pww_coer_eval_resist = {
+	# Patron pledge (halved when a quarantine makes it undeliverable)
+	if = {
+		limit = { check_variable = { pww_ce_pledge > 0 } }
+		set_temp_variable = { pww_ca_r = 1 }
+		set_temp_variable = { pww_ca_w = pww_ce_pledge }
+		multiply_temp_variable = { pww_ca_w = 0.4 }
+		if = {
+			limit = { check_variable = { global.pww_cd_quar^pww_ce_id = 1 } }
+			multiply_temp_variable = { pww_ca_w = 0.5 }
+		}
+		pww_coer_add_hold = yes
+	}
+	if = {
+		limit = { check_variable = { pww_ce_guar = 1 } }
+		set_temp_variable = { pww_ca_r = 2 }
+		set_temp_variable = { pww_ca_w = 15 }
+		pww_coer_add_hold = yes
+	}
+	if = {
+		limit = { check_variable = { pww_ce_fac = 1 } }
+		set_temp_variable = { pww_ca_r = 3 }
+		set_temp_variable = { pww_ca_w = 18 }
+		pww_coer_add_hold = yes
+	}
+	# Alternatives (open-market buyers), shrinking under embargoes
+	if = {
+		limit = { check_variable = { pww_ce_ty < 2 } }
+		set_temp_variable = { pww_ca_r = 4 }
+		set_temp_variable = { pww_ca_w = 8 }
+		if = {
+			limit = { check_variable = { pww_ce_emb = 1 } }
+			set_temp_variable = { pww_ca_w = 4 }
+		}
+		if = {
+			limit = { check_variable = { pww_cjt_ok > 1 } }
+			set_temp_variable = { pww_ca_w = 0 }
+		}
+		pww_coer_add_hold = yes
+	}
+	# Rival bidding
+	if = {
+		limit = {
+			NOT = { check_variable = { global.pww_cd_rival^pww_ce_id = 0 } }
+			check_variable = { global.pww_cd_rival_on^pww_ce_id = 1 }
+		}
+		set_temp_variable = { pww_ca_r = 5 }
+		set_temp_variable = { pww_ca_w = 10 }
+		pww_coer_add_hold = yes
+	}
+	# Regime: democratic rally against a public ultimatum, dictator pride
+	if = {
+		limit = {
+			check_variable = { pww_ce_ch = 1 }
+			check_variable = { pww_ce_tdem = 1 }
+		}
+		set_temp_variable = { pww_ca_r = 7 }
+		set_temp_variable = { pww_ca_w = global.pww_cd_loud^pww_ce_id }
+		multiply_temp_variable = { pww_ca_w = 3 }
+		add_to_temp_variable = { pww_ca_w = 8 }
+		pww_coer_add_hold = yes
+	}
+	if = {
+		limit = {
+			check_variable = { pww_ce_ch = 1 }
+			check_variable = { pww_ce_tdem = 0 }
+		}
+		set_temp_variable = { pww_ca_r = 9 }
+		set_temp_variable = { pww_ca_w = 14 }
+		pww_coer_add_hold = yes
+	}
+	# Democratic coercer acting loud without a pretext
+	if = {
+		limit = {
+			var:pww_ce_cl = { has_government = democratic }
+			OR = {
+				check_variable = { pww_ce_ch = 1 }
+				check_variable = { global.pww_cd_loud^pww_ce_id > 0 }
+			}
+			var:pww_ce_cl = { NOT = { is_in_array = { pww_coer_pretexts = pww_ce_tg } } }
+		}
+		set_temp_variable = { pww_ca_r = 8 }
+		set_temp_variable = { pww_ca_w = 10 }
+		pww_coer_add_hold = yes
+	}
+	# Demand size
+	set_temp_variable = { pww_ca_r = 10 }
+	set_temp_variable = { pww_ca_w = 6 }
+	if = {
+		limit = { check_variable = { pww_ce_ty = 1 } }
+		set_temp_variable = { pww_ca_w = 12 }
+	}
+	else_if = {
+		limit = { check_variable = { pww_ce_ty = 0 } }
+		set_temp_variable = { pww_crs_res = global.pww_cd_res^pww_ce_id }
+		var:pww_ce_tg = { pww_coer_get_produced = yes }
+		set_temp_variable = { pww_cer_share = global.pww_cd_amount^pww_ce_id }
+		divide_temp_variable = { var = pww_cer_share value = pww_crs_out if_zero = 1 }
+		set_temp_variable = { pww_ca_w = 3 }
+		if = {
+			limit = { check_variable = { pww_cer_share > 0.499 } }
+			set_temp_variable = { pww_ca_w = 15 }
+		}
+		else_if = {
+			limit = { check_variable = { pww_cer_share > 0.249 } }
+			set_temp_variable = { pww_ca_w = 8 }
+		}
+	}
+	pww_coer_add_hold = yes
+	# Humiliation (sovereignty and publicity), cut by a fig leaf
+	set_temp_variable = { pww_ca_w = 0 }
+	if = {
+		limit = { check_variable = { pww_ce_ty = 1 } }
+		add_to_temp_variable = { pww_ca_w = 8 }
+	}
+	if = {
+		limit = { check_variable = { pww_ce_ch = 1 } }
+		add_to_temp_variable = { pww_ca_w = 6 }
+	}
+	if = {
+		limit = {
+			check_variable = { pww_ce_fig > 0 }
+			check_variable = { pww_ce_tfig = 0 }
+		}
+		multiply_temp_variable = { pww_ca_w = 0.4 }
+	}
+	set_temp_variable = { pww_ca_r = 11 }
+	pww_coer_add_hold = yes
+	# Recent humiliation
+	if = {
+		limit = { var:pww_ce_tg = { has_country_flag = pww_coer_humiliated } }
+		set_temp_variable = { pww_ca_r = 12 }
+		set_temp_variable = { pww_ca_w = 15 }
+		pww_coer_add_hold = yes
+	}
+	# Pride: stability and war support
+	if = {
+		limit = { check_variable = { pww_ce_tstab > 0.6 } }
+		set_temp_variable = { pww_ca_r = 13 }
+		set_temp_variable = { pww_ca_w = pww_ce_tstab }
+		subtract_from_temp_variable = { pww_ca_w = 0.5 }
+		multiply_temp_variable = { pww_ca_w = 40 }
+		pww_coer_add_hold = yes
+	}
+	if = {
+		limit = { check_variable = { pww_ce_tws > 0.5 } }
+		set_temp_variable = { pww_ca_r = 14 }
+		set_temp_variable = { pww_ca_w = pww_ce_tws }
+		subtract_from_temp_variable = { pww_ca_w = 0.4 }
+		multiply_temp_variable = { pww_ca_w = 40 }
+		pww_coer_add_hold = yes
+	}
+	if = {
+		limit = { check_variable = { global.pww_cd_hardened^pww_ce_id = 1 } }
+		set_temp_variable = { pww_ca_r = 15 }
+		set_temp_variable = { pww_ca_w = 20 }
+		pww_coer_add_hold = yes
+	}
+	# Quarantine lapsed recently
+	if = {
+		limit = { check_variable = { global.pww_cd_quar^pww_ce_id = 2 } }
+		set_temp_variable = { pww_cer_d = global.num_days }
+		subtract_from_temp_variable = { pww_cer_d = global.pww_cd_quar_day^pww_ce_id }
+		if = {
+			limit = { check_variable = { pww_cer_d < 30 } }
+			set_temp_variable = { pww_ca_r = 22 }
+			set_temp_variable = { pww_ca_w = 10 }
+			pww_coer_add_hold = yes
+		}
+	}
+	# Join our embargo ignored
+	if = {
+		limit = { check_variable = { pww_cjt_ignored > 0 } }
+		set_temp_variable = { pww_ca_r = 23 }
+		set_temp_variable = { pww_ca_w = 8 }
+		pww_coer_add_hold = yes
+	}
+	# Credibility and Reliability
+	if = {
+		limit = { check_variable = { pww_ce_cred < 35 } }
+		set_temp_variable = { pww_ca_r = 24 }
+		set_temp_variable = { pww_ca_w = 50 }
+		subtract_from_temp_variable = { pww_ca_w = pww_ce_cred }
+		divide_temp_variable = { pww_ca_w = 2 }
+		pww_coer_add_hold = yes
+	}
+	if = {
+		limit = {
+			check_variable = { pww_ce_ty < 2 }
+			var:pww_ce_cl = {
+				has_variable = pww_reliability
+				check_variable = { pww_reliability < 35 }
+			}
+		}
+		set_temp_variable = { pww_ca_r = 25 }
+		set_temp_variable = { pww_ca_w = 8 }
+		pww_coer_add_hold = yes
+	}
+	# Regional alarm about the claimant
+	var:pww_ce_tg = { set_temp_variable = { pww_cer_al = pww_alarm@var:pww_ce_cl } }
+	if = {
+		limit = { check_variable = { pww_cer_al > 39.9 } }
+		set_temp_variable = { pww_ca_r = 26 }
+		set_temp_variable = { pww_ca_w = pww_cer_al }
+		divide_temp_variable = { pww_ca_w = 5 }
+		pww_coer_add_hold = yes
+	}
+	# Coercer distracted by a war
+	if = {
+		limit = { var:pww_ce_cl = { has_war = yes } }
+		set_temp_variable = { pww_ca_r = 27 }
+		set_temp_variable = { pww_ca_w = 12 }
+		pww_coer_add_hold = yes
+	}
+	# Energy holding up against a coal cutoff
+	if = {
+		limit = {
+			check_variable = { pww_csc_coal > 0 }
+			check_variable = { pww_ce_tenergy > 0.949 }
+		}
+		set_temp_variable = { pww_ca_r = 29 }
+		set_temp_variable = { pww_ca_w = 6 }
+		pww_coer_add_hold = yes
+	}
+	# The target's own moves
+	if = {
+		limit = {
+			check_variable = { pww_ce_ch = 0 }
+			check_variable = { global.pww_cd_stall^pww_ce_id > 0 }
+		}
+		set_temp_variable = { pww_ca_r = 30 }
+		set_temp_variable = { pww_ca_w = 8 }
+		pww_coer_add_hold = yes
+	}
+	if = {
+		limit = { check_variable = { global.pww_cd_lot^pww_ce_id > 0 } }
+		set_temp_variable = { pww_ca_r = 32 }
+		set_temp_variable = { pww_ca_w = 6 }
+		pww_coer_add_hold = yes
+	}
+	if = {
+		limit = { check_variable = { pww_ce_tfig = 1 } }
+		set_temp_variable = { pww_ca_r = 33 }
+		set_temp_variable = { pww_ca_w = 6 }
+		pww_coer_add_hold = yes
+	}
+	if = {
+		limit = { check_variable = { global.pww_cd_patron_until^pww_ce_id > global.num_days } }
+		set_temp_variable = { pww_ca_r = 34 }
+		set_temp_variable = { pww_ca_w = 10 }
+		pww_coer_add_hold = yes
+	}
+	# Ceiling by channel
+	set_temp_variable = { pww_cer_cap = global.pww_coer_c_public_cap }
+	if = {
+		limit = { check_variable = { pww_ce_ch = 0 } }
+		set_temp_variable = { pww_cer_cap = global.pww_coer_c_quiet_cap }
+	}
+	if = {
+		limit = { check_variable = { pww_ce_p > pww_cer_cap } }
+		set_temp_variable = { pww_ce_p = pww_cer_cap }
+		if = {
+			limit = { check_variable = { pww_ce_ch = 0 } }
+			set_temp_variable = { pww_ca_r = 21 }
+			set_temp_variable = { pww_ca_w = 20 }
+			set_temp_variable = { pww_ca_show = 1 }
+			pww_coer_add_hold = yes
+		}
+	}
+}
+
+###############################################################################
+# Target state, Cornered, routes to war, intel
+###############################################################################
+
+pww_coer_eval_state = {
+	set_temp_variable = { pww_ce_net = pww_ce_p }
+	subtract_from_temp_variable = { pww_ce_net = pww_ce_r }
+	# Desired state from thresholds
+	set_temp_variable = { pww_ces_d = 0 }
+	if = { limit = { check_variable = { pww_ce_net > global.pww_coer_c_t4 } } set_temp_variable = { pww_ces_d = 4 } }
+	else_if = { limit = { check_variable = { pww_ce_net > global.pww_coer_c_t3 } } set_temp_variable = { pww_ces_d = 3 } }
+	else_if = { limit = { check_variable = { pww_ce_net > global.pww_coer_c_t2 } } set_temp_variable = { pww_ces_d = 2 } }
+	else_if = { limit = { check_variable = { pww_ce_net > global.pww_coer_c_t1 } } set_temp_variable = { pww_ces_d = 1 } }
+	# Hysteresis on the way down
+	if = {
+		limit = { check_variable = { pww_ces_d < pww_ce_s } }
+		set_temp_variable = { pww_ces_h = pww_ce_net }
+		add_to_temp_variable = { pww_ces_h = global.pww_coer_c_hyst }
+		set_temp_variable = { pww_ces_d2 = 0 }
+		if = { limit = { check_variable = { pww_ces_h > global.pww_coer_c_t4 } } set_temp_variable = { pww_ces_d2 = 4 } }
+		else_if = { limit = { check_variable = { pww_ces_h > global.pww_coer_c_t3 } } set_temp_variable = { pww_ces_d2 = 3 } }
+		else_if = { limit = { check_variable = { pww_ces_h > global.pww_coer_c_t2 } } set_temp_variable = { pww_ces_d2 = 2 } }
+		else_if = { limit = { check_variable = { pww_ces_h > global.pww_coer_c_t1 } } set_temp_variable = { pww_ces_d2 = 1 } }
+		if = {
+			limit = { NOT = { check_variable = { pww_ces_d2 < pww_ce_s } } }
+			set_temp_variable = { pww_ces_d = pww_ce_s }
+		}
+	}
+	# Force alone tops out at Wavering
+	if = {
+		limit = {
+			check_variable = { pww_ces_d > 2 }
+			check_variable = { pww_ce_lever < global.pww_coer_c_lever_min }
+		}
+		set_temp_variable = { pww_ces_d = 2 }
+		set_temp_variable = { pww_ca_r = 16 }
+		set_temp_variable = { pww_ca_w = 30 }
+		set_temp_variable = { pww_ca_show = 1 }
+		pww_coer_add_hold = yes
+		if = {
+			limit = { has_global_flag = pww_coer_debug }
+			log = "[GetDateText] PWW_COER force_cap id=[?pww_ce_id] net=[?pww_ce_net|1] lever=[?pww_ce_lever|1]"
+		}
+	}
+	# One step per evaluation (always through Cornered)
+	set_temp_variable = { pww_ces_up = pww_ce_s }
+	add_to_temp_variable = { pww_ces_up = 1 }
+	set_temp_variable = { pww_ces_dn = pww_ce_s }
+	subtract_from_temp_variable = { pww_ces_dn = 1 }
+	if = { limit = { check_variable = { pww_ces_d > pww_ces_up } } set_temp_variable = { pww_ces_d = pww_ces_up } }
+	if = { limit = { check_variable = { pww_ces_d < pww_ces_dn } } set_temp_variable = { pww_ces_d = pww_ces_dn } }
+
+	# Routes to war (computed from Wavering up)
+	set_temp_variable = { pww_ces_route = 0 }
+	if = {
+		limit = { check_variable = { pww_ce_s > 1 } }
+		pww_coer_eval_route = yes
+	}
+	set_variable = { global.pww_cd_route^pww_ce_id = pww_ces_route }
+
+	# Cornered -> Ready: time in Cornered, and an exit when a route is open
+	set_temp_variable = { pww_ces_cdays = 0 }
+	if = {
+		limit = { check_variable = { global.pww_cd_corner_day^pww_ce_id > 0 } }
+		set_temp_variable = { pww_ces_cdays = global.num_days }
+		subtract_from_temp_variable = { pww_ces_cdays = global.pww_cd_corner_day^pww_ce_id }
+	}
+	set_temp_variable = { pww_ces_exit = 0 }
+	if = {
+		limit = {
+			OR = {
+				check_variable = { pww_ce_fig > 0 }
+				check_variable = { pww_ce_tfig = 1 }
+			}
+		}
+		set_temp_variable = { pww_ces_exit = 1 }
+	}
+	if = {
+		limit = {
+			check_variable = { pww_ce_s = 3 }
+			check_variable = { pww_ces_d = 4 }
+			OR = {
+				check_variable = { pww_ces_cdays < global.pww_coer_c_corner_days }
+				AND = {
+					check_variable = { pww_ces_route > 0 }
+					check_variable = { pww_ces_exit = 0 }
+				}
+			}
+		}
+		set_temp_variable = { pww_ces_d = 3 }
+	}
+
+	# Warning and intel lines
+	pww_coer_eval_warnings = yes
+
+	# Apply a shift
+	if = {
+		limit = { NOT = { check_variable = { pww_ces_d = pww_ce_s } } }
+		pww_coer_apply_shift = yes
+	}
+
+	# War route fires after war_days in Cornered with no exit on the table
+	if = {
+		limit = {
+			check_variable = { pww_ces_d = 3 }
+			check_variable = { pww_ces_route > 0 }
+			check_variable = { pww_ces_exit = 0 }
+			check_variable = { global.pww_cd_corner_day^pww_ce_id > 0 }
+			NOT = { check_variable = { pww_ces_cdays < global.pww_coer_c_war_days } }
+		}
+		pww_coer_fire_war_route = yes
+	}
+}
+
+# Sets pww_ces_route (0 none, 1 calculated, 2 desperate).
+pww_coer_eval_route = {
+	set_temp_variable = { pww_cer_pressure_tool = 0 }
+	if = {
+		limit = {
+			OR = {
+				check_variable = { pww_ce_emb = 1 }
+				check_variable = { global.pww_cd_quar^pww_ce_id = 1 }
+				check_variable = { global.pww_cd_cut^pww_ce_id = 1 }
+			}
+		}
+		set_temp_variable = { pww_cer_pressure_tool = 1 }
+	}
+	if = {
+		limit = {
+			check_variable = { pww_cer_pressure_tool = 1 }
+			check_variable = { pww_ce_tdesp > 79.9 }
+		}
+		set_temp_variable = { pww_ces_route = 2 }
+	}
+	else = {
+		var:pww_ce_cl = { set_temp_variable = { pww_cer_cdiv = num_divisions } }
+		var:pww_ce_tg = { set_temp_variable = { pww_cer_tdiv = num_divisions } }
+		multiply_temp_variable = { pww_cer_cdiv = 0.6 }
+		if = {
+			limit = {
+				OR = {
+					check_variable = { global.pww_cd_hardened^pww_ce_id = 1 }
+					check_variable = { pww_ce_pledge > 49.9 }
+					check_variable = { pww_ce_guar = 1 }
+					check_variable = { pww_ce_fac = 1 }
+					check_variable = { pww_cer_tdiv > pww_cer_cdiv }
+				}
+			}
+			set_temp_variable = { pww_ces_route = 1 }
+		}
+	}
+}
+
+# Sets the record's warn (Cornered line) and intel (advance warning) ids.
+pww_coer_eval_warnings = {
+	set_temp_variable = { pww_cew_warn = 0 }
+	if = {
+		limit = { check_variable = { pww_ces_route = 2 } }
+		set_temp_variable = { pww_cew_warn = 10 }
+		if = {
+			limit = { check_variable = { global.pww_cd_quar^pww_ce_id = 1 } }
+			set_temp_variable = { pww_cew_warn = 9 }
+		}
+		else_if = {
+			limit = { check_variable = { pww_ce_emb = 1 } }
+			set_temp_variable = { pww_cew_warn = 8 }
+		}
+		else_if = {
+			limit = { var:pww_ce_tg = { check_variable = { pww_desp_oil > 74.9 } } }
+			set_temp_variable = { pww_cew_warn = 7 }
+		}
+		else_if = {
+			limit = { check_variable = { pww_csc_coal > 0 } }
+			set_temp_variable = { pww_cew_warn = 11 }
+		}
+		else_if = {
+			limit = { check_variable = { pww_ce_pledge = 0 } check_variable = { pww_ce_guar = 0 } }
+			set_temp_variable = { pww_cew_warn = 12 }
+		}
+	}
+	else_if = {
+		limit = { check_variable = { pww_ces_route = 1 } }
+		set_temp_variable = { pww_cew_warn = 1 }
+		if = {
+			limit = { check_variable = { global.pww_cd_hardened^pww_ce_id = 1 } }
+			set_temp_variable = { pww_cew_warn = 4 }
+		}
+		else_if = {
+			limit = {
+				OR = {
+					check_variable = { pww_ce_pledge > 49.9 }
+					check_variable = { pww_ce_guar = 1 }
+				}
+			}
+			set_temp_variable = { pww_cew_warn = 2 }
+		}
+		else_if = {
+			limit = { check_variable = { pww_ce_fac = 1 } }
+			set_temp_variable = { pww_cew_warn = 6 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { pww_ce_ch = 1 }
+				check_variable = { pww_ce_tdem = 0 }
+			}
+			set_temp_variable = { pww_cew_warn = 5 }
+		}
+		else_if = {
+			limit = { var:pww_ce_tg = { var:pww_ce_cl = { is_neighbor_of = PREV } } }
+			set_temp_variable = { pww_cew_warn = 3 }
+		}
+	}
+	else = {
+		# No route: the decision prompts
+		set_temp_variable = { pww_cew_warn = 13 }
+		if = {
+			limit = { check_variable = { global.pww_cd_lot^pww_ce_id > 0 } }
+			set_temp_variable = { pww_cew_warn = 15 }
+		}
+		else_if = {
+			limit = { NOT = { check_variable = { global.pww_cd_patron^pww_ce_id = 0 } } }
+			set_temp_variable = { pww_cew_warn = 17 }
+		}
+		else_if = {
+			limit = { check_variable = { pww_ce_ch = 1 } }
+			set_temp_variable = { pww_cew_warn = 14 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { pww_ce_pledge = 0 }
+				check_variable = { pww_ce_guar = 0 }
+				check_variable = { pww_ce_fac = 0 }
+			}
+			set_temp_variable = { pww_cew_warn = 16 }
+		}
+	}
+	set_variable = { global.pww_cd_warn^pww_ce_id = pww_cew_warn }
+
+	# Intel line, most urgent first
+	set_temp_variable = { pww_cew_intel = 0 }
+	set_temp_variable = { pww_cew_eta = 0 }
+	set_temp_variable = { pww_cew_delta = pww_ce_net }
+	subtract_from_temp_variable = { pww_cew_delta = global.pww_cd_net^pww_ce_id }
+	if = {
+		limit = {
+			check_variable = { pww_ces_d < 3 }
+			check_variable = { pww_cew_delta > 0.5 }
+			check_variable = { pww_ce_lever > global.pww_coer_c_lever_min }
+		}
+		set_temp_variable = { pww_cew_eta = global.pww_coer_c_t3 }
+		subtract_from_temp_variable = { pww_cew_eta = pww_ce_net }
+		divide_temp_variable = { pww_cew_eta = pww_cew_delta }
+		multiply_temp_variable = { pww_cew_eta = 7 }
+		clamp_temp_variable = { var = pww_cew_eta min = 1 max = 365 }
+	}
+	set_variable = { global.pww_cd_eta^pww_ce_id = pww_cew_eta }
+	if = {
+		limit = { check_variable = { pww_ces_route = 2 } }
+		set_temp_variable = { pww_cew_intel = 5 }
+	}
+	else_if = {
+		limit = { check_variable = { pww_ces_route = 1 } }
+		set_temp_variable = { pww_cew_intel = 4 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { pww_cew_eta > 0 }
+			check_variable = { pww_cew_eta < 11 }
+		}
+		set_temp_variable = { pww_cew_intel = 3 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { pww_cew_eta > 0 }
+			check_variable = { pww_cew_eta < 18 }
+		}
+		set_temp_variable = { pww_cew_intel = 2 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { pww_cew_eta > 0 }
+			check_variable = { pww_cew_eta < 25 }
+		}
+		set_temp_variable = { pww_cew_intel = 1 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { pww_ces_d = 3 }
+			check_variable = { pww_ces_cdays > 6 }
+		}
+		set_temp_variable = { pww_cew_intel = 13 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { pww_ce_ch = 0 }
+			check_variable = { global.pww_cd_leak_day^pww_ce_id > 0 }
+		}
+		set_temp_variable = { pww_cew_intel = 8 }
+	}
+	else_if = {
+		limit = { check_variable = { global.pww_cd_patron_until^pww_ce_id > global.num_days } }
+		set_temp_variable = { pww_cew_intel = 6 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { global.pww_cd_pledge_max^pww_ce_id > 19.9 }
+			check_variable = { pww_cel_p2 < pww_cel_pm }
+		}
+		set_temp_variable = { pww_cew_intel = 7 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { pww_ce_ch = 0 }
+			check_variable = { global.pww_cd_stall^pww_ce_id > 0 }
+		}
+		set_temp_variable = { pww_cew_intel = 10 }
+	}
+	else_if = {
+		limit = { check_variable = { pww_cjt_ignored > 0 } }
+		set_temp_variable = { pww_cew_intel = 14 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { pww_ces_d = 3 }
+			check_variable = { pww_ces_route = 0 }
+		}
+		set_temp_variable = { pww_cew_intel = 9 }
+	}
+	set_variable = { global.pww_cd_intel^pww_ce_id = pww_cew_intel }
+}
+
+# pww_ce_s -> pww_ces_d with its cause.
+pww_coer_apply_shift = {
+	set_temp_variable = { pww_cas_side = 0 }
+	if = {
+		limit = { check_variable = { pww_ces_d < pww_ce_s } }
+		set_temp_variable = { pww_cas_side = 1 }
+	}
+	# Cause: the latest move in the same direction (last 14 days), else the
+	# strongest reason on the side that moved it.
+	set_temp_variable = { pww_cas_cause = 0 }
+	set_temp_variable = { pww_cas_age = global.num_days }
+	subtract_from_temp_variable = { pww_cas_age = global.pww_cd_evt_day^pww_ce_id }
+	if = {
+		limit = {
+			check_variable = { global.pww_cd_evt^pww_ce_id > 0 }
+			check_variable = { pww_cas_age < 15 }
+			check_variable = { global.pww_cd_evt_side^pww_ce_id = pww_cas_side }
+		}
+		set_temp_variable = { pww_cas_cause = global.pww_cd_evt^pww_ce_id }
+		set_variable = { global.pww_cd_evt^pww_ce_id = 0 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { pww_cas_side = 0 }
+			check_variable = { pww_ce_fid^num > 0 }
+		}
+		find_highest_in_array = { array = pww_ce_fw value = pww_cas_v index = pww_cas_i }
+		set_temp_variable = { pww_cas_cause = pww_ce_fid^pww_cas_i }
+	}
+	else_if = {
+		limit = {
+			check_variable = { pww_cas_side = 1 }
+			check_variable = { pww_ce_hid^num > 0 }
+		}
+		find_highest_in_array = { array = pww_ce_hw value = pww_cas_v index = pww_cas_i }
+		set_temp_variable = { pww_cas_cause = pww_ce_hid^pww_cas_i }
+	}
+	set_variable = { global.pww_cd_prev^pww_ce_id = pww_ce_s }
+	set_variable = { global.pww_cd_tstate^pww_ce_id = pww_ces_d }
+	set_variable = { global.pww_cd_cause^pww_ce_id = pww_cas_cause }
+	set_variable = { global.pww_cd_cause_side^pww_ce_id = pww_cas_side }
+	set_variable = { global.pww_cd_shift_day^pww_ce_id = global.num_days }
+	set_temp_variable = { pww_cqp_kind = 2 }
+	set_temp_variable = { pww_cqp_dem = pww_ce_id }
+	set_temp_variable = { pww_cqp_val = pww_ces_d }
+	pww_coer_queue_push = yes
+	if = {
+		limit = { has_global_flag = pww_coer_debug }
+		log = "[GetDateText] PWW_COER shift id=[?pww_ce_id] [?pww_ce_s] -> [?pww_ces_d] cause=[?pww_cas_cause] side=[?pww_cas_side]"
+	}
+	# Cornered bookkeeping
+	if = {
+		limit = { check_variable = { pww_ces_d = 3 } check_variable = { pww_ce_s < 3 } }
+		set_variable = { global.pww_cd_corner_day^pww_ce_id = global.num_days }
+		set_temp_variable = { pww_cqp_kind = 5 }
+		set_temp_variable = { pww_cqp_dem = pww_ce_id }
+		set_temp_variable = { pww_cqp_val = pww_ces_route }
+		pww_coer_queue_push = yes
+		if = {
+			limit = {
+				NOT = { has_global_flag = pww_coer_no_popups }
+				var:pww_ce_cl = { is_ai = no }
+			}
+			set_temp_variable = { pww_cpu_id = pww_ce_id }
+			var:pww_ce_tg = { var:pww_ce_cl = { pww_coer_popup_prep = yes country_event = { id = pww_coer.3 } } }
+		}
+	}
+	if = {
+		limit = { check_variable = { pww_ces_d < 3 } }
+		set_variable = { global.pww_cd_corner_day^pww_ce_id = 0 }
+	}
+	pww_coer_notify_sit = yes
+}
+
+# The target, cornered with a route open and no exit offered, turns to war:
+# a war goal on the claimant plus AI war strategies. No declaration is
+# scripted; a human target decides for itself.
+pww_coer_fire_war_route = {
+	set_variable = { global.pww_cd_route^pww_ce_id = pww_ces_route }
+	var:pww_ce_cl = {
+		var:pww_ce_tg = {
+			if = {
+				limit = { NOT = { has_wargoal_against = PREV } }
+				create_wargoal = { type = topple_government target = PREV expire = 0 }
+			}
+			add_ai_strategy = { type = prepare_for_war id = PREV value = 200 }
+			add_ai_strategy = { type = antagonize id = PREV value = 100 }
+			add_ai_strategy = { type = declare_war id = PREV value = 100 }
+		}
+	}
+	set_temp_variable = { pww_cqp_kind = 6 }
+	set_temp_variable = { pww_cqp_dem = pww_ce_id }
+	set_temp_variable = { pww_cqp_val = pww_ces_route }
+	pww_coer_queue_push = yes
+	if = {
+		limit = { has_global_flag = pww_coer_debug }
+		log = "[GetDateText] PWW_COER war_route id=[?pww_ce_id] route=[?pww_ces_route]"
+	}
+	set_temp_variable = { pww_ce_end_status = 4 }
+	pww_coer_end_demand = yes
+}
+
+# Writes the top four reasons per side into the record.
+pww_coer_save_reasons = {
+	set_temp_variable = { pww_csr_n = 0 }
+	for_loop_effect = {
+		start = 0
+		end = 4
+		value = pww_csr_k
+		set_temp_variable = { pww_csr_id = 0 }
+		if = {
+			limit = { check_variable = { pww_ce_fw^num > 0 } }
+			find_highest_in_array = { array = pww_ce_fw value = pww_csr_v index = pww_csr_i }
+			if = {
+				limit = { check_variable = { pww_csr_v > 0 } }
+				set_temp_variable = { pww_csr_id = pww_ce_fid^pww_csr_i }
+				set_temp_variable = { pww_ce_fw^pww_csr_i = -1 }
+				add_to_temp_variable = { pww_csr_n = 1 }
+			}
+		}
+		if = { limit = { check_variable = { pww_csr_k = 0 } } set_variable = { global.pww_cd_for0^pww_ce_id = pww_csr_id } }
+		else_if = { limit = { check_variable = { pww_csr_k = 1 } } set_variable = { global.pww_cd_for1^pww_ce_id = pww_csr_id } }
+		else_if = { limit = { check_variable = { pww_csr_k = 2 } } set_variable = { global.pww_cd_for2^pww_ce_id = pww_csr_id } }
+		else = { set_variable = { global.pww_cd_for3^pww_ce_id = pww_csr_id } }
+	}
+	set_temp_variable = { pww_csr_total = pww_ce_fid^num }
+	set_variable = { global.pww_cd_nfor^pww_ce_id = pww_csr_total }
+	set_temp_variable = { pww_csr_n = 0 }
+	for_loop_effect = {
+		start = 0
+		end = 4
+		value = pww_csr_k
+		set_temp_variable = { pww_csr_id = 0 }
+		if = {
+			limit = { check_variable = { pww_ce_hw^num > 0 } }
+			find_highest_in_array = { array = pww_ce_hw value = pww_csr_v index = pww_csr_i }
+			if = {
+				limit = { check_variable = { pww_csr_v > 0 } }
+				set_temp_variable = { pww_csr_id = pww_ce_hid^pww_csr_i }
+				set_temp_variable = { pww_ce_hw^pww_csr_i = -1 }
+				add_to_temp_variable = { pww_csr_n = 1 }
+			}
+		}
+		if = { limit = { check_variable = { pww_csr_k = 0 } } set_variable = { global.pww_cd_hold0^pww_ce_id = pww_csr_id } }
+		else_if = { limit = { check_variable = { pww_csr_k = 1 } } set_variable = { global.pww_cd_hold1^pww_ce_id = pww_csr_id } }
+		else_if = { limit = { check_variable = { pww_csr_k = 2 } } set_variable = { global.pww_cd_hold2^pww_ce_id = pww_csr_id } }
+		else = { set_variable = { global.pww_cd_hold3^pww_ce_id = pww_csr_id } }
+	}
+	set_temp_variable = { pww_csr_total = pww_ce_hid^num }
+	set_variable = { global.pww_cd_nhold^pww_ce_id = pww_csr_total }
+}
+
+# Weekly upkeep of the committed force (political power, command power,
+# fuel). Charged while committed, present or not.
+pww_coer_force_upkeep = {
+	if = {
+		limit = { check_variable = { global.pww_cd_ftype^pww_ce_id > 0 } }
+		var:pww_ce_cl = {
+			add_political_power = -1
+			if = {
+				limit = { check_variable = { pww_ce_ft = 3 } }
+				add_command_power = -3
+			}
+			else = {
+				add_command_power = -2
+			}
+			if = {
+				limit = { check_variable = { pww_ce_ft = 1 } }
+				if = {
+					limit = { check_variable = { pww_ce_ships > 19 } }
+					add_fuel = -1000
+				}
+				else_if = {
+					limit = { check_variable = { pww_ce_ships > 9 } }
+					add_fuel = -500
+				}
+				else_if = {
+					limit = { check_variable = { pww_ce_ships > 0 } }
+					add_fuel = -250
+				}
+			}
+			else_if = {
+				limit = {
+					check_variable = { pww_ce_ft = 2 }
+					check_variable = { pww_ce_ships > 0 }
+				}
+				add_fuel = -300
+			}
+		}
+	}
+}
+
+###############################################################################
+# AI moves
+###############################################################################
+
+# The AI target answers the pressure it is under.
+pww_coer_ai_target = {
+	if = {
+		limit = {
+			var:pww_ce_tg = {
+				is_ai = yes
+				NOT = { has_country_flag = pww_coer_no_ai_response }
+			}
+		}
+		set_temp_variable = { pww_cat_s = global.pww_cd_tstate^pww_ce_id }
+		set_temp_variable = { pww_in_demand_id = pww_ce_id }
+		set_temp_variable = { pww_in_response = -1 }
+		if = {
+			limit = { check_variable = { pww_cat_s = 4 } }
+			set_temp_variable = { pww_in_response = 0 }
+		}
+		else_if = {
+			limit = { check_variable = { pww_cat_s = 3 } }
+			if = {
+				limit = {
+					check_variable = { pww_ces_route > 0 }
+					check_variable = { pww_ces_exit = 0 }
+					check_variable = { global.pww_cd_hardened^pww_ce_id = 0 }
+				}
+				set_temp_variable = { pww_in_response = 5 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { pww_ces_route = 0 }
+					check_variable = { global.pww_cd_lot_done^pww_ce_id = 0 }
+				}
+				set_temp_variable = { pww_in_response = 1 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { pww_ces_route = 0 }
+					check_variable = { global.pww_cd_tfig_done^pww_ce_id = 0 }
+					check_variable = { pww_ce_fig = 0 }
+				}
+				set_temp_variable = { pww_in_response = 3 }
+				set_temp_variable = { pww_in_fig_leaf = 2 }
+			}
+		}
+		else_if = {
+			limit = { check_variable = { pww_cat_s = 2 } }
+			if = {
+				limit = {
+					check_variable = { global.pww_cd_patron_until^pww_ce_id = 0 }
+					OR = {
+						check_variable = { pww_ce_pledge > 0 }
+						check_variable = { pww_ce_guar = 1 }
+						check_variable = { pww_ce_fac = 1 }
+					}
+				}
+				set_temp_variable = { pww_in_response = 4 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { pww_ce_ch = 0 }
+					check_variable = { global.pww_cd_stall^pww_ce_id = 0 }
+				}
+				set_temp_variable = { pww_in_response = 7 }
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = { pww_ce_ch = 1 }
+				check_variable = { pww_ce_tdem = 0 }
+				check_variable = { pww_ce_tstab > 0.5 }
+				check_variable = { pww_ce_age > 13 }
+				check_variable = { global.pww_cd_hardened^pww_ce_id = 0 }
+			}
+			set_temp_variable = { pww_in_response = 5 }
+		}
+		if = {
+			limit = { check_variable = { pww_in_response > -1 } }
+			pww_coer_target_respond = yes
+		}
+	}
+}
+
+# The AI claimant escalates along the ladder.
+pww_coer_ai_claimant = {
+	if = {
+		limit = {
+			var:pww_ce_cl = {
+				is_ai = yes
+				NOT = { has_country_flag = pww_coer_no_ai_escalation }
+			}
+		}
+		set_temp_variable = { pww_in_demand_id = pww_ce_id }
+		set_temp_variable = { pww_cac_s = global.pww_cd_tstate^pww_ce_id }
+		# Commit a force after two weeks
+		if = {
+			limit = {
+				check_variable = { global.pww_cd_ftype^pww_ce_id = 0 }
+				check_variable = { pww_ce_age > 13 }
+			}
+			set_temp_variable = { pww_in_force_type = 0 }
+			if = {
+				limit = {
+					check_variable = { global.pww_cd_sea0^pww_ce_id > 0 }
+					var:pww_ce_cl = { check_variable = { num_ships > 9 } }
+				}
+				set_temp_variable = { pww_in_force_type = 1 }
+			}
+			else_if = {
+				limit = { var:pww_ce_tg = { var:pww_ce_cl = { is_neighbor_of = PREV } } }
+				set_temp_variable = { pww_in_force_type = 3 }
+			}
+			else_if = {
+				limit = { var:pww_ce_cl = { check_variable = { num_deployed_planes > 49 } } }
+				set_temp_variable = { pww_in_force_type = 2 }
+			}
+			if = {
+				limit = { check_variable = { pww_in_force_type > 0 } }
+				pww_coer_commit_force = yes
+			}
+		}
+		# Stuck at Wavering or below without a lever: cutoff, else embargo
+		if = {
+			limit = {
+				check_variable = { pww_ce_age > 41 }
+				check_variable = { pww_cac_s < 3 }
+				check_variable = { pww_ce_lever < global.pww_coer_c_lever_min }
+			}
+			set_temp_variable = { pww_in_cut_mode = 0 }
+			set_temp_variable = { pww_in_res = -1 }
+			pww_coer_cutoff = yes
+			if = {
+				limit = {
+					check_variable = { pww_out_result = 0 }
+					check_variable = { pww_ce_emb = 0 }
+				}
+				pww_coer_embargo = yes
+			}
+		}
+		# Quarantine once the squadron holds the approaches
+		if = {
+			limit = {
+				check_variable = { pww_ce_age > 69 }
+				check_variable = { pww_cac_s < 3 }
+				check_variable = { global.pww_cd_quar^pww_ce_id = 0 }
+				check_variable = { global.pww_cd_ftype^pww_ce_id = 1 }
+				check_variable = { pww_ce_eff > 4.9 }
+			}
+			pww_coer_declare_quarantine = yes
+		}
+		# Cornered with a war route open: take the face-saving exit
+		if = {
+			limit = {
+				check_variable = { pww_cac_s = 3 }
+				check_variable = { pww_ces_route > 0 }
+				check_variable = { pww_ce_fig = 0 }
+			}
+			set_temp_variable = { pww_in_response = 2 }
+			set_temp_variable = { pww_in_fig_leaf = 4 }
+			pww_coer_claimant_respond = yes
+		}
+	}
+}

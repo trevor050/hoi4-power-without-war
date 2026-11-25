@@ -1,0 +1,237 @@
+###############################################################################
+# Power Without War: coercion engine, reputation and housekeeping
+#
+# CREDIBILITY (country var pww_credibility, 0..100, seeded 50; this lane owns
+#   every write). Changes:
+#     fold: +8 public, +4 quiet           withdraw: -8 public, -2 quiet
+#     lapsed public demand, followed through within 60 days (embargo, a new
+#       loud demand, or war on the target): +3; not followed through: -10
+#     re-demanding during a provisional suspension: -10
+#     punishing a third party that ignored Join our embargo: +5
+#   Bands (loc pww_rep_cred_band_N): N = round(credibility / 20), 0..4.
+# REGIONAL ALARM (country var pww_alarm@<claimant> on observers, 0..100).
+#   Coercing T raises T's alarm about the claimant by the amount and every
+#   neighbor of T by 60% of it: issue quiet 3 / public 10, going public 7,
+#   embargo 5, Join our embargo 3, quarantine 10, public fold 5.
+#   Decays 2 per month. Majors bordering T that reach 60 get an AI
+#   'protect T' strategy. Bands: pww_rep_alarm_band_N, N = round(alarm/20).
+#   global.pww_coer_claimants lists every country that ever coerced.
+# HUMILIATION: country flag pww_coer_humiliated (365 days after a public
+#   fold, 180 with a fig leaf; none after a quiet fold).
+# PRETEXTS: country array pww_coer_pretexts on the coercer (targets it has a
+#   pretext against). A democracy going loud without one pays 0.02 stability
+#   and war support per loud step and faces the no_pretext reason. Granted
+#   by pww_coer_grant_pretext and automatically when the target nationalizes
+#   an agreement of the coercer (ledger queue, status 6).
+#
+# PUBLIC EFFECTS
+#   pww_coer_cred_add = yes        (country) temp in pww_cc_delta
+#   pww_coer_alarm_raise = yes     temp in pww_ca_cl, pww_ca_tg, pww_ca_amt
+#   pww_coer_grant_pretext = yes   temp in pww_in_claimant, pww_in_target
+###############################################################################
+
+pww_coer_cred_add = {
+	if = {
+		limit = { NOT = { has_variable = pww_credibility } }
+		set_variable = { pww_credibility = 50 }
+	}
+	add_to_variable = { pww_credibility = pww_cc_delta }
+	clamp_variable = { var = pww_credibility min = 0 max = 100 }
+	if = {
+		limit = { has_global_flag = pww_coer_debug }
+		log = "[GetDateText] PWW_COER credibility [THIS.GetTag] [?pww_cc_delta] -> [?pww_credibility]"
+	}
+}
+
+pww_coer_alarm_raise = {
+	if = {
+		limit = { NOT = { is_in_array = { global.pww_coer_claimants = pww_ca_cl } } }
+		add_to_array = { array = global.pww_coer_claimants value = pww_ca_cl }
+	}
+	set_temp_variable = { pww_car_amt = pww_ca_amt }
+	var:pww_ca_tg = { pww_coer_alarm_add_here = yes }
+	multiply_temp_variable = { pww_car_amt = 0.6 }
+	var:pww_ca_tg = {
+		every_neighbor_country = {
+			limit = { NOT = { check_variable = { pww_ca_cl = THIS } } }
+			pww_coer_alarm_add_here = yes
+			if = {
+				limit = {
+					is_ai = yes
+					is_major = yes
+					check_variable = { pww_car_now > 59.9 }
+					var:pww_ca_cl = { NOT = { is_in_faction_with = PREV } }
+				}
+				add_ai_strategy = { type = protect id = PREV value = 25 }
+			}
+		}
+	}
+}
+
+# Country scope (observer). In: pww_ca_cl, pww_car_amt. Out: pww_car_now.
+pww_coer_alarm_add_here = {
+	set_temp_variable = { pww_car_now = pww_alarm@var:pww_ca_cl }
+	add_to_temp_variable = { pww_car_now = pww_car_amt }
+	clamp_temp_variable = { var = pww_car_now min = 0 max = 100 }
+	set_variable = { pww_alarm@var:pww_ca_cl = pww_car_now }
+}
+
+# Internal. In: pww_cpt_cl, pww_cpt_tg. Democratic coercer without a pretext.
+pww_coer_pretext_cost = {
+	var:pww_cpt_cl = {
+		if = {
+			limit = {
+				has_government = democratic
+				NOT = { is_in_array = { pww_coer_pretexts = pww_cpt_tg } }
+			}
+			add_stability = -0.02
+			add_war_support = -0.02
+		}
+	}
+}
+
+pww_coer_grant_pretext = {
+	set_temp_variable = { pww_out_result = 0 }
+	set_temp_variable = { pww_cgp_cl = pww_in_claimant }
+	set_temp_variable = { pww_cgp_tg = pww_in_target }
+	if = {
+		limit = {
+			NOT = { check_variable = { pww_cgp_cl = 0 } }
+			NOT = { check_variable = { pww_cgp_tg = 0 } }
+		}
+		var:pww_cgp_cl = {
+			if = {
+				limit = { NOT = { is_in_array = { pww_coer_pretexts = pww_cgp_tg } } }
+				add_to_array = { array = pww_coer_pretexts value = pww_cgp_tg }
+			}
+		}
+		set_temp_variable = { pww_out_result = 1 }
+	}
+}
+
+###############################################################################
+# Daily and monthly hooks
+###############################################################################
+
+# Country scope, every on_daily.
+pww_coer_on_daily = {
+	if = {
+		limit = { NOT = { has_global_flag = pww_coer_loaded } }
+		pww_coer_init = yes
+	}
+	if = {
+		limit = { NOT = { check_variable = { global.pww_coer_last_day = global.num_days } } }
+		pww_coer_daily_global = yes
+	}
+	if = {
+		limit = { check_variable = { pww_coer_break_emb^num > 0 } }
+		pww_coer_process_break_embargo = yes
+	}
+}
+
+# Country scope, every on_monthly. The first caller at least 28 days after
+# the last run does the monthly work.
+pww_coer_on_monthly = {
+	if = {
+		limit = { has_global_flag = pww_coer_loaded }
+		set_temp_variable = { pww_com_since = global.num_days }
+		subtract_from_temp_variable = { pww_com_since = global.pww_coer_last_month }
+		if = {
+			limit = { check_variable = { pww_com_since > 27 } }
+			set_variable = { global.pww_coer_last_month = global.num_days }
+			pww_coer_monthly_global = yes
+		}
+	}
+}
+
+pww_coer_monthly_global = {
+	# Alarm decay
+	if = {
+		limit = { check_variable = { global.pww_coer_claimants^num > 0 } }
+		every_country = {
+			limit = { exists = yes }
+			for_each_loop = {
+				array = global.pww_coer_claimants
+				value = pww_cmg_c
+				if = {
+					limit = { check_variable = { pww_alarm@var:pww_cmg_c > 0 } }
+					set_temp_variable = { pww_cmg_v = pww_alarm@var:pww_cmg_c }
+					subtract_from_temp_variable = { pww_cmg_v = 2 }
+					clamp_temp_variable = { var = pww_cmg_v min = 0 max = 100 }
+					set_variable = { pww_alarm@var:pww_cmg_c = pww_cmg_v }
+				}
+			}
+		}
+	}
+	# Follow-through on lapsed public demands
+	clear_temp_array = pww_cmg_done
+	if = {
+		limit = { check_variable = { global.pww_coer_follow^num > 0 } }
+		for_each_loop = {
+			array = global.pww_coer_follow
+			value = pww_cmg_id
+			if = {
+				limit = { NOT = { check_variable = { global.pww_cd_follow_until^pww_cmg_id > global.num_days } } }
+				add_to_temp_array = { pww_cmg_done = pww_cmg_id }
+				set_temp_variable = { pww_cmg_cl = global.pww_cd_claimant^pww_cmg_id }
+				set_temp_variable = { pww_cmg_tg = global.pww_cd_target^pww_cmg_id }
+				set_temp_variable = { pww_cc_delta = -10 }
+				if = {
+					limit = {
+						var:pww_cmg_cl = { exists = yes }
+						var:pww_cmg_tg = { exists = yes }
+						OR = {
+							var:pww_cmg_tg = { var:pww_cmg_cl = { is_embargoing = PREV } }
+							var:pww_cmg_tg = { var:pww_cmg_cl = { has_war_with = PREV } }
+							pww_coer_followed_with_loud_demand = yes
+						}
+					}
+					set_temp_variable = { pww_cc_delta = 3 }
+				}
+				if = {
+					limit = { var:pww_cmg_cl = { exists = yes } }
+					var:pww_cmg_cl = { pww_coer_cred_add = yes }
+				}
+				set_variable = { global.pww_cd_follow_until^pww_cmg_id = 0 }
+			}
+		}
+		for_each_loop = {
+			array = pww_cmg_done
+			value = pww_cmg_id
+			remove_from_array = { array = global.pww_coer_follow value = pww_cmg_id }
+		}
+	}
+	pww_coer_poll_ledger_pretexts = yes
+}
+
+# Grants pretexts from the ledger queue: a nationalized agreement (status 6)
+# gives its buyer a pretext against the host (seller).
+pww_coer_poll_ledger_pretexts = {
+	if = {
+		limit = { NOT = { has_variable = global.pww_coer_lq_seen } }
+		set_variable = { global.pww_coer_lq_seen = 0 }
+	}
+	if = {
+		limit = { check_variable = { global.pww_lq_seq^num > 0 } }
+		for_each_loop = {
+			array = global.pww_lq_seq
+			value = pww_cpl_seq
+			index = pww_cpl_i
+			if = {
+				limit = {
+					check_variable = { pww_cpl_seq > global.pww_coer_lq_seen }
+					check_variable = { global.pww_lq_kind^pww_cpl_i = 1 }
+					check_variable = { global.pww_lq_status^pww_cpl_i = 6 }
+				}
+				set_temp_variable = { pww_cpl_ag = global.pww_lq_ag^pww_cpl_i }
+				set_temp_variable = { pww_in_claimant = global.pww_ag_buyer^pww_cpl_ag }
+				set_temp_variable = { pww_in_target = global.pww_ag_seller^pww_cpl_ag }
+				pww_coer_grant_pretext = yes
+			}
+			if = {
+				limit = { check_variable = { pww_cpl_seq > global.pww_coer_lq_seen } }
+				set_variable = { global.pww_coer_lq_seen = pww_cpl_seq }
+			}
+		}
+	}
+}

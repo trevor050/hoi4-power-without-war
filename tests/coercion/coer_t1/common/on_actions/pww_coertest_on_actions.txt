@@ -1,0 +1,24 @@
+# Coercion scenario driver (scratch test, not shipped). GER on_daily.
+# Run: python tools/run_hoi4.py --tag GER --test tests/coercion/coer_t1
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = GER }
+				add_to_variable = { global.pww_ct_day = 1 }
+				if = { limit = { check_variable = { global.pww_ct_day = 2 } } pww_coertest_setup = yes }
+				if = { limit = { check_variable = { global.pww_ct_day > 2 } } pww_coertest_watch = yes }
+				if = { limit = { check_variable = { global.pww_ct_day = 63 } } pww_coertest_check_cap = yes }
+				if = { limit = { check_variable = { global.pww_ct_day = 64 } } pww_coertest_quarantine = yes }
+				if = { limit = { check_variable = { global.pww_ct_day = 65 } } pww_coertest_issue_b = yes }
+				if = { limit = { check_variable = { global.pww_ct_day = 66 } } pww_coertest_embargo_b = yes }
+				if = { limit = { check_variable = { global.pww_ct_day = 67 } } pww_coertest_check_quarantine = yes }
+				if = { limit = { check_variable = { global.pww_ct_day = 90 } } pww_coertest_check_leak = yes }
+				if = { limit = { check_variable = { global.pww_ct_day = 108 } } pww_coertest_after_quarantine = yes }
+				if = { limit = { check_variable = { global.pww_ct_day = 120 } } pww_coertest_check_no_war = yes }
+				if = { limit = { check_variable = { global.pww_ct_day = 121 } } pww_coertest_provisional = yes }
+				if = { limit = { check_variable = { global.pww_ct_day = 123 } } log = "PWW_DONE coer_t1" }
+			}
+		}
+	}
+}

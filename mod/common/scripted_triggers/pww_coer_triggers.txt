@@ -1,0 +1,104 @@
+###############################################################################
+# Power Without War: coercion triggers
+#
+# PUBLIC TRIGGERS
+#   pww_coer_is_loaded = yes                (any) the coercion lane is initialized
+#   pww_coer_demand_is_open = yes           (any) temp pww_c_id is a valid
+#                                           demand id (any status)
+#   pww_coer_demand_is_live = yes           (any) temp pww_c_id is live
+#                                           (status 0 or 5)
+#   pww_coer_target_quarantined = yes       (country) a quarantine holds on it
+#   pww_coer_is_target_of_live_demand = yes (country) THIS is the target of a
+#                                           live demand
+#   pww_coer_has_live_demand_on = yes       (country, claimant) temp pww_in_target
+#                                           is the target of a live demand by THIS
+###############################################################################
+
+pww_coer_is_loaded = {
+	has_global_flag = pww_coer_loaded
+}
+
+pww_coer_demand_is_open = {
+	check_variable = { pww_c_id > -1 }
+	check_variable = { pww_c_id < global.pww_next_demand_id }
+}
+
+pww_coer_demand_is_live = {
+	pww_coer_demand_is_open = yes
+	OR = {
+		check_variable = { global.pww_cd_status^pww_c_id = 0 }
+		check_variable = { global.pww_cd_status^pww_c_id = 5 }
+	}
+}
+
+pww_coer_target_quarantined = {
+	has_country_flag = pww_coer_quarantined
+}
+
+pww_coer_is_target_of_live_demand = {
+	check_variable = { pww_coer_dem_ids^num > 0 }
+	any_of = {
+		array = pww_coer_dem_ids
+		value = pww_ctt_id
+		OR = {
+			check_variable = { global.pww_cd_status^pww_ctt_id = 0 }
+			check_variable = { global.pww_cd_status^pww_ctt_id = 5 }
+		}
+		set_temp_variable = { pww_ctt_t = global.pww_cd_target^pww_ctt_id }
+		check_variable = { pww_ctt_t = THIS }
+	}
+}
+
+pww_coer_has_live_demand_on = {
+	check_variable = { pww_coer_dem_ids^num > 0 }
+	any_of = {
+		array = pww_coer_dem_ids
+		value = pww_ctt_id
+		OR = {
+			check_variable = { global.pww_cd_status^pww_ctt_id = 0 }
+			check_variable = { global.pww_cd_status^pww_ctt_id = 5 }
+		}
+		set_temp_variable = { pww_ctt_t = global.pww_cd_target^pww_ctt_id }
+		check_variable = { pww_ctt_t = pww_in_target }
+		set_temp_variable = { pww_ctt_c = global.pww_cd_claimant^pww_ctt_id }
+		check_variable = { pww_ctt_c = THIS }
+	}
+}
+
+# Internal (monthly follow-through). Temps pww_cmg_id, pww_cmg_cl, pww_cmg_tg:
+# the claimant opened a later demand against the same target that used a
+# loud tool or went public.
+pww_coer_followed_with_loud_demand = {
+	var:pww_cmg_cl = {
+		check_variable = { pww_coer_dem_ids^num > 0 }
+		any_of = {
+			array = pww_coer_dem_ids
+			value = pww_ctf_id
+			check_variable = { pww_ctf_id > pww_cmg_id }
+			set_temp_variable = { pww_ctf_t = global.pww_cd_target^pww_ctf_id }
+			check_variable = { pww_ctf_t = pww_cmg_tg }
+			OR = {
+				check_variable = { global.pww_cd_channel^pww_ctf_id = 1 }
+				check_variable = { global.pww_cd_loud^pww_ctf_id > 0 }
+			}
+		}
+	}
+}
+
+# Any scope. Temps pww_ci_cl / pww_ci_tg. True if a live (status 0) demand
+# already exists for the pair.
+pww_coer_has_live_demand_pair = {
+	var:pww_ci_cl = {
+		check_variable = { pww_coer_dem_ids^num > 0 }
+		any_of = {
+			array = pww_coer_dem_ids
+			value = pww_cip_id
+			check_variable = { global.pww_cd_status^pww_cip_id = 0 }
+			set_temp_variable = { pww_cip_t = global.pww_cd_target^pww_cip_id }
+			check_variable = { pww_cip_t = pww_ci_tg }
+			set_temp_variable = { pww_cip_c = global.pww_cd_claimant^pww_cip_id }
+			check_variable = { pww_cip_c = pww_ci_cl }
+		}
+	}
+}
+

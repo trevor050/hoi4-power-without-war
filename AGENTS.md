@@ -83,6 +83,8 @@ Per-resource country variables use the resource name suffix: `pww_desp_oil`, `pw
 - `send_embargo` works at 0 world tension (one-way, no PP). `break_embargo` only from the sender.
 - Resource rights: output becomes receiver production; granting twice doubles; any owner/controller change destroys it. Delivery to USA silently failed (unexplained): verify delivery after granting.
 - `has_naval_control` is always false in peacetime (needs patrol missions). Use `ships_in_area` (counts ships in port). AI naval strategies don't move fleets in peace.
+- Ships in port count in the port's LAND strategic region for `ships_in_area`, not the adjacent sea. AI fleets return home in peace, so AI naval demonstrations only count docked ships. Use `any_home_area_neighbor_country` for real neighbors (`is_neighbor_of` counts colonies).
+- Unset temp variables read 0: use -1 for "none" ids (e.g. `pww_in_sit_id = -1`).
 - `send_equipment` works. `create_purchase_contract` needs 1..15 civs. `add_equipment_subsidy` effect unverified.
 - Scripted GUI attachment to `trade_tab`, `top_bar`, `diplomacy_target_context` loads cleanly. Scripted diplomatic actions work AI to AI.
 - No script trigger for sea regions adjacent to a state: use offline tables from `tools/map_tables.py` (vanilla and R56). POR tungsten states 112 and 181 in both maps.

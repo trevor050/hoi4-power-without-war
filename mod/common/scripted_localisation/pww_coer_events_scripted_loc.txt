@@ -1,0 +1,29 @@
+###############################################################################
+# Power Without War: coercion popup scripted localisation (hand-written)
+# Reads the recipient's pww_coer_ev_* variables (pww_coer_popup_prep).
+###############################################################################
+
+defined_text = {
+	name = pww_coer_ev_channel_text
+	text = { trigger = { check_variable = { pww_coer_ev_channel = 1 } } localization_key = pww_coer_ev_channel_1 }
+	text = { localization_key = pww_coer_ev_channel_0 }
+}
+
+defined_text = {
+	name = pww_coer_ev_what_text
+	text = { trigger = { check_variable = { pww_coer_ev_type = 0 } } localization_key = pww_coer_ev_what_0 }
+	text = { trigger = { check_variable = { pww_coer_ev_type = 1 } } localization_key = pww_coer_ev_what_1 }
+	text = { localization_key = pww_coer_ev_what_2 }
+}
+
+defined_text = {
+	name = pww_coer_ev_res_text
+	text = { trigger = { check_variable = { pww_coer_ev_res = 0 } } localization_key = pww_coer_res_0 }
+	text = { trigger = { check_variable = { pww_coer_ev_res = 1 } } localization_key = pww_coer_res_1 }
+	text = { trigger = { check_variable = { pww_coer_ev_res = 2 } } localization_key = pww_coer_res_2 }
+	text = { trigger = { check_variable = { pww_coer_ev_res = 3 } } localization_key = pww_coer_res_3 }
+	text = { trigger = { check_variable = { pww_coer_ev_res = 4 } } localization_key = pww_coer_res_4 }
+	text = { trigger = { check_variable = { pww_coer_ev_res = 5 } } localization_key = pww_coer_res_5 }
+	text = { trigger = { check_variable = { pww_coer_ev_res = 6 } } localization_key = pww_coer_res_6 }
+	text = { localization_key = pww_coer_res_all }
+}

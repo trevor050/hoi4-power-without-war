@@ -1,0 +1,946 @@
+###############################################################################
+# Power Without War: coercion engine, escalation ladder (design 7.11)
+#
+# PUBLIC EFFECTS (inputs are temp variables; out pww_out_result 1/0 and
+# pww_out_fail)
+#   pww_coer_cutoff = yes
+#     in : pww_in_demand_id, pww_in_cut_mode (0 the claimant's supplies to the
+#          target, 1 the claimant's purchases from the target, 2 both),
+#          pww_in_res (-1 every resource; unset reads 0 = oil, so set it)
+#     Quiet. Suspends the claimant's matching active ledger agreements with
+#     the target (cause 15) until the demand ends. fail 1 bad demand,
+#     2 nothing to cut.
+#   pww_coer_embargo = yes          in: pww_in_demand_id
+#     Loud. send_embargo (works at 0 world tension), 10 PP. fail 2 already
+#     embargoing.
+#   pww_coer_lift_embargo = yes     in: pww_in_demand_id
+#     break_embargo needs ROOT = the sender: queued on the claimant
+#     (country array pww_coer_break_emb) and run on its next on_daily.
+#   pww_coer_join_embargo_ask = yes in: pww_in_demand_id, pww_in_third
+#     Loud. Asks a third party to embargo the target within 30 days.
+#     AI third parties answer at once (subjects and faction members comply;
+#     others comply when their opinion of the claimant is >= 30 and of the
+#     target <= 0, normalized); a human gets a popup. Compliance is checked
+#     with is_embargoing every week. fail 2 bad third, 3 already asked.
+#   pww_coer_join_embargo_reply = yes  in: pww_in_demand_id, pww_in_third,
+#     pww_in_comply (1 comply, 0 ignore)
+#   pww_coer_punish_noncompliance = yes  in: pww_in_demand_id, pww_in_third
+#     The claimant embargoes a third party that ignored the call and cuts
+#     its supplies to it; Credibility +5. fail 2 not an ignoring third.
+#   pww_coer_declare_quarantine = yes  in: pww_in_demand_id
+#     Loud, 25 PP, 2 PP a week. Needs the demand's committed naval force with
+#     at least 5 effective ships in the approaches (own ships present via
+#     ships_in_area, minus half the target's). While it holds, every week the
+#     target's exposed sea agreements are suspended (cause 16). Losing the
+#     ships lapses it and the agreements resume; it holds again when they
+#     return. fail 2 no committed naval force, 3 not enough ships, 4 already.
+#   pww_coer_lift_quarantine = yes  in: pww_in_demand_id
+#
+# EXPOSED SEA AGREEMENT: an active agreement of the target whose counterparty
+#   does not border the target's home area (any_home_area_neighbor_country;
+#   a colonial border is not a land route), or that holds convoys in escrow.
+# FORCE MAJEURE: a quarantine suspension is force majeure for the target's
+#   counterparty (no fault). It does not apply when the counterparty is the
+#   quarantiner, its subject or its faction member: that agreement is a
+#   default by the counterparty (pww_ledger_default, by = counterparty).
+# CASUS BELLI: strangulation (quarantine +10/week, embargo +5/week, +2 per
+#   complying third party, otherwise -5/week) at 60 or more grants the target
+#   a war goal on the claimant once per demand (no war is declared).
+#
+# SUSPENSION REGISTRY (agreements this lane suspended; poll, never edit)
+#   global.pww_cs_ag^n   ledger agreement id
+#   global.pww_cs_dem^n  demand id
+#   global.pww_cs_kind^n 1 cutoff of supplies, 2 quarantine, 3 a type 2
+#                        concession (target cut a third party), 4 punishment
+#                        of a non-complying third party, 5 purchases halted
+#   global.pww_cs_live^n 1 while this lane still holds it suspended
+# JOIN REGISTRY: global.pww_cj_dem / _third / _deadline / _status (0 asked,
+#   1 complying, 2 ignored or broke, 3 punished)
+###############################################################################
+
+###############################################################################
+# Suspension registry
+###############################################################################
+
+# Internal. In: pww_c_id (demand), pww_cs_in_ag, pww_cs_in_kind,
+# pww_cs_in_cause, pww_cs_in_repair (days). Suspends an active agreement and
+# registers it. Out: pww_cs_ok.
+pww_coer_suspend_registered = {
+	set_temp_variable = { pww_cs_ok = 0 }
+	set_temp_variable = { pww_l_ag = pww_cs_in_ag }
+	if = {
+		limit = { pww_ledger_ag_is_active = yes }
+		set_temp_variable = { pww_l_cause = pww_cs_in_cause }
+		set_temp_variable = { pww_l_repair_days = pww_cs_in_repair }
+		clamp_temp_variable = { var = pww_l_repair_days min = 7 max = 1825 }
+		pww_ledger_suspend = yes
+		if = {
+			limit = { check_variable = { pww_l_result = 1 } }
+			set_temp_variable = { pww_cs_ok = 1 }
+			add_to_array = { array = global.pww_cs_ag value = pww_cs_in_ag }
+			add_to_array = { array = global.pww_cs_dem value = pww_c_id }
+			add_to_array = { array = global.pww_cs_kind value = pww_cs_in_kind }
+			add_to_array = { array = global.pww_cs_live value = 1 }
+			if = {
+				limit = { has_global_flag = pww_coer_debug }
+				log = "[GetDateText] PWW_COER suspend ag=[?pww_cs_in_ag] dem=[?pww_c_id] kind=[?pww_cs_in_kind]"
+			}
+		}
+	}
+}
+
+# Internal. In: pww_crg_dem, pww_crg_kind (-1 = every kind except 3).
+# Resumes the agreements this lane suspended for the demand.
+pww_coer_resume_registered = {
+	if = {
+		limit = { check_variable = { global.pww_cs_ag^num > 0 } }
+		for_each_loop = {
+			array = global.pww_cs_ag
+			value = pww_crg_ag
+			index = pww_crg_i
+			if = {
+				limit = {
+					check_variable = { global.pww_cs_live^pww_crg_i = 1 }
+					check_variable = { global.pww_cs_dem^pww_crg_i = pww_crg_dem }
+					OR = {
+						check_variable = { global.pww_cs_kind^pww_crg_i = pww_crg_kind }
+						AND = {
+							check_variable = { pww_crg_kind = -1 }
+							NOT = { check_variable = { global.pww_cs_kind^pww_crg_i = 3 } }
+						}
+					}
+				}
+				set_variable = { global.pww_cs_live^pww_crg_i = 0 }
+				set_temp_variable = { pww_l_ag = pww_crg_ag }
+				if = {
+					limit = { check_variable = { global.pww_ag_status^pww_crg_ag = 2 } }
+					pww_ledger_resume = yes
+					if = {
+						limit = { has_global_flag = pww_coer_debug }
+						log = "[GetDateText] PWW_COER resume ag=[?pww_crg_ag] ok=[?pww_l_result]"
+					}
+				}
+			}
+		}
+	}
+}
+
+# Eval helper. Weights of live cutoffs for pww_ce_id by resource category.
+# Out: pww_csc_oil, pww_csc_coal, pww_csc_metal, pww_csc_rubber,
+# pww_csc_market; sets the record's cut flag.
+pww_coer_scan_cutoffs = {
+	set_temp_variable = { pww_csc_oil = 0 }
+	set_temp_variable = { pww_csc_coal = 0 }
+	set_temp_variable = { pww_csc_metal = 0 }
+	set_temp_variable = { pww_csc_rubber = 0 }
+	set_temp_variable = { pww_csc_market = 0 }
+	set_temp_variable = { pww_csc_any = 0 }
+	if = {
+		limit = { check_variable = { global.pww_cs_ag^num > 0 } }
+		for_each_loop = {
+			array = global.pww_cs_ag
+			value = pww_csc_ag
+			index = pww_csc_i
+			if = {
+				limit = {
+					check_variable = { global.pww_cs_live^pww_csc_i = 1 }
+					check_variable = { global.pww_cs_dem^pww_csc_i = pww_ce_id }
+					check_variable = { global.pww_ag_status^pww_csc_ag = 2 }
+				}
+				set_temp_variable = { pww_csc_k = global.pww_cs_kind^pww_csc_i }
+				set_temp_variable = { pww_crs_res = global.pww_ag_res^pww_csc_ag }
+				var:pww_ce_tg = { pww_coer_get_desp = yes }
+				set_temp_variable = { pww_csc_w = pww_crs_out }
+				multiply_temp_variable = { pww_csc_w = 0.2 }
+				add_to_temp_variable = { pww_csc_w = 8 }
+				if = {
+					limit = { check_variable = { pww_csc_k = 1 } }
+					set_temp_variable = { pww_csc_any = 1 }
+					if = {
+						limit = { check_variable = { pww_crs_res = 0 } }
+						if = { limit = { check_variable = { pww_csc_w > pww_csc_oil } } set_temp_variable = { pww_csc_oil = pww_csc_w } }
+					}
+					else_if = {
+						limit = { check_variable = { pww_crs_res = 6 } }
+						if = { limit = { check_variable = { pww_csc_w > pww_csc_coal } } set_temp_variable = { pww_csc_coal = pww_csc_w } }
+					}
+					else_if = {
+						limit = { check_variable = { pww_crs_res = 2 } }
+						if = { limit = { check_variable = { pww_csc_w > pww_csc_rubber } } set_temp_variable = { pww_csc_rubber = pww_csc_w } }
+					}
+					else = {
+						if = { limit = { check_variable = { pww_csc_w > pww_csc_metal } } set_temp_variable = { pww_csc_metal = pww_csc_w } }
+					}
+				}
+				else_if = {
+					limit = { check_variable = { pww_csc_k = 5 } }
+					set_temp_variable = { pww_csc_any = 1 }
+					if = { limit = { check_variable = { pww_csc_w > pww_csc_market } } set_temp_variable = { pww_csc_market = pww_csc_w } }
+				}
+			}
+		}
+	}
+	set_variable = { global.pww_cd_cut^pww_ce_id = pww_csc_any }
+}
+
+###############################################################################
+# Rung 1: targeted cutoff
+###############################################################################
+
+pww_coer_cutoff = {
+	set_temp_variable = { pww_out_result = 0 }
+	set_temp_variable = { pww_out_fail = 0 }
+	set_temp_variable = { pww_c_id = pww_in_demand_id }
+	if = {
+		limit = {
+			OR = {
+				NOT = { pww_coer_demand_is_open = yes }
+				NOT = { check_variable = { global.pww_cd_status^pww_c_id = 0 } }
+			}
+		}
+		set_temp_variable = { pww_out_fail = 1 }
+	}
+	else = {
+		set_temp_variable = { pww_ccu_cl = global.pww_cd_claimant^pww_c_id }
+		set_temp_variable = { pww_ccu_tg = global.pww_cd_target^pww_c_id }
+		set_temp_variable = { pww_ccu_mode = pww_in_cut_mode }
+		set_temp_variable = { pww_ccu_res = pww_in_res }
+		set_temp_variable = { pww_ccu_n = 0 }
+		set_temp_variable = { pww_ccu_rep = global.pww_cd_deadline^pww_c_id }
+		subtract_from_temp_variable = { pww_ccu_rep = global.num_days }
+		add_to_temp_variable = { pww_ccu_rep = 30 }
+		set_temp_variable = { pww_ccu_last_res = -1 }
+		var:pww_ccu_cl = {
+			if = {
+				limit = { check_variable = { pww_ag_ids^num > 0 } }
+				for_each_loop = {
+					array = pww_ag_ids
+					value = pww_ccu_ag
+					set_temp_variable = { pww_ccu_kind = 0 }
+					if = {
+						limit = {
+							check_variable = { global.pww_ag_status^pww_ccu_ag = 1 }
+							OR = {
+								check_variable = { pww_ccu_res = -1 }
+								check_variable = { global.pww_ag_res^pww_ccu_ag = pww_ccu_res }
+							}
+						}
+						if = {
+							limit = {
+								NOT = { check_variable = { pww_ccu_mode = 1 } }
+								check_variable = { global.pww_ag_seller^pww_ccu_ag = pww_ccu_cl }
+								check_variable = { global.pww_ag_buyer^pww_ccu_ag = pww_ccu_tg }
+							}
+							set_temp_variable = { pww_ccu_kind = 1 }
+						}
+						else_if = {
+							limit = {
+								NOT = { check_variable = { pww_ccu_mode = 0 } }
+								check_variable = { global.pww_ag_buyer^pww_ccu_ag = pww_ccu_cl }
+								check_variable = { global.pww_ag_seller^pww_ccu_ag = pww_ccu_tg }
+							}
+							set_temp_variable = { pww_ccu_kind = 5 }
+						}
+					}
+					if = {
+						limit = { check_variable = { pww_ccu_kind > 0 } }
+						set_temp_variable = { pww_cs_in_ag = pww_ccu_ag }
+						set_temp_variable = { pww_cs_in_kind = pww_ccu_kind }
+						set_temp_variable = { pww_cs_in_cause = 15 }
+						set_temp_variable = { pww_cs_in_repair = pww_ccu_rep }
+						pww_coer_suspend_registered = yes
+						if = {
+							limit = { check_variable = { pww_cs_ok = 1 } }
+							add_to_temp_variable = { pww_ccu_n = 1 }
+							set_temp_variable = { pww_ccu_last_res = global.pww_ag_res^pww_ccu_ag }
+							set_temp_variable = { pww_ccu_last_kind = pww_ccu_kind }
+						}
+					}
+				}
+			}
+		}
+		if = {
+			limit = { check_variable = { pww_ccu_n > 0 } }
+			set_temp_variable = { pww_out_result = 1 }
+			set_variable = { global.pww_cd_cut^pww_c_id = 1 }
+			# Cause line for the next shift
+			set_temp_variable = { pww_cev_id = 12 }
+			if = {
+				limit = { check_variable = { pww_ccu_last_kind = 5 } }
+				set_temp_variable = { pww_cev_id = 16 }
+			}
+			else_if = {
+				limit = { check_variable = { pww_ccu_last_res = 0 } }
+				set_temp_variable = { pww_cev_id = 10 }
+			}
+			else_if = {
+				limit = { check_variable = { pww_ccu_last_res = 6 } }
+				set_temp_variable = { pww_cev_id = 11 }
+			}
+			else_if = {
+				limit = { check_variable = { pww_ccu_last_res = 2 } }
+				set_temp_variable = { pww_cev_id = 13 }
+			}
+			set_temp_variable = { pww_cev_side = 0 }
+			pww_coer_set_evt = yes
+		}
+		else = {
+			set_temp_variable = { pww_out_fail = 2 }
+		}
+	}
+}
+
+###############################################################################
+# Rung 2: embargo
+###############################################################################
+
+pww_coer_embargo = {
+	set_temp_variable = { pww_out_result = 0 }
+	set_temp_variable = { pww_out_fail = 0 }
+	set_temp_variable = { pww_c_id = pww_in_demand_id }
+	if = {
+		limit = {
+			OR = {
+				NOT = { pww_coer_demand_is_open = yes }
+				NOT = { check_variable = { global.pww_cd_status^pww_c_id = 0 } }
+			}
+		}
+		set_temp_variable = { pww_out_fail = 1 }
+	}
+	else = {
+		set_temp_variable = { pww_cem_cl = global.pww_cd_claimant^pww_c_id }
+		set_temp_variable = { pww_cem_tg = global.pww_cd_target^pww_c_id }
+		if = {
+			limit = { var:pww_cem_tg = { var:pww_cem_cl = { is_embargoing = PREV } } }
+			set_temp_variable = { pww_out_fail = 2 }
+		}
+		else = {
+			var:pww_cem_tg = {
+				var:pww_cem_cl = {
+					send_embargo = PREV
+					add_political_power = -10
+				}
+			}
+			set_variable = { global.pww_cd_emb^pww_c_id = 1 }
+			pww_coer_loud_tool_used = yes
+			set_temp_variable = { pww_ca_cl = pww_cem_cl }
+			set_temp_variable = { pww_ca_tg = pww_cem_tg }
+			set_temp_variable = { pww_ca_amt = 5 }
+			pww_coer_alarm_raise = yes
+			set_temp_variable = { pww_cev_id = 18 }
+			set_temp_variable = { pww_cev_side = 0 }
+			pww_coer_set_evt = yes
+			set_temp_variable = { pww_out_result = 1 }
+			if = {
+				limit = { has_global_flag = pww_coer_debug }
+				log = "[GetDateText] PWW_COER embargo id=[?pww_c_id] [?pww_cem_cl.GetTag]->[?pww_cem_tg.GetTag]"
+			}
+		}
+	}
+}
+
+pww_coer_lift_embargo = {
+	set_temp_variable = { pww_out_result = 0 }
+	set_temp_variable = { pww_c_id = pww_in_demand_id }
+	if = {
+		limit = {
+			pww_coer_demand_is_open = yes
+			check_variable = { global.pww_cd_emb^pww_c_id = 1 }
+		}
+		pww_coer_queue_break_embargo = yes
+		set_variable = { global.pww_cd_emb^pww_c_id = 0 }
+		set_temp_variable = { pww_out_result = 1 }
+	}
+}
+
+# Internal. pww_c_id. Queues break_embargo on the claimant (ROOT must be the
+# sender, so it runs from the claimant's own on_daily).
+pww_coer_queue_break_embargo = {
+	set_temp_variable = { pww_cqb_cl = global.pww_cd_claimant^pww_c_id }
+	set_temp_variable = { pww_cqb_tg = global.pww_cd_target^pww_c_id }
+	var:pww_cqb_cl = {
+		if = {
+			limit = { NOT = { is_in_array = { pww_coer_break_emb = pww_cqb_tg } } }
+			add_to_array = { array = pww_coer_break_emb value = pww_cqb_tg }
+		}
+	}
+}
+
+# Country scope, from its own on_daily (ROOT = THIS). Runs queued breaks.
+pww_coer_process_break_embargo = {
+	for_each_loop = {
+		array = pww_coer_break_emb
+		value = pww_cpb_tg
+		var:pww_cpb_tg = {
+			PREV = { break_embargo = PREV }
+		}
+	}
+	clear_array = pww_coer_break_emb
+}
+
+# Internal. pww_c_id: a loud tool was used (count, leak a quiet demand,
+# democratic pretext cost).
+pww_coer_loud_tool_used = {
+	add_to_variable = { global.pww_cd_loud^pww_c_id = 1 }
+	pww_coer_schedule_leak = yes
+	set_temp_variable = { pww_cpt_cl = global.pww_cd_claimant^pww_c_id }
+	set_temp_variable = { pww_cpt_tg = global.pww_cd_target^pww_c_id }
+	pww_coer_pretext_cost = yes
+}
+
+###############################################################################
+# Rung 3: Join our embargo
+###############################################################################
+
+pww_coer_join_embargo_ask = {
+	set_temp_variable = { pww_out_result = 0 }
+	set_temp_variable = { pww_out_fail = 0 }
+	set_temp_variable = { pww_c_id = pww_in_demand_id }
+	set_temp_variable = { pww_cja_th = pww_in_third }
+	if = {
+		limit = {
+			OR = {
+				NOT = { pww_coer_demand_is_open = yes }
+				NOT = { check_variable = { global.pww_cd_status^pww_c_id = 0 } }
+			}
+		}
+		set_temp_variable = { pww_out_fail = 1 }
+	}
+	else = {
+		set_temp_variable = { pww_cja_cl = global.pww_cd_claimant^pww_c_id }
+		set_temp_variable = { pww_cja_tg = global.pww_cd_target^pww_c_id }
+		if = {
+			limit = {
+				OR = {
+					check_variable = { pww_cja_th = 0 }
+					check_variable = { pww_cja_th = pww_cja_cl }
+					check_variable = { pww_cja_th = pww_cja_tg }
+					var:pww_cja_th = { exists = no }
+				}
+			}
+			set_temp_variable = { pww_out_fail = 2 }
+		}
+		else = {
+			set_temp_variable = { pww_cja_dup = 0 }
+			if = {
+				limit = { check_variable = { global.pww_cj_dem^num > 0 } }
+				for_each_loop = {
+					array = global.pww_cj_dem
+					value = pww_cja_d
+					index = pww_cja_i
+					if = {
+						limit = {
+							check_variable = { pww_cja_d = pww_c_id }
+							check_variable = { global.pww_cj_third^pww_cja_i = pww_cja_th }
+						}
+						set_temp_variable = { pww_cja_dup = 1 }
+					}
+				}
+			}
+			if = {
+				limit = { check_variable = { pww_cja_dup = 1 } }
+				set_temp_variable = { pww_out_fail = 3 }
+			}
+		}
+	}
+	if = {
+		limit = { check_variable = { pww_out_fail = 0 } }
+		set_temp_variable = { pww_cja_dl = global.num_days }
+		add_to_temp_variable = { pww_cja_dl = 30 }
+		set_temp_variable = { pww_cja_idx = global.pww_cj_dem^num }
+		add_to_array = { array = global.pww_cj_dem value = pww_c_id }
+		add_to_array = { array = global.pww_cj_third value = pww_cja_th }
+		add_to_array = { array = global.pww_cj_deadline value = pww_cja_dl }
+		add_to_array = { array = global.pww_cj_status value = 0 }
+		pww_coer_loud_tool_used = yes
+		set_temp_variable = { pww_ca_cl = pww_cja_cl }
+		set_temp_variable = { pww_ca_tg = pww_cja_tg }
+		set_temp_variable = { pww_ca_amt = 3 }
+		pww_coer_alarm_raise = yes
+		set_temp_variable = { pww_out_result = 1 }
+		if = {
+			limit = { var:pww_cja_th = { is_ai = yes } }
+			set_temp_variable = { pww_cja_yes = 0 }
+			var:pww_cja_th = {
+				if = {
+					limit = {
+						var:pww_cja_cl = {
+							PREV = {
+								OR = {
+									is_subject_of = PREV
+									is_in_faction_with = PREV
+								}
+							}
+						}
+					}
+					set_temp_variable = { pww_cja_yes = 1 }
+				}
+				else = {
+					set_temp_variable = { pww_opinion_target = pww_cja_cl }
+					pww_core_norm_opinion = yes
+					set_temp_variable = { pww_cja_oc = pww_norm_opinion }
+					set_temp_variable = { pww_opinion_target = pww_cja_tg }
+					pww_core_norm_opinion = yes
+					if = {
+						limit = {
+							check_variable = { pww_cja_oc > 29.9 }
+							check_variable = { pww_norm_opinion < 0.1 }
+						}
+						set_temp_variable = { pww_cja_yes = 1 }
+					}
+				}
+			}
+			set_temp_variable = { pww_in_comply = pww_cja_yes }
+			set_temp_variable = { pww_in_third = pww_cja_th }
+			set_temp_variable = { pww_in_demand_id = pww_c_id }
+			pww_coer_join_embargo_reply = yes
+			set_temp_variable = { pww_out_result = 1 }
+		}
+		else_if = {
+			limit = { NOT = { has_global_flag = pww_coer_no_popups } }
+			set_temp_variable = { pww_cpu_id = pww_c_id }
+			var:pww_cja_cl = {
+				var:pww_cja_th = {
+					pww_coer_popup_prep = yes
+					set_variable = { pww_coer_ev_tg = pww_cja_tg }
+					country_event = { id = pww_coer.7 }
+				}
+			}
+		}
+	}
+}
+
+pww_coer_join_embargo_reply = {
+	set_temp_variable = { pww_out_result = 0 }
+	set_temp_variable = { pww_c_id = pww_in_demand_id }
+	set_temp_variable = { pww_cjr_th = pww_in_third }
+	if = {
+		limit = {
+			pww_coer_demand_is_open = yes
+			check_variable = { global.pww_cj_dem^num > 0 }
+		}
+		set_temp_variable = { pww_cjr_tg = global.pww_cd_target^pww_c_id }
+		for_each_loop = {
+			array = global.pww_cj_dem
+			value = pww_cjr_d
+			index = pww_cjr_i
+			if = {
+				limit = {
+					check_variable = { pww_cjr_d = pww_c_id }
+					check_variable = { global.pww_cj_third^pww_cjr_i = pww_cjr_th }
+					check_variable = { global.pww_cj_status^pww_cjr_i = 0 }
+				}
+				set_temp_variable = { pww_out_result = 1 }
+				if = {
+					limit = { check_variable = { pww_in_comply = 1 } }
+					var:pww_cjr_tg = {
+						var:pww_cjr_th = {
+							if = {
+								limit = { NOT = { is_embargoing = PREV } }
+								send_embargo = PREV
+							}
+						}
+					}
+					set_variable = { global.pww_cj_status^pww_cjr_i = 1 }
+					set_temp_variable = { pww_cev_id = 19 }
+					set_temp_variable = { pww_cev_side = 0 }
+					pww_coer_set_evt = yes
+				}
+				if = {
+					limit = { has_global_flag = pww_coer_debug }
+					log = "[GetDateText] PWW_COER join reply dem=[?pww_c_id] third=[?pww_cjr_th.GetTag] comply=[?pww_in_comply]"
+				}
+			}
+		}
+	}
+}
+
+# Eval helper. Compliance check for pww_ce_id. Out: pww_cjt_ok (complying
+# third parties still embargoing), pww_cjt_ignored.
+pww_coer_join_tick = {
+	set_temp_variable = { pww_cjt_ok = 0 }
+	set_temp_variable = { pww_cjt_ignored = 0 }
+	if = {
+		limit = { check_variable = { global.pww_cj_dem^num > 0 } }
+		for_each_loop = {
+			array = global.pww_cj_dem
+			value = pww_cjt_d
+			index = pww_cjt_i
+			if = {
+				limit = { check_variable = { pww_cjt_d = pww_ce_id } }
+				set_temp_variable = { pww_cjt_th = global.pww_cj_third^pww_cjt_i }
+				set_temp_variable = { pww_cjt_st = global.pww_cj_status^pww_cjt_i }
+				set_temp_variable = { pww_cjt_emb = 0 }
+				if = {
+					limit = {
+						var:pww_cjt_th = { exists = yes }
+						var:pww_ce_tg = { var:pww_cjt_th = { is_embargoing = PREV } }
+					}
+					set_temp_variable = { pww_cjt_emb = 1 }
+				}
+				if = {
+					limit = { check_variable = { pww_cjt_st = 0 } }
+					if = {
+						limit = { check_variable = { pww_cjt_emb = 1 } }
+						set_variable = { global.pww_cj_status^pww_cjt_i = 1 }
+						set_temp_variable = { pww_cjt_st = 1 }
+					}
+					else_if = {
+						limit = { NOT = { check_variable = { global.pww_cj_deadline^pww_cjt_i > global.num_days } } }
+						set_variable = { global.pww_cj_status^pww_cjt_i = 2 }
+						set_temp_variable = { pww_cjt_st = 2 }
+						set_temp_variable = { pww_cev_id = 23 }
+						set_temp_variable = { pww_cev_side = 1 }
+						pww_coer_set_evt = yes
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = { pww_cjt_st = 1 }
+						check_variable = { pww_cjt_emb = 0 }
+					}
+					# Broke the embargo
+					set_variable = { global.pww_cj_status^pww_cjt_i = 2 }
+					set_temp_variable = { pww_cjt_st = 2 }
+				}
+				if = {
+					limit = { check_variable = { pww_cjt_st = 1 } }
+					add_to_temp_variable = { pww_cjt_ok = 1 }
+				}
+				else_if = {
+					limit = { check_variable = { pww_cjt_st = 2 } }
+					add_to_temp_variable = { pww_cjt_ignored = 1 }
+				}
+			}
+		}
+	}
+}
+
+pww_coer_punish_noncompliance = {
+	set_temp_variable = { pww_out_result = 0 }
+	set_temp_variable = { pww_out_fail = 2 }
+	set_temp_variable = { pww_c_id = pww_in_demand_id }
+	set_temp_variable = { pww_cpn_th = pww_in_third }
+	if = {
+		limit = {
+			pww_coer_demand_is_open = yes
+			check_variable = { global.pww_cj_dem^num > 0 }
+		}
+		set_temp_variable = { pww_cpn_cl = global.pww_cd_claimant^pww_c_id }
+		for_each_loop = {
+			array = global.pww_cj_dem
+			value = pww_cpn_d
+			index = pww_cpn_i
+			if = {
+				limit = {
+					check_variable = { pww_cpn_d = pww_c_id }
+					check_variable = { global.pww_cj_third^pww_cpn_i = pww_cpn_th }
+					check_variable = { global.pww_cj_status^pww_cpn_i = 2 }
+				}
+				set_variable = { global.pww_cj_status^pww_cpn_i = 3 }
+				set_temp_variable = { pww_out_result = 1 }
+				set_temp_variable = { pww_out_fail = 0 }
+			}
+		}
+		if = {
+			limit = { check_variable = { pww_out_result = 1 } }
+			var:pww_cpn_th = {
+				var:pww_cpn_cl = {
+					if = {
+						limit = { NOT = { is_embargoing = PREV } }
+						send_embargo = PREV
+					}
+				}
+			}
+			# Cut the claimant's supplies to the third party
+			var:pww_cpn_cl = {
+				if = {
+					limit = { check_variable = { pww_ag_ids^num > 0 } }
+					for_each_loop = {
+						array = pww_ag_ids
+						value = pww_cpn_ag
+						if = {
+							limit = {
+								check_variable = { global.pww_ag_status^pww_cpn_ag = 1 }
+								check_variable = { global.pww_ag_seller^pww_cpn_ag = pww_cpn_cl }
+								check_variable = { global.pww_ag_buyer^pww_cpn_ag = pww_cpn_th }
+							}
+							set_temp_variable = { pww_cs_in_ag = pww_cpn_ag }
+							set_temp_variable = { pww_cs_in_kind = 4 }
+							set_temp_variable = { pww_cs_in_cause = 15 }
+							set_temp_variable = { pww_cs_in_repair = 180 }
+							pww_coer_suspend_registered = yes
+						}
+					}
+				}
+				set_temp_variable = { pww_cc_delta = 5 }
+				pww_coer_cred_add = yes
+			}
+		}
+	}
+}
+
+###############################################################################
+# Rung 4: Quarantine
+###############################################################################
+
+pww_coer_declare_quarantine = {
+	set_temp_variable = { pww_out_result = 0 }
+	set_temp_variable = { pww_out_fail = 0 }
+	set_temp_variable = { pww_c_id = pww_in_demand_id }
+	if = {
+		limit = {
+			OR = {
+				NOT = { pww_coer_demand_is_open = yes }
+				NOT = { check_variable = { global.pww_cd_status^pww_c_id = 0 } }
+			}
+		}
+		set_temp_variable = { pww_out_fail = 1 }
+	}
+	else_if = {
+		limit = { NOT = { check_variable = { global.pww_cd_ftype^pww_c_id = 1 } } }
+		set_temp_variable = { pww_out_fail = 2 }
+	}
+	else_if = {
+		limit = { check_variable = { global.pww_cd_quar^pww_c_id = 1 } }
+		set_temp_variable = { pww_out_fail = 4 }
+	}
+	else = {
+		set_temp_variable = { pww_cdq_cl = global.pww_cd_claimant^pww_c_id }
+		set_temp_variable = { pww_cdq_tg = global.pww_cd_target^pww_c_id }
+		var:pww_cdq_cl = { pww_coer_measure_ships = yes }
+		set_temp_variable = { pww_cdq_own = pww_cms_n }
+		var:pww_cdq_tg = { pww_coer_measure_ships = yes }
+		multiply_temp_variable = { pww_cms_n = 0.5 }
+		subtract_from_temp_variable = { pww_cdq_own = pww_cms_n }
+		if = {
+			limit = { check_variable = { pww_cdq_own < 5 } }
+			set_temp_variable = { pww_out_fail = 3 }
+		}
+	}
+	if = {
+		limit = { check_variable = { pww_out_fail = 0 } }
+		set_variable = { global.pww_cd_quar^pww_c_id = 1 }
+		set_variable = { global.pww_cd_quar_day^pww_c_id = global.num_days }
+		var:pww_cdq_cl = {
+			add_political_power = -25
+			add_named_threat = { threat = 2 name = pww_coer_threat_quarantine }
+			var:pww_cdq_tg = {
+				add_opinion_modifier = { target = PREV modifier = pww_coer_quarantined }
+				set_country_flag = pww_coer_quarantined
+			}
+		}
+		pww_coer_loud_tool_used = yes
+		set_temp_variable = { pww_ca_cl = pww_cdq_cl }
+		set_temp_variable = { pww_ca_tg = pww_cdq_tg }
+		set_temp_variable = { pww_ca_amt = 10 }
+		pww_coer_alarm_raise = yes
+		set_temp_variable = { pww_cev_id = 20 }
+		set_temp_variable = { pww_cev_side = 0 }
+		pww_coer_set_evt = yes
+		set_temp_variable = { pww_cqs_cl = pww_cdq_cl }
+		set_temp_variable = { pww_cqs_tg = pww_cdq_tg }
+		pww_coer_quarantine_suspend = yes
+		set_temp_variable = { pww_cqp_kind = 11 }
+		set_temp_variable = { pww_cqp_dem = pww_c_id }
+		set_temp_variable = { pww_cqp_val = 1 }
+		pww_coer_queue_push = yes
+		set_temp_variable = { pww_out_result = 1 }
+		if = {
+			limit = { has_global_flag = pww_coer_debug }
+			log = "[GetDateText] PWW_COER quarantine declared id=[?pww_c_id] eff_ships=[?pww_cdq_own|1]"
+		}
+	}
+	else_if = {
+		limit = { has_global_flag = pww_coer_debug }
+		log = "[GetDateText] PWW_COER quarantine refused id=[?pww_c_id] fail=[?pww_out_fail] eff_ships=[?pww_cdq_own|1]"
+	}
+}
+
+pww_coer_lift_quarantine = {
+	set_temp_variable = { pww_out_result = 0 }
+	set_temp_variable = { pww_c_id = pww_in_demand_id }
+	if = {
+		limit = {
+			pww_coer_demand_is_open = yes
+			check_variable = { global.pww_cd_quar^pww_c_id > 0 }
+		}
+		set_variable = { global.pww_cd_quar^pww_c_id = 0 }
+		set_temp_variable = { pww_clq_tg = global.pww_cd_target^pww_c_id }
+		var:pww_clq_tg = { clr_country_flag = pww_coer_quarantined }
+		set_temp_variable = { pww_crg_dem = pww_c_id }
+		set_temp_variable = { pww_crg_kind = 2 }
+		pww_coer_resume_registered = yes
+		set_temp_variable = { pww_out_result = 1 }
+	}
+}
+
+# Eval helper (pww_ce_*). Holds, lapses or re-holds the quarantine.
+pww_coer_quarantine_tick = {
+	if = {
+		limit = { check_variable = { global.pww_cd_quar^pww_ce_id > 0 } }
+		set_temp_variable = { pww_cqt_hold = 0 }
+		if = {
+			limit = {
+				check_variable = { global.pww_cd_ftype^pww_ce_id = 1 }
+				check_variable = { pww_ce_eff > 4.9 }
+			}
+			set_temp_variable = { pww_cqt_hold = 1 }
+		}
+		if = {
+			limit = { check_variable = { pww_cqt_hold = 1 } }
+			if = {
+				limit = { check_variable = { global.pww_cd_quar^pww_ce_id = 2 } }
+				set_variable = { global.pww_cd_quar^pww_ce_id = 1 }
+				set_variable = { global.pww_cd_quar_day^pww_ce_id = global.num_days }
+				var:pww_ce_tg = { set_country_flag = pww_coer_quarantined }
+				set_temp_variable = { pww_cqp_kind = 11 }
+				set_temp_variable = { pww_cqp_dem = pww_ce_id }
+				set_temp_variable = { pww_cqp_val = 1 }
+				pww_coer_queue_push = yes
+			}
+			var:pww_ce_cl = { add_political_power = -2 }
+			set_temp_variable = { pww_cqs_cl = pww_ce_cl }
+			set_temp_variable = { pww_cqs_tg = pww_ce_tg }
+			pww_coer_quarantine_suspend = yes
+		}
+		else_if = {
+			limit = { check_variable = { global.pww_cd_quar^pww_ce_id = 1 } }
+			set_variable = { global.pww_cd_quar^pww_ce_id = 2 }
+			set_variable = { global.pww_cd_quar_day^pww_ce_id = global.num_days }
+			var:pww_ce_tg = { clr_country_flag = pww_coer_quarantined }
+			set_temp_variable = { pww_crg_dem = pww_ce_id }
+			set_temp_variable = { pww_crg_kind = 2 }
+			pww_coer_resume_registered = yes
+			set_temp_variable = { pww_cev_id = 22 }
+			set_temp_variable = { pww_cev_side = 1 }
+			pww_coer_set_evt = yes
+			set_temp_variable = { pww_cqp_kind = 11 }
+			set_temp_variable = { pww_cqp_dem = pww_ce_id }
+			set_temp_variable = { pww_cqp_val = 0 }
+			pww_coer_queue_push = yes
+			if = {
+				limit = { has_global_flag = pww_coer_debug }
+				log = "[GetDateText] PWW_COER quarantine lapsed id=[?pww_ce_id]"
+			}
+		}
+	}
+}
+
+# Internal. In: pww_c_id, pww_cqs_cl (quarantiner), pww_cqs_tg (target).
+# Suspends the target's exposed sea agreements (force majeure) or records a
+# default where force majeure does not apply.
+pww_coer_quarantine_suspend = {
+	var:pww_cqs_tg = {
+		if = {
+			limit = { check_variable = { pww_ag_ids^num > 0 } }
+			for_each_loop = {
+				array = pww_ag_ids
+				value = pww_cqs_ag
+				if = {
+					limit = { check_variable = { global.pww_ag_status^pww_cqs_ag = 1 } }
+					set_temp_variable = { pww_cqs_other = global.pww_ag_seller^pww_cqs_ag }
+					if = {
+						limit = { check_variable = { pww_cqs_other = pww_cqs_tg } }
+						set_temp_variable = { pww_cqs_other = global.pww_ag_buyer^pww_cqs_ag }
+					}
+					if = {
+						limit = {
+							var:pww_cqs_other = {
+								OR = {
+									check_variable = { pww_cqs_other = pww_cqs_cl }
+									var:pww_cqs_cl = {
+										PREV = {
+											OR = {
+												is_subject_of = PREV
+												is_in_faction_with = PREV
+											}
+										}
+									}
+								}
+							}
+						}
+						# No force majeure: the counterparty blockades its own deal
+						set_temp_variable = { pww_l_ag = pww_cqs_ag }
+						set_temp_variable = { pww_l_by = pww_cqs_other }
+						pww_ledger_default = yes
+						if = {
+							limit = { has_global_flag = pww_coer_debug }
+							log = "[GetDateText] PWW_COER quarantine default ag=[?pww_cqs_ag] by=[?pww_cqs_other.GetTag]"
+						}
+					}
+					else_if = {
+						limit = {
+							OR = {
+								check_variable = { global.pww_ag_convoys^pww_cqs_ag > 0 }
+								var:pww_cqs_tg = {
+									NOT = { any_home_area_neighbor_country = { check_variable = { pww_cqs_other = THIS } } }
+								}
+							}
+						}
+						set_temp_variable = { pww_cs_in_ag = pww_cqs_ag }
+						set_temp_variable = { pww_cs_in_kind = 2 }
+						set_temp_variable = { pww_cs_in_cause = 16 }
+						set_temp_variable = { pww_cs_in_repair = 120 }
+						pww_coer_suspend_registered = yes
+					}
+				}
+			}
+		}
+	}
+}
+
+# Eval helper. Strangulation and the casus belli rung.
+pww_coer_strangle_tick = {
+	set_temp_variable = { pww_cst_v = global.pww_cd_strangle^pww_ce_id }
+	set_temp_variable = { pww_cst_add = 0 }
+	if = {
+		limit = { check_variable = { global.pww_cd_quar^pww_ce_id = 1 } }
+		add_to_temp_variable = { pww_cst_add = 10 }
+	}
+	if = {
+		limit = { check_variable = { pww_ce_emb = 1 } }
+		add_to_temp_variable = { pww_cst_add = 5 }
+	}
+	set_temp_variable = { pww_cst_j = pww_cjt_ok }
+	multiply_temp_variable = { pww_cst_j = 2 }
+	add_to_temp_variable = { pww_cst_add = pww_cst_j }
+	if = {
+		limit = { check_variable = { pww_cst_add = 0 } }
+		set_temp_variable = { pww_cst_add = -5 }
+	}
+	add_to_temp_variable = { pww_cst_v = pww_cst_add }
+	clamp_temp_variable = { var = pww_cst_v min = 0 max = 100 }
+	set_variable = { global.pww_cd_strangle^pww_ce_id = pww_cst_v }
+	if = {
+		limit = {
+			check_variable = { pww_cst_v > 59.9 }
+			check_variable = { global.pww_cd_cb^pww_ce_id = 0 }
+		}
+		set_variable = { global.pww_cd_cb^pww_ce_id = 1 }
+		var:pww_ce_cl = {
+			var:pww_ce_tg = {
+				if = {
+					limit = { NOT = { has_wargoal_against = PREV } }
+					create_wargoal = { type = topple_government target = PREV expire = 0 }
+				}
+			}
+		}
+		set_temp_variable = { pww_cqp_kind = 8 }
+		set_temp_variable = { pww_cqp_dem = pww_ce_id }
+		set_temp_variable = { pww_cqp_val = 0 }
+		pww_coer_queue_push = yes
+		if = {
+			limit = {
+				NOT = { has_global_flag = pww_coer_no_popups }
+				var:pww_ce_tg = { is_ai = no }
+			}
+			set_temp_variable = { pww_cpu_id = pww_ce_id }
+			var:pww_ce_cl = { var:pww_ce_tg = { pww_coer_popup_prep = yes country_event = { id = pww_coer.8 } } }
+		}
+		if = {
+			limit = { has_global_flag = pww_coer_debug }
+			log = "[GetDateText] PWW_COER casus_belli id=[?pww_ce_id] strangle=[?pww_cst_v]"
+		}
+	}
+}

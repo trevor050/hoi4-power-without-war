@@ -1,0 +1,318 @@
+# Coercion scenario test (tests/coercion/coer_t1). Run with:
+#   python tools/run_hoi4.py --tag GER --test tests/coercion/coer_t1
+# GER is the human tag so its test squadron (history/units) stays at sea.
+#
+# Timeline (GER on_daily counter):
+#   2   POR->ENG sea agreement; demand A GER->POR quiet (10% tungsten),
+#       naval force committed, test squadron loaded off Lisbon
+#   3+  every shift of A logged with its cause
+#   63  A: progression with causes, Wavering cap with force only, readout
+#   64  ENG pledge to POR appears; quarantine on POR (demand A)
+#   65  demand B GER->HUN quiet, 45-day clock
+#   66  embargo on HUN (demand B): leak scheduled
+#   67  quarantine suspended the POR->ENG agreement
+#   90  B is public (leaked on the embargo)
+#   108 A after the quarantine lever; no war
+#   120 B lapsed without war or war goal
+#   121 POR accepts a 90-day provisional suspension on A
+
+pww_coertest_setup = {
+	set_global_flag = pww_coer_debug
+	set_global_flag = pww_coer_no_popups
+	pww_core_init = yes
+	pww_ledger_init = yes
+	pww_coer_init = yes
+	log = "PWW_RESULT coer.map INFO variant=[?global.pww_coer_map_variant] states=[?global.states^num]"
+	POR = {
+		set_country_flag = pww_coer_no_ai_response
+		# A moderately stable target so a full squadron alone outweighs it
+		set_stability = 0.45
+	}
+	HUN = { set_country_flag = pww_coer_no_ai_response }
+
+	# A sea agreement POR -> ENG (exposed: ENG is not a land neighbor)
+	POR = { set_temp_variable = { pww_l_seller = THIS } }
+	ENG = { set_temp_variable = { pww_l_buyer = THIS } }
+	set_temp_variable = { pww_l_kind = 0 }
+	set_temp_variable = { pww_l_res = 3 }
+	set_temp_variable = { pww_l_amount = 8 }
+	set_temp_variable = { pww_l_state = 0 }
+	set_temp_variable = { pww_l_committal = 0 }
+	set_temp_variable = { pww_l_term_days = 0 }
+	set_temp_variable = { pww_l_civ = 0 }
+	set_temp_variable = { pww_l_pp = 0 }
+	set_temp_variable = { pww_l_activate = 1 }
+	pww_ledger_create_agreement = yes
+	set_variable = { global.pww_ct_ag_eng = pww_l_new_id }
+	if = {
+		limit = { check_variable = { pww_l_result = 1 } }
+		log = "PWW_RESULT coer.setup_agreement PASS POR->ENG tungsten ag=[?pww_l_new_id]"
+	}
+	else = {
+		log = "PWW_RESULT coer.setup_agreement FAIL fail=[?pww_l_fail]"
+	}
+
+	# Demand A: GER -> POR, 25% of tungsten output, back channel
+	GER = { set_temp_variable = { pww_in_claimant = THIS } }
+	POR = { set_temp_variable = { pww_in_target = THIS } }
+	set_temp_variable = { pww_in_sit_id = -1 }
+	set_temp_variable = { pww_in_demand_type = 0 }
+	set_temp_variable = { pww_in_channel = 0 }
+	set_temp_variable = { pww_in_res = 3 }
+	set_temp_variable = { pww_in_share = 0.1 }
+	set_temp_variable = { pww_in_days = 240 }
+	pww_coer_issue_demand = yes
+	set_variable = { global.pww_ct_a = pww_out_demand_id }
+	if = {
+		limit = { check_variable = { pww_out_demand_id > -1 } }
+		log = "PWW_RESULT coer.issue PASS demand A id=[?pww_out_demand_id] amount=[?global.pww_cd_amount^pww_out_demand_id|1] seas=[?global.pww_cd_sea0^pww_out_demand_id],[?global.pww_cd_sea1^pww_out_demand_id],[?global.pww_cd_sea2^pww_out_demand_id] air=[?global.pww_cd_air0^pww_out_demand_id],[?global.pww_cd_air1^pww_out_demand_id],[?global.pww_cd_air2^pww_out_demand_id]"
+	}
+	else = {
+		log = "PWW_RESULT coer.issue FAIL fail=[?pww_out_fail]"
+	}
+	set_temp_variable = { pww_in_demand_id = global.pww_ct_a }
+	set_temp_variable = { pww_in_force_type = 1 }
+	pww_coer_commit_force = yes
+	if = {
+		limit = { check_variable = { pww_out_result = 1 } }
+		log = "PWW_RESULT coer.commit PASS naval force committed to A"
+	}
+	else = {
+		log = "PWW_RESULT coer.commit FAIL fail=[?pww_out_fail]"
+	}
+	# A second force on the same demand is refused (one force per demand)
+	set_temp_variable = { pww_in_demand_id = global.pww_ct_a }
+	set_temp_variable = { pww_in_force_type = 2 }
+	pww_coer_commit_force = yes
+	if = {
+		limit = {
+			check_variable = { pww_out_result = 0 }
+			check_variable = { pww_out_fail = 2 }
+		}
+		log = "PWW_RESULT coer.one_force PASS second force refused"
+	}
+	else = {
+		log = "PWW_RESULT coer.one_force FAIL result=[?pww_out_result] fail=[?pww_out_fail]"
+	}
+	GER = { load_oob = "pww_coertest_GER_squadron" }
+	set_variable = { global.pww_ct_a_max = 0 }
+	set_variable = { global.pww_ct_a_last = 0 }
+	set_variable = { global.pww_ct_capseen = 0 }
+}
+
+# Daily: log every state shift of A with its cause, note the force cap.
+pww_coertest_watch = {
+	set_temp_variable = { pww_ct_i = global.pww_ct_a }
+	set_temp_variable = { pww_ct_s = global.pww_cd_tstate^pww_ct_i }
+	if = {
+		limit = { NOT = { check_variable = { pww_ct_s = global.pww_ct_a_last } } }
+		log = "PWW_RESULT coer.progress INFO day=[?global.pww_ct_day] A state [?global.pww_ct_a_last] -> [?pww_ct_s] cause=[?global.pww_cd_cause^pww_ct_i] side=[?global.pww_cd_cause_side^pww_ct_i] for=[?global.pww_cd_for0^pww_ct_i],[?global.pww_cd_for1^pww_ct_i] hold=[?global.pww_cd_hold0^pww_ct_i],[?global.pww_cd_hold1^pww_ct_i]"
+		set_variable = { global.pww_ct_a_last = pww_ct_s }
+	}
+	if = {
+		limit = { check_variable = { pww_ct_s > global.pww_ct_a_max } }
+		set_variable = { global.pww_ct_a_max = pww_ct_s }
+	}
+	if = {
+		limit = {
+			OR = {
+				check_variable = { global.pww_cd_hold0^pww_ct_i = 16 }
+				check_variable = { global.pww_cd_hold1^pww_ct_i = 16 }
+				check_variable = { global.pww_cd_hold2^pww_ct_i = 16 }
+				check_variable = { global.pww_cd_hold3^pww_ct_i = 16 }
+			}
+		}
+		set_variable = { global.pww_ct_capseen = 1 }
+	}
+}
+
+pww_coertest_check_cap = {
+	set_temp_variable = { pww_ct_i = global.pww_ct_a }
+	if = {
+		limit = {
+			check_variable = { global.pww_ct_a_max > 0 }
+			NOT = { check_variable = { global.pww_cd_cause^pww_ct_i = 0 } }
+		}
+		log = "PWW_RESULT coer.state_progress PASS A reached state [?global.pww_ct_a_max] (last cause [?global.pww_cd_cause^pww_ct_i] side [?global.pww_cd_cause_side^pww_ct_i])"
+	}
+	else = {
+		log = "PWW_RESULT coer.state_progress FAIL max=[?global.pww_ct_a_max] net=[?global.pww_cd_net^pww_ct_i|1]"
+	}
+	if = {
+		limit = {
+			check_variable = { global.pww_cd_tstate^pww_ct_i = 2 }
+			check_variable = { global.pww_ct_capseen = 1 }
+			check_variable = { global.pww_ct_a_max < 3 }
+		}
+		log = "PWW_RESULT coer.wavering_cap PASS force only: Wavering, cap bound (net=[?global.pww_cd_net^pww_ct_i|1] lever=[?global.pww_cd_lever^pww_ct_i|1] force=[?global.pww_cd_force_pts^pww_ct_i|1])"
+	}
+	else = {
+		log = "PWW_RESULT coer.wavering_cap FAIL state=[?global.pww_cd_tstate^pww_ct_i] max=[?global.pww_ct_a_max] capseen=[?global.pww_ct_capseen] net=[?global.pww_cd_net^pww_ct_i|1] lever=[?global.pww_cd_lever^pww_ct_i|1] force=[?global.pww_cd_force_pts^pww_ct_i|1]"
+	}
+	log = "PWW_RESULT coer.channel_A INFO channel=[?global.pww_cd_channel^pww_ct_i] (a squadron on station is loud)"
+	GER = {
+		set_temp_variable = { pww_in_demand_id = global.pww_ct_a }
+		pww_coer_load_readout = yes
+		log = "PWW_RESULT coer.readout INFO state=[?pww_coer_rd_state] prev=[?pww_coer_rd_prev] cause=[?pww_coer_rd_cause] for=[?pww_coer_rd_for0],[?pww_coer_rd_for1] hold=[?pww_coer_rd_hold0],[?pww_coer_rd_hold1] reveal=[?pww_coer_rd_reveal] cred_band=[?pww_coer_rd_cred_band] alarm_band=[?pww_coer_rd_alarm_band] patron=[?pww_patron.GetTag]"
+	}
+}
+
+pww_coertest_quarantine = {
+	# From here on ENG backs POR with a commercial pledge (diplomacy lane input)
+	POR = {
+		set_variable = { pww_patron_pledge_strength = 30 }
+		set_variable = { pww_patron_pledge_patron = ENG }
+	}
+	set_temp_variable = { pww_in_demand_id = global.pww_ct_a }
+	pww_coer_declare_quarantine = yes
+	if = {
+		limit = { check_variable = { pww_out_result = 1 } }
+		log = "PWW_RESULT coer.quarantine_declared PASS"
+	}
+	else = {
+		log = "PWW_RESULT coer.quarantine_declared FAIL fail=[?pww_out_fail]"
+	}
+}
+
+pww_coertest_check_quarantine = {
+	set_temp_variable = { pww_ct_ag = global.pww_ct_ag_eng }
+	if = {
+		limit = {
+			check_variable = { global.pww_ag_status^pww_ct_ag = 2 }
+			check_variable = { global.pww_ag_cause^pww_ct_ag = 16 }
+		}
+		log = "PWW_RESULT coer.quarantine_suspends PASS POR->ENG agreement suspended (cause 16)"
+	}
+	else = {
+		log = "PWW_RESULT coer.quarantine_suspends FAIL status=[?global.pww_ag_status^pww_ct_ag] cause=[?global.pww_ag_cause^pww_ct_ag] quar=[?global.pww_cd_quar^global.pww_ct_a]"
+	}
+}
+
+pww_coertest_issue_b = {
+	GER = { set_temp_variable = { pww_in_claimant = THIS } }
+	HUN = { set_temp_variable = { pww_in_target = THIS } }
+	set_temp_variable = { pww_in_sit_id = -1 }
+	set_temp_variable = { pww_in_demand_type = 0 }
+	set_temp_variable = { pww_in_channel = 0 }
+	set_temp_variable = { pww_in_res = 1 }
+	set_temp_variable = { pww_in_share = 0.25 }
+	set_temp_variable = { pww_in_days = 45 }
+	pww_coer_issue_demand = yes
+	if = {
+		limit = { check_variable = { pww_out_demand_id = -1 } }
+		# HUN without aluminium output: steel
+		set_temp_variable = { pww_in_res = 4 }
+		pww_coer_issue_demand = yes
+	}
+	set_variable = { global.pww_ct_b = pww_out_demand_id }
+	if = {
+		limit = { check_variable = { pww_out_demand_id > -1 } }
+		log = "PWW_RESULT coer.issue_b PASS demand B id=[?pww_out_demand_id] channel=[?global.pww_cd_channel^pww_out_demand_id]"
+	}
+	else = {
+		log = "PWW_RESULT coer.issue_b FAIL fail=[?pww_out_fail]"
+	}
+}
+
+pww_coertest_embargo_b = {
+	set_temp_variable = { pww_in_demand_id = global.pww_ct_b }
+	pww_coer_embargo = yes
+	if = {
+		limit = {
+			check_variable = { pww_out_result = 1 }
+			HUN = { is_embargoed_by = GER }
+			check_variable = { global.pww_cd_leak_day^global.pww_ct_b > 0 }
+		}
+		log = "PWW_RESULT coer.embargo PASS GER embargoes HUN, leak scheduled day=[?global.pww_cd_leak_day^global.pww_ct_b]"
+	}
+	else = {
+		log = "PWW_RESULT coer.embargo FAIL result=[?pww_out_result] fail=[?pww_out_fail] leak_day=[?global.pww_cd_leak_day^global.pww_ct_b]"
+	}
+}
+
+pww_coertest_check_leak = {
+	if = {
+		limit = { check_variable = { global.pww_cd_channel^global.pww_ct_b = 1 } }
+		log = "PWW_RESULT coer.leak_on_embargo PASS quiet demand B went public after the embargo"
+	}
+	else = {
+		log = "PWW_RESULT coer.leak_on_embargo FAIL channel=[?global.pww_cd_channel^global.pww_ct_b] leak_day=[?global.pww_cd_leak_day^global.pww_ct_b]"
+	}
+}
+
+pww_coertest_after_quarantine = {
+	set_temp_variable = { pww_ct_i = global.pww_ct_a }
+	log = "PWW_RESULT coer.after_quarantine INFO state=[?global.pww_cd_tstate^pww_ct_i] max=[?global.pww_ct_a_max] net=[?global.pww_cd_net^pww_ct_i|1] lever=[?global.pww_cd_lever^pww_ct_i|1] quar=[?global.pww_cd_quar^pww_ct_i] strangle=[?global.pww_cd_strangle^pww_ct_i|0] route=[?global.pww_cd_route^pww_ct_i] warn=[?global.pww_cd_warn^pww_ct_i] intel=[?global.pww_cd_intel^pww_ct_i]"
+	if = {
+		limit = { check_variable = { global.pww_ct_a_max > 2 } }
+		log = "PWW_RESULT coer.lever_lifts_cap PASS with the quarantine lever A passed Wavering (max [?global.pww_ct_a_max])"
+	}
+	else = {
+		log = "PWW_RESULT coer.lever_lifts_cap INFO A stayed at [?global.pww_ct_a_max]"
+	}
+	if = {
+		limit = { NOT = { POR = { has_war_with = GER } } }
+		log = "PWW_RESULT coer.no_war_A PASS no war between GER and POR"
+	}
+	else = {
+		log = "PWW_RESULT coer.no_war_A FAIL"
+	}
+}
+
+pww_coertest_check_no_war = {
+	set_temp_variable = { pww_ct_i = global.pww_ct_b }
+	if = {
+		limit = {
+			check_variable = { global.pww_cd_status^pww_ct_i = 2 }
+			NOT = { HUN = { has_war_with = GER } }
+			NOT = { HUN = { has_wargoal_against = GER } }
+			NOT = { GER = { has_wargoal_against = HUN } }
+		}
+		log = "PWW_RESULT coer.no_auto_war PASS demand B lapsed (status 2), no war and no war goal"
+	}
+	else = {
+		log = "PWW_RESULT coer.no_auto_war FAIL status=[?global.pww_cd_status^pww_ct_i] state=[?global.pww_cd_tstate^pww_ct_i]"
+	}
+	if = {
+		limit = { HUN = { is_embargoed_by = GER } }
+		log = "PWW_RESULT coer.embargo_lifted FAIL GER still embargoes HUN after B ended"
+	}
+	else = {
+		log = "PWW_RESULT coer.embargo_lifted PASS embargo lifted when the demand ended"
+	}
+}
+
+pww_coertest_provisional = {
+	set_temp_variable = { pww_ct_i = global.pww_ct_a }
+	if = {
+		limit = { check_variable = { global.pww_cd_status^pww_ct_i = 0 } }
+		set_temp_variable = { pww_in_demand_id = global.pww_ct_a }
+		set_temp_variable = { pww_in_response = 2 }
+		pww_coer_target_respond = yes
+		set_temp_variable = { pww_ct_ag = global.pww_cd_prov_ag^pww_ct_i }
+		if = {
+			limit = {
+				check_variable = { global.pww_cd_status^pww_ct_i = 5 }
+				check_variable = { pww_ct_ag > -1 }
+				check_variable = { global.pww_ag_status^pww_ct_ag = 1 }
+				check_variable = { global.pww_ag_revert_day^pww_ct_ag > global.num_days }
+			}
+			log = "PWW_RESULT coer.provisional PASS 90-day timed agreement ag=[?pww_ct_ag] reverts day [?global.pww_ag_revert_day^pww_ct_ag]"
+		}
+		else = {
+			log = "PWW_RESULT coer.provisional FAIL status=[?global.pww_cd_status^pww_ct_i] ag=[?pww_ct_ag] fail=[?pww_out_fail] lfail=[?pww_l_fail]"
+		}
+		# The quarantine and force are released: the ENG agreement resumes
+		set_temp_variable = { pww_ct_ag = global.pww_ct_ag_eng }
+		if = {
+			limit = { check_variable = { global.pww_ag_status^pww_ct_ag = 1 } }
+			log = "PWW_RESULT coer.quarantine_released PASS POR->ENG agreement resumed"
+		}
+		else = {
+			log = "PWW_RESULT coer.quarantine_released FAIL status=[?global.pww_ag_status^pww_ct_ag]"
+		}
+	}
+	else = {
+		log = "PWW_RESULT coer.provisional INFO A already ended with status [?global.pww_cd_status^pww_ct_i]"
+	}
+}

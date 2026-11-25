@@ -1,0 +1,174 @@
+###############################################################################
+# Power Without War: coercion demand storage (parallel global arrays)
+#
+# A demand id is an integer 0..global.pww_next_demand_id-1. Every field is a
+# global array indexed by id, appended together in pww_coer_alloc_demand and
+# never removed or reordered (id == index forever). Read a field with
+#   global.pww_cd_<field>^<temp var holding the id>
+#
+# FIELDS
+#   claimant     country making the demand
+#   target       country receiving it
+#   sit          situation id from the situations lane (-1 none)
+#   type         0 resource output share, 1 named-state lease, 2 cutoff of a third party
+#   res          resource index 0..6 (lease: -1 all resources of the state)
+#   amount       output share: resource units demanded (set at issue from the share)
+#   state        lease: state id (0 otherwise)
+#   third        cutoff: the third party (0 otherwise)
+#   channel      0 quiet (back channel), 1 public ultimatum
+#   deadline     num_days of the decision date
+#   term         term in days of the agreement the target concedes
+#   status       0 live, 1 folded, 2 lapsed/refused, 3 withdrawn, 4 war route, 5 provisional, 6 void
+#   tstate       target state 0 Defiant 1 Strained 2 Wavering 3 Cornered 4 Ready
+#   prev         target state before the last shift
+#   cause        reason id of the last shift
+#   cause_side   0 the cause is a 'for' reason, 1 a 'holding out' reason
+#   shift_day    num_days of the last shift
+#   p            pressure total of the last evaluation
+#   r            resistance total of the last evaluation
+#   net          p - r of the last evaluation
+#   prev_net     net of the evaluation before (pace for intel warnings)
+#   lever        non-force lever points of the last evaluation
+#   force_pts    committed force points of the last evaluation (after ramp)
+#   ftype        committed force: 0 none, 1 naval, 2 air, 3 army
+#   framp        force ramp 0..100
+#   fraw         raw force strength points of the last evaluation (before ramp)
+#   fsince       num_days the force was committed
+#   leak_day     quiet demand: num_days it goes public (0 no leak pending)
+#   loud         number of loud tools used so far
+#   fig          fig leaf offered by the claimant: 0 none, 1 token purchase, 2 joint commission, 3 public assurance, 4 temporary
+#   tfig         1 while the target's own fig leaf awaits the claimant
+#   lot          pending smaller lot (resource units) offered by the target, 0 none
+#   patron_until num_days until which the target awaits its patron
+#   hardened     1 once the target hardened and mobilized
+#   stall        times the target stalled
+#   prov_until   provisional suspension end (num_days)
+#   prov_ag      ledger agreement id of the provisional concession
+#   ag           ledger agreement id produced by the fold
+#   corner_day   num_days the target entered Cornered (0 not cornered)
+#   route        war route available: 0 none, 1 calculated, 2 desperate
+#   warn         Cornered warning line id
+#   intel        intel advance-warning line id
+#   eta          estimated days to Cornered (0 unknown)
+#   strangle     strangulation 0..100 (quarantine, embargo)
+#   quar         quarantine: 0 none, 1 holding, 2 lapsed
+#   quar_day     num_days the quarantine last changed
+#   emb          1 while the claimant embargoes the target for this demand
+#   issued       num_days of issue
+#   last_eval    num_days of the last evaluation
+#   dow          evaluation weekday (num_days mod 7)
+#   evt          reason id of the last move by either side (preferred shift cause)
+#   evt_side     side of evt (0 for, 1 holding out)
+#   evt_day      num_days of evt
+#   patron       target's patron country (pledge or guarantor), 0 none
+#   rival        rival claimant country, 0 none
+#   pledge_max   highest patron pledge strength seen
+#   end_day      num_days the demand ended
+#   follow_until lapsed public demand: day by which the claimant must follow through
+#   nfor         number of filled 'working for you' slots
+#   nhold        number of filled 'holding out' slots
+#   lot_done     1 once the target has offered a smaller lot (AI offers once)
+#   tfig_done    1 once the target has proposed its own fig leaf
+#   cb           1 once strangulation granted the target a casus belli
+#   rival_on     1 while the rival claimant is still bidding
+#   cut          1 while a coercion cutoff suspends agreements for this demand
+#   for0..for3   'working for you' reason ids, strongest first (0 empty)
+#   hold0..hold3 'why they are holding out' reason ids, strongest first
+#   sea0..sea5   naval approaches: adjacent sea regions, then the land regions
+#                of the coastal states (ships in port count there)
+#   air0..air7   regions where planes count for an air demonstration
+###############################################################################
+
+# Internal. Inputs are the pww_ci_* temps prepared by pww_coer_issue_demand.
+# Out: pww_ci_id.
+pww_coer_alloc_demand = {
+	set_temp_variable = { pww_ci_id = global.pww_next_demand_id }
+	add_to_array = { array = global.pww_cd_claimant value = pww_in_claimant }
+	add_to_array = { array = global.pww_cd_target value = pww_in_target }
+	add_to_array = { array = global.pww_cd_sit value = pww_ci_sit }
+	add_to_array = { array = global.pww_cd_type value = pww_ci_type }
+	add_to_array = { array = global.pww_cd_res value = pww_ci_res }
+	add_to_array = { array = global.pww_cd_amount value = pww_ci_amount }
+	add_to_array = { array = global.pww_cd_state value = pww_ci_state }
+	add_to_array = { array = global.pww_cd_third value = pww_ci_third }
+	add_to_array = { array = global.pww_cd_channel value = pww_ci_channel }
+	add_to_array = { array = global.pww_cd_deadline value = pww_ci_deadline }
+	add_to_array = { array = global.pww_cd_term value = pww_ci_term }
+	add_to_array = { array = global.pww_cd_status value = 0 }
+	add_to_array = { array = global.pww_cd_tstate value = 0 }
+	add_to_array = { array = global.pww_cd_prev value = 0 }
+	add_to_array = { array = global.pww_cd_cause value = 0 }
+	add_to_array = { array = global.pww_cd_cause_side value = 0 }
+	add_to_array = { array = global.pww_cd_shift_day value = 0 }
+	add_to_array = { array = global.pww_cd_p value = 0 }
+	add_to_array = { array = global.pww_cd_r value = 0 }
+	add_to_array = { array = global.pww_cd_net value = 0 }
+	add_to_array = { array = global.pww_cd_prev_net value = 0 }
+	add_to_array = { array = global.pww_cd_lever value = 0 }
+	add_to_array = { array = global.pww_cd_force_pts value = 0 }
+	add_to_array = { array = global.pww_cd_ftype value = 0 }
+	add_to_array = { array = global.pww_cd_framp value = 0 }
+	add_to_array = { array = global.pww_cd_fraw value = 0 }
+	add_to_array = { array = global.pww_cd_fsince value = 0 }
+	add_to_array = { array = global.pww_cd_leak_day value = 0 }
+	add_to_array = { array = global.pww_cd_loud value = 0 }
+	add_to_array = { array = global.pww_cd_fig value = 0 }
+	add_to_array = { array = global.pww_cd_tfig value = 0 }
+	add_to_array = { array = global.pww_cd_lot value = 0 }
+	add_to_array = { array = global.pww_cd_patron_until value = 0 }
+	add_to_array = { array = global.pww_cd_hardened value = 0 }
+	add_to_array = { array = global.pww_cd_stall value = 0 }
+	add_to_array = { array = global.pww_cd_prov_until value = 0 }
+	add_to_array = { array = global.pww_cd_prov_ag value = -1 }
+	add_to_array = { array = global.pww_cd_ag value = -1 }
+	add_to_array = { array = global.pww_cd_corner_day value = 0 }
+	add_to_array = { array = global.pww_cd_route value = 0 }
+	add_to_array = { array = global.pww_cd_warn value = 0 }
+	add_to_array = { array = global.pww_cd_intel value = 0 }
+	add_to_array = { array = global.pww_cd_eta value = 0 }
+	add_to_array = { array = global.pww_cd_strangle value = 0 }
+	add_to_array = { array = global.pww_cd_quar value = 0 }
+	add_to_array = { array = global.pww_cd_quar_day value = 0 }
+	add_to_array = { array = global.pww_cd_emb value = 0 }
+	add_to_array = { array = global.pww_cd_issued value = global.num_days }
+	add_to_array = { array = global.pww_cd_last_eval value = 0 }
+	add_to_array = { array = global.pww_cd_dow value = pww_ci_dow }
+	add_to_array = { array = global.pww_cd_evt value = 0 }
+	add_to_array = { array = global.pww_cd_evt_side value = 0 }
+	add_to_array = { array = global.pww_cd_evt_day value = 0 }
+	add_to_array = { array = global.pww_cd_patron value = 0 }
+	add_to_array = { array = global.pww_cd_rival value = 0 }
+	add_to_array = { array = global.pww_cd_pledge_max value = 0 }
+	add_to_array = { array = global.pww_cd_end_day value = 0 }
+	add_to_array = { array = global.pww_cd_follow_until value = 0 }
+	add_to_array = { array = global.pww_cd_nfor value = 0 }
+	add_to_array = { array = global.pww_cd_nhold value = 0 }
+	add_to_array = { array = global.pww_cd_for0 value = 0 }
+	add_to_array = { array = global.pww_cd_for1 value = 0 }
+	add_to_array = { array = global.pww_cd_for2 value = 0 }
+	add_to_array = { array = global.pww_cd_for3 value = 0 }
+	add_to_array = { array = global.pww_cd_hold0 value = 0 }
+	add_to_array = { array = global.pww_cd_hold1 value = 0 }
+	add_to_array = { array = global.pww_cd_hold2 value = 0 }
+	add_to_array = { array = global.pww_cd_hold3 value = 0 }
+	add_to_array = { array = global.pww_cd_sea0 value = -1 }
+	add_to_array = { array = global.pww_cd_sea1 value = -1 }
+	add_to_array = { array = global.pww_cd_sea2 value = -1 }
+	add_to_array = { array = global.pww_cd_sea3 value = -1 }
+	add_to_array = { array = global.pww_cd_air0 value = -1 }
+	add_to_array = { array = global.pww_cd_air1 value = -1 }
+	add_to_array = { array = global.pww_cd_air2 value = -1 }
+	add_to_array = { array = global.pww_cd_air3 value = -1 }
+	add_to_array = { array = global.pww_cd_air4 value = -1 }
+	add_to_array = { array = global.pww_cd_air5 value = -1 }
+	add_to_array = { array = global.pww_cd_air6 value = -1 }
+	add_to_array = { array = global.pww_cd_air7 value = -1 }
+	add_to_array = { array = global.pww_cd_lot_done value = 0 }
+	add_to_array = { array = global.pww_cd_tfig_done value = 0 }
+	add_to_array = { array = global.pww_cd_cb value = 0 }
+	add_to_array = { array = global.pww_cd_rival_on value = 0 }
+	add_to_array = { array = global.pww_cd_cut value = 0 }
+	add_to_array = { array = global.pww_cd_sea4 value = -1 }
+	add_to_array = { array = global.pww_cd_sea5 value = -1 }
+	add_to_variable = { global.pww_next_demand_id = 1 }
+}

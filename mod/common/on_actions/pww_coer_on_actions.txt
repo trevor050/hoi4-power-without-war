@@ -1,0 +1,33 @@
+###############################################################################
+# Power Without War: coercion on_actions
+#
+#   on_startup   pww_coer_init (idempotent; on_daily inits lazily after a load)
+#   on_daily     per country: lazy init, the once-per-day global step (weekly
+#                demand evaluations staggered by demand id), and queued
+#                break_embargo runs that need ROOT = the sender
+#   on_monthly   per country: the first one 28+ days after the last run does
+#                alarm decay, follow-through checks and ledger pretexts
+###############################################################################
+
+on_actions = {
+	on_startup = {
+		effect = {
+			random_country = {
+				limit = { exists = yes }
+				pww_coer_init = yes
+			}
+		}
+	}
+
+	on_daily = {
+		effect = {
+			pww_coer_on_daily = yes
+		}
+	}
+
+	on_monthly = {
+		effect = {
+			pww_coer_on_monthly = yes
+		}
+	}
+}
