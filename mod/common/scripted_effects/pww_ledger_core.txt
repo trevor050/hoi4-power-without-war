@@ -138,6 +138,8 @@
 #            pww_l_civ, pww_l_pp            signed payments (see STORAGE)
 #            pww_l_ideo, pww_l_ideo_giver   drift per day, side
 #            pww_l_cond                     0, or a condition id -> reserved
+#                                           (seller capacity is checked when
+#                                           it fires, not at creation)
 #            pww_l_reserve_days             reserved lapse window (0 never)
 #            pww_l_revert_days              timed clause (0 none)
 #            pww_l_convoys                  convoys held from the seller
@@ -291,7 +293,10 @@ pww_ledger_validate = {
 		else = {
 			var:pww_lv_seller = { pww_ledger_calc_seller_avail = yes }
 			if = {
-				limit = { check_variable = { pww_lfa_avail < pww_lv_amount } }
+				limit = {
+					check_variable = { pww_lfa_avail < pww_lv_amount }
+					NOT = { check_variable = { pww_lv_reserving = 1 } }
+				}
 				set_temp_variable = { pww_l_fail = 4 }
 			}
 		}
@@ -457,8 +462,16 @@ pww_ledger_create_agreement = {
 		set_temp_variable = { pww_lv_committal = 1 }
 		set_temp_variable = { pww_lv_term = 0 }
 	}
+	# A reserved agreement (pww_l_cond > 0) is not checked for seller
+	# capacity now: activation rechecks every term when it fires.
+	set_temp_variable = { pww_lv_reserving = 0 }
+	if = {
+		limit = { check_variable = { pww_l_cond > 0 } }
+		set_temp_variable = { pww_lv_reserving = 1 }
+	}
 
 	pww_ledger_validate = yes
+	set_temp_variable = { pww_lv_reserving = 0 }
 
 	if = {
 		limit = { check_variable = { pww_l_fail = 0 } }

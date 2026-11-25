@@ -334,7 +334,11 @@ pww_coer_pick_largest_state = {
 		if = {
 			limit = { check_variable = { pww_crs_out > pww_crs_best } }
 			set_temp_variable = { pww_crs_best = pww_crs_out }
-			set_temp_variable = { pww_crs_state = THIS }
+			# Plain numeric state id (what the ledger and meta_effect need)
+			meta_effect = {
+				text = { set_temp_variable = { pww_crs_state = [ID] } }
+				ID = "[THIS.GetID]"
+			}
 		}
 	}
 }
@@ -1606,10 +1610,100 @@ pww_coer_load_readout = {
 			limit = { NOT = { check_variable = { global.pww_cd_patron^pww_c_id = 0 } } }
 			set_variable = { pww_patron = global.pww_cd_patron^pww_c_id }
 		}
+		else = {
+			# No named patron: never show a line that names one (it would
+			# read "from ."), and drop a stale name from another demand.
+			clear_variable = pww_patron
+			pww_coer_readout_drop_patron_lines = yes
+		}
 		if = {
 			limit = { NOT = { check_variable = { global.pww_cd_rival^pww_c_id = 0 } } }
 			set_variable = { pww_rival = global.pww_cd_rival^pww_c_id }
 		}
+	}
+}
+
+# Internal (viewer scope, after pww_coer_load_readout filled the slots).
+# Removes reasons whose text names the patron: for 23 patron_backed_down,
+# 24 patron_blocked; hold 1 patron_pledge, 2 guarantee, 34 patron_called;
+# Cornered 2 calc_patron, 17 choice_patron_watch; intel 6, 7. Later reasons
+# move up; counts shrink.
+pww_coer_readout_drop_patron_lines = {
+	clear_temp_array = pww_cdp_f
+	clear_temp_array = pww_cdp_h
+	add_to_temp_array = { pww_cdp_f = pww_coer_rd_for0 }
+	add_to_temp_array = { pww_cdp_f = pww_coer_rd_for1 }
+	add_to_temp_array = { pww_cdp_f = pww_coer_rd_for2 }
+	add_to_temp_array = { pww_cdp_f = pww_coer_rd_for3 }
+	add_to_temp_array = { pww_cdp_h = pww_coer_rd_hold0 }
+	add_to_temp_array = { pww_cdp_h = pww_coer_rd_hold1 }
+	add_to_temp_array = { pww_cdp_h = pww_coer_rd_hold2 }
+	add_to_temp_array = { pww_cdp_h = pww_coer_rd_hold3 }
+	clear_temp_array = pww_cdp_f2
+	clear_temp_array = pww_cdp_h2
+	for_each_loop = {
+		array = pww_cdp_f
+		value = pww_cdp_v
+		if = {
+			limit = {
+				check_variable = { pww_cdp_v > 0 }
+				NOT = { check_variable = { pww_cdp_v = 23 } }
+				NOT = { check_variable = { pww_cdp_v = 24 } }
+			}
+			add_to_temp_array = { pww_cdp_f2 = pww_cdp_v }
+		}
+	}
+	for_each_loop = {
+		array = pww_cdp_h
+		value = pww_cdp_v
+		if = {
+			limit = {
+				check_variable = { pww_cdp_v > 0 }
+				NOT = { check_variable = { pww_cdp_v = 1 } }
+				NOT = { check_variable = { pww_cdp_v = 2 } }
+				NOT = { check_variable = { pww_cdp_v = 34 } }
+			}
+			add_to_temp_array = { pww_cdp_h2 = pww_cdp_v }
+		}
+	}
+	set_variable = { pww_coer_rd_nfor = pww_cdp_f2^num }
+	set_variable = { pww_coer_rd_nhold = pww_cdp_h2^num }
+	for_loop_effect = {
+		start = 0
+		end = 4
+		value = pww_cdp_k
+		set_temp_variable = { pww_cdp_a = 0 }
+		set_temp_variable = { pww_cdp_b = 0 }
+		if = {
+			limit = { check_variable = { pww_cdp_k < pww_cdp_f2^num } }
+			set_temp_variable = { pww_cdp_a = pww_cdp_f2^pww_cdp_k }
+		}
+		if = {
+			limit = { check_variable = { pww_cdp_k < pww_cdp_h2^num } }
+			set_temp_variable = { pww_cdp_b = pww_cdp_h2^pww_cdp_k }
+		}
+		if = { limit = { check_variable = { pww_cdp_k = 0 } } set_variable = { pww_coer_rd_for0 = pww_cdp_a } set_variable = { pww_coer_rd_hold0 = pww_cdp_b } }
+		if = { limit = { check_variable = { pww_cdp_k = 1 } } set_variable = { pww_coer_rd_for1 = pww_cdp_a } set_variable = { pww_coer_rd_hold1 = pww_cdp_b } }
+		if = { limit = { check_variable = { pww_cdp_k = 2 } } set_variable = { pww_coer_rd_for2 = pww_cdp_a } set_variable = { pww_coer_rd_hold2 = pww_cdp_b } }
+		if = { limit = { check_variable = { pww_cdp_k = 3 } } set_variable = { pww_coer_rd_for3 = pww_cdp_a } set_variable = { pww_coer_rd_hold3 = pww_cdp_b } }
+	}
+	if = {
+		limit = {
+			OR = {
+				check_variable = { pww_coer_rd_warn = 2 }
+				check_variable = { pww_coer_rd_warn = 17 }
+			}
+		}
+		set_variable = { pww_coer_rd_warn = 0 }
+	}
+	if = {
+		limit = {
+			OR = {
+				check_variable = { pww_coer_rd_intel = 6 }
+				check_variable = { pww_coer_rd_intel = 7 }
+			}
+		}
+		set_variable = { pww_coer_rd_intel = 0 }
 	}
 }
 

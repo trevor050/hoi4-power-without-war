@@ -1187,3 +1187,32 @@ defined_text = {
 	text = { trigger = { check_variable = { pww_ui_st_res = 6 } } localization_key = pww_mkt_res_coal }
 	text = { localization_key = pww_ui_blank }
 }
+# Seat as a sentence for the desk rows ("You are the claimant.")
+defined_text = {
+	name = pww_ui_sl_s0_seatline
+	text = { trigger = { check_variable = { pww_ui_s0_seat = 0 } } localization_key = pww_seat_line_claimant }
+	text = { trigger = { check_variable = { pww_ui_s0_seat = 1 } } localization_key = pww_seat_line_holder }
+	text = { trigger = { check_variable = { pww_ui_s0_seat = 2 } } localization_key = pww_seat_line_patron }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_s1_seatline
+	text = { trigger = { check_variable = { pww_ui_s1_seat = 0 } } localization_key = pww_seat_line_claimant }
+	text = { trigger = { check_variable = { pww_ui_s1_seat = 1 } } localization_key = pww_seat_line_holder }
+	text = { trigger = { check_variable = { pww_ui_s1_seat = 2 } } localization_key = pww_seat_line_patron }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_s2_seatline
+	text = { trigger = { check_variable = { pww_ui_s2_seat = 0 } } localization_key = pww_seat_line_claimant }
+	text = { trigger = { check_variable = { pww_ui_s2_seat = 1 } } localization_key = pww_seat_line_holder }
+	text = { trigger = { check_variable = { pww_ui_s2_seat = 2 } } localization_key = pww_seat_line_patron }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_s3_seatline
+	text = { trigger = { check_variable = { pww_ui_s3_seat = 0 } } localization_key = pww_seat_line_claimant }
+	text = { trigger = { check_variable = { pww_ui_s3_seat = 1 } } localization_key = pww_seat_line_holder }
+	text = { trigger = { check_variable = { pww_ui_s3_seat = 2 } } localization_key = pww_seat_line_patron }
+	text = { localization_key = pww_ui_blank }
+}

@@ -37,6 +37,10 @@ completion), `--leave-running` (keep the game open for manual poking), `--dry-ru
 Output: `.hoi4-userdir/runs/<stamp>_<name>/` with `error.log`, `game.log`, `system.log`,
 `setup.log`, `text.log`, `summary.json` (and `screen.png`).
 
+Stale logs: at launch the harness deletes (or rotates to `game.prev.log`) the previous
+`game.log`, and ignores any line whose wall-clock stamp is older than the launch, so a killed
+run's or another session's `PWW_DONE` can never end a new run early.
+
 ## Log protocol
 
 Emit from mod script with the `log` effect (it writes to `logs/game.log`):

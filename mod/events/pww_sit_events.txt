@@ -154,23 +154,27 @@ country_event = {
 
 	option = {
 		name = pww_sit_opt_h_hold
+		ai_chance = { factor = 1 }
 		set_temp_variable = { pww_in_outcome = 4 }
 		pww_sit_ev_resolve_mine = yes
 	}
 	option = {
 		name = pww_sit_opt_h_split
+		ai_chance = { factor = 0 }
 		trigger = { check_variable = { pww_sit_ev_can_split = 1 } }
 		set_temp_variable = { pww_in_outcome = 1 }
 		pww_sit_ev_resolve_mine = yes
 	}
 	option = {
 		name = pww_sit_opt_h_lease_c
+		ai_chance = { factor = 0 }
 		trigger = { check_variable = { pww_sit_ev_can_c = 1 } }
 		set_temp_variable = { pww_in_outcome = 2 }
 		pww_sit_ev_resolve_mine = yes
 	}
 	option = {
 		name = pww_sit_opt_h_lease_p
+		ai_chance = { factor = 0 }
 		trigger = { check_variable = { pww_sit_ev_can_p = 1 } }
 		set_temp_variable = { pww_in_outcome = 3 }
 		pww_sit_ev_resolve_mine = yes
@@ -188,16 +192,19 @@ country_event = {
 
 	option = {
 		name = pww_renew_btn_reclaim
+		ai_chance = { factor = 1 }
 		set_temp_variable = { pww_in_outcome = 8 }
 		pww_sit_ev_resolve_mine = yes
 	}
 	option = {
 		name = pww_renew_btn_extend
+		ai_chance = { factor = 0 }
 		set_temp_variable = { pww_in_outcome = 6 }
 		pww_sit_ev_resolve_mine = yes
 	}
 	option = {
 		name = pww_renew_btn_rebid
+		ai_chance = { factor = 0 }
 		trigger = {
 			OR = {
 				AND = {

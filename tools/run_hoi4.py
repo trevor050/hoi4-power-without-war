@@ -423,6 +423,20 @@ class LogTail:
         return data.splitlines()
 
 
+STAMP_RE = re.compile(r"^\[(\d\d):(\d\d):(\d\d)\]")
+
+
+def stale_line(line: str, launch: _dt.datetime) -> bool:
+    """True for a game.log line stamped before this launch (wall clock, 2 s slack)."""
+    m = STAMP_RE.match(line)
+    if not m:
+        return False
+    h, mi, se = (int(x) for x in m.groups())
+    line_s = h * 3600 + mi * 60 + se
+    launch_s = launch.hour * 3600 + launch.minute * 60 + launch.second - 2
+    return (line_s - launch_s) % 86400 > 43200  # more than 12 h "after" means before
+
+
 def build_args(a: argparse.Namespace, root: Path) -> list[str]:
     # -userdir= is ignored by the game but kept: it tags harness-launched processes.
     args = [str(GAME_EXE), f"-userdir={norm(root)}", "-gdpr-compliant"]
@@ -546,7 +560,22 @@ def main(argv: list[str] | None = None) -> int:
         out.mkdir(parents=True, exist_ok=True)
 
         game_log = userdir / "logs" / "game.log"
+        # A previous run's game.log (a killed run, or another agent's game that
+        # still holds it) must not leak its PWW_DONE into this run: remove or
+        # rotate it, and accept only lines stamped at or after launch.
+        skip = 0
+        if game_log.exists():
+            try:
+                game_log.unlink()
+            except OSError:
+                try:
+                    game_log.replace(game_log.with_name("game.prev.log"))
+                except OSError:
+                    skip = game_log.stat().st_size
+                    log("warning: could not rotate game.log (in use); ignoring its existing lines")
         tail = LogTail(game_log)
+        tail.pos = skip
+        launch_clock = _dt.datetime.now()
         t0 = time.time()
         proc = subprocess.Popen(args, cwd=str(GAME_DIR), env=game_env(root))
         lock.set_game_pid(proc.pid)
@@ -563,6 +592,8 @@ def main(argv: list[str] | None = None) -> int:
         days_done = False
         while True:
             for line in tail.read_new():
+                if stale_line(line, launch_clock):
+                    continue
                 if (SENTINEL_STARTED in line or "Launching SINGLEPLAYER-game" in line) and started_at is None:
                     # on_startup does not fire when a save is loaded; the engine line covers that case.
                     started_at = time.time()

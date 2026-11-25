@@ -1,0 +1,497 @@
+# Integration test driver (see on_actions/pww_tw_on_actions.txt). GER scope.
+# global.pww_tw_mode: 0 all AI, 1 human holder (POR is the player).
+
+pww_tw_daily = {
+	add_to_variable = { global.pww_tw_day = 1 }
+
+	if = {
+		limit = { check_variable = { global.pww_tw_day = 1 } }
+		set_global_flag = pww_sit_debug_open_wolfram
+		set_global_flag = pww_sit_debug
+		set_global_flag = pww_coer_debug
+		set_global_flag = pww_diplo_debug
+		set_variable = { global.pww_tw_mode = 0 }
+		if = {
+			limit = { POR = { is_ai = no } }
+			set_variable = { global.pww_tw_mode = 1 }
+		}
+		set_variable = { global.pww_tw_sit = -1 }
+		set_variable = { global.pww_tw_dem = -1 }
+		set_variable = { global.pww_tw_cq_seen = 0 }
+		set_variable = { global.pww_tw_dq_seen = 0 }
+		set_variable = { global.pww_tw_sq_seen = 0 }
+		set_variable = { global.pww_tw_max_ts = 0 }
+		set_variable = { global.pww_tw_max_f = 0 }
+		set_variable = { global.pww_tw_readout = 0 }
+		set_variable = { global.pww_tw_responses = 0 }
+		set_variable = { global.pww_tw_ls_status = -1 }
+		log = "PWW_RESULT wolfram_full.start INFO [GetDateText] mode=[?global.pww_tw_mode|0] player_por=[?global.pww_tw_mode|0]"
+	}
+	# Keep the claimant desperate (core test hook floors its own recompute)
+	set_variable = { pww_desp_floor_tungsten = 90 }
+	if = {
+		limit = { check_variable = { pww_desp_tungsten < 90 } }
+		set_variable = { pww_desp_tungsten = 90 }
+	}
+
+	# Situation id
+	if = {
+		limit = {
+			check_variable = { global.pww_tw_sit < 0 }
+			has_global_flag = pww_sit_wolfram_opened
+		}
+		set_variable = { global.pww_tw_sit = global.pww_sit_wolfram_id }
+		set_variable = { global.pww_tw_open_day = global.pww_tw_day }
+		set_temp_variable = { s = global.pww_tw_sit }
+		set_temp_variable = { c = global.pww_sit_claimant^s }
+		set_temp_variable = { h = global.pww_sit_holder^s }
+		set_temp_variable = { p = global.pww_sit_patron^s }
+		log = "PWW_RESULT wolfram_full.step INFO [GetDateText] opened sit=[?s|0] claimant=[?c.GetTag] holder=[?h.GetTag] patron=[?p.GetTag] states=[?global.pww_sitp_sit^num|0] ger_desp=[?pww_desp_tungsten|0] days=[?global.pww_sit_days_left^s|0]"
+	}
+
+	if = {
+		limit = { check_variable = { global.pww_tw_sit > -1 } }
+		pww_tw_watch = yes
+		if = {
+			limit = { check_variable = { global.pww_tw_mode = 1 } }
+			pww_tw_human_holder = yes
+		}
+	}
+
+	# Final checks 10 days after the resolution
+	if = {
+		limit = {
+			has_global_flag = pww_tw_resolved
+			NOT = { has_global_flag = pww_tw_done }
+			set_temp_variable = { t = global.pww_tw_res_day }
+			add_to_temp_variable = { t = 10 }
+			NOT = { check_variable = { global.pww_tw_day < t } }
+		}
+		set_global_flag = pww_tw_done
+		pww_tw_checks = yes
+		log = "PWW_DONE wolfram_full"
+	}
+	# Safety stop
+	if = {
+		limit = {
+			NOT = { has_global_flag = pww_tw_done }
+			check_variable = { global.pww_tw_day > 330 }
+		}
+		set_global_flag = pww_tw_done
+		set_temp_variable = { s = global.pww_tw_sit }
+		log = "PWW_RESULT wolfram_full.timeout INFO no resolution by day 330 sit=[?s|0] status=[?global.pww_sit_status^s|0]"
+		pww_tw_checks = yes
+		log = "PWW_DONE wolfram_full"
+	}
+}
+
+# Logs every change of the situation, its demand and the three queues.
+pww_tw_watch = {
+	set_temp_variable = { s = global.pww_tw_sit }
+	set_temp_variable = { st = global.pww_sit_status^s }
+	set_temp_variable = { ph = global.pww_sit_phase^s }
+	set_temp_variable = { dv = global.pww_sit_dev^s }
+	set_temp_variable = { ts = global.pww_sit_tstate^s }
+	set_temp_variable = { bc = global.pww_sit_bid_c^s }
+	set_temp_variable = { bp = global.pww_sit_bid_p^s }
+	set_temp_variable = { pl = global.pww_sit_pledge^s }
+	set_temp_variable = { dm = global.pww_sit_demand^s }
+	set_temp_variable = { co = global.pww_sit_coer^s }
+	set_temp_variable = { hd = global.pww_sit_hardened^s }
+	if = {
+		limit = {
+			OR = {
+				NOT = { check_variable = { st = global.pww_tw_ls_status } }
+				NOT = { check_variable = { ph = global.pww_tw_ls_phase } }
+				NOT = { check_variable = { dv = global.pww_tw_ls_dev } }
+				NOT = { check_variable = { ts = global.pww_tw_ls_ts } }
+				NOT = { check_variable = { bc = global.pww_tw_ls_bc } }
+				NOT = { check_variable = { bp = global.pww_tw_ls_bp } }
+				NOT = { check_variable = { pl = global.pww_tw_ls_pl } }
+				NOT = { check_variable = { dm = global.pww_tw_ls_dm } }
+				NOT = { check_variable = { hd = global.pww_tw_ls_hd } }
+			}
+		}
+		set_variable = { global.pww_tw_ls_status = st }
+		set_variable = { global.pww_tw_ls_phase = ph }
+		set_variable = { global.pww_tw_ls_dev = dv }
+		set_variable = { global.pww_tw_ls_ts = ts }
+		set_variable = { global.pww_tw_ls_bc = bc }
+		set_variable = { global.pww_tw_ls_bp = bp }
+		set_variable = { global.pww_tw_ls_pl = pl }
+		set_variable = { global.pww_tw_ls_dm = dm }
+		set_variable = { global.pww_tw_ls_hd = hd }
+		log = "PWW_RESULT wolfram_full.step INFO [GetDateText] sit status=[?st|0] phase=[?ph|0] dev=[?dv|0] tstate=[?ts|0] bid_c=[?bc|0] bid_p=[?bp|0] pledge=[?pl|0] demand=[?dm|0] coer=[?co|0] hardened=[?hd|0] left=[?global.pww_sit_days_left^s|0] ger_desp=[?pww_desp_tungsten|0]"
+	}
+	if = {
+		limit = { check_variable = { ts > global.pww_tw_max_ts } }
+		set_variable = { global.pww_tw_max_ts = ts }
+	}
+
+	# Demand
+	if = {
+		limit = {
+			check_variable = { dm > -1 }
+			check_variable = { global.pww_tw_dem < 0 }
+		}
+		set_variable = { global.pww_tw_dem = dm }
+		set_temp_variable = { dc = global.pww_cd_claimant^dm }
+		set_temp_variable = { dt = global.pww_cd_target^dm }
+		log = "PWW_RESULT wolfram_full.step INFO [GetDateText] demand issued id=[?dm|0] [?dc.GetTag]->[?dt.GetTag] type=[?global.pww_cd_type^dm|0] channel=[?global.pww_cd_channel^dm|0] state=[?global.pww_cd_state^dm|0] sit=[?global.pww_cd_sit^dm|0]"
+	}
+	if = {
+		limit = { check_variable = { global.pww_tw_dem > -1 } }
+		set_temp_variable = { d = global.pww_tw_dem }
+		set_temp_variable = { ds = global.pww_cd_status^d }
+		set_temp_variable = { dts = global.pww_cd_tstate^d }
+		set_temp_variable = { df = global.pww_cd_ftype^d }
+		set_temp_variable = { dch = global.pww_cd_channel^d }
+		set_temp_variable = { dq = global.pww_cd_quar^d }
+		if = {
+			limit = {
+				OR = {
+					NOT = { check_variable = { ds = global.pww_tw_ld_s } }
+					NOT = { check_variable = { dts = global.pww_tw_ld_ts } }
+					NOT = { check_variable = { df = global.pww_tw_ld_f } }
+					NOT = { check_variable = { dch = global.pww_tw_ld_ch } }
+					NOT = { check_variable = { dq = global.pww_tw_ld_q } }
+				}
+			}
+			set_variable = { global.pww_tw_ld_s = ds }
+			set_variable = { global.pww_tw_ld_ts = dts }
+			set_variable = { global.pww_tw_ld_f = df }
+			set_variable = { global.pww_tw_ld_ch = dch }
+			set_variable = { global.pww_tw_ld_q = dq }
+			log = "PWW_RESULT wolfram_full.step INFO [GetDateText] demand id=[?d|0] status=[?ds|0] tstate=[?dts|0] force=[?df|0] force_pts=[?global.pww_cd_force_pts^d|1] channel=[?dch|0] quarantine=[?dq|0] net=[?global.pww_cd_net^d|1] lever=[?global.pww_cd_lever^d|1] for0=[?global.pww_cd_for0^d|0] hold0=[?global.pww_cd_hold0^d|0] pledge_str=[?POR.pww_patron_pledge_strength|0]"
+		}
+		if = {
+			limit = { check_variable = { dts > global.pww_tw_max_ts } }
+			set_variable = { global.pww_tw_max_ts = dts }
+		}
+		if = {
+			limit = { check_variable = { df > 0 } }
+			set_variable = { global.pww_tw_max_f = df }
+		}
+		if = {
+			limit = {
+				OR = {
+					check_variable = { global.pww_cd_for0^d > 0 }
+					check_variable = { global.pww_cd_hold0^d > 0 }
+				}
+			}
+			set_variable = { global.pww_tw_readout = 1 }
+		}
+	}
+
+	# Coercion queue entries for our demand
+	for_each_loop = {
+		array = global.pww_cq_seq
+		value = q
+		index = i
+		if = {
+			limit = { check_variable = { q > global.pww_tw_cq_seen } }
+			set_variable = { global.pww_tw_cq_seen = q }
+			set_temp_variable = { qd = global.pww_cq_dem^i }
+			if = {
+				limit = { check_variable = { qd = global.pww_tw_dem } }
+				set_temp_variable = { qk = global.pww_cq_kind^i }
+				log = "PWW_RESULT wolfram_full.step INFO [GetDateText] coercion queue kind=[?qk|0] val=[?global.pww_cq_val^i|0] demand=[?qd|0]"
+				if = {
+					limit = { check_variable = { qk = 7 } }
+					add_to_variable = { global.pww_tw_responses = 1 }
+				}
+			}
+		}
+	}
+	# Diplomacy queue entries between the three seats
+	for_each_loop = {
+		array = global.pww_dq_seq
+		value = q
+		index = i
+		if = {
+			limit = { check_variable = { q > global.pww_tw_dq_seen } }
+			set_variable = { global.pww_tw_dq_seen = q }
+			set_temp_variable = { qa = global.pww_dq_a^i }
+			set_temp_variable = { qb = global.pww_dq_b^i }
+			if = {
+				limit = {
+					OR = {
+						var:qa = { OR = { tag = GER tag = POR tag = ENG } }
+						var:qb = { OR = { tag = GER tag = POR tag = ENG } }
+					}
+				}
+				log = "PWW_RESULT wolfram_full.step INFO [GetDateText] diplomacy queue kind=[?global.pww_dq_kind^i|0] a=[?qa.GetTag] b=[?qb.GetTag] ref=[?global.pww_dq_ref^i|0] ag=[?global.pww_dq_ag^i|0] sit=[?global.pww_dq_sit^i|0] x=[?global.pww_dq_x^i|0]"
+			}
+		}
+	}
+	# Situation queue entries for our situation
+	for_each_loop = {
+		array = global.pww_sitq_seq
+		value = q
+		index = i
+		if = {
+			limit = { check_variable = { q > global.pww_tw_sq_seen } }
+			set_variable = { global.pww_tw_sq_seen = q }
+			if = {
+				limit = { check_variable = { global.pww_sitq_sit^i = global.pww_tw_sit } }
+				log = "PWW_RESULT wolfram_full.step INFO [GetDateText] situation queue kind=[?global.pww_sitq_kind^i|0] val=[?global.pww_sitq_val^i|0]"
+			}
+		}
+	}
+
+	# Resolution
+	if = {
+		limit = {
+			NOT = { has_global_flag = pww_tw_resolved }
+			check_variable = { st > 1 }
+		}
+		set_global_flag = pww_tw_resolved
+		set_variable = { global.pww_tw_res_day = global.pww_tw_day }
+		set_temp_variable = { d = global.pww_tw_dem }
+		log = "PWW_RESULT wolfram_full.step INFO [GetDateText] resolved status=[?st|0] outcome=[?global.pww_sit_outcome^s|0] demand_status=[?global.pww_cd_status^d|0]"
+	}
+}
+
+# POR is the player: answer the coercion popups and the holder decision the
+# way the event options do (same effects, POR scope).
+pww_tw_human_holder = {
+	set_temp_variable = { d = global.pww_tw_dem }
+	# The demand popup arrived (pww_coer_popup_prep ran on POR)
+	if = {
+		limit = {
+			check_variable = { d > -1 }
+			NOT = { has_global_flag = pww_tw_h1 }
+			POR = { has_variable = pww_coer_ev_dem }
+		}
+		set_global_flag = pww_tw_h1
+		set_temp_variable = { ev = POR.pww_coer_ev_dem }
+		if = {
+			limit = { check_variable = { ev = d } }
+			log = "PWW_RESULT wolfram_full.human_popup PASS demand popup reached POR dem=[?ev|0] channel=[?POR.pww_coer_ev_channel|0] state=[?POR.pww_coer_rd_state|0]"
+		}
+		else = {
+			log = "PWW_RESULT wolfram_full.human_popup FAIL popup demand [?ev|0] is not the situation demand [?d|0]"
+		}
+		# Option e: call a patron
+		POR = {
+			set_temp_variable = { pww_in_response = 4 }
+			pww_coer_popup_target_answer = yes
+		}
+		log = "PWW_RESULT wolfram_full.step INFO [GetDateText] human POR answers: call patron result=[?pww_out_result|0] fail=[?pww_out_fail|0]"
+		set_variable = { global.pww_tw_h1_ok = pww_out_result }
+	}
+	# Pressure reaches Wavering: offer a smaller lot (the receiver's counter)
+	if = {
+		limit = {
+			check_variable = { d > -1 }
+			has_global_flag = pww_tw_h1
+			NOT = { has_global_flag = pww_tw_h2 }
+			check_variable = { global.pww_cd_status^d = 0 }
+			check_variable = { global.pww_cd_tstate^d > 1 }
+		}
+		set_global_flag = pww_tw_h2
+		POR = {
+			set_temp_variable = { pww_in_response = 1 }
+			set_temp_variable = { pww_in_share = 0.5 }
+			pww_coer_popup_target_answer = yes
+		}
+		log = "PWW_RESULT wolfram_full.step INFO [GetDateText] human POR answers: smaller lot result=[?pww_out_result|0] fail=[?pww_out_fail|0] tstate=[?global.pww_cd_tstate^d|0]"
+	}
+	# Decision date: the holder splits the award when it can (the Salazar
+	# line), otherwise holds out
+	set_temp_variable = { s = global.pww_tw_sit }
+	if = {
+		limit = {
+			NOT = { has_global_flag = pww_tw_h3 }
+			check_variable = { global.pww_sit_status^s = 1 }
+			check_variable = { global.pww_sit_phase^s = 3 }
+		}
+		set_global_flag = pww_tw_h3
+		POR = {
+			set_temp_variable = { pww_in_outcome = 4 }
+			if = {
+				limit = { check_variable = { pww_sit_ev_can_split = 1 } }
+				set_temp_variable = { pww_in_outcome = 1 }
+			}
+			set_variable = { global.pww_tw_h_choice = pww_in_outcome }
+			pww_sit_ev_resolve_mine = yes
+		}
+		log = "PWW_RESULT wolfram_full.step INFO [GetDateText] human POR decides outcome=[?global.pww_tw_h_choice|0] result=[?pww_out_result|0]"
+	}
+}
+
+pww_tw_checks = {
+	set_temp_variable = { s = global.pww_tw_sit }
+	set_temp_variable = { d = global.pww_tw_dem }
+	set_temp_variable = { oc = global.pww_sit_outcome^s }
+
+	if = {
+		limit = {
+			check_variable = { s > -1 }
+			GER = { check_variable = { global.pww_sit_claimant^s = THIS } }
+			POR = { check_variable = { global.pww_sit_holder^s = THIS } }
+			ENG = { check_variable = { global.pww_sit_patron^s = THIS } }
+		}
+		log = "PWW_RESULT wolfram_full.opened PASS sit=[?s|0] day=[?global.pww_tw_open_day|0]"
+	}
+	else = {
+		log = "PWW_RESULT wolfram_full.opened FAIL sit=[?s|0]"
+	}
+
+	if = {
+		limit = { GER = { check_variable = { pww_desp_tungsten > 89 } } }
+		log = "PWW_RESULT wolfram_full.desperate PASS ger_desp=[?GER.pww_desp_tungsten|0]"
+	}
+	else = {
+		log = "PWW_RESULT wolfram_full.desperate FAIL ger_desp=[?GER.pww_desp_tungsten|0]"
+	}
+
+	if = {
+		limit = { check_variable = { global.pww_sit_bid_c^s > 0 } }
+		log = "PWW_RESULT wolfram_full.claimant_offer PASS band=[?global.pww_sit_bid_c^s|0]"
+	}
+	else = {
+		log = "PWW_RESULT wolfram_full.claimant_offer FAIL band=0"
+	}
+
+	# Escalation through the coercion lane (not the situations pressure model)
+	if = {
+		limit = {
+			check_variable = { d > -1 }
+			check_variable = { global.pww_sit_coer^s = 1 }
+			check_variable = { global.pww_cd_sit^d = s }
+		}
+		log = "PWW_RESULT wolfram_full.escalated PASS demand=[?d|0] channel=[?global.pww_cd_channel^d|0] issued_day=[?global.pww_cd_issued^d|0]"
+	}
+	else = {
+		log = "PWW_RESULT wolfram_full.escalated FAIL demand=[?d|0] coer=[?global.pww_sit_coer^s|0] fallback_pressure=[?global.pww_sit_pressure^s|0]"
+	}
+
+	if = {
+		limit = { check_variable = { global.pww_tw_max_f > 0 } }
+		log = "PWW_RESULT wolfram_full.committed_force PASS type=[?global.pww_tw_max_f|0] (1 naval, 2 air, 3 army)"
+	}
+	else = {
+		log = "PWW_RESULT wolfram_full.committed_force FAIL no force was committed to demand [?d|0]"
+	}
+
+	if = {
+		limit = { check_variable = { global.pww_tw_readout = 1 } }
+		log = "PWW_RESULT wolfram_full.pressure PASS weekly readout with reasons; max_target_state=[?global.pww_tw_max_ts|0] last_net=[?global.pww_cd_net^d|1] for0=[?global.pww_cd_for0^d|0] hold0=[?global.pww_cd_hold0^d|0]"
+	}
+	else = {
+		log = "PWW_RESULT wolfram_full.pressure FAIL no evaluated readout for demand [?d|0]"
+	}
+
+	# Patron pledge, and whether it came through diplomacy
+	set_temp_variable = { dpl = 0 }
+	for_each_loop = {
+		array = global.pww_dpl_patron
+		value = pp
+		index = i
+		if = {
+			limit = {
+				var:pp = { tag = ENG }
+				POR = { check_variable = { global.pww_dpl_holder^i = THIS } }
+			}
+			add_to_temp_variable = { dpl = 1 }
+		}
+	}
+	if = {
+		limit = { check_variable = { global.pww_sit_pledge^s = 1 } }
+		log = "PWW_RESULT wolfram_full.patron_pledge PASS diplomacy_pledges=[?dpl|0] pledge_ag=[?global.pww_sit_pledge_ag^s|0] strength=[?POR.pww_patron_pledge_strength|0]"
+	}
+	else = {
+		log = "PWW_RESULT wolfram_full.patron_pledge FAIL diplomacy_pledges=[?dpl|0]"
+	}
+
+	if = {
+		limit = { check_variable = { global.pww_tw_responses > 0 } }
+		log = "PWW_RESULT wolfram_full.holder_responded PASS responses=[?global.pww_tw_responses|0] hardened=[?global.pww_cd_hardened^d|0] lot_done=[?global.pww_cd_lot_done^d|0] stall=[?global.pww_cd_stall^d|0]"
+	}
+	else = {
+		log = "PWW_RESULT wolfram_full.holder_responded FAIL no target response recorded for demand [?d|0]"
+	}
+
+	if = {
+		limit = {
+			check_variable = { global.pww_sit_status^s = 2 }
+			check_variable = { oc > 0 }
+			check_variable = { oc < 6 }
+		}
+		log = "PWW_RESULT wolfram_full.resolved PASS outcome=[?oc|0] day=[?global.pww_tw_res_day|0] demand_status=[?global.pww_cd_status^d|0]"
+	}
+	else = {
+		log = "PWW_RESULT wolfram_full.resolved FAIL status=[?global.pww_sit_status^s|0] outcome=[?oc|0]"
+	}
+
+	# The outcome is served by live ledger agreements
+	set_temp_variable = { act = 0 }
+	for_each_loop = {
+		array = global.pww_sitp_sit
+		value = v
+		index = k
+		if = {
+			limit = {
+				check_variable = { v = s }
+				check_variable = { global.pww_sitp_ag^k > -1 }
+			}
+			set_temp_variable = { ag = global.pww_sitp_ag^k }
+			set_temp_variable = { b = global.pww_ag_buyer^ag }
+			log = "PWW_RESULT wolfram_full.agreement INFO ag=[?ag|0] kind=[?global.pww_ag_kind^ag|0] status=[?global.pww_ag_status^ag|0] buyer=[?b.GetTag] state=[?global.pww_ag_state^ag|0]"
+			if = {
+				limit = { check_variable = { global.pww_ag_status^ag = 1 } }
+				add_to_temp_variable = { act = 1 }
+			}
+		}
+	}
+	if = {
+		limit = { check_variable = { oc = 4 } }
+		set_temp_variable = { pag = global.pww_sit_pledge_ag^s }
+		if = {
+			limit = {
+				check_variable = { pag > -1 }
+				OR = {
+					check_variable = { global.pww_ag_status^pag = 1 }
+					check_variable = { global.pww_ag_status^pag = 2 }
+				}
+			}
+			add_to_temp_variable = { act = 1 }
+		}
+	}
+	if = {
+		limit = {
+			OR = {
+				check_variable = { act > 0 }
+				check_variable = { oc = 5 }
+			}
+		}
+		log = "PWW_RESULT wolfram_full.outcome_served PASS active=[?act|0] outcome=[?oc|0]"
+	}
+	else = {
+		log = "PWW_RESULT wolfram_full.outcome_served FAIL active=0 outcome=[?oc|0]"
+	}
+
+	# Wars: the mod never declares one; report whether the crisis led to war
+	if = {
+		limit = { GER = { has_war_with = POR } }
+		log = "PWW_RESULT wolfram_full.war INFO GER and POR at war (outcome [?oc|0])"
+	}
+	else = {
+		log = "PWW_RESULT wolfram_full.war INFO no war between GER and POR"
+	}
+
+	if = {
+		limit = { check_variable = { global.pww_tw_mode = 1 } }
+		if = {
+			limit = {
+				has_global_flag = pww_tw_h1
+				check_variable = { global.pww_tw_h1_ok = 1 }
+			}
+			log = "PWW_RESULT wolfram_full.human_receiver PASS the human holder's popup answer was accepted"
+		}
+		else = {
+			log = "PWW_RESULT wolfram_full.human_receiver FAIL popup answered=[?global.pww_tw_h1_ok|0]"
+		}
+	}
+}

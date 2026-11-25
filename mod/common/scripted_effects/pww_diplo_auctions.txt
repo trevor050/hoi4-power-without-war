@@ -38,9 +38,22 @@ pww_diplo_auction_open = {
 		set_temp_variable = { pww_dao_days = global.pww_diplo_c_auction_days }
 	}
 	add_to_temp_variable = { pww_dao_close = pww_dao_days }
+	# Situation link: -1 unless it names a situation this holder holds (an
+	# unset temp reads 0, which is situation 0).
+	set_temp_variable = { pww_dao_sit = -1 }
+	if = {
+		limit = {
+			has_global_flag = pww_sit_loaded
+			check_variable = { pww_in_sit_id > -1 }
+			check_variable = { pww_in_sit_id < global.pww_next_sit_id }
+			check_variable = { global.pww_sit_holder^pww_in_sit_id = pww_in_holder }
+		}
+		set_temp_variable = { pww_dao_sit = pww_in_sit_id }
+	}
+	set_temp_variable = { pww_in_sit_id = pww_dao_sit }
 	add_to_array = { array = global.pww_dau_holder value = pww_in_holder }
 	add_to_array = { array = global.pww_dau_res value = pww_in_resource }
-	add_to_array = { array = global.pww_dau_sit value = pww_in_sit_id }
+	add_to_array = { array = global.pww_dau_sit value = pww_dao_sit }
 	add_to_array = { array = global.pww_dau_status value = 0 }
 	add_to_array = { array = global.pww_dau_opened value = global.num_days }
 	add_to_array = { array = global.pww_dau_closes value = pww_dao_close }

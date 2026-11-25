@@ -274,16 +274,17 @@ ui = {
     "pww_diplo_lot_desc_3": "A short supply contract with no named-state rights.",
 }
 
+# Titles fit the vanilla diplomatic actions list (about 18 characters).
 ACTIONS = {
-    "pww_diplo_propose_agreement": ("Propose Commercial Agreement", "$pww_act_propose_agreement_desc$"),
-    "pww_diplo_lease_rights": ("Negotiate Resource Lease", "$pww_act_lease_rights_desc$"),
-    "pww_diplo_demand_quiet": ("Issue Demand (Back Channel)", "$pww_act_demand_quiet_desc$"),
-    "pww_diplo_demand_public": ("Issue Demand (Public Ultimatum)", "$pww_act_demand_public_desc$"),
-    "pww_diplo_pledge_support": ("Pledge Commercial Support", "$pww_act_pledge_support_desc$"),
-    "pww_diplo_quarantine": ("Declare Naval Quarantine", "$pww_act_quarantine_desc$"),
+    "pww_diplo_propose_agreement": ("Propose Trade Deal", "$pww_act_propose_agreement_desc$"),
+    "pww_diplo_lease_rights": ("Lease Mines", "$pww_act_lease_rights_desc$"),
+    "pww_diplo_demand_quiet": ("Demand (Quiet)", "$pww_act_demand_quiet_desc$"),
+    "pww_diplo_demand_public": ("Demand (Public)", "$pww_act_demand_public_desc$"),
+    "pww_diplo_pledge_support": ("Pledge Support", "$pww_act_pledge_support_desc$"),
+    "pww_diplo_quarantine": ("Quarantine", "$pww_act_quarantine_desc$"),
     "pww_diplo_demand_settlement": ("Demand Settlement", "$pww_act_demand_settlement_desc$"),
-    "pww_diplo_join_embargo": ("Request Embargo Compliance", "$pww_act_join_embargo_desc$"),
-    "pww_diplo_submit_bid": ("Submit Auction Bid", "Bid once on a lot [THIS.GetName] has put up. The holder awards each lot when bidding closes."),
+    "pww_diplo_join_embargo": ("Join Our Embargo", "$pww_act_join_embargo_desc$"),
+    "pww_diplo_submit_bid": ("Submit Bid", "Bid once on a lot [THIS.GetName] has put up. The holder awards each lot when bidding closes."),
 }
 for k, (t, d) in ACTIONS.items():
     K = k.upper()

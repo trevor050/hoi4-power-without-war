@@ -12,6 +12,11 @@
 #   pww_coer.6  target: the demand is resolved (no situation attached)
 #   pww_coer.7  third party: asked to join an embargo (FROM claimant)
 #   pww_coer.8  target: strangulation grants a war justification
+# Timeouts: these go to humans only, so ai_chance is only the engine's pick
+# when a popup is left unanswered. It always picks the option that changes
+# nothing (an ignored ultimatum never folds, an ignored counter is rejected).
+# The engine takes the FIRST option on a player's timeout, so that option is
+# listed first too.
 ###############################################################################
 
 add_namespace = pww_coer
@@ -24,45 +29,45 @@ country_event = {
 	is_triggered_only = yes
 
 	option = {
-		name = pww_coer.1.a
+		name = pww_coer.1.h
 		ai_chance = { factor = 1 }
+	}
+	option = {
+		name = pww_coer.1.a
+		ai_chance = { factor = 0 }
 		set_temp_variable = { pww_in_response = 0 }
 		pww_coer_popup_target_answer = yes
 	}
 	option = {
 		name = pww_coer.1.b
-		ai_chance = { factor = 1 }
+		ai_chance = { factor = 0 }
 		set_temp_variable = { pww_in_response = 1 }
 		pww_coer_popup_target_answer = yes
 	}
 	option = {
 		name = pww_coer.1.c
-		ai_chance = { factor = 1 }
+		ai_chance = { factor = 0 }
 		set_temp_variable = { pww_in_response = 2 }
 		pww_coer_popup_target_answer = yes
 	}
 	option = {
 		name = pww_coer.1.e
-		ai_chance = { factor = 1 }
+		ai_chance = { factor = 0 }
 		set_temp_variable = { pww_in_response = 4 }
 		pww_coer_popup_target_answer = yes
 	}
 	option = {
 		name = pww_coer.1.f
-		ai_chance = { factor = 1 }
+		ai_chance = { factor = 0 }
 		set_temp_variable = { pww_in_response = 5 }
 		pww_coer_popup_target_answer = yes
 	}
 	option = {
 		name = pww_coer.1.g
 		trigger = { check_variable = { pww_coer_ev_channel = 0 } }
-		ai_chance = { factor = 1 }
+		ai_chance = { factor = 0 }
 		set_temp_variable = { pww_in_response = 7 }
 		pww_coer_popup_target_answer = yes
-	}
-	option = {
-		name = pww_coer.1.h
-		ai_chance = { factor = 10 }
 	}
 }
 
@@ -81,15 +86,15 @@ country_event = {
 	is_triggered_only = yes
 
 	option = {
-		name = pww_coer.2.a
-		ai_chance = { factor = 1 }
-		set_temp_variable = { pww_in_response = 0 }
-		pww_coer_popup_claimant_answer = yes
-	}
-	option = {
 		name = pww_coer.2.b
 		ai_chance = { factor = 1 }
 		set_temp_variable = { pww_in_response = 1 }
+		pww_coer_popup_claimant_answer = yes
+	}
+	option = {
+		name = pww_coer.2.a
+		ai_chance = { factor = 0 }
+		set_temp_variable = { pww_in_response = 0 }
 		pww_coer_popup_claimant_answer = yes
 	}
 }
@@ -107,14 +112,14 @@ country_event = {
 	}
 	option = {
 		name = pww_coer.3.b
-		ai_chance = { factor = 1 }
+		ai_chance = { factor = 0 }
 		set_temp_variable = { pww_in_response = 2 }
 		set_temp_variable = { pww_in_fig_leaf = 4 }
 		pww_coer_popup_claimant_answer = yes
 	}
 	option = {
 		name = pww_coer.3.c
-		ai_chance = { factor = 1 }
+		ai_chance = { factor = 0 }
 		set_temp_variable = { pww_in_response = 5 }
 		pww_coer_popup_claimant_answer = yes
 	}
@@ -186,16 +191,16 @@ country_event = {
 	is_triggered_only = yes
 
 	option = {
-		name = pww_coer.7.a
+		name = pww_coer.7.b
 		ai_chance = { factor = 1 }
+	}
+	option = {
+		name = pww_coer.7.a
+		ai_chance = { factor = 0 }
 		set_temp_variable = { pww_in_demand_id = pww_coer_ev_dem }
 		set_temp_variable = { pww_in_third = THIS }
 		set_temp_variable = { pww_in_comply = 1 }
 		pww_coer_join_embargo_reply = yes
-	}
-	option = {
-		name = pww_coer.7.b
-		ai_chance = { factor = 1 }
 	}
 }
 

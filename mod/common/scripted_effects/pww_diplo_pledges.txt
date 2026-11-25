@@ -19,6 +19,13 @@
 # clamped to 100. A pledge against a specific claimant counts fully only
 # against that claimant; the variable is the holder's overall cover, and
 # pww_diplo_pledged_against answers "is it covered against X".
+#
+# Quarantine (coercion loaded): a pledged deal to a quarantined holder is
+# undeliverable. While the holder carries flag pww_coer_quarantined its
+# pledge strength counts a quarter (recomputed when coercion's queue reports
+# a quarantine holding or lapsing, kind 11), and a pledge that fires is
+# suspended at once through pww_coer_quarantine_hold_ag (it resumes when the
+# quarantine lapses).
 ###############################################################################
 
 ###############################################################################
@@ -224,21 +231,44 @@ pww_diplo_pledge_make = {
 		limit = { check_variable = { pww_dp_valid = 0 } }
 		pww_ledger_new_condition_id = yes
 		set_temp_variable = { pww_dpm_cond = pww_l_cond_new }
-		pww_diplo_ledger_clear = yes
-		set_temp_variable = { pww_l_seller = pww_dp_target }
-		set_temp_variable = { pww_l_buyer = THIS }
-		set_temp_variable = { pww_l_kind = 0 }
-		set_temp_variable = { pww_l_res = pww_dp_res }
-		set_temp_variable = { pww_l_amount = pww_dp_units }
-		set_temp_variable = { pww_l_committal = 1 }
-		set_temp_variable = { pww_l_term_days = pww_dp_term }
-		if = {
-			limit = { check_variable = { pww_dp_pay = 0 } }
-			set_temp_variable = { pww_l_civ = pww_dp_civ }
+		# The holder may have sold part of its output since the draft: when
+		# the ledger refuses for capacity (fail 4), halve the amount (up to
+		# three times) rather than drop the pledge.
+		set_temp_variable = { pww_dpm_units = pww_dp_units }
+		set_temp_variable = { pww_l_result = 0 }
+		set_temp_variable = { pww_l_fail = 4 }
+		for_loop_effect = {
+			start = 0
+			end = 4
+			value = pww_dpm_try
+			if = {
+				limit = {
+					check_variable = { pww_l_result = 0 }
+					check_variable = { pww_l_fail = 4 }
+					check_variable = { pww_dpm_units > 0.999 }
+				}
+				pww_diplo_ledger_clear = yes
+				set_temp_variable = { pww_l_seller = pww_dp_target }
+				set_temp_variable = { pww_l_buyer = THIS }
+				set_temp_variable = { pww_l_kind = 0 }
+				set_temp_variable = { pww_l_res = pww_dp_res }
+				set_temp_variable = { pww_l_amount = pww_dpm_units }
+				set_temp_variable = { pww_l_committal = 1 }
+				set_temp_variable = { pww_l_term_days = pww_dp_term }
+				if = {
+					limit = { check_variable = { pww_dp_pay = 0 } }
+					set_temp_variable = { pww_l_civ = pww_dp_civ }
+				}
+				set_temp_variable = { pww_l_cond = pww_dpm_cond }
+				set_temp_variable = { pww_l_reserve_days = global.pww_diplo_c_pledge_days }
+				pww_ledger_create_agreement = yes
+				if = {
+					limit = { check_variable = { pww_l_result = 0 } }
+					multiply_temp_variable = { pww_dpm_units = 0.5 }
+					round_temp_variable = pww_dpm_units
+				}
+			}
 		}
-		set_temp_variable = { pww_l_cond = pww_dpm_cond }
-		set_temp_variable = { pww_l_reserve_days = global.pww_diplo_c_pledge_days }
-		pww_ledger_create_agreement = yes
 		if = {
 			limit = { check_variable = { pww_l_result = 1 } }
 			set_temp_variable = { pww_dpm_ag = pww_l_new_id }
@@ -276,7 +306,9 @@ pww_diplo_pledge_make = {
 			add_to_array = { array = global.pww_dpl_cond value = pww_dpm_cond }
 			add_to_array = { array = global.pww_dpl_ag value = pww_dpm_ag }
 			add_to_array = { array = global.pww_dpl_status value = 0 }
-			add_to_array = { array = global.pww_dpl_value value = pww_dp_value }
+			set_temp_variable = { pww_dpm_val = pww_dpm_units }
+			divide_temp_variable = { pww_dpm_val = 8 }
+			add_to_array = { array = global.pww_dpl_value value = pww_dpm_val }
 			add_to_array = { array = global.pww_dpl_made value = global.num_days }
 			add_to_array = { array = pww_dpl_given value = pww_dpm_id }
 			var:pww_dp_target = { add_to_array = { array = pww_dpl_ids value = pww_dpm_id } }
@@ -297,7 +329,7 @@ pww_diplo_pledge_make = {
 	}
 	if = {
 		limit = { has_global_flag = pww_diplo_debug }
-		log = "[GetDateText] PWW_DIPLO pledge [THIS.GetTag]->[?pww_dp_target.GetTag] vs=[?pww_dp_claimant.GetTag] res=[?pww_dp_res|0] units=[?pww_dp_units|0] ok=[?pww_dpm_ok|0] id=[?pww_dpm_id|0] valid=[?pww_dp_valid|0] lfail=[?pww_l_fail|0]"
+		log = "[GetDateText] PWW_DIPLO pledge [THIS.GetTag]->[?pww_dp_target.GetTag] vs=[?pww_dp_claimant.GetTag] res=[?pww_dp_res|0] units=[?pww_dp_units|0] made=[?pww_dpm_units|0] ok=[?pww_dpm_ok|0] id=[?pww_dpm_id|0] valid=[?pww_dp_valid|0] lfail=[?pww_l_fail|0]"
 	}
 }
 
@@ -340,6 +372,13 @@ pww_diplo_pledge_strength = {
 			}
 		}
 	}
+	if = {
+		limit = {
+			has_global_flag = pww_coer_loaded
+			has_country_flag = pww_coer_quarantined
+		}
+		multiply_temp_variable = { pww_dps_sum = 0.25 }
+	}
 	clamp_temp_variable = { var = pww_dps_sum min = 0 max = 100 }
 	round_temp_variable = pww_dps_sum
 	set_variable = { pww_patron_pledge_strength = pww_dps_sum }
@@ -380,6 +419,9 @@ pww_diplo_on_demand_refused = {
 					limit = { check_variable = { pww_l_fired > 0 } }
 					set_variable = { global.pww_dpl_status^pww_dpf_v = 1 }
 					add_to_temp_variable = { pww_out_fired = 1 }
+					set_temp_variable = { pww_dqh_ag = global.pww_dpl_ag^pww_dpf_v }
+					set_temp_variable = { pww_dqh_h = THIS }
+					pww_diplo_pledge_quarantine_hold = yes
 					set_temp_variable = { pww_dq_kind_in = 5 }
 				}
 				else = {
@@ -447,6 +489,9 @@ pww_diplo_pledges_sweep = {
 			if = {
 				limit = { check_variable = { global.pww_ag_status^pww_dpsw_ag = 1 } }
 				set_variable = { global.pww_dpl_status^pww_dpsw_v = 1 }
+				set_temp_variable = { pww_dqh_ag = pww_dpsw_ag }
+				set_temp_variable = { pww_dqh_h = global.pww_dpl_holder^pww_dpsw_v }
+				pww_diplo_pledge_quarantine_hold = yes
 			}
 			else = {
 				set_variable = { global.pww_dpl_status^pww_dpsw_v = 2 }
@@ -468,5 +513,69 @@ pww_diplo_pledges_sweep = {
 		set_temp_variable = { pww_dq_ag_in = global.pww_dpl_ag^pww_dpsw_d }
 		set_temp_variable = { pww_dq_x_in = global.pww_dpl_status^pww_dpsw_d }
 		pww_diplo_queue_push = yes
+	}
+}
+
+###############################################################################
+# A fired pledge to a quarantined holder is undeliverable. Any scope.
+# in: pww_dqh_ag (ledger agreement), pww_dqh_h (holder)
+###############################################################################
+pww_diplo_pledge_quarantine_hold = {
+	if = {
+		limit = {
+			has_global_flag = pww_coer_loaded
+			var:pww_dqh_h = { has_country_flag = pww_coer_quarantined }
+		}
+		set_temp_variable = { pww_in_ag = pww_dqh_ag }
+		set_temp_variable = { pww_in_target = pww_dqh_h }
+		meta_effect = {
+			text = { pww_coer_quarantine_hold_ag = [Y] }
+			Y = "yes"
+		}
+		if = {
+			limit = { has_global_flag = pww_diplo_debug }
+			log = "[GetDateText] PWW_DIPLO pledge to quarantined [?pww_dqh_h.GetTag] ag=[?pww_dqh_ag|0] held=[?pww_out_result|0]"
+		}
+	}
+}
+
+###############################################################################
+# Direct pledge for the situations lane (patron scope; no diplomatic action,
+# the holder is taken to accept being underwritten). Situations call it when
+# an AI patron's pledge intent outlived the grace, so every pledge lives in
+# these records and feeds pww_patron_pledge_strength.
+# in : pww_in_target (holder), pww_in_claimant (country, or 0 = anyone; it
+#      is matched against the holder's pww_dd_pressers), pww_in_resource
+# out: pww_out_result (1/0), pww_out_ag (reserved agreement, -1),
+#      pww_out_pledge_id (-1)
+###############################################################################
+pww_diplo_make_pledge_direct = {
+	pww_diplo_init = yes
+	set_temp_variable = { pww_out_result = 0 }
+	set_temp_variable = { pww_out_ag = -1 }
+	set_temp_variable = { pww_out_pledge_id = -1 }
+	set_temp_variable = { pww_dmd_c = pww_in_claimant }
+	set_temp_variable = { pww_dmd_r = pww_in_resource }
+	set_temp_variable = { pww_dk_target = pww_in_target }
+	pww_diplo_pledge_begin = yes
+	set_variable = { pww_dp_res = pww_dmd_r }
+	set_variable = { pww_dp_ci = -1 }
+	var:pww_in_target = {
+		for_each_loop = {
+			array = pww_dd_pressers
+			value = pww_dmd_v
+			index = pww_dmd_i
+			if = {
+				limit = { check_variable = { pww_dmd_v = pww_dmd_c } }
+				PREV = { set_variable = { pww_dp_ci = pww_dmd_i } }
+			}
+		}
+	}
+	pww_diplo_pledge_make = yes
+	if = {
+		limit = { check_variable = { pww_dpm_ok = 1 } }
+		set_temp_variable = { pww_out_result = 1 }
+		set_temp_variable = { pww_out_ag = pww_dpm_ag }
+		set_temp_variable = { pww_out_pledge_id = pww_dpm_id }
 	}
 }

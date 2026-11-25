@@ -30,6 +30,8 @@
 #   coal only: + 80 * max(0, 1 - energy_ratio)    when energy_ratio > 0.01
 #   war:       raw = raw * 1.25 + 10              when has_war and raw > 0
 #   raw clamped 0..100; stored value = round(0.4 * previous + 0.6 * raw)
+#   Test hook: country var pww_desp_floor_<res> (unset = none) floors the
+#   stored value (integration tests force a desperate claimant).
 # All constants are first-pass placeholders for playtest tuning.
 ###############################################################################
 
@@ -142,6 +144,10 @@ pww_core_update_desperation = {
 	add_to_temp_variable = { pww_raw = pww_prev }
 	round_temp_variable = pww_raw
 	clamp_temp_variable = { var = pww_raw min = 0 max = 100 }
+	if = {
+		limit = { check_variable = { pww_desp_floor_oil > pww_raw } }
+		set_temp_variable = { pww_raw = pww_desp_floor_oil }
+	}
 	set_variable = { pww_desp_oil = pww_raw }
 	if = {
 		limit = { check_variable = { pww_desp_oil > pww_desp_max } }
@@ -196,6 +202,10 @@ pww_core_update_desperation = {
 	add_to_temp_variable = { pww_raw = pww_prev }
 	round_temp_variable = pww_raw
 	clamp_temp_variable = { var = pww_raw min = 0 max = 100 }
+	if = {
+		limit = { check_variable = { pww_desp_floor_aluminium > pww_raw } }
+		set_temp_variable = { pww_raw = pww_desp_floor_aluminium }
+	}
 	set_variable = { pww_desp_aluminium = pww_raw }
 	if = {
 		limit = { check_variable = { pww_desp_aluminium > pww_desp_max } }
@@ -250,6 +260,10 @@ pww_core_update_desperation = {
 	add_to_temp_variable = { pww_raw = pww_prev }
 	round_temp_variable = pww_raw
 	clamp_temp_variable = { var = pww_raw min = 0 max = 100 }
+	if = {
+		limit = { check_variable = { pww_desp_floor_rubber > pww_raw } }
+		set_temp_variable = { pww_raw = pww_desp_floor_rubber }
+	}
 	set_variable = { pww_desp_rubber = pww_raw }
 	if = {
 		limit = { check_variable = { pww_desp_rubber > pww_desp_max } }
@@ -304,6 +318,10 @@ pww_core_update_desperation = {
 	add_to_temp_variable = { pww_raw = pww_prev }
 	round_temp_variable = pww_raw
 	clamp_temp_variable = { var = pww_raw min = 0 max = 100 }
+	if = {
+		limit = { check_variable = { pww_desp_floor_tungsten > pww_raw } }
+		set_temp_variable = { pww_raw = pww_desp_floor_tungsten }
+	}
 	set_variable = { pww_desp_tungsten = pww_raw }
 	if = {
 		limit = { check_variable = { pww_desp_tungsten > pww_desp_max } }
@@ -358,6 +376,10 @@ pww_core_update_desperation = {
 	add_to_temp_variable = { pww_raw = pww_prev }
 	round_temp_variable = pww_raw
 	clamp_temp_variable = { var = pww_raw min = 0 max = 100 }
+	if = {
+		limit = { check_variable = { pww_desp_floor_steel > pww_raw } }
+		set_temp_variable = { pww_raw = pww_desp_floor_steel }
+	}
 	set_variable = { pww_desp_steel = pww_raw }
 	if = {
 		limit = { check_variable = { pww_desp_steel > pww_desp_max } }
@@ -412,6 +434,10 @@ pww_core_update_desperation = {
 	add_to_temp_variable = { pww_raw = pww_prev }
 	round_temp_variable = pww_raw
 	clamp_temp_variable = { var = pww_raw min = 0 max = 100 }
+	if = {
+		limit = { check_variable = { pww_desp_floor_chromium > pww_raw } }
+		set_temp_variable = { pww_raw = pww_desp_floor_chromium }
+	}
 	set_variable = { pww_desp_chromium = pww_raw }
 	if = {
 		limit = { check_variable = { pww_desp_chromium > pww_desp_max } }
@@ -476,6 +502,10 @@ pww_core_update_desperation = {
 	add_to_temp_variable = { pww_raw = pww_prev }
 	round_temp_variable = pww_raw
 	clamp_temp_variable = { var = pww_raw min = 0 max = 100 }
+	if = {
+		limit = { check_variable = { pww_desp_floor_coal > pww_raw } }
+		set_temp_variable = { pww_raw = pww_desp_floor_coal }
+	}
 	set_variable = { pww_desp_coal = pww_raw }
 	if = {
 		limit = { check_variable = { pww_desp_coal > pww_desp_max } }

@@ -639,6 +639,12 @@ pww_diplo_coer_queue_poll = {
 					set_temp_variable = { pww_in_target = global.pww_cd_target^pww_dcq_d }
 					pww_diplo_on_demand_refused = yes
 				}
+				# A quarantine holds or lapses: the holder's pledge cover changes
+				if = {
+					limit = { check_variable = { pww_dcq_k = 11 } }
+					set_temp_variable = { pww_dcq_qt = global.pww_cd_target^pww_dcq_d }
+					var:pww_dcq_qt = { pww_diplo_pledge_strength = yes }
+				}
 				set_variable = { global.pww_dq_coer_seen = pww_dcq_s }
 			}
 		}

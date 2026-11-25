@@ -1,0 +1,56 @@
+# Integration soak: two in-game years, all AI, every lane live.
+#   python tools/run_hoi4.py --tag HAI --days 730 --timeout 3600 --test tests/integration/soak
+# Baseline for tick time (same driver, without the mod):
+#   python tools/run_hoi4.py --no-pww --tag HAI --days 730 --timeout 3600 --test tests/integration/soak
+# Every 30 days logs "PWW_RESULT soak.month INFO" with cumulative counts; the
+# game.log wall-clock prefix gives game days per real second
+# (tests/integration/soak_report.py summarizes both runs). Day 730 runs the
+# runaway checks and logs PWW_DONE soak.
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = GER }
+				pww_tsk_daily = yes
+			}
+		}
+	}
+	# Wars between a coercion pair (claimant and target of any demand)
+	on_war_relation_added = {
+		effect = {
+			if = {
+				limit = {
+					has_global_flag = pww_coer_loaded
+					check_variable = { pww_coer_dem_ids^num > 0 }
+				}
+				set_temp_variable = { pww_tsk_found = 0 }
+				for_each_loop = {
+					array = pww_coer_dem_ids
+					value = pww_tsk_d
+					set_temp_variable = { pww_tsk_c = global.pww_cd_claimant^pww_tsk_d }
+					set_temp_variable = { pww_tsk_t = global.pww_cd_target^pww_tsk_d }
+					if = {
+						limit = {
+							OR = {
+								AND = {
+									check_variable = { pww_tsk_c = ROOT }
+									check_variable = { pww_tsk_t = FROM }
+								}
+								AND = {
+									check_variable = { pww_tsk_c = FROM }
+									check_variable = { pww_tsk_t = ROOT }
+								}
+							}
+						}
+						set_temp_variable = { pww_tsk_found = 1 }
+					}
+				}
+				if = {
+					limit = { check_variable = { pww_tsk_found = 1 } }
+					add_to_variable = { global.pww_tsk_pair_wars = 1 }
+					log = "PWW_RESULT soak.war INFO [GetDateText] [ROOT.GetTag] vs [FROM.GetTag] (a coercion pair)"
+				}
+			}
+		}
+	}
+}

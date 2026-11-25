@@ -257,6 +257,9 @@ def write_yml(name: str, pairs: list[tuple[str, str]], extra: list[tuple[str, st
         seen.add(k)
         if "—" in v:
             raise SystemExit(f"em dash in {k}")
+        # The content bible's GetCapitalName is not a loc function (renders
+        # empty): vanilla uses Capital.GetCapitalVictoryPointName.
+        v = v.replace(".GetCapitalName]", ".Capital.GetCapitalVictoryPointName]")
         v = v.replace('"', '\\"')
         lines.append(f' {k}:0 "{v}"')
     out.write_text("﻿" + "\n".join(lines) + "\n", encoding="utf-8")

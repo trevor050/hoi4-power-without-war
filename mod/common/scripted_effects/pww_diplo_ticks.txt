@@ -52,6 +52,28 @@ pww_diplo_on_daily = {
 		set_variable = { pww_diplo_tick_day = global.num_days }
 		pww_diplo_country_tick = yes
 	}
+	# A situation seat's fresh intent is picked up within a week instead of
+	# on the next bucket day (the situation waits pww_sit_c_diplo_grace).
+	else_if = {
+		limit = {
+			is_ai = yes
+			OR = {
+				AND = {
+					has_country_flag = pww_sit_ai_wants_bid
+					NOT = { has_country_flag = pww_diplo_ai_offer }
+				}
+				AND = {
+					has_country_flag = pww_sit_ai_wants_pledge
+					NOT = { has_country_flag = pww_diplo_ai_pledge }
+				}
+			}
+			NOT = { has_country_flag = pww_diplo_sit_early }
+			NOT = { check_variable = { pww_diplo_tick_day = global.num_days } }
+		}
+		set_country_flag = { flag = pww_diplo_sit_early days = 7 value = 1 }
+		set_variable = { pww_diplo_tick_day = global.num_days }
+		pww_diplo_country_tick = yes
+	}
 }
 
 ###############################################################################

@@ -7,9 +7,12 @@
 #   3 patron       every prize state leased to the patron
 #   4 holds out    the patron's reserved pledge fires (it buys the holder's
 #                  unsold output); grievance claimant -> holder if it offered
-#   5 war          the claimant declares war on the holder (unless the war
-#                  already exists or pww_sit_c_allow_war = 0). The ledger's
-#                  war hook handles their agreements.
+#   5 war          records that the crisis went to war. Never declares one:
+#                  it fires only when the claimant and the holder are at war
+#                  (detected on the daily tick; pww_sit_resolve refuses 5
+#                  otherwise). Wars come from coercion's Cornered routes (war
+#                  goals and AI war strategies). The ledger's war hook handles
+#                  their agreements.
 #   6 renewed      every live lease of the prize is renewed for a new term
 #   7 outbid       incumbent leases complete (honored); the rival seat gets
 #                  new leases on the same states
@@ -163,19 +166,8 @@ pww_sit_apply_outcome = {
 	}
 	else_if = {
 		limit = { check_variable = { pww_sr_out = 5 } }
-		if = {
-			limit = {
-				NOT = { check_variable = { pww_sr_already_war = 1 } }
-				check_variable = { global.pww_sit_c_allow_war = 1 }
-				var:pww_sao_h = { var:pww_sao_c = { NOT = { has_war_with = PREV } } }
-			}
-			var:pww_sao_h = {
-				var:pww_sao_c = {
-					declare_war_on = { target = PREV type = annex_everything }
-				}
-			}
-			log = "[GetDateText] PWW_SIT war declared id=[?pww_sr_id|0] [?pww_sao_c.GetTag] -> [?pww_sao_h.GetTag]"
-		}
+		# The war already exists (pww_sit_resolve only accepts 5 then).
+		log = "[GetDateText] PWW_SIT war outcome id=[?pww_sr_id|0] [?pww_sao_c.GetTag] vs [?pww_sao_h.GetTag]"
 	}
 	else_if = {
 		limit = { check_variable = { pww_sr_out = 6 } }
@@ -512,6 +504,41 @@ pww_sit_make_pledge = {
 		limit = { check_variable = { pww_smp_amt < 1 } }
 		set_temp_variable = { pww_smp_amt = 1 }
 	}
+	# With diplomacy loaded the pledge is a diplomacy pledge record, so the
+	# holder's pww_patron_pledge_strength (read by coercion) carries it.
+	set_temp_variable = { pww_smp_done = 0 }
+	if = {
+		limit = { has_global_flag = pww_diplo_loaded }
+		set_temp_variable = { pww_in_target = pww_smp_h }
+		set_temp_variable = { pww_in_claimant = global.pww_sit_claimant^pww_sm_id }
+		set_temp_variable = { pww_in_resource = pww_smp_res }
+		set_temp_variable = { pww_out_result = 0 }
+		var:pww_smp_p = {
+			meta_effect = {
+				text = { pww_diplo_make_pledge_direct = [Y] }
+				Y = "yes"
+			}
+		}
+		if = {
+			limit = { check_variable = { pww_out_result = 1 } }
+			set_temp_variable = { pww_smp_done = 1 }
+			set_variable = { global.pww_sit_pledge^pww_sm_id = 1 }
+			set_variable = { global.pww_sit_pledge_ag^pww_sm_id = pww_out_ag }
+			set_temp_variable = { pww_in_sit_id = pww_sm_id }
+			set_temp_variable = { pww_in_dev = 4 }
+			pww_sit_set_dev = yes
+			log = "[GetDateText] PWW_SIT pledge (diplomacy record) id=[?pww_sm_id|0] patron=[?pww_smp_p.GetTag] ag=[?pww_out_ag|0] pledge=[?pww_out_pledge_id|0]"
+		}
+	}
+	if = {
+		limit = { check_variable = { pww_smp_done = 0 } }
+		pww_sit_make_pledge_own = yes
+	}
+}
+
+# Internal. The situation's own reserved agreement (no diplomacy lane, or
+# diplomacy refused the pledge). In: pww_sm_id, pww_smp_*.
+pww_sit_make_pledge_own = {
 	pww_ledger_new_condition_id = yes
 	set_temp_variable = { pww_smp_reserve = global.pww_sit_days_left^pww_sm_id }
 	add_to_temp_variable = { pww_smp_reserve = 60 }
@@ -533,6 +560,23 @@ pww_sit_make_pledge = {
 	set_temp_variable = { pww_l_convoys = 0 }
 	set_temp_variable = { pww_l_activate = 0 }
 	pww_ledger_create_agreement = yes
+	# Capacity already sold elsewhere (fail 4): halve, up to three times
+	for_loop_effect = {
+		start = 0
+		end = 3
+		value = pww_smp_try
+		if = {
+			limit = {
+				check_variable = { pww_l_result = 0 }
+				check_variable = { pww_l_fail = 4 }
+				check_variable = { pww_smp_amt > 1.999 }
+			}
+			multiply_temp_variable = { pww_smp_amt = 0.5 }
+			round_temp_variable = pww_smp_amt
+			set_temp_variable = { pww_l_amount = pww_smp_amt }
+			pww_ledger_create_agreement = yes
+		}
+	}
 	if = {
 		limit = { check_variable = { pww_l_result = 1 } }
 		set_variable = { global.pww_sit_pledge^pww_sm_id = 1 }

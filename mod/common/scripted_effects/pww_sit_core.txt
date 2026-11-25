@@ -136,12 +136,13 @@
 #   pww_sit_c_wolfram_fallback_year 1938   opens on 1 January of this year
 #   pww_sit_c_lease_days 365       lease term
 #   pww_sit_c_civ_per_band 1       civilian factories per offer band
-#   pww_sit_c_diplo_grace 21       days AI seats wait for diplomacy actions
+#   pww_sit_c_diplo_grace 30       days an AI seat waits for diplomacy to act
+#                                  on an intent (from when it was raised)
 #   pww_sit_c_human_wait 14        days a human holder has to decide (the
 #                                  popup times out to holding out at 14; the
 #                                  script backstop resolves 2 days later)
 #   pww_sit_c_verify_days 7        delivery check delay after a lease
-#   pww_sit_c_allow_war 1          0 disables the war outcome
+#   pww_sit_c_allow_war 1          0 disables the fallback war route
 #   pww_sit_c_pledge_share 0.25    share of holder output a pledge buys
 #   pww_sit_c_press_desp 40        claimant desperation to escalate
 #   pww_sit_c_queue_cap 128
@@ -209,7 +210,7 @@ pww_sit_init = {
 	}
 	if = {
 		limit = { NOT = { has_variable = global.pww_sit_c_diplo_grace } }
-		set_variable = { global.pww_sit_c_diplo_grace = 21 }
+		set_variable = { global.pww_sit_c_diplo_grace = 30 }
 	}
 	if = {
 		limit = { NOT = { has_variable = global.pww_sit_c_human_wait } }
@@ -825,6 +826,15 @@ pww_sit_resolve = {
 			check_variable = { global.pww_sit_status^pww_sr_id = 1 }
 			check_variable = { pww_sr_out > 0 }
 			check_variable = { pww_sr_out < 9 }
+			# Outcome 5 records a war that broke out; it never starts one.
+			OR = {
+				NOT = { check_variable = { pww_sr_out = 5 } }
+				AND = {
+					set_temp_variable = { pww_sr_wc = global.pww_sit_claimant^pww_sr_id }
+					set_temp_variable = { pww_sr_wh = global.pww_sit_holder^pww_sr_id }
+					var:pww_sr_wc = { var:pww_sr_wh = { has_war_with = PREV } }
+				}
+			}
 		}
 		# Mark first: anything below that re-enters sees a closed situation
 		set_variable = { global.pww_sit_status^pww_sr_id = 2 }

@@ -35,6 +35,11 @@
 #     ships lapses it and the agreements resume; it holds again when they
 #     return. fail 2 no committed naval force, 3 not enough ships, 4 already.
 #   pww_coer_lift_quarantine = yes  in: pww_in_demand_id
+#   pww_coer_quarantine_hold_ag = yes  in: pww_in_ag (ledger agreement),
+#     pww_in_target (the quarantined country). For agreements that turn
+#     active while a quarantine holds (a fired patron pledge): suspends an
+#     exposed one at once under the holding demand (cause 16) so it resumes
+#     when the quarantine lapses or ends. out pww_out_result 1 suspended.
 #
 # EXPOSED SEA AGREEMENT: an active agreement of the target whose counterparty
 #   does not border the target's home area (any_home_area_neighbor_country;
@@ -824,6 +829,48 @@ pww_coer_quarantine_tick = {
 				log = "[GetDateText] PWW_COER quarantine lapsed id=[?pww_ce_id]"
 			}
 		}
+	}
+}
+
+pww_coer_quarantine_hold_ag = {
+	set_temp_variable = { pww_out_result = 0 }
+	set_temp_variable = { pww_out_fail = 1 }
+	set_temp_variable = { pww_cqh_ag = pww_in_ag }
+	set_temp_variable = { pww_cqh_tg = pww_in_target }
+	if = {
+		limit = {
+			check_variable = { pww_cqh_ag > -1 }
+			check_variable = { global.pww_ag_status^pww_cqh_ag = 1 }
+			var:pww_cqh_tg = { has_country_flag = pww_coer_quarantined }
+		}
+		set_temp_variable = { pww_cqh_dem = -1 }
+		for_each_loop = {
+			array = global.pww_coer_live
+			value = pww_cqh_d
+			if = {
+				limit = {
+					check_variable = { global.pww_cd_target^pww_cqh_d = pww_cqh_tg }
+					check_variable = { global.pww_cd_quar^pww_cqh_d = 1 }
+				}
+				set_temp_variable = { pww_cqh_dem = pww_cqh_d }
+			}
+		}
+		if = {
+			limit = { check_variable = { pww_cqh_dem > -1 } }
+			set_temp_variable = { pww_c_id = pww_cqh_dem }
+			set_temp_variable = { pww_cqs_cl = global.pww_cd_claimant^pww_cqh_dem }
+			set_temp_variable = { pww_cqs_tg = pww_cqh_tg }
+			pww_coer_quarantine_suspend = yes
+			if = {
+				limit = { check_variable = { global.pww_ag_status^pww_cqh_ag = 2 } }
+				set_temp_variable = { pww_out_result = 1 }
+				set_temp_variable = { pww_out_fail = 0 }
+			}
+		}
+	}
+	if = {
+		limit = { has_global_flag = pww_coer_debug }
+		log = "[GetDateText] PWW_COER quarantine hold ag=[?pww_cqh_ag] target=[?pww_cqh_tg.GetTag] held=[?pww_out_result]"
 	}
 }
 

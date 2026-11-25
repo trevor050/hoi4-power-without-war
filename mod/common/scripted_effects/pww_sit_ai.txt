@@ -14,9 +14,12 @@
 #       With coercion loaded: one demand via pww_coer_issue_demand; the
 #       target state then arrives through pww_sit_on_target_state.
 #       Without: pressure +10 per week (+15 public) in the fallback model.
-#     - War route (always through a visible Cornered): holder Cornered AND
-#       hardened, claimant desperation >= 90, world tension > 50%, and
-#       pww_sit_c_allow_war = 1 -> outcome 5. Refusal alone never fires war.
+#     - War route (fallback model only; with coercion loaded its Cornered
+#       routes own war): holder Cornered AND hardened, claimant desperation
+#       >= 90, world tension > 50%, pww_sit_c_allow_war = 1 -> the claimant
+#       gets a war goal and AI war strategies, never a scripted declaration.
+#       Outcome 5 resolves only when war actually breaks out. Refusal alone
+#       never fires war.
 #   Patron (third power with a stake)
 #     - Pledges (reserved agreement: buys the holder's unsold output if the
 #       holder holds out) once pressure is visible (tstate >= Strained, a
@@ -64,7 +67,9 @@
 #   pww_sit_on_hardened = yes       in: pww_in_sit_id (holder hardened)
 #   Diplomacy reads AI intents: country flags pww_sit_ai_wants_bid /
 #   pww_sit_ai_wants_pledge with country var pww_sit_ai_sit (situation id),
-#   set while diplomacy is loaded and the grace period runs; cleared when
+#   set while diplomacy is loaded; the AI acts directly only after
+#   pww_sit_c_diplo_grace days counted from when the intent was raised
+#   (country vars pww_sit_ai_bid_day / pww_sit_ai_pledge_day). Cleared when
 #   the matching hook arrives or the AI acts directly.
 ###############################################################################
 
@@ -80,10 +85,7 @@ pww_sit_ai_week = {
 	subtract_from_temp_variable = { pww_sw_since = global.pww_sit_open_day^pww_sw_id }
 	set_temp_variable = { pww_sw_grace = 0 }
 	if = {
-		limit = {
-			has_global_flag = pww_diplo_loaded
-			check_variable = { pww_sw_since < global.pww_sit_c_diplo_grace }
-		}
+		limit = { has_global_flag = pww_diplo_loaded }
 		set_temp_variable = { pww_sw_grace = 1 }
 	}
 
@@ -176,12 +178,10 @@ pww_sit_ai_claimant = {
 	else = {
 		if = {
 			limit = { check_variable = { global.pww_sit_bid_c^pww_sw_id = 0 } }
+			set_temp_variable = { pww_sw_ikind = 0 }
+			pww_sit_ai_intent_wait = yes
 			if = {
-				limit = { check_variable = { pww_sw_grace = 1 } }
-				set_country_flag = pww_sit_ai_wants_bid
-				set_variable = { pww_sit_ai_sit = pww_sw_id }
-			}
-			else = {
+				limit = { check_variable = { pww_sw_wait = 0 } }
 				clr_country_flag = pww_sit_ai_wants_bid
 				pww_sit_ai_record_bid_c = yes
 			}
@@ -200,20 +200,68 @@ pww_sit_ai_claimant = {
 			pww_sit_ai_escalate = yes
 		}
 
-		# War route
+		# War route, fallback model only: with coercion loaded the demand's
+		# Cornered stage owns every route to war. No declaration is scripted:
+		# the claimant gets a war goal and AI war strategies; outcome 5
+		# resolves only if a war actually breaks out (pww_sit_tick_live).
 		if = {
 			limit = {
+				NOT = { has_global_flag = pww_coer_loaded }
 				check_variable = { global.pww_sit_c_allow_war = 1 }
 				check_variable = { global.pww_sit_tstate^pww_sw_id = 3 }
 				check_variable = { global.pww_sit_hardened^pww_sw_id = 1 }
 				check_variable = { pww_sw_desp > 89.999 }
 				threat > 0.5
 				has_war = no
+				NOT = { has_country_flag = pww_sit_war_route }
 			}
+			set_country_flag = { flag = pww_sit_war_route days = 365 value = 1 }
 			log = "[GetDateText] PWW_SIT war route id=[?pww_sw_id|0] claimant=[THIS.GetTag] desp=[?pww_sw_desp|0]"
-			set_temp_variable = { pww_in_sit_id = pww_sw_id }
-			set_temp_variable = { pww_in_outcome = 5 }
-			pww_sit_resolve = yes
+			var:pww_sw_h = {
+				var:pww_sw_c = {
+					if = {
+						limit = { NOT = { has_wargoal_against = PREV } }
+						create_wargoal = { type = topple_government target = PREV expire = 0 }
+					}
+					add_ai_strategy = { type = prepare_for_war id = PREV value = 200 }
+					add_ai_strategy = { type = declare_war id = PREV value = 100 }
+				}
+			}
+		}
+	}
+}
+
+# Internal (seat scope). In: pww_sw_ikind (0 bid, 1 pledge), pww_sw_grace,
+# pww_sw_id. Out: pww_sw_wait (1 = leave the move to diplomacy for now).
+# Raises the intent flag diplomacy reads; the grace runs from the day the
+# intent was first raised (diplomacy reacts within days, see
+# pww_diplo_on_daily), so a late intent still gets the full grace.
+pww_sit_ai_intent_wait = {
+	set_temp_variable = { pww_sw_wait = 0 }
+	if = {
+		limit = { check_variable = { pww_sw_grace = 1 } }
+		set_temp_variable = { pww_sw_age = global.num_days }
+		if = {
+			limit = { check_variable = { pww_sw_ikind = 0 } }
+			if = {
+				limit = { NOT = { has_country_flag = pww_sit_ai_wants_bid } }
+				set_country_flag = pww_sit_ai_wants_bid
+				set_variable = { pww_sit_ai_bid_day = global.num_days }
+			}
+			subtract_from_temp_variable = { pww_sw_age = pww_sit_ai_bid_day }
+		}
+		else = {
+			if = {
+				limit = { NOT = { has_country_flag = pww_sit_ai_wants_pledge } }
+				set_country_flag = pww_sit_ai_wants_pledge
+				set_variable = { pww_sit_ai_pledge_day = global.num_days }
+			}
+			subtract_from_temp_variable = { pww_sw_age = pww_sit_ai_pledge_day }
+		}
+		set_variable = { pww_sit_ai_sit = pww_sw_id }
+		if = {
+			limit = { check_variable = { pww_sw_age < global.pww_sit_c_diplo_grace } }
+			set_temp_variable = { pww_sw_wait = 1 }
 		}
 	}
 }
@@ -358,12 +406,10 @@ pww_sit_ai_patron = {
 					check_variable = { global.pww_sit_bid_c^pww_sw_id > 2 }
 				}
 			}
+			set_temp_variable = { pww_sw_ikind = 1 }
+			pww_sit_ai_intent_wait = yes
 			if = {
-				limit = { check_variable = { pww_sw_grace = 1 } }
-				set_country_flag = pww_sit_ai_wants_pledge
-				set_variable = { pww_sit_ai_sit = pww_sw_id }
-			}
-			else = {
+				limit = { check_variable = { pww_sw_wait = 0 } }
 				clr_country_flag = pww_sit_ai_wants_pledge
 				set_temp_variable = { pww_sm_id = pww_sw_id }
 				pww_sit_make_pledge = yes
@@ -375,12 +421,10 @@ pww_sit_ai_patron = {
 				check_variable = { global.pww_sit_bid_p^pww_sw_id = 0 }
 				check_variable = { global.pww_sit_bid_c^pww_sw_id > 0 }
 			}
+			set_temp_variable = { pww_sw_ikind = 0 }
+			pww_sit_ai_intent_wait = yes
 			if = {
-				limit = { check_variable = { pww_sw_grace = 1 } }
-				set_country_flag = pww_sit_ai_wants_bid
-				set_variable = { pww_sit_ai_sit = pww_sw_id }
-			}
-			else = {
+				limit = { check_variable = { pww_sw_wait = 0 } }
 				clr_country_flag = pww_sit_ai_wants_bid
 				set_variable = { global.pww_sit_bid_p^pww_sw_id = pww_sw_pband }
 				if = {

@@ -50,56 +50,56 @@ pww_dtest_auction_open = {
 pww_dtest_auction_close = {
 	set_temp_variable = { pww_in_auction_id = global.pww_dtest_auc }
 	pww_diplo_auction_close = yes
-	set_temp_variable = { awarded = 0 }
-	set_temp_variable = { bad = 0 }
-	set_temp_variable = { w1 = 0 }
-	set_temp_variable = { w2 = 0 }
+	set_temp_variable = { pww_dta_awarded = 0 }
+	set_temp_variable = { pww_dta_bad = 0 }
+	set_temp_variable = { pww_dta_w1 = 0 }
+	set_temp_variable = { pww_dta_w2 = 0 }
 	for_loop_effect = {
 		start = 0
 		end = global.pww_next_lot_id
-		value = l
-		set_temp_variable = { ag = global.pww_dlot_ag^l }
-		set_temp_variable = { lw = global.pww_dlot_winner^l }
-		log = "PWW_RESULT diplo_auction.lot INFO lot=[?l|0] kind=[?global.pww_dlot_kind^l|0] state=[?global.pww_dlot_state^l|0] status=[?global.pww_dlot_status^l|0] winner=[?lw.GetTag] ag=[?ag|0]"
+		value = pww_dta_l
+		set_temp_variable = { pww_dta_ag = global.pww_dlot_ag^pww_dta_l }
+		set_temp_variable = { pww_dta_lw = global.pww_dlot_winner^pww_dta_l }
+		log = "PWW_RESULT diplo_auction.lot INFO lot=[?pww_dta_l|0] kind=[?global.pww_dlot_kind^pww_dta_l|0] state=[?global.pww_dlot_state^pww_dta_l|0] status=[?global.pww_dlot_status^pww_dta_l|0] winner=[?pww_dta_lw.GetTag] ag=[?pww_dta_ag|0]"
 		if = {
-			limit = { check_variable = { global.pww_dlot_status^l = 1 } }
-			add_to_temp_variable = { awarded = 1 }
+			limit = { check_variable = { global.pww_dlot_status^pww_dta_l = 1 } }
+			add_to_temp_variable = { pww_dta_awarded = 1 }
 			if = {
 				limit = {
 					OR = {
-						check_variable = { ag < 0 }
-						NOT = { check_variable = { global.pww_ag_status^ag = 1 } }
+						check_variable = { pww_dta_ag < 0 }
+						NOT = { check_variable = { global.pww_ag_status^pww_dta_ag = 1 } }
 					}
 				}
-				add_to_temp_variable = { bad = 1 }
+				add_to_temp_variable = { pww_dta_bad = 1 }
 			}
 			if = {
-				limit = { check_variable = { global.pww_dlot_kind^l = 1 } }
+				limit = { check_variable = { global.pww_dlot_kind^pww_dta_l = 1 } }
 				if = {
-					limit = { check_variable = { w1 = 0 } }
-					set_temp_variable = { w1 = lw }
+					limit = { check_variable = { pww_dta_w1 = 0 } }
+					set_temp_variable = { pww_dta_w1 = pww_dta_lw }
 				}
 				else = {
-					set_temp_variable = { w2 = lw }
+					set_temp_variable = { pww_dta_w2 = pww_dta_lw }
 				}
 			}
 		}
 	}
-	set_temp_variable = { a = global.pww_dtest_auc }
+	set_temp_variable = { pww_dta_a = global.pww_dtest_auc }
 	if = {
 		limit = {
-			check_variable = { awarded > 0 }
-			check_variable = { bad = 0 }
+			check_variable = { pww_dta_awarded > 0 }
+			check_variable = { pww_dta_bad = 0 }
 			OR = {
-				check_variable = { w2 = 0 }
-				NOT = { check_variable = { w1 = w2 } }
+				check_variable = { pww_dta_w2 = 0 }
+				NOT = { check_variable = { pww_dta_w1 = pww_dta_w2 } }
 			}
-			check_variable = { global.pww_dau_status^a = 1 }
+			check_variable = { global.pww_dau_status^pww_dta_a = 1 }
 		}
-		log = "PWW_RESULT diplo_auction.awarded PASS awarded=[?awarded|0] lots, agreements active, split halves to distinct bidders"
+		log = "PWW_RESULT diplo_auction.awarded PASS awarded=[?pww_dta_awarded|0] lots, agreements active, split halves to distinct bidders"
 	}
 	else = {
-		log = "PWW_RESULT diplo_auction.awarded FAIL awarded=[?awarded|0] bad=[?bad|0] w1=[?w1.GetTag] w2=[?w2.GetTag] status=[?global.pww_dau_status^a|0] lfail=[?pww_l_fail|0]"
+		log = "PWW_RESULT diplo_auction.awarded FAIL awarded=[?pww_dta_awarded|0] bad=[?pww_dta_bad|0] w1=[?pww_dta_w1.GetTag] w2=[?pww_dta_w2.GetTag] status=[?global.pww_dau_status^pww_dta_a|0] lfail=[?pww_l_fail|0]"
 	}
 	log = "PWW_DONE diplo_auction"
 }

@@ -1,0 +1,158 @@
+# Soak driver (GER scope, daily). See on_actions/pww_tsk_on_actions.txt.
+
+pww_tsk_daily = {
+	add_to_variable = { global.pww_tsk_day = 1 }
+	set_temp_variable = { m = global.pww_tsk_day }
+	modulo_temp_variable = { var = m value = 30 }
+	if = {
+		limit = {
+			check_variable = { m = 0 }
+			NOT = { has_global_flag = pww_tsk_done }
+		}
+		if = {
+			limit = { has_global_flag = pww_initialized }
+			pww_tsk_month = yes
+		}
+		else = {
+			log = "PWW_RESULT soak.month INFO [GetDateText] day=[?global.pww_tsk_day|0] mod=0"
+		}
+	}
+	if = {
+		limit = {
+			check_variable = { global.pww_tsk_day > 729 }
+			NOT = { has_global_flag = pww_tsk_done }
+		}
+		set_global_flag = pww_tsk_done
+		if = {
+			limit = { has_global_flag = pww_initialized }
+			pww_tsk_month = yes
+			pww_tsk_final = yes
+		}
+		log = "PWW_DONE soak"
+	}
+}
+
+pww_tsk_month = {
+	# Agreements: created, active, created in the last 30 days, mod wars
+	set_temp_variable = { ag_n = global.pww_next_agreement_id }
+	set_temp_variable = { ag_act = 0 }
+	set_temp_variable = { ag_res = 0 }
+	set_temp_variable = { ag_sup = 0 }
+	set_temp_variable = { ag_lease = 0 }
+	for_each_loop = {
+		array = global.pww_ag_status
+		value = st
+		index = i
+		if = {
+			limit = { check_variable = { st = 1 } }
+			add_to_temp_variable = { ag_act = 1 }
+			if = {
+				limit = { check_variable = { global.pww_ag_kind^i = 1 } }
+				add_to_temp_variable = { ag_lease = 1 }
+			}
+			else = {
+				add_to_temp_variable = { ag_sup = 1 }
+			}
+		}
+		if = {
+			limit = { check_variable = { st = 7 } }
+			add_to_temp_variable = { ag_res = 1 }
+		}
+	}
+	set_temp_variable = { ag_new = ag_n }
+	subtract_from_temp_variable = { ag_new = global.pww_tsk_last_ag }
+	set_variable = { global.pww_tsk_last_ag = ag_n }
+	if = {
+		limit = { check_variable = { ag_new > global.pww_tsk_max_new } }
+		set_variable = { global.pww_tsk_max_new = ag_new }
+	}
+	# Countries party to an active agreement
+	set_temp_variable = { traders = 0 }
+	every_country = {
+		limit = { check_variable = { pww_ag_ids^num > 0 } }
+		set_temp_variable = { has = 0 }
+		set_temp_variable = { brk = 0 }
+		for_each_loop = {
+			array = pww_ag_ids
+			value = a
+			break = brk
+			if = {
+				limit = { check_variable = { global.pww_ag_status^a = 1 } }
+				set_temp_variable = { has = 1 }
+				set_temp_variable = { brk = 1 }
+			}
+		}
+		if = {
+			limit = { check_variable = { has = 1 } }
+			add_to_temp_variable = { traders = 1 }
+		}
+	}
+	if = {
+		limit = { check_variable = { traders > global.pww_tsk_max_traders } }
+		set_variable = { global.pww_tsk_max_traders = traders }
+	}
+	set_temp_variable = { dem_n = 0 }
+	set_temp_variable = { dem_live = 0 }
+	if = {
+		limit = { has_global_flag = pww_coer_loaded }
+		set_temp_variable = { dem_n = global.pww_next_demand_id }
+		set_temp_variable = { dem_live = global.pww_coer_live^num }
+	}
+	set_temp_variable = { sit_n = 0 }
+	set_temp_variable = { sit_live = 0 }
+	if = {
+		limit = { has_global_flag = pww_sit_loaded }
+		set_temp_variable = { sit_n = global.pww_next_sit_id }
+		set_temp_variable = { sit_live = global.pww_sit_live^num }
+	}
+	# Coercion war routes (kind 6) and casus belli (kind 8) granted
+	set_temp_variable = { routes = 0 }
+	set_temp_variable = { cbs = 0 }
+	for_each_loop = {
+		array = global.pww_cq_kind
+		value = k
+		if = {
+			limit = { check_variable = { k = 6 } }
+			add_to_temp_variable = { routes = 1 }
+		}
+		if = {
+			limit = { check_variable = { k = 8 } }
+			add_to_temp_variable = { cbs = 1 }
+		}
+	}
+	log = "PWW_RESULT soak.month INFO [GetDateText] day=[?global.pww_tsk_day|0] mod=1 ag_created=[?ag_n|0] ag_new30=[?ag_new|0] ag_active=[?ag_act|0] supply=[?ag_sup|0] lease=[?ag_lease|0] reserved=[?ag_res|0] traders=[?traders|0] active_traders=[?global.pww_active_traders^num|0] talks=[?global.pww_next_talk_id|0] pledges=[?global.pww_next_pledge_id|0] auctions=[?global.pww_next_auction_id|0] demands=[?dem_n|0] demands_live=[?dem_live|0] sits=[?sit_n|0] sits_live=[?sit_live|0] war_routes=[?routes|0] casus_belli=[?cbs|0] pair_wars=[?global.pww_tsk_pair_wars|0]"
+}
+
+pww_tsk_final = {
+	set_temp_variable = { ag_n = global.pww_next_agreement_id }
+	# Alive: some trade happened
+	if = {
+		limit = { check_variable = { ag_n > 2 } }
+		log = "PWW_RESULT soak.alive PASS agreements_created=[?ag_n|0] max_traders=[?global.pww_tsk_max_traders|0]"
+	}
+	else = {
+		log = "PWW_RESULT soak.alive FAIL agreements_created=[?ag_n|0]"
+	}
+	# Not noisy: at most 12 new agreements in any 30 days, at most 20
+	# countries party to active agreements, under 120 in two years
+	if = {
+		limit = {
+			check_variable = { global.pww_tsk_max_new < 12.1 }
+			check_variable = { global.pww_tsk_max_traders < 20.1 }
+			check_variable = { ag_n < 120 }
+		}
+		log = "PWW_RESULT soak.not_noisy PASS max_new_per_30d=[?global.pww_tsk_max_new|0] max_traders=[?global.pww_tsk_max_traders|0] total=[?ag_n|0]"
+	}
+	else = {
+		log = "PWW_RESULT soak.not_noisy FAIL max_new_per_30d=[?global.pww_tsk_max_new|0] max_traders=[?global.pww_tsk_max_traders|0] total=[?ag_n|0]"
+	}
+	# Bounded storage (records are never removed; arrays grow with use)
+	log = "PWW_RESULT soak.storage INFO ag=[?global.pww_ag_status^num|0] lq=[?global.pww_lq_seq^num|0] cq=[?global.pww_cq_seq^num|0] dq=[?global.pww_dq_seq^num|0] sitq=[?global.pww_sitq_seq^num|0] talks=[?global.pww_next_talk_id|0]"
+	if = {
+		limit = { check_variable = { global.pww_tsk_pair_wars < 1 } }
+		log = "PWW_RESULT soak.mod_wars INFO no war between a coercion pair"
+	}
+	else = {
+		log = "PWW_RESULT soak.mod_wars INFO wars between coercion pairs=[?global.pww_tsk_pair_wars|0]"
+	}
+}

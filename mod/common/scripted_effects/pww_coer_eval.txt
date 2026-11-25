@@ -301,6 +301,18 @@ pww_coer_eval_patron = {
 		}
 	}
 	clamp_temp_variable = { var = pww_ce_pledge min = 0 max = 100 }
+	# No pledge patron or guarantor: a situation demand names the
+	# situation's patron seat (a target that called a patron calls it)
+	if = {
+		limit = {
+			check_variable = { pww_ce_pat = 0 }
+			has_global_flag = pww_sit_loaded
+			set_temp_variable = { pww_cep_sit = global.pww_cd_sit^pww_ce_id }
+			check_variable = { pww_cep_sit > -1 }
+			check_variable = { global.pww_sit_has_patron^pww_cep_sit = 1 }
+		}
+		set_temp_variable = { pww_ce_pat = global.pww_sit_patron^pww_cep_sit }
+	}
 	if = {
 		limit = { NOT = { check_variable = { pww_ce_pat = 0 } } }
 		set_variable = { global.pww_cd_patron^pww_ce_id = pww_ce_pat }
@@ -1686,11 +1698,30 @@ pww_coer_ai_claimant = {
 		}
 		set_temp_variable = { pww_in_demand_id = pww_ce_id }
 		set_temp_variable = { pww_cac_s = global.pww_cd_tstate^pww_ce_id }
+		# A committed force that registers nothing after four weeks (an AI
+		# fleet stays in its home ports in peacetime) is released: it only
+		# costs upkeep. The AI does not commit again for 120 days.
+		if = {
+			limit = {
+				check_variable = { global.pww_cd_ftype^pww_ce_id > 0 }
+				NOT = { check_variable = { global.pww_cd_fraw^pww_ce_id > 0 } }
+				set_temp_variable = { pww_cac_fa = global.num_days }
+				subtract_from_temp_variable = { pww_cac_fa = global.pww_cd_fsince^pww_ce_id }
+				check_variable = { pww_cac_fa > 27 }
+			}
+			pww_coer_release_force = yes
+			var:pww_ce_cl = { set_country_flag = { flag = pww_coer_ai_force_idle days = 120 value = 1 } }
+			if = {
+				limit = { has_global_flag = pww_coer_debug }
+				log = "[GetDateText] PWW_COER ai releases idle force id=[?pww_ce_id]"
+			}
+		}
 		# Commit a force after two weeks
 		if = {
 			limit = {
 				check_variable = { global.pww_cd_ftype^pww_ce_id = 0 }
 				check_variable = { pww_ce_age > 13 }
+				var:pww_ce_cl = { NOT = { has_country_flag = pww_coer_ai_force_idle } }
 			}
 			set_temp_variable = { pww_in_force_type = 0 }
 			if = {
@@ -1713,12 +1744,19 @@ pww_coer_ai_claimant = {
 				pww_coer_commit_force = yes
 			}
 		}
-		# Stuck at Wavering or below without a lever: cutoff, else embargo
+		# Stuck at Wavering or below without a lever, or a desperate claimant
+		# stuck at Defiant/Strained: cutoff, else embargo
 		if = {
 			limit = {
 				check_variable = { pww_ce_age > 41 }
 				check_variable = { pww_cac_s < 3 }
-				check_variable = { pww_ce_lever < global.pww_coer_c_lever_min }
+				OR = {
+					check_variable = { pww_ce_lever < global.pww_coer_c_lever_min }
+					AND = {
+						check_variable = { pww_cac_s < 2 }
+						var:pww_ce_cl = { check_variable = { pww_desp_max > 69.9 } }
+					}
+				}
 			}
 			set_temp_variable = { pww_in_cut_mode = 0 }
 			set_temp_variable = { pww_in_res = -1 }

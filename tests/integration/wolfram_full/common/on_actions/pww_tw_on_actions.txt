@@ -1,0 +1,25 @@
+# Integration test: The Wolfram Question end to end, every lane live.
+#
+# All-AI run (claimant GER, holder POR, patron ENG all AI):
+#   python tools/run_hoi4.py --tag HAI --test tests/integration/wolfram_full [--r56]
+# Human holder run (POR is the player; the driver answers POR's coercion
+# popups and the holder decision through the same effects the event options
+# run):
+#   python tools/run_hoi4.py --tag POR --test tests/integration/wolfram_full [--r56]
+#
+# Day 1 sets the debug flags (the Wolfram Question opens on day 2) and floors
+# GER's tungsten desperation at 90 (core test hook pww_desp_floor_tungsten),
+# so the claimant offers Large, the patron pledges, and the claimant escalates
+# into a coercion demand (committed force, target states). Every step is
+# logged as PWW_RESULT wolfram_full.step INFO lines; the checks run 10 days
+# after the situation resolves. Driver: scripted_effects/pww_tw_effects.txt.
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = GER }
+				pww_tw_daily = yes
+			}
+		}
+	}
+}
