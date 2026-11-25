@@ -110,3 +110,6 @@ Per-resource country variables use the resource name suffix: `pww_desp_oil`, `pw
 - Isolation is via redirected USERPROFILE; the harness verifies the user's real files by sha256 after each run.
 - Hazard: another agent's `--leave-running` game holds no lock but shares `.hoi4-userdir`. The harness rotates `game.log` at launch and ignores lines stamped before launch; `run_all_tests.py` also waits until no `hoi4.exe` runs.
 - UI: desk/dossier rows are UI-lane loc (`pww_ui_*`) built from situation/coercion keys (`pww_seat_line_*`, readout scripted loc). The readout hides patron-naming reasons when the demand has no known patron.
+
+## Known hazards
+- `tools/pww_ui_gen.py` regenerates `pww_ui_scripted_loc.txt` and `pww_ui_l_english.yml`, but the integration pass hand-edited both (seat lines, line2 keys). Regenerating clobbers those edits: fold them into the generator before relying on it, or revert those two files after running it.

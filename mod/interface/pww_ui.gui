@@ -5,7 +5,7 @@
 guiTypes = {
 	containerWindowType = {
 		name = "pww_ui_desk_trade"
-		position = { x = 689 y = 0 }
+		position = { x = 734 y = 0 }
 		size = { width = 500 height = 586 }
 		clipping = no
 		background = {
