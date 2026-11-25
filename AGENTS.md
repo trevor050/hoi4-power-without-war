@@ -44,6 +44,19 @@ Per-resource country variables use the resource name suffix: `pww_desp_oil`, `pw
 - One dynamic modifier per country carrying all agreement flows (variable-driven).
 - Status enum: 0 draft, 1 active, 2 suspended, 3 completed, 4 terminated, 5 defaulted, 6 nationalized, 7 reserved.
 
+## Wave 2 lanes (each in its own git worktree; the lead merges)
+- **situations**: `pww_sit_*` across common/scripted_effects, scripted_triggers, on_actions, events (`mod/events/pww_sit_*.txt`, namespace `pww_sit`), decisions, localisation. Situation records, seats, clock, noise cap, resolution, the Wolfram Question anchor and its AI seat behavior.
+- **coercion**: `pww_coer_*` (same folder pattern, events namespace `pww_coer`, plus `common/opinion_modifiers/pww_coer_*`). Demands, channels, pressure sources, committed forces, resistance, target states and reasons, Cornered, fig leaves, routes to war, quarantine, embargo rungs, credibility, regional alarm, pretexts.
+- **diplomacy**: `pww_diplo_*` (scripted_diplomatic_actions, scripted_guis, `mod/interface/pww_diplo_*.gui`, `mod/gfx/interface/pww_diplo_*`, localisation). The scripted diplomatic actions with sender and receiver GUIs, negotiation (term cards, bands, seeded, 3 rounds, red lines and wants), patron pledges (reserved agreements), seller-written auctions.
+- Every lane converts its own lines from `docs/content/*.md` into its own `pww_<lane>_*_l_english.yml` (keep the suggested key names).
+- on_actions blocks from different files merge in HoI4, so each lane hooks on_daily/on_monthly in its own `pww_<lane>_on_actions.txt` and staggers with core's `pww_bucket` / `global.pww_day_mod30`.
+
+## Wave 2 interface contract (owners finalize names in their file headers and in this section)
+- Inputs to scripted effects are passed in temp variables (no `$PARAM$`). Country refs as variables (`set_temp_variable = { pww_in_target = FROM }`).
+- **situations provides**: `pww_sit_open` (in: `pww_in_template`, `pww_in_claimant`, `pww_in_holder`, `pww_in_patron`, `pww_in_resource`, `pww_in_days`; out: `pww_out_sit_id`), `pww_sit_resolve` (in: `pww_in_sit_id`, `pww_in_outcome`), trigger `pww_sit_is_live`. Per-country array `pww_my_situations` (ids where the country holds a seat); per-situation global arrays documented in the header. Seat enum: 0 claimant, 1 holder, 2 patron.
+- **coercion provides**: `pww_coer_issue_demand` (in: `pww_in_claimant`, `pww_in_target`, `pww_in_sit_id`, `pww_in_demand_type`, `pww_in_channel` 0 quiet 1 public; out: `pww_out_demand_id`), `pww_coer_commit_force`, `pww_coer_target_respond` (in: demand id, response enum), per-demand target state 0 Defiant 1 Strained 2 Wavering 3 Cornered 4 Ready, and per-demand reason-id arrays for "working for you" and "holding out" (ids map to loc keys from docs/content/readouts.md). Country vars `pww_credibility`, regional alarm vars.
+- **diplomacy provides**: the scripted diplomatic actions; it calls ledger (`pww_ledger_create_agreement`), coercion (`pww_coer_issue_demand`, `pww_coer_target_respond`) and situations (`pww_sit_*`). Where a callee is not yet available in your worktree, call it anyway per this contract and note it; the lead integrates.
+
 ## Engine facts (verified in game, Phase 0: docs/engine/phase0-results.md)
 - `on_startup` has NO scope and does not fire on save load. Wrap in `random_country`; make init idempotent with a lazy on_daily fallback.
 - Scripted effects cannot take `$PARAM$` arguments in v1.20. Pass inputs via temp/global variables.
