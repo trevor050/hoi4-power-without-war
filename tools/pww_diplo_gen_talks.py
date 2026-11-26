@@ -4,8 +4,9 @@ tools/pww_diplo_gen_gui.py, which writes the files. Builds:
   - the receive window pww_diplo_recv_offer (an AI proposal to a human)
   - their scripted GUI effects and triggers, scripted localisation
   - mod/common/scripted_effects/pww_diplo_bundle_gen.txt: the display mirror
-    (pww_diplo_bundle_mirror) and the copy to the receiver
-    (pww_diplo_bundle_copy_display)
+    (pww_diplo_bundle_mirror) and the receive snapshot on the sender
+    (pww_diplo_bundle_snapshot_recv: the receive window's own namespace,
+    pww_drx_*; see V())
   - trade talks UI loc (TALKS_LOC, merged by tools/pww_diplo_gen_loc.py)
 
 Layout grid: the vanilla popup is 584 wide. The other diplomacy windows align
@@ -35,7 +36,8 @@ ROW_H = 40           # two text lines per item
 TERMS_Y = 232 + TOP
 MENU_Y = 46 + TOP
 H_SEND = 486
-H_RECV = 470
+H_RECV = 494
+RDY = 24             # receive window: everything sits below its title line
 # Unit of every market value (civilian factories), after the number. The game
 # eats the first space after a text icon, so the token carries its own.
 FAC = " £civ_factory "
@@ -76,7 +78,7 @@ def side_of(n):
 def slot_xy(n, recv=False):
     s = side_of(n)
     col = (1 - s) if recv else s
-    return COLX[col], ROW_Y0 + (n % 4) * ROW_H
+    return COLX[col], ROW_Y0 + (n % 4) * ROW_H + (RDY if recv else 0)
 
 
 def R(cond):
@@ -85,6 +87,35 @@ def R(cond):
 
 def cv(var, op, val):
     return f"check_variable = {{ {var} {op} {val} }}"
+
+
+# Receive namespace. In both windows ROOT is the sender. The send window reads
+# the sender's live display mirror (pww_db*, pww_do_*, pww_dd_*, pww_dmg*); the
+# receive window reads a snapshot of it under pww_drx_<name without pww_>,
+# taken on the sender when the proposal is delivered
+# (pww_diplo_bundle_snapshot_recv). The two windows never share a variable: a
+# delivery cannot repaint a send window left open, and the sender's later
+# drafting cannot repaint a receive window. Every receive-window variable goes
+# through V(), which also lists it for the snapshot.
+RECV_VARS = set()
+
+
+def V(name, recv):
+    if not recv:
+        return name
+    assert name.startswith("pww_d"), name
+    RECV_VARS.add(name)
+    return "pww_drx_" + name[4:]
+
+
+def SLN(name, recv):
+    """Scripted loc name: receive variants read the receive namespace."""
+    return name.replace("pww_dt_sl_", "pww_dt_slr_", 1) if recv else name
+
+
+def LK(key, recv):
+    """Loc key whose text reads variables: one per namespace."""
+    return key + "_r" if recv else key
 
 
 class B:
@@ -155,6 +186,14 @@ MENU_CLOSED = R(cv("pww_dbm_side", "<", 0))
 MENU_OPEN = R(cv("pww_dbm_side", ">", -1))
 
 
+def poach(recv):
+    return R(cv(V("pww_do_act", recv), "=", 2))
+
+
+def not_poach(recv):
+    return R(f"NOT = {{ {cv(V('pww_do_act', recv), '=', 2)} }}")
+
+
 # ----------------------------------------------------------------------------
 # Scripted localisation helpers
 # ----------------------------------------------------------------------------
@@ -187,10 +226,14 @@ def num(var, dec=0):
     return f"[?ROOT.{var}|{dec}]"
 
 
-def money(name, var, unit=FAC):
+def money(name, var, unit=FAC, recv=False):
     """Scripted loc for a market value written by the mirror's formatter
     (var rounded, var_f: 0 two decimals, 1 one, 2 whole, 3 exactly one).
-    unit: the text after the number; None for the long 'factories' form."""
+    unit: the text after the number; None for the long 'factories' form.
+    recv: the receive namespace (name and var are given in send form)."""
+    name = SLN(name, recv)
+    V(var + "_f", recv)
+    var = V(var, recv)
     if unit is None:
         cases = [(R(cv(f"{var}_f", "=", 3)), loc(f"{name}_3", "§Y~1§! factory")),
                  (R(cv(f"{var}_f", "=", 2)), loc(f"{name}_2", f"§Y~{num(var)}§! factories")),
@@ -206,65 +249,69 @@ def money(name, var, unit=FAC):
 # ----------------------------------------------------------------------------
 # Per-slot scripted loc (shared by send and receive)
 # ----------------------------------------------------------------------------
-def kind_is(n, k):
-    return R(cv(f"pww_dbk_{n}", "=", k))
+def kind_is(n, k, recv=False):
+    return R(cv(V(f"pww_dbk_{n}", recv), "=", k))
 
 
-def build_slot_loc():
+def build_slot_loc(recv):
+    """Per-slot scripted loc. Send and receive each get their own set: the
+    receive set (pww_dt_slr_*) reads the receive namespace."""
     for n in range(8):
-        a, x = f"pww_dba_{n}", f"pww_dbx_{n}"
+        a, x, k = V(f"pww_dba_{n}", recv), V(f"pww_dbx_{n}", recv), V(f"pww_dbk_{n}", recv)
+        s_, u_ = V(f"pww_dbs_{n}", recv), V(f"pww_dbu_{n}", recv)
         # Name (row line 1)
-        cases = [(kind_is(n, 1), loc("pww_dt_nm_civ", "£civ_factory Civilian factories")),
-                 (kind_is(n, 2), loc("pww_dt_nm_pp", "£pol_power Political power"))]
+        cases = [(kind_is(n, 1, recv), loc("pww_dt_nm_civ", "£civ_factory Civilian factories")),
+                 (kind_is(n, 2, recv), loc("pww_dt_nm_pp", "£pol_power Political power"))]
         for r in range(7):
-            cases.append((R(f"{cv(f'pww_dbk_{n}', '=', 3)} {cv(x, '=', r)}"),
+            cases.append((R(f"{cv(k, '=', 3)} {cv(x, '=', r)}"),
                           loc(f"pww_dt_nm_res_{r}", f"{RES_ICON[r]} {RES[r]}")))
-            cases.append((R(f"{cv(f'pww_dbk_{n}', '=', 6)} {cv(x, '=', r)}"),
+            cases.append((R(f"{cv(k, '=', 6)} {cv(x, '=', r)}"),
                           loc(f"pww_dt_nm_rights_{r}", f"{RES_ICON[r]} {RES[r]} mine lease")))
         for e in range(8):
-            cases.append((R(f"{cv(f'pww_dbk_{n}', '=', 4)} {cv(x, '=', e)}"),
+            cases.append((R(f"{cv(k, '=', 4)} {cv(x, '=', e)}"),
                           loc(f"pww_dt_nm_eq_{e}", f"£production_cost {EQ[e]}")))
-            cases.append((R(f"{cv(f'pww_dbk_{n}', '=', 5)} {cv(x, '=', e)}"),
+            cases.append((R(f"{cv(k, '=', 5)} {cv(x, '=', e)}"),
                           loc(f"pww_dt_nm_lic_{e}", f"£tech_mod Licence: {LIC[e]}")))
-        dt(f"pww_dt_sl_nm_{n}", cases, "pww_dt_empty")
+        dt(SLN(f"pww_dt_sl_nm_{n}", recv), cases, "pww_dt_empty")
         # Amount (stepper value)
-        dt(f"pww_dt_sl_am_{n}", [
-            (kind_is(n, 2), loc(f"pww_dt_am_pp_{n}", f"§Y{num(a, 2)}§!")),
-        ], loc(f"pww_dt_am_{n}", f"§Y{num(a)}§!"))
+        dt(SLN(f"pww_dt_sl_am_{n}", recv), [
+            (kind_is(n, 2, recv), loc(LK(f"pww_dt_am_pp_{n}", recv), f"§Y{num(a, 2)}§!")),
+        ], loc(LK(f"pww_dt_am_{n}", recv), f"§Y{num(a)}§!"))
         # Lease state line
-        loc(f"pww_dt_state_{n}", f"[?ROOT.pww_dbs_{n}.GetName] · {num(f'pww_dbu_{n}')} a day")
+        loc(LK(f"pww_dt_state_{n}", recv), f"[?ROOT.{s_}.GetName] · {num(u_)} a day")
         # Market value of the item (rows; a lease shows it on line 1)
-        money(f"pww_dt_sl_v_{n}", f"pww_dbv_{n}")
+        money(f"pww_dt_sl_v_{n}", f"pww_dbv_{n}", recv=recv)
         # Summary list item and separator
-        cases = [(R(f"{cv(f'pww_dbk_{n}', '=', 1)} {cv(a, '=', 1)}"),
+        cases = [(R(f"{cv(k, '=', 1)} {cv(a, '=', 1)}"),
                   loc(f"pww_dt_li_civ1_{n}", "§Y1 civilian factory§!")),
-                 (kind_is(n, 1), loc(f"pww_dt_li_civ_{n}", f"§Y{num(a)} civilian factories§!")),
-                 (kind_is(n, 2), loc(f"pww_dt_li_pp_{n}", f"§Y{num(a, 2)} political power§! a day"))]
+                 (kind_is(n, 1, recv), loc(LK(f"pww_dt_li_civ_{n}", recv), f"§Y{num(a)} civilian factories§!")),
+                 (kind_is(n, 2, recv), loc(LK(f"pww_dt_li_pp_{n}", recv), f"§Y{num(a, 2)} political power§! a day"))]
         for r in range(7):
-            cases.append((R(f"{cv(f'pww_dbk_{n}', '=', 3)} {cv(x, '=', r)}"),
-                          loc(f"pww_dt_li_res_{r}_{n}", f"§Y{num(a)} {RES_LC[r]}§! a day")))
-            cases.append((R(f"{cv(f'pww_dbk_{n}', '=', 6)} {cv(x, '=', r)}"),
-                          loc(f"pww_dt_li_rights_{r}_{n}", f"the §Y{RES_LC[r]} mines of [?ROOT.pww_dbs_{n}.GetName]§!")))
+            cases.append((R(f"{cv(k, '=', 3)} {cv(x, '=', r)}"),
+                          loc(LK(f"pww_dt_li_res_{r}_{n}", recv), f"§Y{num(a)} {RES_LC[r]}§! a day")))
+            cases.append((R(f"{cv(k, '=', 6)} {cv(x, '=', r)}"),
+                          loc(LK(f"pww_dt_li_rights_{r}_{n}", recv), f"the §Y{RES_LC[r]} mines of [?ROOT.{s_}.GetName]§!")))
         for e in range(8):
-            cases.append((R(f"{cv(f'pww_dbk_{n}', '=', 4)} {cv(x, '=', e)}"),
-                          loc(f"pww_dt_li_eq_{e}_{n}", f"§Y{num(a)} {EQ_LC[e]}§! in three shipments")))
-            cases.append((R(f"{cv(f'pww_dbk_{n}', '=', 5)} {cv(x, '=', e)}"),
+            cases.append((R(f"{cv(k, '=', 4)} {cv(x, '=', e)}"),
+                          loc(LK(f"pww_dt_li_eq_{e}_{n}", recv), f"§Y{num(a)} {EQ_LC[e]}§! in three shipments")))
+            cases.append((R(f"{cv(k, '=', 5)} {cv(x, '=', e)}"),
                           loc(f"pww_dt_li_lic_{e}", f"a §Ylicence to build {LIC_LC[e]}§!")))
-        dt(f"pww_dt_sl_li_{n}", cases, "pww_dt_empty")
+        dt(SLN(f"pww_dt_sl_li_{n}", recv), cases, "pww_dt_empty")
         i = n % 4
         if i == 0:
-            dt(f"pww_dt_sl_sep_{n}", [], "pww_dt_empty")
+            dt(SLN(f"pww_dt_sl_sep_{n}", recv), [], "pww_dt_empty")
         else:
-            last = R(cv(f"pww_dbk_{n + 1}", "=", 0)) if i < 3 else "always = yes"
-            dt(f"pww_dt_sl_sep_{n}", [(R(cv(f"pww_dbk_{n}", "=", 0)), "pww_dt_empty"),
-                                      (last, loc("pww_dt_sep_and", " and "))], loc("pww_dt_sep_comma", ", "))
+            last = R(cv(V(f"pww_dbk_{n + 1}", recv), "=", 0)) if i < 3 else "always = yes"
+            dt(SLN(f"pww_dt_sl_sep_{n}", recv), [(R(cv(k, "=", 0)), "pww_dt_empty"),
+                                                 (last, loc("pww_dt_sep_and", " and "))], loc("pww_dt_sep_comma", ", "))
 
 
-build_slot_loc()
+build_slot_loc(False)
+build_slot_loc(True)
 
 
-def side_list(s):
-    return "".join(f"[pww_dt_sl_sep_{n}][pww_dt_sl_li_{n}]" for n in range(4 * s, 4 * s + 4))
+def side_list(s, recv=False):
+    return "".join(f"[{SLN(f'pww_dt_sl_sep_{n}', recv)}][{SLN(f'pww_dt_sl_li_{n}', recv)}]" for n in range(4 * s, 4 * s + 4))
 
 
 def build_hint_loc(n, recv):
@@ -275,25 +322,40 @@ def build_hint_loc(n, recv):
     we_give = (s == 0) != recv
     us_sh, us_sp = ("pww_dbts", "pww_dbtp") if recv else ("pww_dbss", "pww_dbsp")
     th_sh, th_sp = ("pww_dbss", "pww_dbsp") if recv else ("pww_dbts", "pww_dbtp")
+    us_sh, us_sp, th_sh, th_sp = (V(f"{v}_{n}", recv) for v in (us_sh, us_sp, th_sh, th_sp))
     nm = f"pww_dt_sl_hi{tag}_{n}"
-    f = f"pww_dbf_{n}"
-    val = f"[pww_dt_sl_v_{n}]"
+    f = V(f"pww_dbf_{n}", recv)
+    val = f"[{SLN(f'pww_dt_sl_v_{n}', recv)}]"
     # resource parts (compact: the line also carries the market value)
     if we_give:
-        a_cases = [(R(cv(f"{us_sp}_{n}", ">", 0.5)), loc(f"pww_dt_h{tag}_a_sp_{n}", f"{num(f'{us_sp}_{n}')} spare"))]
+        a_cases = [(R(cv(us_sp, ">", 0.5)), loc(f"pww_dt_h{tag}_a_sp_{n}", f"{num(us_sp)} spare"))]
         a_def = loc("pww_dt_h_a_nosp", "none spare")
-        b_cases = [(R(cv(f"{th_sh}_{n}", ">", 0.5)), loc(f"pww_dt_h{tag}_b_sh_{n}", f"they're short {num(f'{th_sh}_{n}')}"))]
+        b_cases = [(R(cv(th_sh, ">", 0.5)), loc(f"pww_dt_h{tag}_b_sh_{n}", f"they're short {num(th_sh)}"))]
         b_def = loc("pww_dt_h_b_enough", "they have enough")
     else:
-        a_cases = [(R(cv(f"{us_sh}_{n}", ">", 0.5)), loc(f"pww_dt_h{tag}_a_sh_{n}", f"we're short {num(f'{us_sh}_{n}')}"))]
+        a_cases = [(R(cv(us_sh, ">", 0.5)), loc(f"pww_dt_h{tag}_a_sh_{n}", f"we're short {num(us_sh)}"))]
         a_def = loc("pww_dt_h_a_enough", "we have enough")
         # Their unsold output (what is left after their own use and exports):
         # unsold goods are cheap to them; none means every unit is already sold.
-        b_cases = [(R(cv(f"{th_sp}_{n}", ">", 0.5)), loc(f"pww_dt_h{tag}_b_sp_{n}", f"{num(f'{th_sp}_{n}')} unsold"))]
+        b_cases = [(R(cv(th_sp, ">", 0.5)), loc(f"pww_dt_h{tag}_b_sp_{n}", f"{num(th_sp)} unsold"))]
         b_def = loc("pww_dt_h_b_nosp", "sold out")
     dt(f"pww_dt_sl_h{tag}a_{n}", a_cases, a_def)
     dt(f"pww_dt_sl_h{tag}b_{n}", b_cases, b_def)
     loc(f"pww_dt_h{tag}_res_{n}", f"{val} §g· [pww_dt_sl_h{tag}a_{n}] · [pww_dt_sl_h{tag}b_{n}]§!")
+    # A sea route: the buyer's shipping (delivered cost) takes the place of our
+    # own position, which the player already knows; the row stays one line.
+    # Short words for the counterparty's position so the line fits the column.
+    if we_give:
+        bs_cases = [(R(cv(th_sh, ">", 0.5)), loc(f"pww_dt_h{tag}_bs_sh_{n}", f"short {num(th_sh)}"))]
+        bs_def = loc("pww_dt_h_bs_enough", "enough")
+    else:
+        bs_cases, bs_def = b_cases, b_def
+    dt(f"pww_dt_sl_h{tag}bs_{n}", bs_cases, bs_def)
+    h = V(f"pww_dbh_{n}", recv)
+    dt(f"pww_dt_sl_h{tag}res_{n}", [(R(cv(h, ">", 0.004)),
+                                    loc(f"pww_dt_h{tag}_ress_{n}", f"{val} §g· ~{num(h, 2)} shipping · [pww_dt_sl_h{tag}bs_{n}]§!"))],
+       f"pww_dt_h{tag}_res_{n}")
+    loc(f"pww_dt_h{tag}_resw_{n}", f"[pww_dt_sl_h{tag}res_{n}]")
     giver_us = we_give
     who = "we" if giver_us else "they"
     civ = loc(f"pww_dt_h{tag}_civ_{n}", f"{val} §g· {who} have {num(f)} free§!")
@@ -315,11 +377,11 @@ def build_hint_loc(n, recv):
         # so wrap each nested defined_text in a loc key that calls it.
         civ, pp, eq = (loc(f"pww_dt_h{tag}_{k}w_{n}", f"[pww_dt_sl_h{tag}{k}_{n}]") for k in ("civ", "pp", "eq"))
     cases = [
-        (kind_is(n, 1), civ),
-        (kind_is(n, 2), pp),
-        (kind_is(n, 3), f"pww_dt_h{tag}_res_{n}"),
-        (kind_is(n, 4), eq),
-        (kind_is(n, 5), loc(f"pww_dt_h{tag}_lic_{n}", f"{val} §g· " + ("they may build our design§!" if giver_us else "we may build their design§!"))),
+        (kind_is(n, 1, recv), civ),
+        (kind_is(n, 2, recv), pp),
+        (kind_is(n, 3, recv), f"pww_dt_h{tag}_resw_{n}"),
+        (kind_is(n, 4, recv), eq),
+        (kind_is(n, 5, recv), loc(f"pww_dt_h{tag}_lic_{n}", f"{val} §g· " + ("they may build our design§!" if giver_us else "we may build their design§!"))),
     ]
     dt(nm, cases, "pww_dt_empty")
     return nm
@@ -330,15 +392,16 @@ def build_rows(b, recv):
     tag = "r" if recv else "s"
     for n in range(8):
         x, y = slot_xy(n, recv)
-        k = f"pww_dbk_{n}"
+        k = V(f"pww_dbk_{n}", recv)
+        nm_, am_, v_ = (SLN(f"pww_dt_sl_{w}_{n}", recv) for w in ("nm", "am", "v"))
         closed = "" if recv else MENU_CLOSED + " "
         stepk = R(f"{cv(k, '>', 0)} {cv(k, '<', 5)}")
         widek = R(cv(k, ">", 4))
         hint = build_hint_loc(n, recv)
         if recv:
-            b.tb(f"i{n}_nm", x, y + 1, f"[pww_dt_sl_nm_{n}]", COLW - 72, vis=stepk)
-            b.tb(f"i{n}_am", x + COLW - 70, y + 1, f"[pww_dt_sl_am_{n}]", 70, fmt="right", vis=stepk)
-            b.tb(f"i{n}_nmw", x, y + 1, f"[pww_dt_sl_nm_{n}]", COLW, vis=widek)
+            b.tb(f"i{n}_nm", x, y + 1, f"[{nm_}]", COLW - 72, vis=stepk)
+            b.tb(f"i{n}_am", x + COLW - 70, y + 1, f"[{am_}]", 70, fmt="right", vis=stepk)
+            b.tb(f"i{n}_nmw", x, y + 1, f"[{nm_}]", COLW, vis=widek)
         else:
             b.tb(f"i{n}_nm", x, y + 1, f"[pww_dt_sl_nm_{n}]", COLW - 92, vis=closed + stepk)
             b.tb(f"i{n}_nmw", x, y + 1, f"[pww_dt_sl_nm_{n}]", COLW - 20, vis=closed + widek)
@@ -355,9 +418,9 @@ def build_rows(b, recv):
         b.tb(f"i{n}_hi", x, y + 20, f"[{hint}]", COLW, vis=closed + R(f"{cv(k, '>', 0)} {cv(k, '<', 6)}"))
         # A lease's line 2 is its state picker: its value sits at the end of line 1.
         vr = COLW if recv else COLW - 20
-        b.tb(f"i{n}_lv", x + vr - 76, y + 1, f"[pww_dt_sl_v_{n}]", 74, fmt="right", vis=closed + lease)
+        b.tb(f"i{n}_lv", x + vr - 76, y + 1, f"[{v_}]", 74, fmt="right", vis=closed + lease)
         if recv:
-            b.tb(f"i{n}_lst", x, y + 20, f"pww_dt_state_{n}", COLW, vis=lease)
+            b.tb(f"i{n}_lst", x, y + 20, LK(f"pww_dt_state_{n}", recv), COLW, vis=lease)
         else:
             stp = lambda d: root_do(f"set_temp_variable = {{ pww_dba_n = {n} }}",
                                     f"set_temp_variable = {{ pww_dba_dir = {d} }}",
@@ -370,13 +433,20 @@ def build_rows(b, recv):
 # ----------------------------------------------------------------------------
 # Send window
 # ----------------------------------------------------------------------------
+POACH = poach(False)
+NOT_POACH = not_poach(False)
+
+
 def party_header(b, recv):
     us, them = ("THIS", "ROOT") if recv else ("ROOT", "THIS")
-    b.tb("us", GL, 2 + TOP, loc(f"pww_dt_us_{int(recv)}", f"[{us}.GetFlag] [{us}.GetName]"), 220, font="hoi_18mbs")
-    b.tb("us_sub", GL, 22 + TOP, loc("pww_dt_you", "§gYou§!"), 220)
-    b.tb("and", 262, 10 + TOP, loc("pww_dt_and", "§gand§!"), 60, fmt="centre")
-    b.tb("them", GR - 220, 2 + TOP, loc(f"pww_dt_them_{int(recv)}", f"[{them}.GetName] [{them}.GetFlag]"), 220, font="hoi_18mbs", fmt="right")
-    b.tb("them_sub", GR - 220, 22 + TOP, f"[pww_dt_sl_top_{int(recv)}]", 220, fmt="right")
+    dy = RDY if recv else 0
+    b.tb("us", GL, 2 + TOP + dy, loc(f"pww_dt_us_{int(recv)}", f"[{us}.GetFlag] [{us}.GetName]"), 220, font="hoi_18mbs")
+    b.tb("us_sub", GL, 22 + TOP + dy, loc("pww_dt_you", "§gYou§!"), 220)
+    b.tb("and", 262, 10 + TOP + dy, loc("pww_dt_and", "§gand§!"), 60, fmt="centre")
+    b.tb("them", GR - 220, 2 + TOP + dy, loc(f"pww_dt_them_{int(recv)}", f"[{them}.GetName] [{them}.GetFlag]"), 220, font="hoi_18mbs", fmt="right")
+    b.tb("them_sub", GR - 220, 22 + TOP + dy, f"[pww_dt_sl_top_{int(recv)}]", 220, fmt="right", vis=not_poach(recv))
+    # Poach Supplier: the incumbent deal in one line (in place of the surplus line).
+    b.tb("inc", GL + 40, 22 + TOP + dy, f"pww_dt_inc_{int(recv)}", CW - 40, fmt="right", vis=poach(recv))
 
 
 def divider(b, key, y, vis=None):
@@ -550,14 +620,14 @@ def menu_loc():
         dt(f"pww_dt_sl_mh_{j}", hint, "pww_dt_empty")
 
 
-def terms(b, recv, up=0, sfx="", tier=None):
-    y = TERMS_Y - up
+def terms(b, recv, up=0, sfx="", tier=None, dy=0):
+    y = TERMS_Y - up + dy
     if recv:
-        b.tb("terms", GL, y + 2, "[pww_dt_sl_rterms]", CW, fmt="centre")
+        b.tb("terms" + sfx, GL, y + 2, "[pww_dt_sl_rterms]", CW, fmt="centre", vis=tier)
         cases = []
         for i, w in enumerate(LEN):
             for bd, bt in ((0, "Either side may end it"), (1, "Fixed contract")):
-                cases.append((R(f"{cv('pww_do_len', '=', i)} {cv('pww_do_bind', '=', bd)}"),
+                cases.append((R(f"{cv(V('pww_do_len', 1), '=', i)} {cv(V('pww_do_bind', 1), '=', bd)}"),
                               loc(f"pww_dt_rterms_{i}_{bd}", f"§gLength§! {w}   §gBinding§! {bt}")))
         dt("pww_dt_sl_rterms", cases, "pww_dt_empty")
         return
@@ -590,20 +660,20 @@ def terms(b, recv, up=0, sfx="", tier=None):
 
 
 def summary_loc():
-    term = [(R(cv("pww_do_len", "=", i)), loc(f"pww_dt_term_{i}", w)) for i, w in enumerate(LEN_WORDS)]
-    dt("pww_dt_sl_term", term, "pww_dt_empty")
     for recv in (0, 1):
+        term = [(R(cv(V("pww_do_len", recv), "=", i)), loc(f"pww_dt_term_{i}", w)) for i, w in enumerate(LEN_WORDS)]
+        dt(SLN("pww_dt_sl_term", recv), term, "pww_dt_empty")
         get_s, pay_s = (0, 1) if recv else (1, 0)
-        dt(f"pww_dt_sl_get_{recv}", [(R(cv(f"pww_do_n{get_s}", "=", 0)),
+        dt(f"pww_dt_sl_get_{recv}", [(R(cv(V(f"pww_do_n{get_s}", recv), "=", 0)),
                                       loc(f"pww_dt_get_none_{recv}", "§gNothing comes to us yet.§!" if recv else "§gAsk them for something.§!"))],
-           loc(f"pww_dt_get_{recv}", f"You get {side_list(get_s)} for [pww_dt_sl_term]."))
-        dt(f"pww_dt_sl_pay_{recv}", [(R(cv(f"pww_do_n{pay_s}", "=", 0)),
+           loc(f"pww_dt_get_{recv}", f"You get {side_list(get_s, recv)} for [{SLN('pww_dt_sl_term', recv)}]."))
+        dt(f"pww_dt_sl_pay_{recv}", [(R(cv(V(f"pww_do_n{pay_s}", recv), "=", 0)),
                                       loc(f"pww_dt_pay_none_{recv}", "§gThey ask nothing of us.§!" if recv else "§gOffer something in return.§!"))],
-           loc(f"pww_dt_pay_{recv}", f"You pay {side_list(pay_s)}."))
+           loc(f"pww_dt_pay_{recv}", f"You pay {side_list(pay_s, recv)}."))
         loc(f"pww_dt_summary_{recv}", f"[pww_dt_sl_get_{recv}] [pww_dt_sl_pay_{recv}]")
-    # Market totals (each side at market, payments at their form's rate).
-    money("pww_dt_sl_t0", "pww_dbm_t0", None)
-    money("pww_dt_sl_t1", "pww_dbm_t1", None)
+        # Market totals (each side at market, payments at their form's rate).
+        money("pww_dt_sl_t0", "pww_dbm_t0", None, recv=recv)
+        money("pww_dt_sl_t1", "pww_dbm_t1", None, recv=recv)
     loc("pww_dt_tot_0", "§gWe give§! [pww_dt_sl_t0]")
     loc("pww_dt_tot_1", "§gThey give§! [pww_dt_sl_t1]")
     verdict = []
@@ -618,15 +688,17 @@ def summary_loc():
         (R(f"NOT = {{ {cv('pww_do_valid', '=', 0)} }}"), loc("pww_dt_mkrow_inv", "[pww_dt_sl_invalid]")),
         (R(cv("pww_dbl_msg", "=", 2)), loc("pww_dt_bal_short", "§RCannot balance: not enough free factories or political power.§!")),
         (R(cv("pww_dbl_msg", "=", 3)), loc("pww_dt_bal_over", "§RWe already give more. Give less or ask for more.§!")),
+        (R(cv("pww_do_lockfail", "=", 1)), loc("pww_dt_mk_lock", "§OToo little trust for a fixed contract: pay well over market.§!")),
     ], loc("pww_dt_mkrow_v", "[pww_dt_sl_mk_verdict]"))
     loc("pww_dt_balance", "Balance it")
     loc("pww_dt_tt_balance", "Set our payments so the deal is at market value. Their side does not change.")
     loc("pww_dt_tt_track", "Leans toward the side that gets more at market value. The centre is an even deal.")
     # Receive perspective (the receiver is "we"): one line, totals then verdict.
-    rv = [(R(cv("pww_do_mk", "=", -1)), loc("pww_dt_rmk_0", "Their offer is §Rbelow market§!.")),
-          (R(cv("pww_do_mk", "=", 0)), loc("pww_dt_rmk_1", "Their offer is §Yat market§!."))]
-    dt("pww_dt_sl_rmk", rv, loc("pww_dt_rmk_2", "Their offer is §Gabove market§!."))
-    loc("pww_dt_market_1", "§gWe give§! [pww_dt_sl_t1] §g· they give§! [pww_dt_sl_t0]§g.§! [pww_dt_sl_rmk]")
+    # pww_do_mk is the sender's view: -1 they ask more than they give.
+    rv = [(R(cv(V("pww_do_mk", 1), "=", -1)), loc("pww_dt_rmk_0", "§RThey ask a premium.§!")),
+          (R(cv(V("pww_do_mk", 1), "=", 0)), loc("pww_dt_rmk_1", "§YA fair deal.§!"))]
+    dt("pww_dt_sl_rmk", rv, loc("pww_dt_rmk_2", "§GA good deal for us.§!"))
+    loc("pww_dt_market_1", "§gWe give§! [pww_dt_slr_t1] §g· they give§! [pww_dt_slr_t0]§g.§! [pww_dt_sl_rmk]")
     # Invalid reasons (send)
     inv = {51: "Put something on each side of the table.",
            52: "A trade deal needs a resource or a mine lease on one side.",
@@ -640,7 +712,10 @@ def summary_loc():
            61: "They have not researched a design we ask to license.",
            62: "There is no producing state for that mine lease.",
            63: "Lease Mines needs a mine lease on their side.",
-           64: "They embargo us: they will not trade with us."}
+           64: "They embargo us: they will not trade with us.",
+           65: "No route: the goods cannot reach them.",
+           66: "That supply deal is gone: there is nothing to poach.",
+           67: "Offer them the resource they now buy."}
     dt("pww_dt_sl_invalid", [(R(cv("pww_do_valid", "=", c)), loc(f"pww_dt_invalid_{c}", f"§R{t}§!")) for c, t in inv.items()],
        "pww_dt_empty")
     # Party header surplus line: the counterparty's spare of the first resource (or mine lease)
@@ -651,9 +726,10 @@ def summary_loc():
         base = 0 if recv else 4
         cases = []
         for n in range(base, base + 4):
+            k, x = V(f"pww_dbk_{n}", recv), V(f"pww_dbx_{n}", recv)
             for r in range(7):
-                cond = f"OR = {{ {cv(f'pww_dbk_{n}', '=', 3)} {cv(f'pww_dbk_{n}', '=', 6)} }} {cv(f'pww_dbx_{n}', '=', r)}"
-                cases.append((R(cond), loc(f"pww_dt_top_{recv}_{n - base}_{r}", f"§g{RES[r]} surplus: {num(f'{g}_r{r}_sp')}§!")))
+                cond = f"OR = {{ {cv(k, '=', 3)} {cv(k, '=', 6)} }} {cv(x, '=', r)}"
+                cases.append((R(cond), loc(f"pww_dt_top_{recv}_{n - base}_{r}", f"§g{RES[r]} surplus: {num(V(f'{g}_r{r}_sp', recv))}§!")))
         dt(f"pww_dt_sl_top_{recv}", cases, "pww_dt_empty")
 
 
@@ -676,9 +752,22 @@ def envoy_loc():
     # Receive GUI lines (an AI sender answering a human counter)
     loc("pww_dt_rline_96", "[ROOT.GetName] has redrafted the terms after our counter.")
     loc("pww_dt_rline_97", "[ROOT.GetName] will not move further. These are their terms.")
-    dt("pww_dt_sl_rline", [(R(cv("pww_dd_line", "=", 96)), "pww_dt_rline_96"),
-                           (R(cv("pww_dd_line", "=", 97)), "pww_dt_rline_97")],
+    dt("pww_dt_sl_rline", [(R(cv(V("pww_dd_line", 1), "=", 96)), "pww_dt_rline_96"),
+                           (R(cv(V("pww_dd_line", 1), "=", 97)), "pww_dt_rline_97"),
+                           (R(f"{cv(V('pww_do_lockwhy', 1), '=', 1)} {cv(V('pww_do_bind', 1), '=', 0)}"),
+                            loc("pww_dt_rline_trust", "[ROOT.GetName] tables these terms. Not a fixed contract: we do not trust each other enough yet."))],
        loc("pww_dt_rline_0", "[ROOT.GetName] tables these terms."))
+    # Poach Supplier: the deal it would replace (send: theirs; receive: ours).
+    for recv in (0, 1):
+        pres, pband, pship = (SLN(f"pww_dt_sl_p_{w}", recv) for w in ("res", "band", "ship"))
+        dt(pres, [(R(cv(V("pww_do_p_res", recv), "=", r)), loc(f"pww_dt_p_res_{r}", RES_LC[r])) for r in range(7)], "pww_dt_empty")
+        dt(pband, [(R(cv(V("pww_do_p_band", recv), "=", i)), loc(f"pww_dt_p_band_{i}", w)) for i, w in
+                   enumerate(["no ties", "some ties", "trusted", "old partners", "soured"])],
+           "pww_dt_empty")
+        dt(pship, [(R(cv(V("pww_do_p_ship", recv), ">", 0.004)),
+                    loc(LK("pww_dt_p_ship", recv), f"§g+~{num(V('pww_do_p_ship', recv), 2)} shipping§!"))], "pww_dt_empty")
+        loc(f"pww_dt_inc_{recv}", f"§gNow:§! {num(V('pww_do_p_amt', recv))} [{pres}] §gfrom§! [?ROOT.{V('pww_do_p_inc', recv)}.GetName] "
+                                  f"§Y~{num(V('pww_do_p_pay', recv), 2)}§!{FAC}[{pship}] §g·§! [{pband}]")
 
 
 def build_send(effects, triggers):
@@ -733,35 +822,52 @@ def build_send(effects, triggers):
 
 def build_recv(effects, triggers):
     b = B("pww_diplo_recv_offer_gui", "pww_ro")
+    # Title line: who offers what (the vanilla frame title is the action's name).
+    dt("pww_dt_sl_rtitle", [(poach(True), loc("pww_dt_rtitle_2", "[ROOT.GetName] Offers a Better Deal"))],
+       loc("pww_dt_rtitle_0", "[ROOT.GetName] Offers a Trade"))
+    b.tb("title", GL, 2 + TOP, "[pww_dt_sl_rtitle]", CW, font="hoi_18mbs", fmt="centre")
     party_header(b, True)
-    divider(b, "div0", 36 + TOP)
-    b.tb("h0", COLX[0], 46 + TOP, "pww_dt_h_give", COLW)
-    b.tb("h1", COLX[1], 46 + TOP, "pww_dt_h_get", COLW)
+    divider(b, "div0", 36 + TOP + RDY)
+    b.tb("h0", COLX[0], 46 + TOP + RDY, "pww_dt_h_give", COLW)
+    b.tb("h1", COLX[1], 46 + TOP + RDY, "pww_dt_h_get", COLW)
     build_rows(b, True)
-    terms(b, True)
-    divider(b, "div1", 266)
-    b.tb("sum", GL, 272, "pww_dt_summary_1", CW, h=36)
-    b.tb("mkt", GL, 310, "pww_dt_market_1", CW)
-    divider(b, "div2", 332)
-    b.tb("line", GL, 338, "[pww_dt_sl_rline]", CW, h=36)
-    # Counter marks: decline with one marked to send it back as a counter.
-    y = 376
+    # Everything under the rows moves up by the rows the taller column leaves
+    # empty (no add buttons here: a column of n items takes n rows).
+    n0, n1 = V("pww_do_n0", True), V("pww_do_n1", True)
+    tiers = [("", 0, R(f"OR = {{ {cv(n0, '>', 3)} {cv(n1, '>', 3)} }}")),
+             ("_u1", ROW_H, R(f"{cv(n0, '<', 4)} {cv(n1, '<', 4)} OR = {{ {cv(n0, '>', 2)} {cv(n1, '>', 2)} }}")),
+             ("_u2", 2 * ROW_H, R(f"{cv(n0, '<', 3)} {cv(n1, '<', 3)} OR = {{ {cv(n0, '>', 1)} {cv(n1, '>', 1)} }}")),
+             ("_u3", 3 * ROW_H, R(f"{cv(n0, '<', 2)} {cv(n1, '<', 2)}"))]
     # When the sender sells goods (frame 1) the first two marks read as a lower
     # price and a smaller amount.
-    dt("pww_dt_sl_counter_1", [(R(cv("pww_do_frame", "=", 1)), loc("pww_dt_counter_1s", "Counter: a lower price"))],
+    dt("pww_dt_sl_counter_1", [(R(cv(V("pww_do_frame", True), "=", 1)), loc("pww_dt_counter_1s", "Counter: a lower price"))],
        loc("pww_dt_counter_1", "Counter: ask them to pay more"))
-    dt("pww_dt_sl_counter_2", [(R(cv("pww_do_frame", "=", 1)), loc("pww_dt_counter_2s", "Counter: a smaller amount"))],
+    dt("pww_dt_sl_counter_2", [(R(cv(V("pww_do_frame", True), "=", 1)), loc("pww_dt_counter_2s", "Counter: a smaller amount"))],
        loc("pww_dt_counter_2", "Counter: give them less"))
-    for v, t in ((1, "[pww_dt_sl_counter_1]"), (2, "[pww_dt_sl_counter_2]"), (3, "Counter: a shorter term")):
-        on = cv("pww_dr_counter", "=", v)
-        click = (f"\t\t\t\tif = {{ limit = {{ {on} }} set_variable = {{ pww_dr_counter = 0 }} }}\n"
-                 f"\t\t\t\telse = {{ set_variable = {{ pww_dr_counter = {v} }} }}\n"
-                 f"\t\t\t\tadd_to_variable = {{ pww_diplo_dirty = 1 }}\n")
-        b.btn(f"c{v}_off", GL, y + 2, "GFX_pww_diplo_box_off", vis=f"NOT = {{ {on} }}", click=click)
-        b.btn(f"c{v}_on", GL, y + 2, "GFX_pww_diplo_box_on", vis=on, click=click)
-        b.tb(f"c{v}_l", GL + 22, y + 1, t if t.startswith("[") else loc(f"pww_dt_counter_{v}", t), CW - 22)
-        y += 22
-    b.tb("hint", GL, y + 2, loc("pww_dt_counter_hint", "§gAccept signs these terms. Decline with a counter marked sends it back.§!"), CW)
+    dt("pww_dt_sl_rhint", [(poach(True), loc("pww_dt_counter_hint_p", "§gAccept signs these terms and ends the current deal. Decline turns it down.§!"))],
+       loc("pww_dt_counter_hint", "§gAccept signs these terms. Decline with a counter marked sends it back.§!"))
+    for sfx, up, tier in tiers:
+        y0 = RDY - up
+        terms(b, True, sfx=sfx, tier=tier, dy=y0)
+        divider(b, "div1" + sfx, 266 + y0, tier)
+        b.tb("sum" + sfx, GL, 272 + y0, "pww_dt_summary_1", CW, h=36, vis=tier)
+        b.tb("mkt" + sfx, GL, 310 + y0, "pww_dt_market_1", CW, vis=tier)
+        divider(b, "div2" + sfx, 332 + y0, tier)
+        b.tb("line" + sfx, GL, 338 + y0, "[pww_dt_sl_rline]", CW, h=36, vis=tier)
+        # Counter marks: decline with one marked to send it back as a counter
+        # (not on a poach offer: that is a yes or no).
+        y = 376 + y0
+        for v, t in ((1, "[pww_dt_sl_counter_1]"), (2, "[pww_dt_sl_counter_2]"), (3, "Counter: a shorter term")):
+            on = cv("pww_dr_counter", "=", v)
+            click = (f"\t\t\t\tif = {{ limit = {{ {on} }} set_variable = {{ pww_dr_counter = 0 }} }}\n"
+                     f"\t\t\t\telse = {{ set_variable = {{ pww_dr_counter = {v} }} }}\n"
+                     f"\t\t\t\tadd_to_variable = {{ pww_diplo_dirty = 1 }}\n")
+            cvis = tier + " " + not_poach(True)
+            b.btn(f"c{v}_off{sfx}", GL, y + 2, "GFX_pww_diplo_box_off", vis=f"{cvis} NOT = {{ {on} }}", click=click)
+            b.btn(f"c{v}_on{sfx}", GL, y + 2, "GFX_pww_diplo_box_on", vis=f"{cvis} {on}", click=click)
+            b.tb(f"c{v}_l{sfx}", GL + 22, y + 1, t if t.startswith("[") else loc(f"pww_dt_counter_{v}", t), CW - 22, vis=cvis)
+            y += 22
+        b.tb("hint" + sfx, GL, y + 2, "[pww_dt_sl_rhint]", CW, vis=tier)
     effects[b.g] = b.eff
     triggers[b.g] = b.trg
     return b.window("pww_diplo_recv_offer", H_RECV)
@@ -862,8 +968,11 @@ def mirror_effects():
          "# (pww_dmg<side>_*: civ, pp, r<res>_sp/_sh, e<eq>, s<res>, top/topa) and\n"
          "# enabled rows pww_dbm_en_<row>. Side 0 figures are the sender's, side 1 the\n"
          "# target's.\n"
-         "# pww_diplo_bundle_copy_display (sender scope): copies everything the receive\n"
-         "# GUI reads to pww_do_target.\n"
+         "# pww_diplo_bundle_snapshot_recv (sender scope, at delivery): copies everything\n"
+         "# the receive window reads to its own namespace on the sender (pww_drx_<name\n"
+         "# without pww_>). The receive window reads only those, the send window only\n"
+         "# the live mirror: an incoming proposal cannot repaint an open send window,\n"
+         "# and the sender's later drafting cannot repaint an open receive window.\n"
          "###############################################################################\n"]
     m = ["pww_diplo_bundle_mirror = {\n\tpww_diplo_bundle_ensure = yes\n"]
     for n in range(8):
@@ -899,6 +1008,12 @@ def mirror_effects():
     # market values: per row, side totals, balance marker
     for n in range(8):
         m.append(fmt_value(f"pww_dob_m^{n}", f"pww_dbv_{n}"))
+    # Shipping a day on a sea route (pww_dob_h, the buyer's delivered cost), to the hundredth.
+    for n in range(8):
+        m.append(f"\tset_temp_variable = {{ pww_dgm_v = pww_dob_h^{n} }}\n"
+                 "\tmultiply_temp_variable = { pww_dgm_v = 100 }\n\tround_temp_variable = pww_dgm_v\n"
+                 "\tdivide_temp_variable = { pww_dgm_v = 100 }\n"
+                 f"\tset_variable = {{ pww_dbh_{n} = pww_dgm_v }}\n")
     # The target's appetite for a payment row, as a word: 1 high, 2 low, 0 none.
     for n in range(8):
         m.append(f"\tset_variable = {{ pww_dbp_{n} = 0 }}\n"
@@ -985,21 +1100,16 @@ def mirror_effects():
                 en.append(f"\t\tif = {{ limit = {{ {test(j)} }} set_variable = {{ pww_dbm_en_{j} = 1 }} }}\n")
             en.append("\t}\n")
     en.append("}\n\n")
-    # Copy for the receive GUI
-    names = []
-    for n in range(8):
-        names += [f"pww_dbk_{n}", f"pww_dbx_{n}", f"pww_dba_{n}", f"pww_dbf_{n}", f"pww_dbss_{n}", f"pww_dbsp_{n}",
-                  f"pww_dbts_{n}", f"pww_dbtp_{n}", f"pww_dbu_{n}"]
-    names += ["pww_do_len", "pww_do_bind", "pww_do_n0", "pww_do_n1", "pww_do_frame", "pww_do_mk", "pww_do_valid",
-              "pww_dd_line", "pww_dd_round", "pww_dd_closed"]
-    for v in [f"pww_dbv_{n}" for n in range(8)] + ["pww_dbm_t0", "pww_dbm_t1"]:
-        names += [v, f"{v}_f"]
-    for s in (0, 1):
-        names += [f"pww_dmg{s}_top", f"pww_dmg{s}_topa"]
-    cp = ["pww_diplo_bundle_copy_display = {\n\tvar:pww_do_target = {\n"]
-    for nm in names:
-        cp.append(f"\t\tset_variable = {{ {nm} = PREV.{nm} }}\n")
-    for n in range(8):
-        cp.append(f"\t\tif = {{ limit = {{ PREV = {{ check_variable = {{ pww_dbk_{n} = 6 }} }} }} set_variable = {{ pww_dbs_{n} = PREV.pww_dbs_{n} }} }}\n")
-    cp.append("\t}\n}\n")
+    # Receive snapshot: every variable the receive window reads (V(), RECV_VARS)
+    # copied on the sender to its pww_drx_ name. A lease state is copied only
+    # for a lease row (the send name is unset otherwise).
+    cp = ["pww_diplo_bundle_snapshot_recv = {\n"]
+    for nm in sorted(RECV_VARS):
+        dst = V(nm, True)
+        if nm.startswith("pww_dbs_"):
+            n = nm.rsplit("_", 1)[1]
+            cp.append(f"\tif = {{ limit = {{ check_variable = {{ pww_dbk_{n} = 6 }} }} set_variable = {{ {dst} = {nm} }} }}\n")
+        else:
+            cp.append(f"\tset_variable = {{ {dst} = {nm} }}\n")
+    cp.append("\tadd_to_variable = { pww_diplo_dirty = 1 }\n}\n")
     return "".join(o + m + en + cp)

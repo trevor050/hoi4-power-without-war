@@ -1,0 +1,39 @@
+# Diplomacy survey (manual): prices of the trade deals AI countries sign in one
+# year, every lane live. Run with an observer tag so every deal is AI to AI:
+#   python tools/run_hoi4.py --tag HAI --days 400 --timeout 3000 --test tests/diplomacy/diplo_price_survey
+#   python tests/diplomacy/diplo_price_survey/price_report.py <run dir>/game.log
+# Day 1 turns on the diplomacy debug log: every signed bundle logs
+# "PWW_DIPLO sign bundle ... pf=<price factor> walk=<seller walk-away> ...".
+# Day 365 logs PWW_DONE.
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = GER }
+				add_to_variable = { global.pww_dtest_ps_day = 1 }
+				if = {
+					limit = { check_variable = { global.pww_dtest_ps_day = 1 } }
+					set_global_flag = pww_diplo_debug
+				}
+				if = {
+					limit = {
+						check_variable = { global.pww_dtest_ps_day > 29 }
+						NOT = { has_global_flag = pww_dtest_ps_m }
+					}
+					set_temp_variable = { pww_dtest_ps_m = global.pww_dtest_ps_day }
+					modulo_temp_variable = { var = pww_dtest_ps_m value = 30 }
+					if = {
+						limit = { check_variable = { pww_dtest_ps_m = 0 } }
+						log = "PWW_RESULT diplo_price_survey.month INFO [GetDateText] day=[?global.pww_dtest_ps_day|0] agreements=[?global.pww_next_agreement_id|0] talks=[?global.pww_next_talk_id|0] tension=[?global.threat|2]"
+					}
+				}
+				if = {
+					limit = { check_variable = { global.pww_dtest_ps_day = 365 } }
+					set_global_flag = pww_dtest_ps_m
+					log = "PWW_RESULT diplo_price_survey.year INFO [GetDateText] agreements=[?global.pww_next_agreement_id|0] talks=[?global.pww_next_talk_id|0]"
+					log = "PWW_DONE diplo_price_survey"
+				}
+			}
+		}
+	}
+}

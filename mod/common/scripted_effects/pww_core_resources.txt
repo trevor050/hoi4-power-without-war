@@ -19,7 +19,8 @@
 #       ticks in deficit, 0..6).
 #
 # Desperation model (per resource, per staggered tick, roughly every 30 days):
-#   need      = max(resource_consumed@res, 3)
+#   need      = resource_consumed@res - min(resource@res, 0)  (demand: met use
+#               plus the open shortfall; resource_consumed is met use only)
 #   shortfall = clamp(-resource@res / need, 0, 1)       (resource@ is net surplus)
 #   streak    = +1 if shortfall > 0.05 else reset to 0  (capped at 6)
 #   duration  = 0 if streak < 2, 0.6 if streak = 2, 1.0 if streak >= 3
@@ -88,8 +89,11 @@ pww_core_update_desperation = {
 	set_variable = { pww_desp_max_res = -1 }
 
 	### oil (index 0)
-	set_temp_variable = { pww_need = resource_consumed@oil }
-	clamp_temp_variable = { var = pww_need min = 3 }
+	# Demand = met use plus the open shortfall (resource_consumed is met use).
+	set_temp_variable = { pww_need = resource@oil }
+	clamp_temp_variable = { var = pww_need min = -99999 max = 0 }
+	multiply_temp_variable = { pww_need = -1 }
+	add_to_temp_variable = { pww_need = resource_consumed@oil }
 	set_temp_variable = { pww_short = resource@oil }
 	multiply_temp_variable = { pww_short = -1 }
 	divide_temp_variable = { var = pww_short value = pww_need if_zero = 0 }
@@ -156,8 +160,11 @@ pww_core_update_desperation = {
 	}
 
 	### aluminium (index 1)
-	set_temp_variable = { pww_need = resource_consumed@aluminium }
-	clamp_temp_variable = { var = pww_need min = 3 }
+	# Demand = met use plus the open shortfall (resource_consumed is met use).
+	set_temp_variable = { pww_need = resource@aluminium }
+	clamp_temp_variable = { var = pww_need min = -99999 max = 0 }
+	multiply_temp_variable = { pww_need = -1 }
+	add_to_temp_variable = { pww_need = resource_consumed@aluminium }
 	set_temp_variable = { pww_short = resource@aluminium }
 	multiply_temp_variable = { pww_short = -1 }
 	divide_temp_variable = { var = pww_short value = pww_need if_zero = 0 }
@@ -214,8 +221,11 @@ pww_core_update_desperation = {
 	}
 
 	### rubber (index 2)
-	set_temp_variable = { pww_need = resource_consumed@rubber }
-	clamp_temp_variable = { var = pww_need min = 3 }
+	# Demand = met use plus the open shortfall (resource_consumed is met use).
+	set_temp_variable = { pww_need = resource@rubber }
+	clamp_temp_variable = { var = pww_need min = -99999 max = 0 }
+	multiply_temp_variable = { pww_need = -1 }
+	add_to_temp_variable = { pww_need = resource_consumed@rubber }
 	set_temp_variable = { pww_short = resource@rubber }
 	multiply_temp_variable = { pww_short = -1 }
 	divide_temp_variable = { var = pww_short value = pww_need if_zero = 0 }
@@ -272,8 +282,11 @@ pww_core_update_desperation = {
 	}
 
 	### tungsten (index 3)
-	set_temp_variable = { pww_need = resource_consumed@tungsten }
-	clamp_temp_variable = { var = pww_need min = 3 }
+	# Demand = met use plus the open shortfall (resource_consumed is met use).
+	set_temp_variable = { pww_need = resource@tungsten }
+	clamp_temp_variable = { var = pww_need min = -99999 max = 0 }
+	multiply_temp_variable = { pww_need = -1 }
+	add_to_temp_variable = { pww_need = resource_consumed@tungsten }
 	set_temp_variable = { pww_short = resource@tungsten }
 	multiply_temp_variable = { pww_short = -1 }
 	divide_temp_variable = { var = pww_short value = pww_need if_zero = 0 }
@@ -330,8 +343,11 @@ pww_core_update_desperation = {
 	}
 
 	### steel (index 4)
-	set_temp_variable = { pww_need = resource_consumed@steel }
-	clamp_temp_variable = { var = pww_need min = 3 }
+	# Demand = met use plus the open shortfall (resource_consumed is met use).
+	set_temp_variable = { pww_need = resource@steel }
+	clamp_temp_variable = { var = pww_need min = -99999 max = 0 }
+	multiply_temp_variable = { pww_need = -1 }
+	add_to_temp_variable = { pww_need = resource_consumed@steel }
 	set_temp_variable = { pww_short = resource@steel }
 	multiply_temp_variable = { pww_short = -1 }
 	divide_temp_variable = { var = pww_short value = pww_need if_zero = 0 }
@@ -388,8 +404,11 @@ pww_core_update_desperation = {
 	}
 
 	### chromium (index 5)
-	set_temp_variable = { pww_need = resource_consumed@chromium }
-	clamp_temp_variable = { var = pww_need min = 3 }
+	# Demand = met use plus the open shortfall (resource_consumed is met use).
+	set_temp_variable = { pww_need = resource@chromium }
+	clamp_temp_variable = { var = pww_need min = -99999 max = 0 }
+	multiply_temp_variable = { pww_need = -1 }
+	add_to_temp_variable = { pww_need = resource_consumed@chromium }
 	set_temp_variable = { pww_short = resource@chromium }
 	multiply_temp_variable = { pww_short = -1 }
 	divide_temp_variable = { var = pww_short value = pww_need if_zero = 0 }
@@ -446,8 +465,11 @@ pww_core_update_desperation = {
 	}
 
 	### coal (index 6)
-	set_temp_variable = { pww_need = resource_consumed@coal }
-	clamp_temp_variable = { var = pww_need min = 3 }
+	# Demand = met use plus the open shortfall (resource_consumed is met use).
+	set_temp_variable = { pww_need = resource@coal }
+	clamp_temp_variable = { var = pww_need min = -99999 max = 0 }
+	multiply_temp_variable = { pww_need = -1 }
+	add_to_temp_variable = { pww_need = resource_consumed@coal }
 	set_temp_variable = { pww_short = resource@coal }
 	multiply_temp_variable = { pww_short = -1 }
 	divide_temp_variable = { var = pww_short value = pww_need if_zero = 0 }

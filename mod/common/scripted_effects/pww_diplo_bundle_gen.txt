@@ -14,8 +14,11 @@
 # (pww_dmg<side>_*: civ, pp, r<res>_sp/_sh, e<eq>, s<res>, top/topa) and
 # enabled rows pww_dbm_en_<row>. Side 0 figures are the sender's, side 1 the
 # target's.
-# pww_diplo_bundle_copy_display (sender scope): copies everything the receive
-# GUI reads to pww_do_target.
+# pww_diplo_bundle_snapshot_recv (sender scope, at delivery): copies everything
+# the receive window reads to its own namespace on the sender (pww_drx_<name
+# without pww_>). The receive window reads only those, the send window only
+# the live mirror: an incoming proposal cannot repaint an open send window,
+# and the sender's later drafting cannot repaint an open receive window.
 ###############################################################################
 pww_diplo_bundle_mirror = {
 	pww_diplo_bundle_ensure = yes
@@ -523,6 +526,46 @@ pww_diplo_bundle_mirror = {
 	if = { limit = { check_variable = { pww_dgm_i = pww_dgm_v } } set_variable = { pww_dbv_7_f = 2 } }
 	if = { limit = { check_variable = { pww_dgm_v = 1 } } set_variable = { pww_dbv_7_f = 3 } }
 	set_variable = { pww_dbv_7 = pww_dgm_v }
+	set_temp_variable = { pww_dgm_v = pww_dob_h^0 }
+	multiply_temp_variable = { pww_dgm_v = 100 }
+	round_temp_variable = pww_dgm_v
+	divide_temp_variable = { pww_dgm_v = 100 }
+	set_variable = { pww_dbh_0 = pww_dgm_v }
+	set_temp_variable = { pww_dgm_v = pww_dob_h^1 }
+	multiply_temp_variable = { pww_dgm_v = 100 }
+	round_temp_variable = pww_dgm_v
+	divide_temp_variable = { pww_dgm_v = 100 }
+	set_variable = { pww_dbh_1 = pww_dgm_v }
+	set_temp_variable = { pww_dgm_v = pww_dob_h^2 }
+	multiply_temp_variable = { pww_dgm_v = 100 }
+	round_temp_variable = pww_dgm_v
+	divide_temp_variable = { pww_dgm_v = 100 }
+	set_variable = { pww_dbh_2 = pww_dgm_v }
+	set_temp_variable = { pww_dgm_v = pww_dob_h^3 }
+	multiply_temp_variable = { pww_dgm_v = 100 }
+	round_temp_variable = pww_dgm_v
+	divide_temp_variable = { pww_dgm_v = 100 }
+	set_variable = { pww_dbh_3 = pww_dgm_v }
+	set_temp_variable = { pww_dgm_v = pww_dob_h^4 }
+	multiply_temp_variable = { pww_dgm_v = 100 }
+	round_temp_variable = pww_dgm_v
+	divide_temp_variable = { pww_dgm_v = 100 }
+	set_variable = { pww_dbh_4 = pww_dgm_v }
+	set_temp_variable = { pww_dgm_v = pww_dob_h^5 }
+	multiply_temp_variable = { pww_dgm_v = 100 }
+	round_temp_variable = pww_dgm_v
+	divide_temp_variable = { pww_dgm_v = 100 }
+	set_variable = { pww_dbh_5 = pww_dgm_v }
+	set_temp_variable = { pww_dgm_v = pww_dob_h^6 }
+	multiply_temp_variable = { pww_dgm_v = 100 }
+	round_temp_variable = pww_dgm_v
+	divide_temp_variable = { pww_dgm_v = 100 }
+	set_variable = { pww_dbh_6 = pww_dgm_v }
+	set_temp_variable = { pww_dgm_v = pww_dob_h^7 }
+	multiply_temp_variable = { pww_dgm_v = 100 }
+	round_temp_variable = pww_dgm_v
+	divide_temp_variable = { pww_dgm_v = 100 }
+	set_variable = { pww_dbh_7 = pww_dgm_v }
 	set_variable = { pww_dbp_0 = 0 }
 	if = { limit = { check_variable = { pww_dob_p^0 > 1.149 } } set_variable = { pww_dbp_0 = 1 } }
 	if = { limit = { check_variable = { pww_dob_p^0 < 0.801 } } set_variable = { pww_dbp_0 = 2 } }
@@ -1024,121 +1067,136 @@ pww_diplo_menu_enable = {
 	}
 }
 
-pww_diplo_bundle_copy_display = {
-	var:pww_do_target = {
-		set_variable = { pww_dbk_0 = PREV.pww_dbk_0 }
-		set_variable = { pww_dbx_0 = PREV.pww_dbx_0 }
-		set_variable = { pww_dba_0 = PREV.pww_dba_0 }
-		set_variable = { pww_dbf_0 = PREV.pww_dbf_0 }
-		set_variable = { pww_dbss_0 = PREV.pww_dbss_0 }
-		set_variable = { pww_dbsp_0 = PREV.pww_dbsp_0 }
-		set_variable = { pww_dbts_0 = PREV.pww_dbts_0 }
-		set_variable = { pww_dbtp_0 = PREV.pww_dbtp_0 }
-		set_variable = { pww_dbu_0 = PREV.pww_dbu_0 }
-		set_variable = { pww_dbk_1 = PREV.pww_dbk_1 }
-		set_variable = { pww_dbx_1 = PREV.pww_dbx_1 }
-		set_variable = { pww_dba_1 = PREV.pww_dba_1 }
-		set_variable = { pww_dbf_1 = PREV.pww_dbf_1 }
-		set_variable = { pww_dbss_1 = PREV.pww_dbss_1 }
-		set_variable = { pww_dbsp_1 = PREV.pww_dbsp_1 }
-		set_variable = { pww_dbts_1 = PREV.pww_dbts_1 }
-		set_variable = { pww_dbtp_1 = PREV.pww_dbtp_1 }
-		set_variable = { pww_dbu_1 = PREV.pww_dbu_1 }
-		set_variable = { pww_dbk_2 = PREV.pww_dbk_2 }
-		set_variable = { pww_dbx_2 = PREV.pww_dbx_2 }
-		set_variable = { pww_dba_2 = PREV.pww_dba_2 }
-		set_variable = { pww_dbf_2 = PREV.pww_dbf_2 }
-		set_variable = { pww_dbss_2 = PREV.pww_dbss_2 }
-		set_variable = { pww_dbsp_2 = PREV.pww_dbsp_2 }
-		set_variable = { pww_dbts_2 = PREV.pww_dbts_2 }
-		set_variable = { pww_dbtp_2 = PREV.pww_dbtp_2 }
-		set_variable = { pww_dbu_2 = PREV.pww_dbu_2 }
-		set_variable = { pww_dbk_3 = PREV.pww_dbk_3 }
-		set_variable = { pww_dbx_3 = PREV.pww_dbx_3 }
-		set_variable = { pww_dba_3 = PREV.pww_dba_3 }
-		set_variable = { pww_dbf_3 = PREV.pww_dbf_3 }
-		set_variable = { pww_dbss_3 = PREV.pww_dbss_3 }
-		set_variable = { pww_dbsp_3 = PREV.pww_dbsp_3 }
-		set_variable = { pww_dbts_3 = PREV.pww_dbts_3 }
-		set_variable = { pww_dbtp_3 = PREV.pww_dbtp_3 }
-		set_variable = { pww_dbu_3 = PREV.pww_dbu_3 }
-		set_variable = { pww_dbk_4 = PREV.pww_dbk_4 }
-		set_variable = { pww_dbx_4 = PREV.pww_dbx_4 }
-		set_variable = { pww_dba_4 = PREV.pww_dba_4 }
-		set_variable = { pww_dbf_4 = PREV.pww_dbf_4 }
-		set_variable = { pww_dbss_4 = PREV.pww_dbss_4 }
-		set_variable = { pww_dbsp_4 = PREV.pww_dbsp_4 }
-		set_variable = { pww_dbts_4 = PREV.pww_dbts_4 }
-		set_variable = { pww_dbtp_4 = PREV.pww_dbtp_4 }
-		set_variable = { pww_dbu_4 = PREV.pww_dbu_4 }
-		set_variable = { pww_dbk_5 = PREV.pww_dbk_5 }
-		set_variable = { pww_dbx_5 = PREV.pww_dbx_5 }
-		set_variable = { pww_dba_5 = PREV.pww_dba_5 }
-		set_variable = { pww_dbf_5 = PREV.pww_dbf_5 }
-		set_variable = { pww_dbss_5 = PREV.pww_dbss_5 }
-		set_variable = { pww_dbsp_5 = PREV.pww_dbsp_5 }
-		set_variable = { pww_dbts_5 = PREV.pww_dbts_5 }
-		set_variable = { pww_dbtp_5 = PREV.pww_dbtp_5 }
-		set_variable = { pww_dbu_5 = PREV.pww_dbu_5 }
-		set_variable = { pww_dbk_6 = PREV.pww_dbk_6 }
-		set_variable = { pww_dbx_6 = PREV.pww_dbx_6 }
-		set_variable = { pww_dba_6 = PREV.pww_dba_6 }
-		set_variable = { pww_dbf_6 = PREV.pww_dbf_6 }
-		set_variable = { pww_dbss_6 = PREV.pww_dbss_6 }
-		set_variable = { pww_dbsp_6 = PREV.pww_dbsp_6 }
-		set_variable = { pww_dbts_6 = PREV.pww_dbts_6 }
-		set_variable = { pww_dbtp_6 = PREV.pww_dbtp_6 }
-		set_variable = { pww_dbu_6 = PREV.pww_dbu_6 }
-		set_variable = { pww_dbk_7 = PREV.pww_dbk_7 }
-		set_variable = { pww_dbx_7 = PREV.pww_dbx_7 }
-		set_variable = { pww_dba_7 = PREV.pww_dba_7 }
-		set_variable = { pww_dbf_7 = PREV.pww_dbf_7 }
-		set_variable = { pww_dbss_7 = PREV.pww_dbss_7 }
-		set_variable = { pww_dbsp_7 = PREV.pww_dbsp_7 }
-		set_variable = { pww_dbts_7 = PREV.pww_dbts_7 }
-		set_variable = { pww_dbtp_7 = PREV.pww_dbtp_7 }
-		set_variable = { pww_dbu_7 = PREV.pww_dbu_7 }
-		set_variable = { pww_do_len = PREV.pww_do_len }
-		set_variable = { pww_do_bind = PREV.pww_do_bind }
-		set_variable = { pww_do_n0 = PREV.pww_do_n0 }
-		set_variable = { pww_do_n1 = PREV.pww_do_n1 }
-		set_variable = { pww_do_frame = PREV.pww_do_frame }
-		set_variable = { pww_do_mk = PREV.pww_do_mk }
-		set_variable = { pww_do_valid = PREV.pww_do_valid }
-		set_variable = { pww_dd_line = PREV.pww_dd_line }
-		set_variable = { pww_dd_round = PREV.pww_dd_round }
-		set_variable = { pww_dd_closed = PREV.pww_dd_closed }
-		set_variable = { pww_dbv_0 = PREV.pww_dbv_0 }
-		set_variable = { pww_dbv_0_f = PREV.pww_dbv_0_f }
-		set_variable = { pww_dbv_1 = PREV.pww_dbv_1 }
-		set_variable = { pww_dbv_1_f = PREV.pww_dbv_1_f }
-		set_variable = { pww_dbv_2 = PREV.pww_dbv_2 }
-		set_variable = { pww_dbv_2_f = PREV.pww_dbv_2_f }
-		set_variable = { pww_dbv_3 = PREV.pww_dbv_3 }
-		set_variable = { pww_dbv_3_f = PREV.pww_dbv_3_f }
-		set_variable = { pww_dbv_4 = PREV.pww_dbv_4 }
-		set_variable = { pww_dbv_4_f = PREV.pww_dbv_4_f }
-		set_variable = { pww_dbv_5 = PREV.pww_dbv_5 }
-		set_variable = { pww_dbv_5_f = PREV.pww_dbv_5_f }
-		set_variable = { pww_dbv_6 = PREV.pww_dbv_6 }
-		set_variable = { pww_dbv_6_f = PREV.pww_dbv_6_f }
-		set_variable = { pww_dbv_7 = PREV.pww_dbv_7 }
-		set_variable = { pww_dbv_7_f = PREV.pww_dbv_7_f }
-		set_variable = { pww_dbm_t0 = PREV.pww_dbm_t0 }
-		set_variable = { pww_dbm_t0_f = PREV.pww_dbm_t0_f }
-		set_variable = { pww_dbm_t1 = PREV.pww_dbm_t1 }
-		set_variable = { pww_dbm_t1_f = PREV.pww_dbm_t1_f }
-		set_variable = { pww_dmg0_top = PREV.pww_dmg0_top }
-		set_variable = { pww_dmg0_topa = PREV.pww_dmg0_topa }
-		set_variable = { pww_dmg1_top = PREV.pww_dmg1_top }
-		set_variable = { pww_dmg1_topa = PREV.pww_dmg1_topa }
-		if = { limit = { PREV = { check_variable = { pww_dbk_0 = 6 } } } set_variable = { pww_dbs_0 = PREV.pww_dbs_0 } }
-		if = { limit = { PREV = { check_variable = { pww_dbk_1 = 6 } } } set_variable = { pww_dbs_1 = PREV.pww_dbs_1 } }
-		if = { limit = { PREV = { check_variable = { pww_dbk_2 = 6 } } } set_variable = { pww_dbs_2 = PREV.pww_dbs_2 } }
-		if = { limit = { PREV = { check_variable = { pww_dbk_3 = 6 } } } set_variable = { pww_dbs_3 = PREV.pww_dbs_3 } }
-		if = { limit = { PREV = { check_variable = { pww_dbk_4 = 6 } } } set_variable = { pww_dbs_4 = PREV.pww_dbs_4 } }
-		if = { limit = { PREV = { check_variable = { pww_dbk_5 = 6 } } } set_variable = { pww_dbs_5 = PREV.pww_dbs_5 } }
-		if = { limit = { PREV = { check_variable = { pww_dbk_6 = 6 } } } set_variable = { pww_dbs_6 = PREV.pww_dbs_6 } }
-		if = { limit = { PREV = { check_variable = { pww_dbk_7 = 6 } } } set_variable = { pww_dbs_7 = PREV.pww_dbs_7 } }
-	}
+pww_diplo_bundle_snapshot_recv = {
+	set_variable = { pww_drx_dba_0 = pww_dba_0 }
+	set_variable = { pww_drx_dba_1 = pww_dba_1 }
+	set_variable = { pww_drx_dba_2 = pww_dba_2 }
+	set_variable = { pww_drx_dba_3 = pww_dba_3 }
+	set_variable = { pww_drx_dba_4 = pww_dba_4 }
+	set_variable = { pww_drx_dba_5 = pww_dba_5 }
+	set_variable = { pww_drx_dba_6 = pww_dba_6 }
+	set_variable = { pww_drx_dba_7 = pww_dba_7 }
+	set_variable = { pww_drx_dbf_0 = pww_dbf_0 }
+	set_variable = { pww_drx_dbf_1 = pww_dbf_1 }
+	set_variable = { pww_drx_dbf_2 = pww_dbf_2 }
+	set_variable = { pww_drx_dbf_3 = pww_dbf_3 }
+	set_variable = { pww_drx_dbf_4 = pww_dbf_4 }
+	set_variable = { pww_drx_dbf_5 = pww_dbf_5 }
+	set_variable = { pww_drx_dbf_6 = pww_dbf_6 }
+	set_variable = { pww_drx_dbf_7 = pww_dbf_7 }
+	set_variable = { pww_drx_dbh_0 = pww_dbh_0 }
+	set_variable = { pww_drx_dbh_1 = pww_dbh_1 }
+	set_variable = { pww_drx_dbh_2 = pww_dbh_2 }
+	set_variable = { pww_drx_dbh_3 = pww_dbh_3 }
+	set_variable = { pww_drx_dbh_4 = pww_dbh_4 }
+	set_variable = { pww_drx_dbh_5 = pww_dbh_5 }
+	set_variable = { pww_drx_dbh_6 = pww_dbh_6 }
+	set_variable = { pww_drx_dbh_7 = pww_dbh_7 }
+	set_variable = { pww_drx_dbk_0 = pww_dbk_0 }
+	set_variable = { pww_drx_dbk_1 = pww_dbk_1 }
+	set_variable = { pww_drx_dbk_2 = pww_dbk_2 }
+	set_variable = { pww_drx_dbk_3 = pww_dbk_3 }
+	set_variable = { pww_drx_dbk_4 = pww_dbk_4 }
+	set_variable = { pww_drx_dbk_5 = pww_dbk_5 }
+	set_variable = { pww_drx_dbk_6 = pww_dbk_6 }
+	set_variable = { pww_drx_dbk_7 = pww_dbk_7 }
+	set_variable = { pww_drx_dbm_t0 = pww_dbm_t0 }
+	set_variable = { pww_drx_dbm_t0_f = pww_dbm_t0_f }
+	set_variable = { pww_drx_dbm_t1 = pww_dbm_t1 }
+	set_variable = { pww_drx_dbm_t1_f = pww_dbm_t1_f }
+	if = { limit = { check_variable = { pww_dbk_0 = 6 } } set_variable = { pww_drx_dbs_0 = pww_dbs_0 } }
+	if = { limit = { check_variable = { pww_dbk_1 = 6 } } set_variable = { pww_drx_dbs_1 = pww_dbs_1 } }
+	if = { limit = { check_variable = { pww_dbk_2 = 6 } } set_variable = { pww_drx_dbs_2 = pww_dbs_2 } }
+	if = { limit = { check_variable = { pww_dbk_3 = 6 } } set_variable = { pww_drx_dbs_3 = pww_dbs_3 } }
+	if = { limit = { check_variable = { pww_dbk_4 = 6 } } set_variable = { pww_drx_dbs_4 = pww_dbs_4 } }
+	if = { limit = { check_variable = { pww_dbk_5 = 6 } } set_variable = { pww_drx_dbs_5 = pww_dbs_5 } }
+	if = { limit = { check_variable = { pww_dbk_6 = 6 } } set_variable = { pww_drx_dbs_6 = pww_dbs_6 } }
+	if = { limit = { check_variable = { pww_dbk_7 = 6 } } set_variable = { pww_drx_dbs_7 = pww_dbs_7 } }
+	set_variable = { pww_drx_dbsp_0 = pww_dbsp_0 }
+	set_variable = { pww_drx_dbsp_1 = pww_dbsp_1 }
+	set_variable = { pww_drx_dbsp_2 = pww_dbsp_2 }
+	set_variable = { pww_drx_dbsp_3 = pww_dbsp_3 }
+	set_variable = { pww_drx_dbsp_4 = pww_dbsp_4 }
+	set_variable = { pww_drx_dbsp_5 = pww_dbsp_5 }
+	set_variable = { pww_drx_dbsp_6 = pww_dbsp_6 }
+	set_variable = { pww_drx_dbsp_7 = pww_dbsp_7 }
+	set_variable = { pww_drx_dbss_0 = pww_dbss_0 }
+	set_variable = { pww_drx_dbss_1 = pww_dbss_1 }
+	set_variable = { pww_drx_dbss_2 = pww_dbss_2 }
+	set_variable = { pww_drx_dbss_3 = pww_dbss_3 }
+	set_variable = { pww_drx_dbss_4 = pww_dbss_4 }
+	set_variable = { pww_drx_dbss_5 = pww_dbss_5 }
+	set_variable = { pww_drx_dbss_6 = pww_dbss_6 }
+	set_variable = { pww_drx_dbss_7 = pww_dbss_7 }
+	set_variable = { pww_drx_dbtp_0 = pww_dbtp_0 }
+	set_variable = { pww_drx_dbtp_1 = pww_dbtp_1 }
+	set_variable = { pww_drx_dbtp_2 = pww_dbtp_2 }
+	set_variable = { pww_drx_dbtp_3 = pww_dbtp_3 }
+	set_variable = { pww_drx_dbtp_4 = pww_dbtp_4 }
+	set_variable = { pww_drx_dbtp_5 = pww_dbtp_5 }
+	set_variable = { pww_drx_dbtp_6 = pww_dbtp_6 }
+	set_variable = { pww_drx_dbtp_7 = pww_dbtp_7 }
+	set_variable = { pww_drx_dbts_0 = pww_dbts_0 }
+	set_variable = { pww_drx_dbts_1 = pww_dbts_1 }
+	set_variable = { pww_drx_dbts_2 = pww_dbts_2 }
+	set_variable = { pww_drx_dbts_3 = pww_dbts_3 }
+	set_variable = { pww_drx_dbts_4 = pww_dbts_4 }
+	set_variable = { pww_drx_dbts_5 = pww_dbts_5 }
+	set_variable = { pww_drx_dbts_6 = pww_dbts_6 }
+	set_variable = { pww_drx_dbts_7 = pww_dbts_7 }
+	set_variable = { pww_drx_dbu_0 = pww_dbu_0 }
+	set_variable = { pww_drx_dbu_1 = pww_dbu_1 }
+	set_variable = { pww_drx_dbu_2 = pww_dbu_2 }
+	set_variable = { pww_drx_dbu_3 = pww_dbu_3 }
+	set_variable = { pww_drx_dbu_4 = pww_dbu_4 }
+	set_variable = { pww_drx_dbu_5 = pww_dbu_5 }
+	set_variable = { pww_drx_dbu_6 = pww_dbu_6 }
+	set_variable = { pww_drx_dbu_7 = pww_dbu_7 }
+	set_variable = { pww_drx_dbv_0 = pww_dbv_0 }
+	set_variable = { pww_drx_dbv_0_f = pww_dbv_0_f }
+	set_variable = { pww_drx_dbv_1 = pww_dbv_1 }
+	set_variable = { pww_drx_dbv_1_f = pww_dbv_1_f }
+	set_variable = { pww_drx_dbv_2 = pww_dbv_2 }
+	set_variable = { pww_drx_dbv_2_f = pww_dbv_2_f }
+	set_variable = { pww_drx_dbv_3 = pww_dbv_3 }
+	set_variable = { pww_drx_dbv_3_f = pww_dbv_3_f }
+	set_variable = { pww_drx_dbv_4 = pww_dbv_4 }
+	set_variable = { pww_drx_dbv_4_f = pww_dbv_4_f }
+	set_variable = { pww_drx_dbv_5 = pww_dbv_5 }
+	set_variable = { pww_drx_dbv_5_f = pww_dbv_5_f }
+	set_variable = { pww_drx_dbv_6 = pww_dbv_6 }
+	set_variable = { pww_drx_dbv_6_f = pww_dbv_6_f }
+	set_variable = { pww_drx_dbv_7 = pww_dbv_7 }
+	set_variable = { pww_drx_dbv_7_f = pww_dbv_7_f }
+	set_variable = { pww_drx_dbx_0 = pww_dbx_0 }
+	set_variable = { pww_drx_dbx_1 = pww_dbx_1 }
+	set_variable = { pww_drx_dbx_2 = pww_dbx_2 }
+	set_variable = { pww_drx_dbx_3 = pww_dbx_3 }
+	set_variable = { pww_drx_dbx_4 = pww_dbx_4 }
+	set_variable = { pww_drx_dbx_5 = pww_dbx_5 }
+	set_variable = { pww_drx_dbx_6 = pww_dbx_6 }
+	set_variable = { pww_drx_dbx_7 = pww_dbx_7 }
+	set_variable = { pww_drx_dd_line = pww_dd_line }
+	set_variable = { pww_drx_dmg0_r0_sp = pww_dmg0_r0_sp }
+	set_variable = { pww_drx_dmg0_r1_sp = pww_dmg0_r1_sp }
+	set_variable = { pww_drx_dmg0_r2_sp = pww_dmg0_r2_sp }
+	set_variable = { pww_drx_dmg0_r3_sp = pww_dmg0_r3_sp }
+	set_variable = { pww_drx_dmg0_r4_sp = pww_dmg0_r4_sp }
+	set_variable = { pww_drx_dmg0_r5_sp = pww_dmg0_r5_sp }
+	set_variable = { pww_drx_dmg0_r6_sp = pww_dmg0_r6_sp }
+	set_variable = { pww_drx_do_act = pww_do_act }
+	set_variable = { pww_drx_do_bind = pww_do_bind }
+	set_variable = { pww_drx_do_frame = pww_do_frame }
+	set_variable = { pww_drx_do_len = pww_do_len }
+	set_variable = { pww_drx_do_lockwhy = pww_do_lockwhy }
+	set_variable = { pww_drx_do_mk = pww_do_mk }
+	set_variable = { pww_drx_do_n0 = pww_do_n0 }
+	set_variable = { pww_drx_do_n1 = pww_do_n1 }
+	set_variable = { pww_drx_do_p_amt = pww_do_p_amt }
+	set_variable = { pww_drx_do_p_band = pww_do_p_band }
+	set_variable = { pww_drx_do_p_inc = pww_do_p_inc }
+	set_variable = { pww_drx_do_p_pay = pww_do_p_pay }
+	set_variable = { pww_drx_do_p_res = pww_do_p_res }
+	set_variable = { pww_drx_do_p_ship = pww_do_p_ship }
+	add_to_variable = { pww_diplo_dirty = 1 }
 }

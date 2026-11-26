@@ -80,13 +80,13 @@ pww_stock_tick_aluminium = {
 		if = { limit = { check_variable = { pww_stk_f > pww_stk_m } } set_temp_variable = { pww_stk_f = pww_stk_m } }
 		set_temp_variable = { pww_stk_cst = pww_stk_f }
 		multiply_temp_variable = { pww_stk_cst = global.pww_stock_c_fill_cost }
-		# A cartel quota (pww_cartel_store_<res>, units a day) may ask storage
-		# to take more: the extra is withheld through the cost modifier
-		# (cutting exports is the quota's purpose), within B and capacity.
+		# A cartel quota (pww_cartel_store_<res>, units a day) is a minimum
+		# fill while storage has room: the extra over the normal share is
+		# withheld through the cost modifier (cutting exports is the quota's
+		# purpose, so it is not capped at B), within capacity only.
 		if = {
 			limit = { check_variable = { pww_cartel_store_aluminium > pww_stk_f } }
 			set_temp_variable = { pww_stk_g = pww_cartel_store_aluminium }
-			if = { limit = { check_variable = { pww_stk_g > pww_stk_b } } set_temp_variable = { pww_stk_g = pww_stk_b } }
 			set_temp_variable = { pww_stk_m = pww_stock_cap_aluminium }
 			subtract_from_temp_variable = { pww_stk_m = pww_stock_aluminium }
 			divide_temp_variable = { pww_stk_m = global.pww_stock_c_period }
@@ -247,13 +247,13 @@ pww_stock_tick_rubber = {
 		if = { limit = { check_variable = { pww_stk_f > pww_stk_m } } set_temp_variable = { pww_stk_f = pww_stk_m } }
 		set_temp_variable = { pww_stk_cst = pww_stk_f }
 		multiply_temp_variable = { pww_stk_cst = global.pww_stock_c_fill_cost }
-		# A cartel quota (pww_cartel_store_<res>, units a day) may ask storage
-		# to take more: the extra is withheld through the cost modifier
-		# (cutting exports is the quota's purpose), within B and capacity.
+		# A cartel quota (pww_cartel_store_<res>, units a day) is a minimum
+		# fill while storage has room: the extra over the normal share is
+		# withheld through the cost modifier (cutting exports is the quota's
+		# purpose, so it is not capped at B), within capacity only.
 		if = {
 			limit = { check_variable = { pww_cartel_store_rubber > pww_stk_f } }
 			set_temp_variable = { pww_stk_g = pww_cartel_store_rubber }
-			if = { limit = { check_variable = { pww_stk_g > pww_stk_b } } set_temp_variable = { pww_stk_g = pww_stk_b } }
 			set_temp_variable = { pww_stk_m = pww_stock_cap_rubber }
 			subtract_from_temp_variable = { pww_stk_m = pww_stock_rubber }
 			divide_temp_variable = { pww_stk_m = global.pww_stock_c_period }
@@ -414,13 +414,13 @@ pww_stock_tick_tungsten = {
 		if = { limit = { check_variable = { pww_stk_f > pww_stk_m } } set_temp_variable = { pww_stk_f = pww_stk_m } }
 		set_temp_variable = { pww_stk_cst = pww_stk_f }
 		multiply_temp_variable = { pww_stk_cst = global.pww_stock_c_fill_cost }
-		# A cartel quota (pww_cartel_store_<res>, units a day) may ask storage
-		# to take more: the extra is withheld through the cost modifier
-		# (cutting exports is the quota's purpose), within B and capacity.
+		# A cartel quota (pww_cartel_store_<res>, units a day) is a minimum
+		# fill while storage has room: the extra over the normal share is
+		# withheld through the cost modifier (cutting exports is the quota's
+		# purpose, so it is not capped at B), within capacity only.
 		if = {
 			limit = { check_variable = { pww_cartel_store_tungsten > pww_stk_f } }
 			set_temp_variable = { pww_stk_g = pww_cartel_store_tungsten }
-			if = { limit = { check_variable = { pww_stk_g > pww_stk_b } } set_temp_variable = { pww_stk_g = pww_stk_b } }
 			set_temp_variable = { pww_stk_m = pww_stock_cap_tungsten }
 			subtract_from_temp_variable = { pww_stk_m = pww_stock_tungsten }
 			divide_temp_variable = { pww_stk_m = global.pww_stock_c_period }
@@ -581,13 +581,13 @@ pww_stock_tick_steel = {
 		if = { limit = { check_variable = { pww_stk_f > pww_stk_m } } set_temp_variable = { pww_stk_f = pww_stk_m } }
 		set_temp_variable = { pww_stk_cst = pww_stk_f }
 		multiply_temp_variable = { pww_stk_cst = global.pww_stock_c_fill_cost }
-		# A cartel quota (pww_cartel_store_<res>, units a day) may ask storage
-		# to take more: the extra is withheld through the cost modifier
-		# (cutting exports is the quota's purpose), within B and capacity.
+		# A cartel quota (pww_cartel_store_<res>, units a day) is a minimum
+		# fill while storage has room: the extra over the normal share is
+		# withheld through the cost modifier (cutting exports is the quota's
+		# purpose, so it is not capped at B), within capacity only.
 		if = {
 			limit = { check_variable = { pww_cartel_store_steel > pww_stk_f } }
 			set_temp_variable = { pww_stk_g = pww_cartel_store_steel }
-			if = { limit = { check_variable = { pww_stk_g > pww_stk_b } } set_temp_variable = { pww_stk_g = pww_stk_b } }
 			set_temp_variable = { pww_stk_m = pww_stock_cap_steel }
 			subtract_from_temp_variable = { pww_stk_m = pww_stock_steel }
 			divide_temp_variable = { pww_stk_m = global.pww_stock_c_period }
@@ -748,13 +748,13 @@ pww_stock_tick_chromium = {
 		if = { limit = { check_variable = { pww_stk_f > pww_stk_m } } set_temp_variable = { pww_stk_f = pww_stk_m } }
 		set_temp_variable = { pww_stk_cst = pww_stk_f }
 		multiply_temp_variable = { pww_stk_cst = global.pww_stock_c_fill_cost }
-		# A cartel quota (pww_cartel_store_<res>, units a day) may ask storage
-		# to take more: the extra is withheld through the cost modifier
-		# (cutting exports is the quota's purpose), within B and capacity.
+		# A cartel quota (pww_cartel_store_<res>, units a day) is a minimum
+		# fill while storage has room: the extra over the normal share is
+		# withheld through the cost modifier (cutting exports is the quota's
+		# purpose, so it is not capped at B), within capacity only.
 		if = {
 			limit = { check_variable = { pww_cartel_store_chromium > pww_stk_f } }
 			set_temp_variable = { pww_stk_g = pww_cartel_store_chromium }
-			if = { limit = { check_variable = { pww_stk_g > pww_stk_b } } set_temp_variable = { pww_stk_g = pww_stk_b } }
 			set_temp_variable = { pww_stk_m = pww_stock_cap_chromium }
 			subtract_from_temp_variable = { pww_stk_m = pww_stock_chromium }
 			divide_temp_variable = { pww_stk_m = global.pww_stock_c_period }
@@ -915,13 +915,13 @@ pww_stock_tick_coal = {
 		if = { limit = { check_variable = { pww_stk_f > pww_stk_m } } set_temp_variable = { pww_stk_f = pww_stk_m } }
 		set_temp_variable = { pww_stk_cst = pww_stk_f }
 		multiply_temp_variable = { pww_stk_cst = global.pww_stock_c_fill_cost }
-		# A cartel quota (pww_cartel_store_<res>, units a day) may ask storage
-		# to take more: the extra is withheld through the cost modifier
-		# (cutting exports is the quota's purpose), within B and capacity.
+		# A cartel quota (pww_cartel_store_<res>, units a day) is a minimum
+		# fill while storage has room: the extra over the normal share is
+		# withheld through the cost modifier (cutting exports is the quota's
+		# purpose, so it is not capped at B), within capacity only.
 		if = {
 			limit = { check_variable = { pww_cartel_store_coal > pww_stk_f } }
 			set_temp_variable = { pww_stk_g = pww_cartel_store_coal }
-			if = { limit = { check_variable = { pww_stk_g > pww_stk_b } } set_temp_variable = { pww_stk_g = pww_stk_b } }
 			set_temp_variable = { pww_stk_m = pww_stock_cap_coal }
 			subtract_from_temp_variable = { pww_stk_m = pww_stock_coal }
 			divide_temp_variable = { pww_stk_m = global.pww_stock_c_period }

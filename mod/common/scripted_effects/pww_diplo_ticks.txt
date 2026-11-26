@@ -11,7 +11,9 @@
 # these flags and variables only, so it stays cheap. Every intent has a
 # concrete reason:
 #   pww_diplo_ai_offer      (+ pww_diplo_ai_offer_to, _res): desperation for
-#                           a resource another active trader has spare;
+#                           a resource another active trader has spare (the
+#                           supplier with the best delivered deal: spare
+#                           units it can use x (1 - 2 x shipping share));
 #                           an agreement it buys under expiring within 60
 #                           days; or a situation bid intent
 #                           (pww_sit_ai_wants_bid). Also set by a human
@@ -35,9 +37,11 @@
 #
 # SALES (glut sellers approach buyers): an AI with no offer intent whose
 # unsold output of a resource is worth a factory or more (pww_dg_unsold >= 8
-# and >= 15% of its output) tables Propose Trade Deal to the country shortest
-# of it (largest demand: open-market imports plus any shortfall still open,
-# at least 4 units, half a factory) among the active traders and human players,
+# and >= 15% of its output; a cartel member only with quota room or when it
+# cheats) tables Propose Trade Deal to the best delivered buyer (demand:
+# open-market imports plus any shortfall still open, at least 4 units, half
+# a factory; score min(demand, unsold) x (1 - 2 x shipping share), no
+# undeliverable route) among the active traders and human players,
 # not at war or embargo either way, neither side's opinion of the other
 # below -25 (normalized), no talks between them in the last 90 days or
 # cooling. The draft (pww_diplo_ai_build_sale) sells up to that demand
@@ -49,6 +53,15 @@
 # AI-to-AI sale attempts (sent or dropped) are capped at 6 per 30-day window
 # (global.pww_ds_win / global.pww_ds_n). A draft the buyer would not take is
 # dropped and its talk closed as superseded.
+#
+# POACHING (opportunistic AIs, pww_diplo_ai_poach_intent): an AI with no offer
+# or sale draft pending and a large glut (unsold >= 40 units and >= 30% of
+# its output) of a resource looks for the largest poachable mod supply deal
+# in it (active, either side may end it, not ours) and drafts Poach Supplier
+# to that buyer (pww_diplo_poach_defaults: 90% of the incumbent's price,
+# less 5% a round, less shipping). Ready: flag pww_diplo_ai_poach (+ _to);
+# either way a 120-day cooldown (pww_diplo_ai_poach_cd). AI-to-AI attempts
+# count against the sales window (global.pww_ds_n).
 ###############################################################################
 
 pww_diplo_on_daily = {
@@ -275,7 +288,16 @@ pww_diplo_ai_intents = {
 				check_variable = { pww_desp_max_res > -1 }
 			}
 			set_temp_variable = { pww_dai_res = pww_desp_max_res }
-			set_temp_variable = { pww_dai_best = 1.999 }
+			# Delivered cost picks the supplier: spare units we can use, less
+			# twice the shipping share (a 20% sea route counts 60%).
+			set_temp_variable = { pww_dg_res = pww_dai_res }
+			pww_diplo_read_market = yes
+			set_temp_variable = { pww_dai_need = pww_dg_demand }
+			if = {
+				limit = { check_variable = { pww_dai_need < 2 } }
+				set_temp_variable = { pww_dai_need = 2 }
+			}
+			set_temp_variable = { pww_dai_best = 0 }
 			for_each_loop = {
 				array = global.pww_active_traders
 				value = pww_dai_c
@@ -290,16 +312,36 @@ pww_diplo_ai_intents = {
 					set_temp_variable = { pww_dg_res = pww_dai_res }
 					var:pww_dai_c = { pww_diplo_read_res = yes }
 					if = {
-						limit = { check_variable = { pww_dg_net > pww_dai_best } }
-						set_temp_variable = { pww_dk_target = pww_dai_c }
-						pww_diplo_talk_cooling = yes
+						limit = { check_variable = { pww_dg_net > 1.999 } }
+						set_temp_variable = { pww_dai_sc = pww_dg_net }
+						if = {
+							limit = { check_variable = { pww_dai_sc > pww_dai_need } }
+							set_temp_variable = { pww_dai_sc = pww_dai_need }
+						}
+						set_temp_variable = { pww_dsh_s = pww_dai_c }
+						set_temp_variable = { pww_dsh_b = pww_dai_me }
+						set_temp_variable = { pww_dsh_r = pww_dai_res }
+						pww_diplo_ship = yes
+						set_temp_variable = { pww_dai_m = pww_dsh_share }
+						multiply_temp_variable = { pww_dai_m = -2 }
+						add_to_temp_variable = { pww_dai_m = 1 }
+						clamp_temp_variable = { var = pww_dai_m min = 0.05 max = 1 }
+						multiply_temp_variable = { pww_dai_sc = pww_dai_m }
 						if = {
 							limit = {
-								check_variable = { pww_dk_cool = 0 }
-								check_variable = { pww_dk_recent = 0 }
+								check_variable = { pww_dai_sc > pww_dai_best }
+								NOT = { check_variable = { pww_dsh_route = 2 } }
 							}
-							set_temp_variable = { pww_dai_best = pww_dg_net }
-							set_temp_variable = { pww_dai_to = pww_dai_c }
+							set_temp_variable = { pww_dk_target = pww_dai_c }
+							pww_diplo_talk_cooling = yes
+							if = {
+								limit = {
+									check_variable = { pww_dk_cool = 0 }
+									check_variable = { pww_dk_recent = 0 }
+								}
+								set_temp_variable = { pww_dai_best = pww_dai_sc }
+								set_temp_variable = { pww_dai_to = pww_dai_c }
+							}
 						}
 					}
 				}
@@ -325,8 +367,19 @@ pww_diplo_ai_intents = {
 		limit = {
 			NOT = { has_country_flag = pww_diplo_ai_offer }
 			NOT = { has_country_flag = pww_diplo_ai_sell_cd }
+			NOT = { has_country_flag = pww_diplo_ai_poach }
 		}
 		pww_diplo_ai_sale_intent = yes
+	}
+	# --- Poach: a large glut looks for a supply deal to take over (POACHING)
+	if = {
+		limit = {
+			NOT = { has_country_flag = pww_diplo_ai_offer }
+			NOT = { has_country_flag = pww_diplo_ai_poach }
+			NOT = { has_country_flag = pww_diplo_ai_poach_cd }
+			check_variable = { global.pww_next_agreement_id > 0 }
+		}
+		pww_diplo_ai_poach_intent = yes
 	}
 	# --- Lease: frantic major, its chosen supplier has producing states
 	if = {
@@ -607,9 +660,19 @@ pww_diplo_ai_sale_intent = {
 			}
 			set_temp_variable = { pww_dsi_q = pww_dg_unsold }
 			divide_temp_variable = { pww_dsi_q = pww_dg_prod }
+			# A cartel member sells only within its quota (or when it cheats).
+			set_temp_variable = { pww_dsi_u = pww_dg_unsold }
+			pww_diplo_sale_cartel = yes
+			if = {
+				limit = {
+					check_variable = { pww_dsl_cheat = 0 }
+					check_variable = { pww_dsl_room < 4 }
+				}
+				set_temp_variable = { pww_dsi_q = 0 }
+			}
 			if = {
 				limit = { check_variable = { pww_dsi_q > 0.149 } }
-				set_temp_variable = { pww_dsi_best = pww_dg_unsold }
+				set_temp_variable = { pww_dsi_best = pww_dsi_u }
 				set_temp_variable = { pww_dsi_res = pww_dsi_r }
 				set_temp_variable = { pww_dsi_ratio = pww_dsi_q }
 			}
@@ -631,7 +694,8 @@ pww_diplo_ai_sale_intent = {
 			set_variable = { global.pww_ds_n = 0 }
 		}
 		set_temp_variable = { pww_dsi_to = -1 }
-		set_temp_variable = { pww_dsi_short = 3.999 }
+		set_temp_variable = { pww_dsi_short = 0 }
+		set_temp_variable = { pww_dsi_score = 0 }
 		every_country = {
 			limit = {
 				exists = yes
@@ -647,8 +711,27 @@ pww_diplo_ai_sale_intent = {
 			set_temp_variable = { pww_dg_res = pww_dsi_res }
 			pww_diplo_read_market = yes
 			set_temp_variable = { pww_dsi_sh = pww_dg_demand }
+			# Delivered score: what it would take, less twice the shipping share.
+			set_temp_variable = { pww_dsi_sc = pww_dsi_sh }
 			if = {
-				limit = { check_variable = { pww_dsi_sh > pww_dsi_short } }
+				limit = { check_variable = { pww_dsi_sc > pww_dsi_best } }
+				set_temp_variable = { pww_dsi_sc = pww_dsi_best }
+			}
+			set_temp_variable = { pww_dsh_s = pww_dsi_me }
+			set_temp_variable = { pww_dsh_b = THIS }
+			set_temp_variable = { pww_dsh_r = pww_dsi_res }
+			pww_diplo_ship = yes
+			set_temp_variable = { pww_dsi_m = pww_dsh_share }
+			multiply_temp_variable = { pww_dsi_m = -2 }
+			add_to_temp_variable = { pww_dsi_m = 1 }
+			clamp_temp_variable = { var = pww_dsi_m min = 0.05 max = 1 }
+			multiply_temp_variable = { pww_dsi_sc = pww_dsi_m }
+			if = {
+				limit = {
+					check_variable = { pww_dsi_sh > 3.999 }
+					check_variable = { pww_dsi_sc > pww_dsi_score }
+					NOT = { check_variable = { pww_dsh_route = 2 } }
+				}
 				set_temp_variable = { pww_dsi_ok = 1 }
 				if = {
 					limit = { is_ai = no }
@@ -692,6 +775,7 @@ pww_diplo_ai_sale_intent = {
 				if = {
 					limit = { check_variable = { pww_dsi_ok = 1 } }
 					set_temp_variable = { pww_dsi_short = pww_dsi_sh }
+					set_temp_variable = { pww_dsi_score = pww_dsi_sc }
 					set_temp_variable = { pww_dsi_to = THIS }
 				}
 			}
@@ -748,6 +832,146 @@ pww_diplo_ai_sale_intent = {
 			if = {
 				limit = { has_global_flag = pww_diplo_debug }
 				log = "[GetDateText] PWW_DIPLO sale intent [THIS.GetTag]->[?pww_dsi_to.GetTag] res=[?pww_dsi_res|0] unsold=[?pww_dsi_best|0] ratio=[?pww_dsi_ratio|2] their_short=[?pww_dsi_short|0] ready=[?pww_dap_ready|0] ok=[?pww_do_ok|0] total=[?pww_do_e_total|0] we_give=[?pww_dob_a^0|0] they_give=[?pww_dob_k^4|0]x[?pww_dob_a^4|2]+[?pww_dob_k^5|0]x[?pww_dob_a^5|2] market=[?pww_do_mk_m0|2]/[?pww_do_mk_m1|2]"
+			}
+		}
+	}
+}
+
+###############################################################################
+# AI poach intent (AI country scope; POACHING in the header).
+###############################################################################
+pww_diplo_ai_poach_intent = {
+	set_temp_variable = { pww_dpi_me = THIS }
+	set_temp_variable = { pww_dpi_res = -1 }
+	set_temp_variable = { pww_dpi_best = 39.999 }
+	for_loop_effect = {
+		start = 1
+		end = 7
+		value = pww_dpi_r
+		set_temp_variable = { pww_dg_res = pww_dpi_r }
+		pww_diplo_read_market = yes
+		if = {
+			limit = {
+				check_variable = { pww_dg_unsold > pww_dpi_best }
+				check_variable = { pww_dg_prod > 0.999 }
+			}
+			set_temp_variable = { pww_dpi_q = pww_dg_unsold }
+			divide_temp_variable = { pww_dpi_q = pww_dg_prod }
+			pww_diplo_sale_cartel = yes
+			if = {
+				limit = {
+					check_variable = { pww_dpi_q > 0.299 }
+					OR = {
+						check_variable = { pww_dsl_cheat = 1 }
+						check_variable = { pww_dsl_price < 0.001 }
+					}
+				}
+				set_temp_variable = { pww_dpi_best = pww_dg_unsold }
+				set_temp_variable = { pww_dpi_res = pww_dpi_r }
+			}
+		}
+	}
+	if = {
+		limit = { check_variable = { pww_dpi_res > -1 } }
+		set_country_flag = { flag = pww_diplo_ai_poach_cd days = 120 value = 1 }
+		# The largest poachable deal in it (scan the ledger; the AI-to-AI
+		# window caps attempts).
+		set_temp_variable = { pww_dpi_ag = -1 }
+		set_temp_variable = { pww_dpi_amt = 3.999 }
+		for_loop_effect = {
+			start = 0
+			end = global.pww_next_agreement_id
+			value = pww_dpi_a
+			if = {
+				limit = {
+					check_variable = { global.pww_ag_status^pww_dpi_a = 1 }
+					check_variable = { global.pww_ag_kind^pww_dpi_a = 0 }
+					check_variable = { global.pww_ag_committal^pww_dpi_a = 0 }
+					check_variable = { global.pww_ag_res^pww_dpi_a = pww_dpi_res }
+					NOT = { check_variable = { global.pww_ag_seller^pww_dpi_a = pww_dpi_me } }
+					NOT = { check_variable = { global.pww_ag_buyer^pww_dpi_a = pww_dpi_me } }
+					check_variable = { global.pww_ag_amount^pww_dpi_a > pww_dpi_amt }
+				}
+				set_temp_variable = { pww_dpi_b = global.pww_ag_buyer^pww_dpi_a }
+				if = {
+					limit = {
+						var:pww_dpi_b = {
+							exists = yes
+							NOT = { has_war_with = var:pww_dpi_me }
+							NOT = { is_embargoing = var:pww_dpi_me }
+						}
+						NOT = { is_embargoing = var:pww_dpi_b }
+					}
+					set_temp_variable = { pww_dk_target = pww_dpi_b }
+					pww_diplo_talk_cooling = yes
+					if = {
+						limit = {
+							check_variable = { pww_dk_cool = 0 }
+							check_variable = { pww_dk_recent = 0 }
+						}
+						set_temp_variable = { pww_dpi_amt = global.pww_ag_amount^pww_dpi_a }
+						set_temp_variable = { pww_dpi_ag = pww_dpi_a }
+					}
+				}
+			}
+		}
+		set_temp_variable = { pww_dpi_ok = 1 }
+		if = {
+			limit = { check_variable = { pww_dpi_ag > -1 } }
+			set_temp_variable = { pww_dpi_to = global.pww_ag_buyer^pww_dpi_ag }
+			if = {
+				limit = { var:pww_dpi_to = { is_ai = yes } }
+				set_temp_variable = { pww_dsi_w = global.num_days }
+				subtract_from_temp_variable = { pww_dsi_w = global.pww_ds_win }
+				if = {
+					limit = {
+						OR = {
+							NOT = { has_variable = global.pww_ds_win }
+							check_variable = { pww_dsi_w > 29 }
+						}
+					}
+					set_variable = { global.pww_ds_win = global.num_days }
+					set_variable = { global.pww_ds_n = 0 }
+				}
+				if = {
+					limit = { check_variable = { global.pww_ds_n > 5 } }
+					set_temp_variable = { pww_dpi_ok = 0 }
+				}
+				else = {
+					add_to_variable = { global.pww_ds_n = 1 }
+				}
+			}
+		}
+		else = {
+			set_temp_variable = { pww_dpi_ok = 0 }
+		}
+		if = {
+			limit = { check_variable = { pww_dpi_ok = 1 } }
+			set_variable = { pww_do_ppref = pww_dpi_res }
+			set_variable = { pww_diplo_ai_poach_to = pww_dpi_to }
+			set_temp_variable = { pww_dk_target = pww_dpi_to }
+			set_temp_variable = { pww_dk_act = 2 }
+			set_temp_variable = { pww_dap_res = pww_dpi_res }
+			pww_diplo_ai_prepare_offer = yes
+			if = {
+				limit = { check_variable = { pww_dap_ready = 1 } }
+				set_country_flag = { flag = pww_diplo_ai_poach days = 30 value = 1 }
+			}
+			else = {
+				set_temp_variable = { pww_dtc_t = pww_do_talk }
+				set_temp_variable = { pww_dtc_status = 4 }
+				if = {
+					limit = {
+						check_variable = { pww_dtc_t > -1 }
+						check_variable = { global.pww_dt_status^pww_dtc_t = 0 }
+					}
+					pww_diplo_talk_close = yes
+				}
+			}
+			set_variable = { pww_do_ppref = -1 }
+			if = {
+				limit = { has_global_flag = pww_diplo_debug }
+				log = "[GetDateText] PWW_DIPLO poach intent [THIS.GetTag]->[?pww_dpi_to.GetTag] res=[?pww_dpi_res|0] agreement=[?pww_dpi_ag|0] incumbent=[?pww_do_p_inc.GetTag] ready=[?pww_dap_ready|0] total=[?pww_do_e_total|0] terms=[?pww_do_e_terms|0] mult=[?pww_do_p_mult|2]"
 			}
 		}
 	}

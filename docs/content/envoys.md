@@ -101,6 +101,13 @@ Tone: diplomatic cable from your legation or trade delegation. Terse, dry, obser
 | `pww_envoy_price_low_5` | `Buyers elsewhere pay more for the same output. Until we match them, the answer stays no.` |
 | `pww_envoy_price_low_6` | `The legation reports no objection to the terms, only to the sum. Pay closer to market.` |
 
+### I2. Trade Talks: Too Little Trust for a Fixed Contract (bond under the lock threshold)
+| Loc Key | Text |
+|---|---|
+| `pww_envoy_trust_lock_1` | `They will trade with us, but not bind themselves to a partner they hardly know. Let either side end it, or make the price impossible to refuse.` |
+| `pww_envoy_trust_lock_2` | `Their ministry will not sign a fixed contract with a stranger. A record of honored deals would change that; so would a much better price.` |
+| `pww_envoy_trust_lock_3` | `"Trust is earned in deliveries," their envoy said. An open deal first, or terms far above market.` |
+
 ### J. Trade Talks: Wants Hinted (items the trade talks table can carry)
 | Loc Key | Text |
 |---|---|

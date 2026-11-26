@@ -648,6 +648,18 @@ defined_text = {
 		localization_key = pww_envoy_price_low_6
 	}
 	text = {
+		trigger = { ROOT = { check_variable = { pww_dd_line = 111 } } }
+		localization_key = pww_envoy_trust_lock_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_dd_line = 112 } } }
+		localization_key = pww_envoy_trust_lock_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_dd_line = 113 } } }
+		localization_key = pww_envoy_trust_lock_3
+	}
+	text = {
 		localization_key = pww_diplo_v_empty
 	}
 }
@@ -4056,6 +4068,2470 @@ defined_text = {
 	}
 }
 defined_text = {
+	name = pww_dt_slr_nm_0
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 1 } } }
+		localization_key = pww_dt_nm_civ
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 2 } } }
+		localization_key = pww_dt_nm_pp
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 3 } check_variable = { pww_drx_dbx_0 = 0 } } }
+		localization_key = pww_dt_nm_res_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 6 } check_variable = { pww_drx_dbx_0 = 0 } } }
+		localization_key = pww_dt_nm_rights_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 3 } check_variable = { pww_drx_dbx_0 = 1 } } }
+		localization_key = pww_dt_nm_res_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 6 } check_variable = { pww_drx_dbx_0 = 1 } } }
+		localization_key = pww_dt_nm_rights_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 3 } check_variable = { pww_drx_dbx_0 = 2 } } }
+		localization_key = pww_dt_nm_res_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 6 } check_variable = { pww_drx_dbx_0 = 2 } } }
+		localization_key = pww_dt_nm_rights_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 3 } check_variable = { pww_drx_dbx_0 = 3 } } }
+		localization_key = pww_dt_nm_res_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 6 } check_variable = { pww_drx_dbx_0 = 3 } } }
+		localization_key = pww_dt_nm_rights_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 3 } check_variable = { pww_drx_dbx_0 = 4 } } }
+		localization_key = pww_dt_nm_res_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 6 } check_variable = { pww_drx_dbx_0 = 4 } } }
+		localization_key = pww_dt_nm_rights_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 3 } check_variable = { pww_drx_dbx_0 = 5 } } }
+		localization_key = pww_dt_nm_res_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 6 } check_variable = { pww_drx_dbx_0 = 5 } } }
+		localization_key = pww_dt_nm_rights_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 3 } check_variable = { pww_drx_dbx_0 = 6 } } }
+		localization_key = pww_dt_nm_res_6
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 6 } check_variable = { pww_drx_dbx_0 = 6 } } }
+		localization_key = pww_dt_nm_rights_6
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 4 } check_variable = { pww_drx_dbx_0 = 0 } } }
+		localization_key = pww_dt_nm_eq_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 5 } check_variable = { pww_drx_dbx_0 = 0 } } }
+		localization_key = pww_dt_nm_lic_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 4 } check_variable = { pww_drx_dbx_0 = 1 } } }
+		localization_key = pww_dt_nm_eq_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 5 } check_variable = { pww_drx_dbx_0 = 1 } } }
+		localization_key = pww_dt_nm_lic_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 4 } check_variable = { pww_drx_dbx_0 = 2 } } }
+		localization_key = pww_dt_nm_eq_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 5 } check_variable = { pww_drx_dbx_0 = 2 } } }
+		localization_key = pww_dt_nm_lic_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 4 } check_variable = { pww_drx_dbx_0 = 3 } } }
+		localization_key = pww_dt_nm_eq_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 5 } check_variable = { pww_drx_dbx_0 = 3 } } }
+		localization_key = pww_dt_nm_lic_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 4 } check_variable = { pww_drx_dbx_0 = 4 } } }
+		localization_key = pww_dt_nm_eq_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 5 } check_variable = { pww_drx_dbx_0 = 4 } } }
+		localization_key = pww_dt_nm_lic_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 4 } check_variable = { pww_drx_dbx_0 = 5 } } }
+		localization_key = pww_dt_nm_eq_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 5 } check_variable = { pww_drx_dbx_0 = 5 } } }
+		localization_key = pww_dt_nm_lic_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 4 } check_variable = { pww_drx_dbx_0 = 6 } } }
+		localization_key = pww_dt_nm_eq_6
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 5 } check_variable = { pww_drx_dbx_0 = 6 } } }
+		localization_key = pww_dt_nm_lic_6
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 4 } check_variable = { pww_drx_dbx_0 = 7 } } }
+		localization_key = pww_dt_nm_eq_7
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 5 } check_variable = { pww_drx_dbx_0 = 7 } } }
+		localization_key = pww_dt_nm_lic_7
+	}
+	text = {
+		localization_key = pww_dt_empty
+	}
+}
+defined_text = {
+	name = pww_dt_slr_am_0
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 2 } } }
+		localization_key = pww_dt_am_pp_0_r
+	}
+	text = {
+		localization_key = pww_dt_am_0_r
+	}
+}
+defined_text = {
+	name = pww_dt_slr_v_0
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbv_0_f > 1 } } }
+		localization_key = pww_dt_slr_v_0_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbv_0_f = 1 } } }
+		localization_key = pww_dt_slr_v_0_1
+	}
+	text = {
+		localization_key = pww_dt_slr_v_0_0
+	}
+}
+defined_text = {
+	name = pww_dt_slr_li_0
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 1 } check_variable = { pww_drx_dba_0 = 1 } } }
+		localization_key = pww_dt_li_civ1_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 1 } } }
+		localization_key = pww_dt_li_civ_0_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 2 } } }
+		localization_key = pww_dt_li_pp_0_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 3 } check_variable = { pww_drx_dbx_0 = 0 } } }
+		localization_key = pww_dt_li_res_0_0_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 6 } check_variable = { pww_drx_dbx_0 = 0 } } }
+		localization_key = pww_dt_li_rights_0_0_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 3 } check_variable = { pww_drx_dbx_0 = 1 } } }
+		localization_key = pww_dt_li_res_1_0_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 6 } check_variable = { pww_drx_dbx_0 = 1 } } }
+		localization_key = pww_dt_li_rights_1_0_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 3 } check_variable = { pww_drx_dbx_0 = 2 } } }
+		localization_key = pww_dt_li_res_2_0_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 6 } check_variable = { pww_drx_dbx_0 = 2 } } }
+		localization_key = pww_dt_li_rights_2_0_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 3 } check_variable = { pww_drx_dbx_0 = 3 } } }
+		localization_key = pww_dt_li_res_3_0_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 6 } check_variable = { pww_drx_dbx_0 = 3 } } }
+		localization_key = pww_dt_li_rights_3_0_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 3 } check_variable = { pww_drx_dbx_0 = 4 } } }
+		localization_key = pww_dt_li_res_4_0_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 6 } check_variable = { pww_drx_dbx_0 = 4 } } }
+		localization_key = pww_dt_li_rights_4_0_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 3 } check_variable = { pww_drx_dbx_0 = 5 } } }
+		localization_key = pww_dt_li_res_5_0_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 6 } check_variable = { pww_drx_dbx_0 = 5 } } }
+		localization_key = pww_dt_li_rights_5_0_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 3 } check_variable = { pww_drx_dbx_0 = 6 } } }
+		localization_key = pww_dt_li_res_6_0_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 6 } check_variable = { pww_drx_dbx_0 = 6 } } }
+		localization_key = pww_dt_li_rights_6_0_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 4 } check_variable = { pww_drx_dbx_0 = 0 } } }
+		localization_key = pww_dt_li_eq_0_0_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 5 } check_variable = { pww_drx_dbx_0 = 0 } } }
+		localization_key = pww_dt_li_lic_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 4 } check_variable = { pww_drx_dbx_0 = 1 } } }
+		localization_key = pww_dt_li_eq_1_0_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 5 } check_variable = { pww_drx_dbx_0 = 1 } } }
+		localization_key = pww_dt_li_lic_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 4 } check_variable = { pww_drx_dbx_0 = 2 } } }
+		localization_key = pww_dt_li_eq_2_0_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 5 } check_variable = { pww_drx_dbx_0 = 2 } } }
+		localization_key = pww_dt_li_lic_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 4 } check_variable = { pww_drx_dbx_0 = 3 } } }
+		localization_key = pww_dt_li_eq_3_0_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 5 } check_variable = { pww_drx_dbx_0 = 3 } } }
+		localization_key = pww_dt_li_lic_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 4 } check_variable = { pww_drx_dbx_0 = 4 } } }
+		localization_key = pww_dt_li_eq_4_0_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 5 } check_variable = { pww_drx_dbx_0 = 4 } } }
+		localization_key = pww_dt_li_lic_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 4 } check_variable = { pww_drx_dbx_0 = 5 } } }
+		localization_key = pww_dt_li_eq_5_0_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 5 } check_variable = { pww_drx_dbx_0 = 5 } } }
+		localization_key = pww_dt_li_lic_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 4 } check_variable = { pww_drx_dbx_0 = 6 } } }
+		localization_key = pww_dt_li_eq_6_0_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 5 } check_variable = { pww_drx_dbx_0 = 6 } } }
+		localization_key = pww_dt_li_lic_6
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 4 } check_variable = { pww_drx_dbx_0 = 7 } } }
+		localization_key = pww_dt_li_eq_7_0_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 5 } check_variable = { pww_drx_dbx_0 = 7 } } }
+		localization_key = pww_dt_li_lic_7
+	}
+	text = {
+		localization_key = pww_dt_empty
+	}
+}
+defined_text = {
+	name = pww_dt_slr_sep_0
+	text = {
+		localization_key = pww_dt_empty
+	}
+}
+defined_text = {
+	name = pww_dt_slr_nm_1
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 1 } } }
+		localization_key = pww_dt_nm_civ
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 2 } } }
+		localization_key = pww_dt_nm_pp
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 3 } check_variable = { pww_drx_dbx_1 = 0 } } }
+		localization_key = pww_dt_nm_res_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 6 } check_variable = { pww_drx_dbx_1 = 0 } } }
+		localization_key = pww_dt_nm_rights_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 3 } check_variable = { pww_drx_dbx_1 = 1 } } }
+		localization_key = pww_dt_nm_res_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 6 } check_variable = { pww_drx_dbx_1 = 1 } } }
+		localization_key = pww_dt_nm_rights_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 3 } check_variable = { pww_drx_dbx_1 = 2 } } }
+		localization_key = pww_dt_nm_res_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 6 } check_variable = { pww_drx_dbx_1 = 2 } } }
+		localization_key = pww_dt_nm_rights_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 3 } check_variable = { pww_drx_dbx_1 = 3 } } }
+		localization_key = pww_dt_nm_res_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 6 } check_variable = { pww_drx_dbx_1 = 3 } } }
+		localization_key = pww_dt_nm_rights_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 3 } check_variable = { pww_drx_dbx_1 = 4 } } }
+		localization_key = pww_dt_nm_res_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 6 } check_variable = { pww_drx_dbx_1 = 4 } } }
+		localization_key = pww_dt_nm_rights_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 3 } check_variable = { pww_drx_dbx_1 = 5 } } }
+		localization_key = pww_dt_nm_res_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 6 } check_variable = { pww_drx_dbx_1 = 5 } } }
+		localization_key = pww_dt_nm_rights_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 3 } check_variable = { pww_drx_dbx_1 = 6 } } }
+		localization_key = pww_dt_nm_res_6
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 6 } check_variable = { pww_drx_dbx_1 = 6 } } }
+		localization_key = pww_dt_nm_rights_6
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 4 } check_variable = { pww_drx_dbx_1 = 0 } } }
+		localization_key = pww_dt_nm_eq_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 5 } check_variable = { pww_drx_dbx_1 = 0 } } }
+		localization_key = pww_dt_nm_lic_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 4 } check_variable = { pww_drx_dbx_1 = 1 } } }
+		localization_key = pww_dt_nm_eq_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 5 } check_variable = { pww_drx_dbx_1 = 1 } } }
+		localization_key = pww_dt_nm_lic_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 4 } check_variable = { pww_drx_dbx_1 = 2 } } }
+		localization_key = pww_dt_nm_eq_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 5 } check_variable = { pww_drx_dbx_1 = 2 } } }
+		localization_key = pww_dt_nm_lic_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 4 } check_variable = { pww_drx_dbx_1 = 3 } } }
+		localization_key = pww_dt_nm_eq_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 5 } check_variable = { pww_drx_dbx_1 = 3 } } }
+		localization_key = pww_dt_nm_lic_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 4 } check_variable = { pww_drx_dbx_1 = 4 } } }
+		localization_key = pww_dt_nm_eq_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 5 } check_variable = { pww_drx_dbx_1 = 4 } } }
+		localization_key = pww_dt_nm_lic_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 4 } check_variable = { pww_drx_dbx_1 = 5 } } }
+		localization_key = pww_dt_nm_eq_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 5 } check_variable = { pww_drx_dbx_1 = 5 } } }
+		localization_key = pww_dt_nm_lic_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 4 } check_variable = { pww_drx_dbx_1 = 6 } } }
+		localization_key = pww_dt_nm_eq_6
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 5 } check_variable = { pww_drx_dbx_1 = 6 } } }
+		localization_key = pww_dt_nm_lic_6
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 4 } check_variable = { pww_drx_dbx_1 = 7 } } }
+		localization_key = pww_dt_nm_eq_7
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 5 } check_variable = { pww_drx_dbx_1 = 7 } } }
+		localization_key = pww_dt_nm_lic_7
+	}
+	text = {
+		localization_key = pww_dt_empty
+	}
+}
+defined_text = {
+	name = pww_dt_slr_am_1
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 2 } } }
+		localization_key = pww_dt_am_pp_1_r
+	}
+	text = {
+		localization_key = pww_dt_am_1_r
+	}
+}
+defined_text = {
+	name = pww_dt_slr_v_1
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbv_1_f > 1 } } }
+		localization_key = pww_dt_slr_v_1_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbv_1_f = 1 } } }
+		localization_key = pww_dt_slr_v_1_1
+	}
+	text = {
+		localization_key = pww_dt_slr_v_1_0
+	}
+}
+defined_text = {
+	name = pww_dt_slr_li_1
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 1 } check_variable = { pww_drx_dba_1 = 1 } } }
+		localization_key = pww_dt_li_civ1_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 1 } } }
+		localization_key = pww_dt_li_civ_1_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 2 } } }
+		localization_key = pww_dt_li_pp_1_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 3 } check_variable = { pww_drx_dbx_1 = 0 } } }
+		localization_key = pww_dt_li_res_0_1_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 6 } check_variable = { pww_drx_dbx_1 = 0 } } }
+		localization_key = pww_dt_li_rights_0_1_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 3 } check_variable = { pww_drx_dbx_1 = 1 } } }
+		localization_key = pww_dt_li_res_1_1_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 6 } check_variable = { pww_drx_dbx_1 = 1 } } }
+		localization_key = pww_dt_li_rights_1_1_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 3 } check_variable = { pww_drx_dbx_1 = 2 } } }
+		localization_key = pww_dt_li_res_2_1_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 6 } check_variable = { pww_drx_dbx_1 = 2 } } }
+		localization_key = pww_dt_li_rights_2_1_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 3 } check_variable = { pww_drx_dbx_1 = 3 } } }
+		localization_key = pww_dt_li_res_3_1_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 6 } check_variable = { pww_drx_dbx_1 = 3 } } }
+		localization_key = pww_dt_li_rights_3_1_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 3 } check_variable = { pww_drx_dbx_1 = 4 } } }
+		localization_key = pww_dt_li_res_4_1_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 6 } check_variable = { pww_drx_dbx_1 = 4 } } }
+		localization_key = pww_dt_li_rights_4_1_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 3 } check_variable = { pww_drx_dbx_1 = 5 } } }
+		localization_key = pww_dt_li_res_5_1_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 6 } check_variable = { pww_drx_dbx_1 = 5 } } }
+		localization_key = pww_dt_li_rights_5_1_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 3 } check_variable = { pww_drx_dbx_1 = 6 } } }
+		localization_key = pww_dt_li_res_6_1_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 6 } check_variable = { pww_drx_dbx_1 = 6 } } }
+		localization_key = pww_dt_li_rights_6_1_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 4 } check_variable = { pww_drx_dbx_1 = 0 } } }
+		localization_key = pww_dt_li_eq_0_1_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 5 } check_variable = { pww_drx_dbx_1 = 0 } } }
+		localization_key = pww_dt_li_lic_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 4 } check_variable = { pww_drx_dbx_1 = 1 } } }
+		localization_key = pww_dt_li_eq_1_1_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 5 } check_variable = { pww_drx_dbx_1 = 1 } } }
+		localization_key = pww_dt_li_lic_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 4 } check_variable = { pww_drx_dbx_1 = 2 } } }
+		localization_key = pww_dt_li_eq_2_1_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 5 } check_variable = { pww_drx_dbx_1 = 2 } } }
+		localization_key = pww_dt_li_lic_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 4 } check_variable = { pww_drx_dbx_1 = 3 } } }
+		localization_key = pww_dt_li_eq_3_1_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 5 } check_variable = { pww_drx_dbx_1 = 3 } } }
+		localization_key = pww_dt_li_lic_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 4 } check_variable = { pww_drx_dbx_1 = 4 } } }
+		localization_key = pww_dt_li_eq_4_1_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 5 } check_variable = { pww_drx_dbx_1 = 4 } } }
+		localization_key = pww_dt_li_lic_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 4 } check_variable = { pww_drx_dbx_1 = 5 } } }
+		localization_key = pww_dt_li_eq_5_1_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 5 } check_variable = { pww_drx_dbx_1 = 5 } } }
+		localization_key = pww_dt_li_lic_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 4 } check_variable = { pww_drx_dbx_1 = 6 } } }
+		localization_key = pww_dt_li_eq_6_1_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 5 } check_variable = { pww_drx_dbx_1 = 6 } } }
+		localization_key = pww_dt_li_lic_6
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 4 } check_variable = { pww_drx_dbx_1 = 7 } } }
+		localization_key = pww_dt_li_eq_7_1_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 5 } check_variable = { pww_drx_dbx_1 = 7 } } }
+		localization_key = pww_dt_li_lic_7
+	}
+	text = {
+		localization_key = pww_dt_empty
+	}
+}
+defined_text = {
+	name = pww_dt_slr_sep_1
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 0 } } }
+		localization_key = pww_dt_empty
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 0 } } }
+		localization_key = pww_dt_sep_and
+	}
+	text = {
+		localization_key = pww_dt_sep_comma
+	}
+}
+defined_text = {
+	name = pww_dt_slr_nm_2
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 1 } } }
+		localization_key = pww_dt_nm_civ
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 2 } } }
+		localization_key = pww_dt_nm_pp
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 3 } check_variable = { pww_drx_dbx_2 = 0 } } }
+		localization_key = pww_dt_nm_res_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 6 } check_variable = { pww_drx_dbx_2 = 0 } } }
+		localization_key = pww_dt_nm_rights_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 3 } check_variable = { pww_drx_dbx_2 = 1 } } }
+		localization_key = pww_dt_nm_res_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 6 } check_variable = { pww_drx_dbx_2 = 1 } } }
+		localization_key = pww_dt_nm_rights_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 3 } check_variable = { pww_drx_dbx_2 = 2 } } }
+		localization_key = pww_dt_nm_res_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 6 } check_variable = { pww_drx_dbx_2 = 2 } } }
+		localization_key = pww_dt_nm_rights_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 3 } check_variable = { pww_drx_dbx_2 = 3 } } }
+		localization_key = pww_dt_nm_res_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 6 } check_variable = { pww_drx_dbx_2 = 3 } } }
+		localization_key = pww_dt_nm_rights_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 3 } check_variable = { pww_drx_dbx_2 = 4 } } }
+		localization_key = pww_dt_nm_res_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 6 } check_variable = { pww_drx_dbx_2 = 4 } } }
+		localization_key = pww_dt_nm_rights_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 3 } check_variable = { pww_drx_dbx_2 = 5 } } }
+		localization_key = pww_dt_nm_res_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 6 } check_variable = { pww_drx_dbx_2 = 5 } } }
+		localization_key = pww_dt_nm_rights_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 3 } check_variable = { pww_drx_dbx_2 = 6 } } }
+		localization_key = pww_dt_nm_res_6
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 6 } check_variable = { pww_drx_dbx_2 = 6 } } }
+		localization_key = pww_dt_nm_rights_6
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 4 } check_variable = { pww_drx_dbx_2 = 0 } } }
+		localization_key = pww_dt_nm_eq_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 5 } check_variable = { pww_drx_dbx_2 = 0 } } }
+		localization_key = pww_dt_nm_lic_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 4 } check_variable = { pww_drx_dbx_2 = 1 } } }
+		localization_key = pww_dt_nm_eq_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 5 } check_variable = { pww_drx_dbx_2 = 1 } } }
+		localization_key = pww_dt_nm_lic_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 4 } check_variable = { pww_drx_dbx_2 = 2 } } }
+		localization_key = pww_dt_nm_eq_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 5 } check_variable = { pww_drx_dbx_2 = 2 } } }
+		localization_key = pww_dt_nm_lic_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 4 } check_variable = { pww_drx_dbx_2 = 3 } } }
+		localization_key = pww_dt_nm_eq_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 5 } check_variable = { pww_drx_dbx_2 = 3 } } }
+		localization_key = pww_dt_nm_lic_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 4 } check_variable = { pww_drx_dbx_2 = 4 } } }
+		localization_key = pww_dt_nm_eq_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 5 } check_variable = { pww_drx_dbx_2 = 4 } } }
+		localization_key = pww_dt_nm_lic_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 4 } check_variable = { pww_drx_dbx_2 = 5 } } }
+		localization_key = pww_dt_nm_eq_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 5 } check_variable = { pww_drx_dbx_2 = 5 } } }
+		localization_key = pww_dt_nm_lic_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 4 } check_variable = { pww_drx_dbx_2 = 6 } } }
+		localization_key = pww_dt_nm_eq_6
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 5 } check_variable = { pww_drx_dbx_2 = 6 } } }
+		localization_key = pww_dt_nm_lic_6
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 4 } check_variable = { pww_drx_dbx_2 = 7 } } }
+		localization_key = pww_dt_nm_eq_7
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 5 } check_variable = { pww_drx_dbx_2 = 7 } } }
+		localization_key = pww_dt_nm_lic_7
+	}
+	text = {
+		localization_key = pww_dt_empty
+	}
+}
+defined_text = {
+	name = pww_dt_slr_am_2
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 2 } } }
+		localization_key = pww_dt_am_pp_2_r
+	}
+	text = {
+		localization_key = pww_dt_am_2_r
+	}
+}
+defined_text = {
+	name = pww_dt_slr_v_2
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbv_2_f > 1 } } }
+		localization_key = pww_dt_slr_v_2_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbv_2_f = 1 } } }
+		localization_key = pww_dt_slr_v_2_1
+	}
+	text = {
+		localization_key = pww_dt_slr_v_2_0
+	}
+}
+defined_text = {
+	name = pww_dt_slr_li_2
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 1 } check_variable = { pww_drx_dba_2 = 1 } } }
+		localization_key = pww_dt_li_civ1_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 1 } } }
+		localization_key = pww_dt_li_civ_2_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 2 } } }
+		localization_key = pww_dt_li_pp_2_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 3 } check_variable = { pww_drx_dbx_2 = 0 } } }
+		localization_key = pww_dt_li_res_0_2_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 6 } check_variable = { pww_drx_dbx_2 = 0 } } }
+		localization_key = pww_dt_li_rights_0_2_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 3 } check_variable = { pww_drx_dbx_2 = 1 } } }
+		localization_key = pww_dt_li_res_1_2_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 6 } check_variable = { pww_drx_dbx_2 = 1 } } }
+		localization_key = pww_dt_li_rights_1_2_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 3 } check_variable = { pww_drx_dbx_2 = 2 } } }
+		localization_key = pww_dt_li_res_2_2_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 6 } check_variable = { pww_drx_dbx_2 = 2 } } }
+		localization_key = pww_dt_li_rights_2_2_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 3 } check_variable = { pww_drx_dbx_2 = 3 } } }
+		localization_key = pww_dt_li_res_3_2_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 6 } check_variable = { pww_drx_dbx_2 = 3 } } }
+		localization_key = pww_dt_li_rights_3_2_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 3 } check_variable = { pww_drx_dbx_2 = 4 } } }
+		localization_key = pww_dt_li_res_4_2_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 6 } check_variable = { pww_drx_dbx_2 = 4 } } }
+		localization_key = pww_dt_li_rights_4_2_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 3 } check_variable = { pww_drx_dbx_2 = 5 } } }
+		localization_key = pww_dt_li_res_5_2_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 6 } check_variable = { pww_drx_dbx_2 = 5 } } }
+		localization_key = pww_dt_li_rights_5_2_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 3 } check_variable = { pww_drx_dbx_2 = 6 } } }
+		localization_key = pww_dt_li_res_6_2_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 6 } check_variable = { pww_drx_dbx_2 = 6 } } }
+		localization_key = pww_dt_li_rights_6_2_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 4 } check_variable = { pww_drx_dbx_2 = 0 } } }
+		localization_key = pww_dt_li_eq_0_2_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 5 } check_variable = { pww_drx_dbx_2 = 0 } } }
+		localization_key = pww_dt_li_lic_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 4 } check_variable = { pww_drx_dbx_2 = 1 } } }
+		localization_key = pww_dt_li_eq_1_2_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 5 } check_variable = { pww_drx_dbx_2 = 1 } } }
+		localization_key = pww_dt_li_lic_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 4 } check_variable = { pww_drx_dbx_2 = 2 } } }
+		localization_key = pww_dt_li_eq_2_2_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 5 } check_variable = { pww_drx_dbx_2 = 2 } } }
+		localization_key = pww_dt_li_lic_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 4 } check_variable = { pww_drx_dbx_2 = 3 } } }
+		localization_key = pww_dt_li_eq_3_2_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 5 } check_variable = { pww_drx_dbx_2 = 3 } } }
+		localization_key = pww_dt_li_lic_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 4 } check_variable = { pww_drx_dbx_2 = 4 } } }
+		localization_key = pww_dt_li_eq_4_2_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 5 } check_variable = { pww_drx_dbx_2 = 4 } } }
+		localization_key = pww_dt_li_lic_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 4 } check_variable = { pww_drx_dbx_2 = 5 } } }
+		localization_key = pww_dt_li_eq_5_2_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 5 } check_variable = { pww_drx_dbx_2 = 5 } } }
+		localization_key = pww_dt_li_lic_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 4 } check_variable = { pww_drx_dbx_2 = 6 } } }
+		localization_key = pww_dt_li_eq_6_2_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 5 } check_variable = { pww_drx_dbx_2 = 6 } } }
+		localization_key = pww_dt_li_lic_6
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 4 } check_variable = { pww_drx_dbx_2 = 7 } } }
+		localization_key = pww_dt_li_eq_7_2_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 5 } check_variable = { pww_drx_dbx_2 = 7 } } }
+		localization_key = pww_dt_li_lic_7
+	}
+	text = {
+		localization_key = pww_dt_empty
+	}
+}
+defined_text = {
+	name = pww_dt_slr_sep_2
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 0 } } }
+		localization_key = pww_dt_empty
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 0 } } }
+		localization_key = pww_dt_sep_and
+	}
+	text = {
+		localization_key = pww_dt_sep_comma
+	}
+}
+defined_text = {
+	name = pww_dt_slr_nm_3
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 1 } } }
+		localization_key = pww_dt_nm_civ
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 2 } } }
+		localization_key = pww_dt_nm_pp
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 3 } check_variable = { pww_drx_dbx_3 = 0 } } }
+		localization_key = pww_dt_nm_res_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 6 } check_variable = { pww_drx_dbx_3 = 0 } } }
+		localization_key = pww_dt_nm_rights_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 3 } check_variable = { pww_drx_dbx_3 = 1 } } }
+		localization_key = pww_dt_nm_res_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 6 } check_variable = { pww_drx_dbx_3 = 1 } } }
+		localization_key = pww_dt_nm_rights_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 3 } check_variable = { pww_drx_dbx_3 = 2 } } }
+		localization_key = pww_dt_nm_res_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 6 } check_variable = { pww_drx_dbx_3 = 2 } } }
+		localization_key = pww_dt_nm_rights_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 3 } check_variable = { pww_drx_dbx_3 = 3 } } }
+		localization_key = pww_dt_nm_res_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 6 } check_variable = { pww_drx_dbx_3 = 3 } } }
+		localization_key = pww_dt_nm_rights_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 3 } check_variable = { pww_drx_dbx_3 = 4 } } }
+		localization_key = pww_dt_nm_res_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 6 } check_variable = { pww_drx_dbx_3 = 4 } } }
+		localization_key = pww_dt_nm_rights_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 3 } check_variable = { pww_drx_dbx_3 = 5 } } }
+		localization_key = pww_dt_nm_res_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 6 } check_variable = { pww_drx_dbx_3 = 5 } } }
+		localization_key = pww_dt_nm_rights_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 3 } check_variable = { pww_drx_dbx_3 = 6 } } }
+		localization_key = pww_dt_nm_res_6
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 6 } check_variable = { pww_drx_dbx_3 = 6 } } }
+		localization_key = pww_dt_nm_rights_6
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 4 } check_variable = { pww_drx_dbx_3 = 0 } } }
+		localization_key = pww_dt_nm_eq_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 5 } check_variable = { pww_drx_dbx_3 = 0 } } }
+		localization_key = pww_dt_nm_lic_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 4 } check_variable = { pww_drx_dbx_3 = 1 } } }
+		localization_key = pww_dt_nm_eq_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 5 } check_variable = { pww_drx_dbx_3 = 1 } } }
+		localization_key = pww_dt_nm_lic_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 4 } check_variable = { pww_drx_dbx_3 = 2 } } }
+		localization_key = pww_dt_nm_eq_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 5 } check_variable = { pww_drx_dbx_3 = 2 } } }
+		localization_key = pww_dt_nm_lic_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 4 } check_variable = { pww_drx_dbx_3 = 3 } } }
+		localization_key = pww_dt_nm_eq_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 5 } check_variable = { pww_drx_dbx_3 = 3 } } }
+		localization_key = pww_dt_nm_lic_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 4 } check_variable = { pww_drx_dbx_3 = 4 } } }
+		localization_key = pww_dt_nm_eq_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 5 } check_variable = { pww_drx_dbx_3 = 4 } } }
+		localization_key = pww_dt_nm_lic_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 4 } check_variable = { pww_drx_dbx_3 = 5 } } }
+		localization_key = pww_dt_nm_eq_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 5 } check_variable = { pww_drx_dbx_3 = 5 } } }
+		localization_key = pww_dt_nm_lic_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 4 } check_variable = { pww_drx_dbx_3 = 6 } } }
+		localization_key = pww_dt_nm_eq_6
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 5 } check_variable = { pww_drx_dbx_3 = 6 } } }
+		localization_key = pww_dt_nm_lic_6
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 4 } check_variable = { pww_drx_dbx_3 = 7 } } }
+		localization_key = pww_dt_nm_eq_7
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 5 } check_variable = { pww_drx_dbx_3 = 7 } } }
+		localization_key = pww_dt_nm_lic_7
+	}
+	text = {
+		localization_key = pww_dt_empty
+	}
+}
+defined_text = {
+	name = pww_dt_slr_am_3
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 2 } } }
+		localization_key = pww_dt_am_pp_3_r
+	}
+	text = {
+		localization_key = pww_dt_am_3_r
+	}
+}
+defined_text = {
+	name = pww_dt_slr_v_3
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbv_3_f > 1 } } }
+		localization_key = pww_dt_slr_v_3_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbv_3_f = 1 } } }
+		localization_key = pww_dt_slr_v_3_1
+	}
+	text = {
+		localization_key = pww_dt_slr_v_3_0
+	}
+}
+defined_text = {
+	name = pww_dt_slr_li_3
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 1 } check_variable = { pww_drx_dba_3 = 1 } } }
+		localization_key = pww_dt_li_civ1_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 1 } } }
+		localization_key = pww_dt_li_civ_3_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 2 } } }
+		localization_key = pww_dt_li_pp_3_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 3 } check_variable = { pww_drx_dbx_3 = 0 } } }
+		localization_key = pww_dt_li_res_0_3_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 6 } check_variable = { pww_drx_dbx_3 = 0 } } }
+		localization_key = pww_dt_li_rights_0_3_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 3 } check_variable = { pww_drx_dbx_3 = 1 } } }
+		localization_key = pww_dt_li_res_1_3_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 6 } check_variable = { pww_drx_dbx_3 = 1 } } }
+		localization_key = pww_dt_li_rights_1_3_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 3 } check_variable = { pww_drx_dbx_3 = 2 } } }
+		localization_key = pww_dt_li_res_2_3_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 6 } check_variable = { pww_drx_dbx_3 = 2 } } }
+		localization_key = pww_dt_li_rights_2_3_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 3 } check_variable = { pww_drx_dbx_3 = 3 } } }
+		localization_key = pww_dt_li_res_3_3_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 6 } check_variable = { pww_drx_dbx_3 = 3 } } }
+		localization_key = pww_dt_li_rights_3_3_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 3 } check_variable = { pww_drx_dbx_3 = 4 } } }
+		localization_key = pww_dt_li_res_4_3_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 6 } check_variable = { pww_drx_dbx_3 = 4 } } }
+		localization_key = pww_dt_li_rights_4_3_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 3 } check_variable = { pww_drx_dbx_3 = 5 } } }
+		localization_key = pww_dt_li_res_5_3_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 6 } check_variable = { pww_drx_dbx_3 = 5 } } }
+		localization_key = pww_dt_li_rights_5_3_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 3 } check_variable = { pww_drx_dbx_3 = 6 } } }
+		localization_key = pww_dt_li_res_6_3_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 6 } check_variable = { pww_drx_dbx_3 = 6 } } }
+		localization_key = pww_dt_li_rights_6_3_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 4 } check_variable = { pww_drx_dbx_3 = 0 } } }
+		localization_key = pww_dt_li_eq_0_3_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 5 } check_variable = { pww_drx_dbx_3 = 0 } } }
+		localization_key = pww_dt_li_lic_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 4 } check_variable = { pww_drx_dbx_3 = 1 } } }
+		localization_key = pww_dt_li_eq_1_3_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 5 } check_variable = { pww_drx_dbx_3 = 1 } } }
+		localization_key = pww_dt_li_lic_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 4 } check_variable = { pww_drx_dbx_3 = 2 } } }
+		localization_key = pww_dt_li_eq_2_3_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 5 } check_variable = { pww_drx_dbx_3 = 2 } } }
+		localization_key = pww_dt_li_lic_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 4 } check_variable = { pww_drx_dbx_3 = 3 } } }
+		localization_key = pww_dt_li_eq_3_3_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 5 } check_variable = { pww_drx_dbx_3 = 3 } } }
+		localization_key = pww_dt_li_lic_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 4 } check_variable = { pww_drx_dbx_3 = 4 } } }
+		localization_key = pww_dt_li_eq_4_3_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 5 } check_variable = { pww_drx_dbx_3 = 4 } } }
+		localization_key = pww_dt_li_lic_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 4 } check_variable = { pww_drx_dbx_3 = 5 } } }
+		localization_key = pww_dt_li_eq_5_3_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 5 } check_variable = { pww_drx_dbx_3 = 5 } } }
+		localization_key = pww_dt_li_lic_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 4 } check_variable = { pww_drx_dbx_3 = 6 } } }
+		localization_key = pww_dt_li_eq_6_3_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 5 } check_variable = { pww_drx_dbx_3 = 6 } } }
+		localization_key = pww_dt_li_lic_6
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 4 } check_variable = { pww_drx_dbx_3 = 7 } } }
+		localization_key = pww_dt_li_eq_7_3_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 5 } check_variable = { pww_drx_dbx_3 = 7 } } }
+		localization_key = pww_dt_li_lic_7
+	}
+	text = {
+		localization_key = pww_dt_empty
+	}
+}
+defined_text = {
+	name = pww_dt_slr_sep_3
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 0 } } }
+		localization_key = pww_dt_empty
+	}
+	text = {
+		trigger = { always = yes }
+		localization_key = pww_dt_sep_and
+	}
+	text = {
+		localization_key = pww_dt_sep_comma
+	}
+}
+defined_text = {
+	name = pww_dt_slr_nm_4
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 1 } } }
+		localization_key = pww_dt_nm_civ
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 2 } } }
+		localization_key = pww_dt_nm_pp
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 3 } check_variable = { pww_drx_dbx_4 = 0 } } }
+		localization_key = pww_dt_nm_res_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 6 } check_variable = { pww_drx_dbx_4 = 0 } } }
+		localization_key = pww_dt_nm_rights_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 3 } check_variable = { pww_drx_dbx_4 = 1 } } }
+		localization_key = pww_dt_nm_res_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 6 } check_variable = { pww_drx_dbx_4 = 1 } } }
+		localization_key = pww_dt_nm_rights_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 3 } check_variable = { pww_drx_dbx_4 = 2 } } }
+		localization_key = pww_dt_nm_res_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 6 } check_variable = { pww_drx_dbx_4 = 2 } } }
+		localization_key = pww_dt_nm_rights_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 3 } check_variable = { pww_drx_dbx_4 = 3 } } }
+		localization_key = pww_dt_nm_res_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 6 } check_variable = { pww_drx_dbx_4 = 3 } } }
+		localization_key = pww_dt_nm_rights_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 3 } check_variable = { pww_drx_dbx_4 = 4 } } }
+		localization_key = pww_dt_nm_res_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 6 } check_variable = { pww_drx_dbx_4 = 4 } } }
+		localization_key = pww_dt_nm_rights_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 3 } check_variable = { pww_drx_dbx_4 = 5 } } }
+		localization_key = pww_dt_nm_res_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 6 } check_variable = { pww_drx_dbx_4 = 5 } } }
+		localization_key = pww_dt_nm_rights_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 3 } check_variable = { pww_drx_dbx_4 = 6 } } }
+		localization_key = pww_dt_nm_res_6
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 6 } check_variable = { pww_drx_dbx_4 = 6 } } }
+		localization_key = pww_dt_nm_rights_6
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 4 } check_variable = { pww_drx_dbx_4 = 0 } } }
+		localization_key = pww_dt_nm_eq_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 5 } check_variable = { pww_drx_dbx_4 = 0 } } }
+		localization_key = pww_dt_nm_lic_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 4 } check_variable = { pww_drx_dbx_4 = 1 } } }
+		localization_key = pww_dt_nm_eq_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 5 } check_variable = { pww_drx_dbx_4 = 1 } } }
+		localization_key = pww_dt_nm_lic_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 4 } check_variable = { pww_drx_dbx_4 = 2 } } }
+		localization_key = pww_dt_nm_eq_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 5 } check_variable = { pww_drx_dbx_4 = 2 } } }
+		localization_key = pww_dt_nm_lic_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 4 } check_variable = { pww_drx_dbx_4 = 3 } } }
+		localization_key = pww_dt_nm_eq_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 5 } check_variable = { pww_drx_dbx_4 = 3 } } }
+		localization_key = pww_dt_nm_lic_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 4 } check_variable = { pww_drx_dbx_4 = 4 } } }
+		localization_key = pww_dt_nm_eq_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 5 } check_variable = { pww_drx_dbx_4 = 4 } } }
+		localization_key = pww_dt_nm_lic_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 4 } check_variable = { pww_drx_dbx_4 = 5 } } }
+		localization_key = pww_dt_nm_eq_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 5 } check_variable = { pww_drx_dbx_4 = 5 } } }
+		localization_key = pww_dt_nm_lic_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 4 } check_variable = { pww_drx_dbx_4 = 6 } } }
+		localization_key = pww_dt_nm_eq_6
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 5 } check_variable = { pww_drx_dbx_4 = 6 } } }
+		localization_key = pww_dt_nm_lic_6
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 4 } check_variable = { pww_drx_dbx_4 = 7 } } }
+		localization_key = pww_dt_nm_eq_7
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 5 } check_variable = { pww_drx_dbx_4 = 7 } } }
+		localization_key = pww_dt_nm_lic_7
+	}
+	text = {
+		localization_key = pww_dt_empty
+	}
+}
+defined_text = {
+	name = pww_dt_slr_am_4
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 2 } } }
+		localization_key = pww_dt_am_pp_4_r
+	}
+	text = {
+		localization_key = pww_dt_am_4_r
+	}
+}
+defined_text = {
+	name = pww_dt_slr_v_4
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbv_4_f > 1 } } }
+		localization_key = pww_dt_slr_v_4_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbv_4_f = 1 } } }
+		localization_key = pww_dt_slr_v_4_1
+	}
+	text = {
+		localization_key = pww_dt_slr_v_4_0
+	}
+}
+defined_text = {
+	name = pww_dt_slr_li_4
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 1 } check_variable = { pww_drx_dba_4 = 1 } } }
+		localization_key = pww_dt_li_civ1_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 1 } } }
+		localization_key = pww_dt_li_civ_4_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 2 } } }
+		localization_key = pww_dt_li_pp_4_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 3 } check_variable = { pww_drx_dbx_4 = 0 } } }
+		localization_key = pww_dt_li_res_0_4_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 6 } check_variable = { pww_drx_dbx_4 = 0 } } }
+		localization_key = pww_dt_li_rights_0_4_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 3 } check_variable = { pww_drx_dbx_4 = 1 } } }
+		localization_key = pww_dt_li_res_1_4_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 6 } check_variable = { pww_drx_dbx_4 = 1 } } }
+		localization_key = pww_dt_li_rights_1_4_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 3 } check_variable = { pww_drx_dbx_4 = 2 } } }
+		localization_key = pww_dt_li_res_2_4_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 6 } check_variable = { pww_drx_dbx_4 = 2 } } }
+		localization_key = pww_dt_li_rights_2_4_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 3 } check_variable = { pww_drx_dbx_4 = 3 } } }
+		localization_key = pww_dt_li_res_3_4_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 6 } check_variable = { pww_drx_dbx_4 = 3 } } }
+		localization_key = pww_dt_li_rights_3_4_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 3 } check_variable = { pww_drx_dbx_4 = 4 } } }
+		localization_key = pww_dt_li_res_4_4_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 6 } check_variable = { pww_drx_dbx_4 = 4 } } }
+		localization_key = pww_dt_li_rights_4_4_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 3 } check_variable = { pww_drx_dbx_4 = 5 } } }
+		localization_key = pww_dt_li_res_5_4_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 6 } check_variable = { pww_drx_dbx_4 = 5 } } }
+		localization_key = pww_dt_li_rights_5_4_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 3 } check_variable = { pww_drx_dbx_4 = 6 } } }
+		localization_key = pww_dt_li_res_6_4_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 6 } check_variable = { pww_drx_dbx_4 = 6 } } }
+		localization_key = pww_dt_li_rights_6_4_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 4 } check_variable = { pww_drx_dbx_4 = 0 } } }
+		localization_key = pww_dt_li_eq_0_4_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 5 } check_variable = { pww_drx_dbx_4 = 0 } } }
+		localization_key = pww_dt_li_lic_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 4 } check_variable = { pww_drx_dbx_4 = 1 } } }
+		localization_key = pww_dt_li_eq_1_4_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 5 } check_variable = { pww_drx_dbx_4 = 1 } } }
+		localization_key = pww_dt_li_lic_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 4 } check_variable = { pww_drx_dbx_4 = 2 } } }
+		localization_key = pww_dt_li_eq_2_4_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 5 } check_variable = { pww_drx_dbx_4 = 2 } } }
+		localization_key = pww_dt_li_lic_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 4 } check_variable = { pww_drx_dbx_4 = 3 } } }
+		localization_key = pww_dt_li_eq_3_4_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 5 } check_variable = { pww_drx_dbx_4 = 3 } } }
+		localization_key = pww_dt_li_lic_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 4 } check_variable = { pww_drx_dbx_4 = 4 } } }
+		localization_key = pww_dt_li_eq_4_4_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 5 } check_variable = { pww_drx_dbx_4 = 4 } } }
+		localization_key = pww_dt_li_lic_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 4 } check_variable = { pww_drx_dbx_4 = 5 } } }
+		localization_key = pww_dt_li_eq_5_4_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 5 } check_variable = { pww_drx_dbx_4 = 5 } } }
+		localization_key = pww_dt_li_lic_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 4 } check_variable = { pww_drx_dbx_4 = 6 } } }
+		localization_key = pww_dt_li_eq_6_4_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 5 } check_variable = { pww_drx_dbx_4 = 6 } } }
+		localization_key = pww_dt_li_lic_6
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 4 } check_variable = { pww_drx_dbx_4 = 7 } } }
+		localization_key = pww_dt_li_eq_7_4_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 5 } check_variable = { pww_drx_dbx_4 = 7 } } }
+		localization_key = pww_dt_li_lic_7
+	}
+	text = {
+		localization_key = pww_dt_empty
+	}
+}
+defined_text = {
+	name = pww_dt_slr_sep_4
+	text = {
+		localization_key = pww_dt_empty
+	}
+}
+defined_text = {
+	name = pww_dt_slr_nm_5
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 1 } } }
+		localization_key = pww_dt_nm_civ
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 2 } } }
+		localization_key = pww_dt_nm_pp
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 3 } check_variable = { pww_drx_dbx_5 = 0 } } }
+		localization_key = pww_dt_nm_res_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 6 } check_variable = { pww_drx_dbx_5 = 0 } } }
+		localization_key = pww_dt_nm_rights_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 3 } check_variable = { pww_drx_dbx_5 = 1 } } }
+		localization_key = pww_dt_nm_res_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 6 } check_variable = { pww_drx_dbx_5 = 1 } } }
+		localization_key = pww_dt_nm_rights_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 3 } check_variable = { pww_drx_dbx_5 = 2 } } }
+		localization_key = pww_dt_nm_res_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 6 } check_variable = { pww_drx_dbx_5 = 2 } } }
+		localization_key = pww_dt_nm_rights_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 3 } check_variable = { pww_drx_dbx_5 = 3 } } }
+		localization_key = pww_dt_nm_res_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 6 } check_variable = { pww_drx_dbx_5 = 3 } } }
+		localization_key = pww_dt_nm_rights_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 3 } check_variable = { pww_drx_dbx_5 = 4 } } }
+		localization_key = pww_dt_nm_res_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 6 } check_variable = { pww_drx_dbx_5 = 4 } } }
+		localization_key = pww_dt_nm_rights_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 3 } check_variable = { pww_drx_dbx_5 = 5 } } }
+		localization_key = pww_dt_nm_res_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 6 } check_variable = { pww_drx_dbx_5 = 5 } } }
+		localization_key = pww_dt_nm_rights_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 3 } check_variable = { pww_drx_dbx_5 = 6 } } }
+		localization_key = pww_dt_nm_res_6
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 6 } check_variable = { pww_drx_dbx_5 = 6 } } }
+		localization_key = pww_dt_nm_rights_6
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 4 } check_variable = { pww_drx_dbx_5 = 0 } } }
+		localization_key = pww_dt_nm_eq_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 5 } check_variable = { pww_drx_dbx_5 = 0 } } }
+		localization_key = pww_dt_nm_lic_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 4 } check_variable = { pww_drx_dbx_5 = 1 } } }
+		localization_key = pww_dt_nm_eq_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 5 } check_variable = { pww_drx_dbx_5 = 1 } } }
+		localization_key = pww_dt_nm_lic_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 4 } check_variable = { pww_drx_dbx_5 = 2 } } }
+		localization_key = pww_dt_nm_eq_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 5 } check_variable = { pww_drx_dbx_5 = 2 } } }
+		localization_key = pww_dt_nm_lic_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 4 } check_variable = { pww_drx_dbx_5 = 3 } } }
+		localization_key = pww_dt_nm_eq_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 5 } check_variable = { pww_drx_dbx_5 = 3 } } }
+		localization_key = pww_dt_nm_lic_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 4 } check_variable = { pww_drx_dbx_5 = 4 } } }
+		localization_key = pww_dt_nm_eq_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 5 } check_variable = { pww_drx_dbx_5 = 4 } } }
+		localization_key = pww_dt_nm_lic_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 4 } check_variable = { pww_drx_dbx_5 = 5 } } }
+		localization_key = pww_dt_nm_eq_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 5 } check_variable = { pww_drx_dbx_5 = 5 } } }
+		localization_key = pww_dt_nm_lic_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 4 } check_variable = { pww_drx_dbx_5 = 6 } } }
+		localization_key = pww_dt_nm_eq_6
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 5 } check_variable = { pww_drx_dbx_5 = 6 } } }
+		localization_key = pww_dt_nm_lic_6
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 4 } check_variable = { pww_drx_dbx_5 = 7 } } }
+		localization_key = pww_dt_nm_eq_7
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 5 } check_variable = { pww_drx_dbx_5 = 7 } } }
+		localization_key = pww_dt_nm_lic_7
+	}
+	text = {
+		localization_key = pww_dt_empty
+	}
+}
+defined_text = {
+	name = pww_dt_slr_am_5
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 2 } } }
+		localization_key = pww_dt_am_pp_5_r
+	}
+	text = {
+		localization_key = pww_dt_am_5_r
+	}
+}
+defined_text = {
+	name = pww_dt_slr_v_5
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbv_5_f > 1 } } }
+		localization_key = pww_dt_slr_v_5_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbv_5_f = 1 } } }
+		localization_key = pww_dt_slr_v_5_1
+	}
+	text = {
+		localization_key = pww_dt_slr_v_5_0
+	}
+}
+defined_text = {
+	name = pww_dt_slr_li_5
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 1 } check_variable = { pww_drx_dba_5 = 1 } } }
+		localization_key = pww_dt_li_civ1_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 1 } } }
+		localization_key = pww_dt_li_civ_5_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 2 } } }
+		localization_key = pww_dt_li_pp_5_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 3 } check_variable = { pww_drx_dbx_5 = 0 } } }
+		localization_key = pww_dt_li_res_0_5_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 6 } check_variable = { pww_drx_dbx_5 = 0 } } }
+		localization_key = pww_dt_li_rights_0_5_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 3 } check_variable = { pww_drx_dbx_5 = 1 } } }
+		localization_key = pww_dt_li_res_1_5_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 6 } check_variable = { pww_drx_dbx_5 = 1 } } }
+		localization_key = pww_dt_li_rights_1_5_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 3 } check_variable = { pww_drx_dbx_5 = 2 } } }
+		localization_key = pww_dt_li_res_2_5_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 6 } check_variable = { pww_drx_dbx_5 = 2 } } }
+		localization_key = pww_dt_li_rights_2_5_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 3 } check_variable = { pww_drx_dbx_5 = 3 } } }
+		localization_key = pww_dt_li_res_3_5_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 6 } check_variable = { pww_drx_dbx_5 = 3 } } }
+		localization_key = pww_dt_li_rights_3_5_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 3 } check_variable = { pww_drx_dbx_5 = 4 } } }
+		localization_key = pww_dt_li_res_4_5_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 6 } check_variable = { pww_drx_dbx_5 = 4 } } }
+		localization_key = pww_dt_li_rights_4_5_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 3 } check_variable = { pww_drx_dbx_5 = 5 } } }
+		localization_key = pww_dt_li_res_5_5_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 6 } check_variable = { pww_drx_dbx_5 = 5 } } }
+		localization_key = pww_dt_li_rights_5_5_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 3 } check_variable = { pww_drx_dbx_5 = 6 } } }
+		localization_key = pww_dt_li_res_6_5_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 6 } check_variable = { pww_drx_dbx_5 = 6 } } }
+		localization_key = pww_dt_li_rights_6_5_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 4 } check_variable = { pww_drx_dbx_5 = 0 } } }
+		localization_key = pww_dt_li_eq_0_5_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 5 } check_variable = { pww_drx_dbx_5 = 0 } } }
+		localization_key = pww_dt_li_lic_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 4 } check_variable = { pww_drx_dbx_5 = 1 } } }
+		localization_key = pww_dt_li_eq_1_5_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 5 } check_variable = { pww_drx_dbx_5 = 1 } } }
+		localization_key = pww_dt_li_lic_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 4 } check_variable = { pww_drx_dbx_5 = 2 } } }
+		localization_key = pww_dt_li_eq_2_5_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 5 } check_variable = { pww_drx_dbx_5 = 2 } } }
+		localization_key = pww_dt_li_lic_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 4 } check_variable = { pww_drx_dbx_5 = 3 } } }
+		localization_key = pww_dt_li_eq_3_5_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 5 } check_variable = { pww_drx_dbx_5 = 3 } } }
+		localization_key = pww_dt_li_lic_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 4 } check_variable = { pww_drx_dbx_5 = 4 } } }
+		localization_key = pww_dt_li_eq_4_5_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 5 } check_variable = { pww_drx_dbx_5 = 4 } } }
+		localization_key = pww_dt_li_lic_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 4 } check_variable = { pww_drx_dbx_5 = 5 } } }
+		localization_key = pww_dt_li_eq_5_5_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 5 } check_variable = { pww_drx_dbx_5 = 5 } } }
+		localization_key = pww_dt_li_lic_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 4 } check_variable = { pww_drx_dbx_5 = 6 } } }
+		localization_key = pww_dt_li_eq_6_5_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 5 } check_variable = { pww_drx_dbx_5 = 6 } } }
+		localization_key = pww_dt_li_lic_6
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 4 } check_variable = { pww_drx_dbx_5 = 7 } } }
+		localization_key = pww_dt_li_eq_7_5_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 5 } check_variable = { pww_drx_dbx_5 = 7 } } }
+		localization_key = pww_dt_li_lic_7
+	}
+	text = {
+		localization_key = pww_dt_empty
+	}
+}
+defined_text = {
+	name = pww_dt_slr_sep_5
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 0 } } }
+		localization_key = pww_dt_empty
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 0 } } }
+		localization_key = pww_dt_sep_and
+	}
+	text = {
+		localization_key = pww_dt_sep_comma
+	}
+}
+defined_text = {
+	name = pww_dt_slr_nm_6
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 1 } } }
+		localization_key = pww_dt_nm_civ
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 2 } } }
+		localization_key = pww_dt_nm_pp
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 3 } check_variable = { pww_drx_dbx_6 = 0 } } }
+		localization_key = pww_dt_nm_res_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 6 } check_variable = { pww_drx_dbx_6 = 0 } } }
+		localization_key = pww_dt_nm_rights_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 3 } check_variable = { pww_drx_dbx_6 = 1 } } }
+		localization_key = pww_dt_nm_res_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 6 } check_variable = { pww_drx_dbx_6 = 1 } } }
+		localization_key = pww_dt_nm_rights_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 3 } check_variable = { pww_drx_dbx_6 = 2 } } }
+		localization_key = pww_dt_nm_res_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 6 } check_variable = { pww_drx_dbx_6 = 2 } } }
+		localization_key = pww_dt_nm_rights_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 3 } check_variable = { pww_drx_dbx_6 = 3 } } }
+		localization_key = pww_dt_nm_res_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 6 } check_variable = { pww_drx_dbx_6 = 3 } } }
+		localization_key = pww_dt_nm_rights_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 3 } check_variable = { pww_drx_dbx_6 = 4 } } }
+		localization_key = pww_dt_nm_res_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 6 } check_variable = { pww_drx_dbx_6 = 4 } } }
+		localization_key = pww_dt_nm_rights_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 3 } check_variable = { pww_drx_dbx_6 = 5 } } }
+		localization_key = pww_dt_nm_res_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 6 } check_variable = { pww_drx_dbx_6 = 5 } } }
+		localization_key = pww_dt_nm_rights_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 3 } check_variable = { pww_drx_dbx_6 = 6 } } }
+		localization_key = pww_dt_nm_res_6
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 6 } check_variable = { pww_drx_dbx_6 = 6 } } }
+		localization_key = pww_dt_nm_rights_6
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 4 } check_variable = { pww_drx_dbx_6 = 0 } } }
+		localization_key = pww_dt_nm_eq_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 5 } check_variable = { pww_drx_dbx_6 = 0 } } }
+		localization_key = pww_dt_nm_lic_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 4 } check_variable = { pww_drx_dbx_6 = 1 } } }
+		localization_key = pww_dt_nm_eq_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 5 } check_variable = { pww_drx_dbx_6 = 1 } } }
+		localization_key = pww_dt_nm_lic_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 4 } check_variable = { pww_drx_dbx_6 = 2 } } }
+		localization_key = pww_dt_nm_eq_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 5 } check_variable = { pww_drx_dbx_6 = 2 } } }
+		localization_key = pww_dt_nm_lic_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 4 } check_variable = { pww_drx_dbx_6 = 3 } } }
+		localization_key = pww_dt_nm_eq_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 5 } check_variable = { pww_drx_dbx_6 = 3 } } }
+		localization_key = pww_dt_nm_lic_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 4 } check_variable = { pww_drx_dbx_6 = 4 } } }
+		localization_key = pww_dt_nm_eq_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 5 } check_variable = { pww_drx_dbx_6 = 4 } } }
+		localization_key = pww_dt_nm_lic_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 4 } check_variable = { pww_drx_dbx_6 = 5 } } }
+		localization_key = pww_dt_nm_eq_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 5 } check_variable = { pww_drx_dbx_6 = 5 } } }
+		localization_key = pww_dt_nm_lic_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 4 } check_variable = { pww_drx_dbx_6 = 6 } } }
+		localization_key = pww_dt_nm_eq_6
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 5 } check_variable = { pww_drx_dbx_6 = 6 } } }
+		localization_key = pww_dt_nm_lic_6
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 4 } check_variable = { pww_drx_dbx_6 = 7 } } }
+		localization_key = pww_dt_nm_eq_7
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 5 } check_variable = { pww_drx_dbx_6 = 7 } } }
+		localization_key = pww_dt_nm_lic_7
+	}
+	text = {
+		localization_key = pww_dt_empty
+	}
+}
+defined_text = {
+	name = pww_dt_slr_am_6
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 2 } } }
+		localization_key = pww_dt_am_pp_6_r
+	}
+	text = {
+		localization_key = pww_dt_am_6_r
+	}
+}
+defined_text = {
+	name = pww_dt_slr_v_6
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbv_6_f > 1 } } }
+		localization_key = pww_dt_slr_v_6_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbv_6_f = 1 } } }
+		localization_key = pww_dt_slr_v_6_1
+	}
+	text = {
+		localization_key = pww_dt_slr_v_6_0
+	}
+}
+defined_text = {
+	name = pww_dt_slr_li_6
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 1 } check_variable = { pww_drx_dba_6 = 1 } } }
+		localization_key = pww_dt_li_civ1_6
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 1 } } }
+		localization_key = pww_dt_li_civ_6_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 2 } } }
+		localization_key = pww_dt_li_pp_6_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 3 } check_variable = { pww_drx_dbx_6 = 0 } } }
+		localization_key = pww_dt_li_res_0_6_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 6 } check_variable = { pww_drx_dbx_6 = 0 } } }
+		localization_key = pww_dt_li_rights_0_6_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 3 } check_variable = { pww_drx_dbx_6 = 1 } } }
+		localization_key = pww_dt_li_res_1_6_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 6 } check_variable = { pww_drx_dbx_6 = 1 } } }
+		localization_key = pww_dt_li_rights_1_6_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 3 } check_variable = { pww_drx_dbx_6 = 2 } } }
+		localization_key = pww_dt_li_res_2_6_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 6 } check_variable = { pww_drx_dbx_6 = 2 } } }
+		localization_key = pww_dt_li_rights_2_6_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 3 } check_variable = { pww_drx_dbx_6 = 3 } } }
+		localization_key = pww_dt_li_res_3_6_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 6 } check_variable = { pww_drx_dbx_6 = 3 } } }
+		localization_key = pww_dt_li_rights_3_6_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 3 } check_variable = { pww_drx_dbx_6 = 4 } } }
+		localization_key = pww_dt_li_res_4_6_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 6 } check_variable = { pww_drx_dbx_6 = 4 } } }
+		localization_key = pww_dt_li_rights_4_6_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 3 } check_variable = { pww_drx_dbx_6 = 5 } } }
+		localization_key = pww_dt_li_res_5_6_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 6 } check_variable = { pww_drx_dbx_6 = 5 } } }
+		localization_key = pww_dt_li_rights_5_6_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 3 } check_variable = { pww_drx_dbx_6 = 6 } } }
+		localization_key = pww_dt_li_res_6_6_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 6 } check_variable = { pww_drx_dbx_6 = 6 } } }
+		localization_key = pww_dt_li_rights_6_6_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 4 } check_variable = { pww_drx_dbx_6 = 0 } } }
+		localization_key = pww_dt_li_eq_0_6_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 5 } check_variable = { pww_drx_dbx_6 = 0 } } }
+		localization_key = pww_dt_li_lic_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 4 } check_variable = { pww_drx_dbx_6 = 1 } } }
+		localization_key = pww_dt_li_eq_1_6_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 5 } check_variable = { pww_drx_dbx_6 = 1 } } }
+		localization_key = pww_dt_li_lic_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 4 } check_variable = { pww_drx_dbx_6 = 2 } } }
+		localization_key = pww_dt_li_eq_2_6_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 5 } check_variable = { pww_drx_dbx_6 = 2 } } }
+		localization_key = pww_dt_li_lic_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 4 } check_variable = { pww_drx_dbx_6 = 3 } } }
+		localization_key = pww_dt_li_eq_3_6_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 5 } check_variable = { pww_drx_dbx_6 = 3 } } }
+		localization_key = pww_dt_li_lic_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 4 } check_variable = { pww_drx_dbx_6 = 4 } } }
+		localization_key = pww_dt_li_eq_4_6_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 5 } check_variable = { pww_drx_dbx_6 = 4 } } }
+		localization_key = pww_dt_li_lic_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 4 } check_variable = { pww_drx_dbx_6 = 5 } } }
+		localization_key = pww_dt_li_eq_5_6_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 5 } check_variable = { pww_drx_dbx_6 = 5 } } }
+		localization_key = pww_dt_li_lic_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 4 } check_variable = { pww_drx_dbx_6 = 6 } } }
+		localization_key = pww_dt_li_eq_6_6_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 5 } check_variable = { pww_drx_dbx_6 = 6 } } }
+		localization_key = pww_dt_li_lic_6
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 4 } check_variable = { pww_drx_dbx_6 = 7 } } }
+		localization_key = pww_dt_li_eq_7_6_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 5 } check_variable = { pww_drx_dbx_6 = 7 } } }
+		localization_key = pww_dt_li_lic_7
+	}
+	text = {
+		localization_key = pww_dt_empty
+	}
+}
+defined_text = {
+	name = pww_dt_slr_sep_6
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 0 } } }
+		localization_key = pww_dt_empty
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 0 } } }
+		localization_key = pww_dt_sep_and
+	}
+	text = {
+		localization_key = pww_dt_sep_comma
+	}
+}
+defined_text = {
+	name = pww_dt_slr_nm_7
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 1 } } }
+		localization_key = pww_dt_nm_civ
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 2 } } }
+		localization_key = pww_dt_nm_pp
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 3 } check_variable = { pww_drx_dbx_7 = 0 } } }
+		localization_key = pww_dt_nm_res_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 6 } check_variable = { pww_drx_dbx_7 = 0 } } }
+		localization_key = pww_dt_nm_rights_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 3 } check_variable = { pww_drx_dbx_7 = 1 } } }
+		localization_key = pww_dt_nm_res_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 6 } check_variable = { pww_drx_dbx_7 = 1 } } }
+		localization_key = pww_dt_nm_rights_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 3 } check_variable = { pww_drx_dbx_7 = 2 } } }
+		localization_key = pww_dt_nm_res_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 6 } check_variable = { pww_drx_dbx_7 = 2 } } }
+		localization_key = pww_dt_nm_rights_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 3 } check_variable = { pww_drx_dbx_7 = 3 } } }
+		localization_key = pww_dt_nm_res_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 6 } check_variable = { pww_drx_dbx_7 = 3 } } }
+		localization_key = pww_dt_nm_rights_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 3 } check_variable = { pww_drx_dbx_7 = 4 } } }
+		localization_key = pww_dt_nm_res_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 6 } check_variable = { pww_drx_dbx_7 = 4 } } }
+		localization_key = pww_dt_nm_rights_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 3 } check_variable = { pww_drx_dbx_7 = 5 } } }
+		localization_key = pww_dt_nm_res_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 6 } check_variable = { pww_drx_dbx_7 = 5 } } }
+		localization_key = pww_dt_nm_rights_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 3 } check_variable = { pww_drx_dbx_7 = 6 } } }
+		localization_key = pww_dt_nm_res_6
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 6 } check_variable = { pww_drx_dbx_7 = 6 } } }
+		localization_key = pww_dt_nm_rights_6
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 4 } check_variable = { pww_drx_dbx_7 = 0 } } }
+		localization_key = pww_dt_nm_eq_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 5 } check_variable = { pww_drx_dbx_7 = 0 } } }
+		localization_key = pww_dt_nm_lic_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 4 } check_variable = { pww_drx_dbx_7 = 1 } } }
+		localization_key = pww_dt_nm_eq_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 5 } check_variable = { pww_drx_dbx_7 = 1 } } }
+		localization_key = pww_dt_nm_lic_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 4 } check_variable = { pww_drx_dbx_7 = 2 } } }
+		localization_key = pww_dt_nm_eq_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 5 } check_variable = { pww_drx_dbx_7 = 2 } } }
+		localization_key = pww_dt_nm_lic_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 4 } check_variable = { pww_drx_dbx_7 = 3 } } }
+		localization_key = pww_dt_nm_eq_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 5 } check_variable = { pww_drx_dbx_7 = 3 } } }
+		localization_key = pww_dt_nm_lic_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 4 } check_variable = { pww_drx_dbx_7 = 4 } } }
+		localization_key = pww_dt_nm_eq_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 5 } check_variable = { pww_drx_dbx_7 = 4 } } }
+		localization_key = pww_dt_nm_lic_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 4 } check_variable = { pww_drx_dbx_7 = 5 } } }
+		localization_key = pww_dt_nm_eq_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 5 } check_variable = { pww_drx_dbx_7 = 5 } } }
+		localization_key = pww_dt_nm_lic_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 4 } check_variable = { pww_drx_dbx_7 = 6 } } }
+		localization_key = pww_dt_nm_eq_6
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 5 } check_variable = { pww_drx_dbx_7 = 6 } } }
+		localization_key = pww_dt_nm_lic_6
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 4 } check_variable = { pww_drx_dbx_7 = 7 } } }
+		localization_key = pww_dt_nm_eq_7
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 5 } check_variable = { pww_drx_dbx_7 = 7 } } }
+		localization_key = pww_dt_nm_lic_7
+	}
+	text = {
+		localization_key = pww_dt_empty
+	}
+}
+defined_text = {
+	name = pww_dt_slr_am_7
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 2 } } }
+		localization_key = pww_dt_am_pp_7_r
+	}
+	text = {
+		localization_key = pww_dt_am_7_r
+	}
+}
+defined_text = {
+	name = pww_dt_slr_v_7
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbv_7_f > 1 } } }
+		localization_key = pww_dt_slr_v_7_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbv_7_f = 1 } } }
+		localization_key = pww_dt_slr_v_7_1
+	}
+	text = {
+		localization_key = pww_dt_slr_v_7_0
+	}
+}
+defined_text = {
+	name = pww_dt_slr_li_7
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 1 } check_variable = { pww_drx_dba_7 = 1 } } }
+		localization_key = pww_dt_li_civ1_7
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 1 } } }
+		localization_key = pww_dt_li_civ_7_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 2 } } }
+		localization_key = pww_dt_li_pp_7_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 3 } check_variable = { pww_drx_dbx_7 = 0 } } }
+		localization_key = pww_dt_li_res_0_7_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 6 } check_variable = { pww_drx_dbx_7 = 0 } } }
+		localization_key = pww_dt_li_rights_0_7_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 3 } check_variable = { pww_drx_dbx_7 = 1 } } }
+		localization_key = pww_dt_li_res_1_7_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 6 } check_variable = { pww_drx_dbx_7 = 1 } } }
+		localization_key = pww_dt_li_rights_1_7_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 3 } check_variable = { pww_drx_dbx_7 = 2 } } }
+		localization_key = pww_dt_li_res_2_7_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 6 } check_variable = { pww_drx_dbx_7 = 2 } } }
+		localization_key = pww_dt_li_rights_2_7_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 3 } check_variable = { pww_drx_dbx_7 = 3 } } }
+		localization_key = pww_dt_li_res_3_7_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 6 } check_variable = { pww_drx_dbx_7 = 3 } } }
+		localization_key = pww_dt_li_rights_3_7_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 3 } check_variable = { pww_drx_dbx_7 = 4 } } }
+		localization_key = pww_dt_li_res_4_7_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 6 } check_variable = { pww_drx_dbx_7 = 4 } } }
+		localization_key = pww_dt_li_rights_4_7_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 3 } check_variable = { pww_drx_dbx_7 = 5 } } }
+		localization_key = pww_dt_li_res_5_7_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 6 } check_variable = { pww_drx_dbx_7 = 5 } } }
+		localization_key = pww_dt_li_rights_5_7_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 3 } check_variable = { pww_drx_dbx_7 = 6 } } }
+		localization_key = pww_dt_li_res_6_7_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 6 } check_variable = { pww_drx_dbx_7 = 6 } } }
+		localization_key = pww_dt_li_rights_6_7_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 4 } check_variable = { pww_drx_dbx_7 = 0 } } }
+		localization_key = pww_dt_li_eq_0_7_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 5 } check_variable = { pww_drx_dbx_7 = 0 } } }
+		localization_key = pww_dt_li_lic_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 4 } check_variable = { pww_drx_dbx_7 = 1 } } }
+		localization_key = pww_dt_li_eq_1_7_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 5 } check_variable = { pww_drx_dbx_7 = 1 } } }
+		localization_key = pww_dt_li_lic_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 4 } check_variable = { pww_drx_dbx_7 = 2 } } }
+		localization_key = pww_dt_li_eq_2_7_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 5 } check_variable = { pww_drx_dbx_7 = 2 } } }
+		localization_key = pww_dt_li_lic_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 4 } check_variable = { pww_drx_dbx_7 = 3 } } }
+		localization_key = pww_dt_li_eq_3_7_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 5 } check_variable = { pww_drx_dbx_7 = 3 } } }
+		localization_key = pww_dt_li_lic_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 4 } check_variable = { pww_drx_dbx_7 = 4 } } }
+		localization_key = pww_dt_li_eq_4_7_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 5 } check_variable = { pww_drx_dbx_7 = 4 } } }
+		localization_key = pww_dt_li_lic_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 4 } check_variable = { pww_drx_dbx_7 = 5 } } }
+		localization_key = pww_dt_li_eq_5_7_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 5 } check_variable = { pww_drx_dbx_7 = 5 } } }
+		localization_key = pww_dt_li_lic_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 4 } check_variable = { pww_drx_dbx_7 = 6 } } }
+		localization_key = pww_dt_li_eq_6_7_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 5 } check_variable = { pww_drx_dbx_7 = 6 } } }
+		localization_key = pww_dt_li_lic_6
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 4 } check_variable = { pww_drx_dbx_7 = 7 } } }
+		localization_key = pww_dt_li_eq_7_7_r
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 5 } check_variable = { pww_drx_dbx_7 = 7 } } }
+		localization_key = pww_dt_li_lic_7
+	}
+	text = {
+		localization_key = pww_dt_empty
+	}
+}
+defined_text = {
+	name = pww_dt_slr_sep_7
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 0 } } }
+		localization_key = pww_dt_empty
+	}
+	text = {
+		trigger = { always = yes }
+		localization_key = pww_dt_sep_and
+	}
+	text = {
+		localization_key = pww_dt_sep_comma
+	}
+}
+defined_text = {
 	name = pww_dt_sl_term
 	text = {
 		trigger = { ROOT = { check_variable = { pww_do_len = 0 } } }
@@ -4098,26 +6574,6 @@ defined_text = {
 	}
 }
 defined_text = {
-	name = pww_dt_sl_get_1
-	text = {
-		trigger = { ROOT = { check_variable = { pww_do_n0 = 0 } } }
-		localization_key = pww_dt_get_none_1
-	}
-	text = {
-		localization_key = pww_dt_get_1
-	}
-}
-defined_text = {
-	name = pww_dt_sl_pay_1
-	text = {
-		trigger = { ROOT = { check_variable = { pww_do_n1 = 0 } } }
-		localization_key = pww_dt_pay_none_1
-	}
-	text = {
-		localization_key = pww_dt_pay_1
-	}
-}
-defined_text = {
 	name = pww_dt_sl_t0
 	text = {
 		trigger = { ROOT = { check_variable = { pww_dbm_t0_f = 3 } } }
@@ -4151,6 +6607,84 @@ defined_text = {
 	}
 	text = {
 		localization_key = pww_dt_sl_t1_0
+	}
+}
+defined_text = {
+	name = pww_dt_slr_term
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_do_len = 0 } } }
+		localization_key = pww_dt_term_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_do_len = 1 } } }
+		localization_key = pww_dt_term_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_do_len = 2 } } }
+		localization_key = pww_dt_term_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_do_len = 3 } } }
+		localization_key = pww_dt_term_3
+	}
+	text = {
+		localization_key = pww_dt_empty
+	}
+}
+defined_text = {
+	name = pww_dt_sl_get_1
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_do_n0 = 0 } } }
+		localization_key = pww_dt_get_none_1
+	}
+	text = {
+		localization_key = pww_dt_get_1
+	}
+}
+defined_text = {
+	name = pww_dt_sl_pay_1
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_do_n1 = 0 } } }
+		localization_key = pww_dt_pay_none_1
+	}
+	text = {
+		localization_key = pww_dt_pay_1
+	}
+}
+defined_text = {
+	name = pww_dt_slr_t0
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbm_t0_f = 3 } } }
+		localization_key = pww_dt_slr_t0_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbm_t0_f = 2 } } }
+		localization_key = pww_dt_slr_t0_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbm_t0_f = 1 } } }
+		localization_key = pww_dt_slr_t0_1
+	}
+	text = {
+		localization_key = pww_dt_slr_t0_0
+	}
+}
+defined_text = {
+	name = pww_dt_slr_t1
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbm_t1_f = 3 } } }
+		localization_key = pww_dt_slr_t1_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbm_t1_f = 2 } } }
+		localization_key = pww_dt_slr_t1_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbm_t1_f = 1 } } }
+		localization_key = pww_dt_slr_t1_1
+	}
+	text = {
+		localization_key = pww_dt_slr_t1_0
 	}
 }
 defined_text = {
@@ -4210,17 +6744,21 @@ defined_text = {
 		localization_key = pww_dt_bal_over
 	}
 	text = {
+		trigger = { ROOT = { check_variable = { pww_do_lockfail = 1 } } }
+		localization_key = pww_dt_mk_lock
+	}
+	text = {
 		localization_key = pww_dt_mkrow_v
 	}
 }
 defined_text = {
 	name = pww_dt_sl_rmk
 	text = {
-		trigger = { ROOT = { check_variable = { pww_do_mk = -1 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_do_mk = -1 } } }
 		localization_key = pww_dt_rmk_0
 	}
 	text = {
-		trigger = { ROOT = { check_variable = { pww_do_mk = 0 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_do_mk = 0 } } }
 		localization_key = pww_dt_rmk_1
 	}
 	text = {
@@ -4280,6 +6818,18 @@ defined_text = {
 	text = {
 		trigger = { ROOT = { check_variable = { pww_do_valid = 64 } } }
 		localization_key = pww_dt_invalid_64
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_do_valid = 65 } } }
+		localization_key = pww_dt_invalid_65
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_do_valid = 66 } } }
+		localization_key = pww_dt_invalid_66
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_do_valid = 67 } } }
+		localization_key = pww_dt_invalid_67
 	}
 	text = {
 		localization_key = pww_dt_empty
@@ -4406,115 +6956,115 @@ defined_text = {
 defined_text = {
 	name = pww_dt_sl_top_1
 	text = {
-		trigger = { ROOT = { OR = { check_variable = { pww_dbk_0 = 3 } check_variable = { pww_dbk_0 = 6 } } check_variable = { pww_dbx_0 = 0 } } }
+		trigger = { ROOT = { OR = { check_variable = { pww_drx_dbk_0 = 3 } check_variable = { pww_drx_dbk_0 = 6 } } check_variable = { pww_drx_dbx_0 = 0 } } }
 		localization_key = pww_dt_top_1_0_0
 	}
 	text = {
-		trigger = { ROOT = { OR = { check_variable = { pww_dbk_0 = 3 } check_variable = { pww_dbk_0 = 6 } } check_variable = { pww_dbx_0 = 1 } } }
+		trigger = { ROOT = { OR = { check_variable = { pww_drx_dbk_0 = 3 } check_variable = { pww_drx_dbk_0 = 6 } } check_variable = { pww_drx_dbx_0 = 1 } } }
 		localization_key = pww_dt_top_1_0_1
 	}
 	text = {
-		trigger = { ROOT = { OR = { check_variable = { pww_dbk_0 = 3 } check_variable = { pww_dbk_0 = 6 } } check_variable = { pww_dbx_0 = 2 } } }
+		trigger = { ROOT = { OR = { check_variable = { pww_drx_dbk_0 = 3 } check_variable = { pww_drx_dbk_0 = 6 } } check_variable = { pww_drx_dbx_0 = 2 } } }
 		localization_key = pww_dt_top_1_0_2
 	}
 	text = {
-		trigger = { ROOT = { OR = { check_variable = { pww_dbk_0 = 3 } check_variable = { pww_dbk_0 = 6 } } check_variable = { pww_dbx_0 = 3 } } }
+		trigger = { ROOT = { OR = { check_variable = { pww_drx_dbk_0 = 3 } check_variable = { pww_drx_dbk_0 = 6 } } check_variable = { pww_drx_dbx_0 = 3 } } }
 		localization_key = pww_dt_top_1_0_3
 	}
 	text = {
-		trigger = { ROOT = { OR = { check_variable = { pww_dbk_0 = 3 } check_variable = { pww_dbk_0 = 6 } } check_variable = { pww_dbx_0 = 4 } } }
+		trigger = { ROOT = { OR = { check_variable = { pww_drx_dbk_0 = 3 } check_variable = { pww_drx_dbk_0 = 6 } } check_variable = { pww_drx_dbx_0 = 4 } } }
 		localization_key = pww_dt_top_1_0_4
 	}
 	text = {
-		trigger = { ROOT = { OR = { check_variable = { pww_dbk_0 = 3 } check_variable = { pww_dbk_0 = 6 } } check_variable = { pww_dbx_0 = 5 } } }
+		trigger = { ROOT = { OR = { check_variable = { pww_drx_dbk_0 = 3 } check_variable = { pww_drx_dbk_0 = 6 } } check_variable = { pww_drx_dbx_0 = 5 } } }
 		localization_key = pww_dt_top_1_0_5
 	}
 	text = {
-		trigger = { ROOT = { OR = { check_variable = { pww_dbk_0 = 3 } check_variable = { pww_dbk_0 = 6 } } check_variable = { pww_dbx_0 = 6 } } }
+		trigger = { ROOT = { OR = { check_variable = { pww_drx_dbk_0 = 3 } check_variable = { pww_drx_dbk_0 = 6 } } check_variable = { pww_drx_dbx_0 = 6 } } }
 		localization_key = pww_dt_top_1_0_6
 	}
 	text = {
-		trigger = { ROOT = { OR = { check_variable = { pww_dbk_1 = 3 } check_variable = { pww_dbk_1 = 6 } } check_variable = { pww_dbx_1 = 0 } } }
+		trigger = { ROOT = { OR = { check_variable = { pww_drx_dbk_1 = 3 } check_variable = { pww_drx_dbk_1 = 6 } } check_variable = { pww_drx_dbx_1 = 0 } } }
 		localization_key = pww_dt_top_1_1_0
 	}
 	text = {
-		trigger = { ROOT = { OR = { check_variable = { pww_dbk_1 = 3 } check_variable = { pww_dbk_1 = 6 } } check_variable = { pww_dbx_1 = 1 } } }
+		trigger = { ROOT = { OR = { check_variable = { pww_drx_dbk_1 = 3 } check_variable = { pww_drx_dbk_1 = 6 } } check_variable = { pww_drx_dbx_1 = 1 } } }
 		localization_key = pww_dt_top_1_1_1
 	}
 	text = {
-		trigger = { ROOT = { OR = { check_variable = { pww_dbk_1 = 3 } check_variable = { pww_dbk_1 = 6 } } check_variable = { pww_dbx_1 = 2 } } }
+		trigger = { ROOT = { OR = { check_variable = { pww_drx_dbk_1 = 3 } check_variable = { pww_drx_dbk_1 = 6 } } check_variable = { pww_drx_dbx_1 = 2 } } }
 		localization_key = pww_dt_top_1_1_2
 	}
 	text = {
-		trigger = { ROOT = { OR = { check_variable = { pww_dbk_1 = 3 } check_variable = { pww_dbk_1 = 6 } } check_variable = { pww_dbx_1 = 3 } } }
+		trigger = { ROOT = { OR = { check_variable = { pww_drx_dbk_1 = 3 } check_variable = { pww_drx_dbk_1 = 6 } } check_variable = { pww_drx_dbx_1 = 3 } } }
 		localization_key = pww_dt_top_1_1_3
 	}
 	text = {
-		trigger = { ROOT = { OR = { check_variable = { pww_dbk_1 = 3 } check_variable = { pww_dbk_1 = 6 } } check_variable = { pww_dbx_1 = 4 } } }
+		trigger = { ROOT = { OR = { check_variable = { pww_drx_dbk_1 = 3 } check_variable = { pww_drx_dbk_1 = 6 } } check_variable = { pww_drx_dbx_1 = 4 } } }
 		localization_key = pww_dt_top_1_1_4
 	}
 	text = {
-		trigger = { ROOT = { OR = { check_variable = { pww_dbk_1 = 3 } check_variable = { pww_dbk_1 = 6 } } check_variable = { pww_dbx_1 = 5 } } }
+		trigger = { ROOT = { OR = { check_variable = { pww_drx_dbk_1 = 3 } check_variable = { pww_drx_dbk_1 = 6 } } check_variable = { pww_drx_dbx_1 = 5 } } }
 		localization_key = pww_dt_top_1_1_5
 	}
 	text = {
-		trigger = { ROOT = { OR = { check_variable = { pww_dbk_1 = 3 } check_variable = { pww_dbk_1 = 6 } } check_variable = { pww_dbx_1 = 6 } } }
+		trigger = { ROOT = { OR = { check_variable = { pww_drx_dbk_1 = 3 } check_variable = { pww_drx_dbk_1 = 6 } } check_variable = { pww_drx_dbx_1 = 6 } } }
 		localization_key = pww_dt_top_1_1_6
 	}
 	text = {
-		trigger = { ROOT = { OR = { check_variable = { pww_dbk_2 = 3 } check_variable = { pww_dbk_2 = 6 } } check_variable = { pww_dbx_2 = 0 } } }
+		trigger = { ROOT = { OR = { check_variable = { pww_drx_dbk_2 = 3 } check_variable = { pww_drx_dbk_2 = 6 } } check_variable = { pww_drx_dbx_2 = 0 } } }
 		localization_key = pww_dt_top_1_2_0
 	}
 	text = {
-		trigger = { ROOT = { OR = { check_variable = { pww_dbk_2 = 3 } check_variable = { pww_dbk_2 = 6 } } check_variable = { pww_dbx_2 = 1 } } }
+		trigger = { ROOT = { OR = { check_variable = { pww_drx_dbk_2 = 3 } check_variable = { pww_drx_dbk_2 = 6 } } check_variable = { pww_drx_dbx_2 = 1 } } }
 		localization_key = pww_dt_top_1_2_1
 	}
 	text = {
-		trigger = { ROOT = { OR = { check_variable = { pww_dbk_2 = 3 } check_variable = { pww_dbk_2 = 6 } } check_variable = { pww_dbx_2 = 2 } } }
+		trigger = { ROOT = { OR = { check_variable = { pww_drx_dbk_2 = 3 } check_variable = { pww_drx_dbk_2 = 6 } } check_variable = { pww_drx_dbx_2 = 2 } } }
 		localization_key = pww_dt_top_1_2_2
 	}
 	text = {
-		trigger = { ROOT = { OR = { check_variable = { pww_dbk_2 = 3 } check_variable = { pww_dbk_2 = 6 } } check_variable = { pww_dbx_2 = 3 } } }
+		trigger = { ROOT = { OR = { check_variable = { pww_drx_dbk_2 = 3 } check_variable = { pww_drx_dbk_2 = 6 } } check_variable = { pww_drx_dbx_2 = 3 } } }
 		localization_key = pww_dt_top_1_2_3
 	}
 	text = {
-		trigger = { ROOT = { OR = { check_variable = { pww_dbk_2 = 3 } check_variable = { pww_dbk_2 = 6 } } check_variable = { pww_dbx_2 = 4 } } }
+		trigger = { ROOT = { OR = { check_variable = { pww_drx_dbk_2 = 3 } check_variable = { pww_drx_dbk_2 = 6 } } check_variable = { pww_drx_dbx_2 = 4 } } }
 		localization_key = pww_dt_top_1_2_4
 	}
 	text = {
-		trigger = { ROOT = { OR = { check_variable = { pww_dbk_2 = 3 } check_variable = { pww_dbk_2 = 6 } } check_variable = { pww_dbx_2 = 5 } } }
+		trigger = { ROOT = { OR = { check_variable = { pww_drx_dbk_2 = 3 } check_variable = { pww_drx_dbk_2 = 6 } } check_variable = { pww_drx_dbx_2 = 5 } } }
 		localization_key = pww_dt_top_1_2_5
 	}
 	text = {
-		trigger = { ROOT = { OR = { check_variable = { pww_dbk_2 = 3 } check_variable = { pww_dbk_2 = 6 } } check_variable = { pww_dbx_2 = 6 } } }
+		trigger = { ROOT = { OR = { check_variable = { pww_drx_dbk_2 = 3 } check_variable = { pww_drx_dbk_2 = 6 } } check_variable = { pww_drx_dbx_2 = 6 } } }
 		localization_key = pww_dt_top_1_2_6
 	}
 	text = {
-		trigger = { ROOT = { OR = { check_variable = { pww_dbk_3 = 3 } check_variable = { pww_dbk_3 = 6 } } check_variable = { pww_dbx_3 = 0 } } }
+		trigger = { ROOT = { OR = { check_variable = { pww_drx_dbk_3 = 3 } check_variable = { pww_drx_dbk_3 = 6 } } check_variable = { pww_drx_dbx_3 = 0 } } }
 		localization_key = pww_dt_top_1_3_0
 	}
 	text = {
-		trigger = { ROOT = { OR = { check_variable = { pww_dbk_3 = 3 } check_variable = { pww_dbk_3 = 6 } } check_variable = { pww_dbx_3 = 1 } } }
+		trigger = { ROOT = { OR = { check_variable = { pww_drx_dbk_3 = 3 } check_variable = { pww_drx_dbk_3 = 6 } } check_variable = { pww_drx_dbx_3 = 1 } } }
 		localization_key = pww_dt_top_1_3_1
 	}
 	text = {
-		trigger = { ROOT = { OR = { check_variable = { pww_dbk_3 = 3 } check_variable = { pww_dbk_3 = 6 } } check_variable = { pww_dbx_3 = 2 } } }
+		trigger = { ROOT = { OR = { check_variable = { pww_drx_dbk_3 = 3 } check_variable = { pww_drx_dbk_3 = 6 } } check_variable = { pww_drx_dbx_3 = 2 } } }
 		localization_key = pww_dt_top_1_3_2
 	}
 	text = {
-		trigger = { ROOT = { OR = { check_variable = { pww_dbk_3 = 3 } check_variable = { pww_dbk_3 = 6 } } check_variable = { pww_dbx_3 = 3 } } }
+		trigger = { ROOT = { OR = { check_variable = { pww_drx_dbk_3 = 3 } check_variable = { pww_drx_dbk_3 = 6 } } check_variable = { pww_drx_dbx_3 = 3 } } }
 		localization_key = pww_dt_top_1_3_3
 	}
 	text = {
-		trigger = { ROOT = { OR = { check_variable = { pww_dbk_3 = 3 } check_variable = { pww_dbk_3 = 6 } } check_variable = { pww_dbx_3 = 4 } } }
+		trigger = { ROOT = { OR = { check_variable = { pww_drx_dbk_3 = 3 } check_variable = { pww_drx_dbk_3 = 6 } } check_variable = { pww_drx_dbx_3 = 4 } } }
 		localization_key = pww_dt_top_1_3_4
 	}
 	text = {
-		trigger = { ROOT = { OR = { check_variable = { pww_dbk_3 = 3 } check_variable = { pww_dbk_3 = 6 } } check_variable = { pww_dbx_3 = 5 } } }
+		trigger = { ROOT = { OR = { check_variable = { pww_drx_dbk_3 = 3 } check_variable = { pww_drx_dbk_3 = 6 } } check_variable = { pww_drx_dbx_3 = 5 } } }
 		localization_key = pww_dt_top_1_3_5
 	}
 	text = {
-		trigger = { ROOT = { OR = { check_variable = { pww_dbk_3 = 3 } check_variable = { pww_dbk_3 = 6 } } check_variable = { pww_dbx_3 = 6 } } }
+		trigger = { ROOT = { OR = { check_variable = { pww_drx_dbk_3 = 3 } check_variable = { pww_drx_dbk_3 = 6 } } check_variable = { pww_drx_dbx_3 = 6 } } }
 		localization_key = pww_dt_top_1_3_6
 	}
 	text = {
@@ -4666,15 +7216,159 @@ defined_text = {
 defined_text = {
 	name = pww_dt_sl_rline
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dd_line = 96 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dd_line = 96 } } }
 		localization_key = pww_dt_rline_96
 	}
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dd_line = 97 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dd_line = 97 } } }
 		localization_key = pww_dt_rline_97
 	}
 	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_do_lockwhy = 1 } check_variable = { pww_drx_do_bind = 0 } } }
+		localization_key = pww_dt_rline_trust
+	}
+	text = {
 		localization_key = pww_dt_rline_0
+	}
+}
+defined_text = {
+	name = pww_dt_sl_p_res
+	text = {
+		trigger = { ROOT = { check_variable = { pww_do_p_res = 0 } } }
+		localization_key = pww_dt_p_res_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_do_p_res = 1 } } }
+		localization_key = pww_dt_p_res_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_do_p_res = 2 } } }
+		localization_key = pww_dt_p_res_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_do_p_res = 3 } } }
+		localization_key = pww_dt_p_res_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_do_p_res = 4 } } }
+		localization_key = pww_dt_p_res_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_do_p_res = 5 } } }
+		localization_key = pww_dt_p_res_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_do_p_res = 6 } } }
+		localization_key = pww_dt_p_res_6
+	}
+	text = {
+		localization_key = pww_dt_empty
+	}
+}
+defined_text = {
+	name = pww_dt_sl_p_band
+	text = {
+		trigger = { ROOT = { check_variable = { pww_do_p_band = 0 } } }
+		localization_key = pww_dt_p_band_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_do_p_band = 1 } } }
+		localization_key = pww_dt_p_band_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_do_p_band = 2 } } }
+		localization_key = pww_dt_p_band_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_do_p_band = 3 } } }
+		localization_key = pww_dt_p_band_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_do_p_band = 4 } } }
+		localization_key = pww_dt_p_band_4
+	}
+	text = {
+		localization_key = pww_dt_empty
+	}
+}
+defined_text = {
+	name = pww_dt_sl_p_ship
+	text = {
+		trigger = { ROOT = { check_variable = { pww_do_p_ship > 0.004 } } }
+		localization_key = pww_dt_p_ship
+	}
+	text = {
+		localization_key = pww_dt_empty
+	}
+}
+defined_text = {
+	name = pww_dt_slr_p_res
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_do_p_res = 0 } } }
+		localization_key = pww_dt_p_res_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_do_p_res = 1 } } }
+		localization_key = pww_dt_p_res_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_do_p_res = 2 } } }
+		localization_key = pww_dt_p_res_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_do_p_res = 3 } } }
+		localization_key = pww_dt_p_res_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_do_p_res = 4 } } }
+		localization_key = pww_dt_p_res_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_do_p_res = 5 } } }
+		localization_key = pww_dt_p_res_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_do_p_res = 6 } } }
+		localization_key = pww_dt_p_res_6
+	}
+	text = {
+		localization_key = pww_dt_empty
+	}
+}
+defined_text = {
+	name = pww_dt_slr_p_band
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_do_p_band = 0 } } }
+		localization_key = pww_dt_p_band_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_do_p_band = 1 } } }
+		localization_key = pww_dt_p_band_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_do_p_band = 2 } } }
+		localization_key = pww_dt_p_band_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_do_p_band = 3 } } }
+		localization_key = pww_dt_p_band_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_do_p_band = 4 } } }
+		localization_key = pww_dt_p_band_4
+	}
+	text = {
+		localization_key = pww_dt_empty
+	}
+}
+defined_text = {
+	name = pww_dt_slr_p_ship
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_do_p_ship > 0.004 } } }
+		localization_key = pww_dt_p_ship_r
+	}
+	text = {
+		localization_key = pww_dt_empty
 	}
 }
 defined_text = {
@@ -6278,6 +8972,26 @@ defined_text = {
 	}
 }
 defined_text = {
+	name = pww_dt_sl_hsbs_0
+	text = {
+		trigger = { ROOT = { check_variable = { pww_dbts_0 > 0.5 } } }
+		localization_key = pww_dt_hs_bs_sh_0
+	}
+	text = {
+		localization_key = pww_dt_h_bs_enough
+	}
+}
+defined_text = {
+	name = pww_dt_sl_hsres_0
+	text = {
+		trigger = { ROOT = { check_variable = { pww_dbh_0 > 0.004 } } }
+		localization_key = pww_dt_hs_ress_0
+	}
+	text = {
+		localization_key = pww_dt_hs_res_0
+	}
+}
+defined_text = {
 	name = pww_dt_sl_hsciv_0
 	text = {
 		trigger = { ROOT = { check_variable = { pww_dbp_0 = 1 } } }
@@ -6331,7 +9045,7 @@ defined_text = {
 	}
 	text = {
 		trigger = { ROOT = { check_variable = { pww_dbk_0 = 3 } } }
-		localization_key = pww_dt_hs_res_0
+		localization_key = pww_dt_hs_resw_0
 	}
 	text = {
 		trigger = { ROOT = { check_variable = { pww_dbk_0 = 4 } } }
@@ -6363,6 +9077,26 @@ defined_text = {
 	}
 	text = {
 		localization_key = pww_dt_h_b_enough
+	}
+}
+defined_text = {
+	name = pww_dt_sl_hsbs_1
+	text = {
+		trigger = { ROOT = { check_variable = { pww_dbts_1 > 0.5 } } }
+		localization_key = pww_dt_hs_bs_sh_1
+	}
+	text = {
+		localization_key = pww_dt_h_bs_enough
+	}
+}
+defined_text = {
+	name = pww_dt_sl_hsres_1
+	text = {
+		trigger = { ROOT = { check_variable = { pww_dbh_1 > 0.004 } } }
+		localization_key = pww_dt_hs_ress_1
+	}
+	text = {
+		localization_key = pww_dt_hs_res_1
 	}
 }
 defined_text = {
@@ -6419,7 +9153,7 @@ defined_text = {
 	}
 	text = {
 		trigger = { ROOT = { check_variable = { pww_dbk_1 = 3 } } }
-		localization_key = pww_dt_hs_res_1
+		localization_key = pww_dt_hs_resw_1
 	}
 	text = {
 		trigger = { ROOT = { check_variable = { pww_dbk_1 = 4 } } }
@@ -6451,6 +9185,26 @@ defined_text = {
 	}
 	text = {
 		localization_key = pww_dt_h_b_enough
+	}
+}
+defined_text = {
+	name = pww_dt_sl_hsbs_2
+	text = {
+		trigger = { ROOT = { check_variable = { pww_dbts_2 > 0.5 } } }
+		localization_key = pww_dt_hs_bs_sh_2
+	}
+	text = {
+		localization_key = pww_dt_h_bs_enough
+	}
+}
+defined_text = {
+	name = pww_dt_sl_hsres_2
+	text = {
+		trigger = { ROOT = { check_variable = { pww_dbh_2 > 0.004 } } }
+		localization_key = pww_dt_hs_ress_2
+	}
+	text = {
+		localization_key = pww_dt_hs_res_2
 	}
 }
 defined_text = {
@@ -6507,7 +9261,7 @@ defined_text = {
 	}
 	text = {
 		trigger = { ROOT = { check_variable = { pww_dbk_2 = 3 } } }
-		localization_key = pww_dt_hs_res_2
+		localization_key = pww_dt_hs_resw_2
 	}
 	text = {
 		trigger = { ROOT = { check_variable = { pww_dbk_2 = 4 } } }
@@ -6539,6 +9293,26 @@ defined_text = {
 	}
 	text = {
 		localization_key = pww_dt_h_b_enough
+	}
+}
+defined_text = {
+	name = pww_dt_sl_hsbs_3
+	text = {
+		trigger = { ROOT = { check_variable = { pww_dbts_3 > 0.5 } } }
+		localization_key = pww_dt_hs_bs_sh_3
+	}
+	text = {
+		localization_key = pww_dt_h_bs_enough
+	}
+}
+defined_text = {
+	name = pww_dt_sl_hsres_3
+	text = {
+		trigger = { ROOT = { check_variable = { pww_dbh_3 > 0.004 } } }
+		localization_key = pww_dt_hs_ress_3
+	}
+	text = {
+		localization_key = pww_dt_hs_res_3
 	}
 }
 defined_text = {
@@ -6595,7 +9369,7 @@ defined_text = {
 	}
 	text = {
 		trigger = { ROOT = { check_variable = { pww_dbk_3 = 3 } } }
-		localization_key = pww_dt_hs_res_3
+		localization_key = pww_dt_hs_resw_3
 	}
 	text = {
 		trigger = { ROOT = { check_variable = { pww_dbk_3 = 4 } } }
@@ -6627,6 +9401,26 @@ defined_text = {
 	}
 	text = {
 		localization_key = pww_dt_h_b_nosp
+	}
+}
+defined_text = {
+	name = pww_dt_sl_hsbs_4
+	text = {
+		trigger = { ROOT = { check_variable = { pww_dbtp_4 > 0.5 } } }
+		localization_key = pww_dt_hs_b_sp_4
+	}
+	text = {
+		localization_key = pww_dt_h_b_nosp
+	}
+}
+defined_text = {
+	name = pww_dt_sl_hsres_4
+	text = {
+		trigger = { ROOT = { check_variable = { pww_dbh_4 > 0.004 } } }
+		localization_key = pww_dt_hs_ress_4
+	}
+	text = {
+		localization_key = pww_dt_hs_res_4
 	}
 }
 defined_text = {
@@ -6683,7 +9477,7 @@ defined_text = {
 	}
 	text = {
 		trigger = { ROOT = { check_variable = { pww_dbk_4 = 3 } } }
-		localization_key = pww_dt_hs_res_4
+		localization_key = pww_dt_hs_resw_4
 	}
 	text = {
 		trigger = { ROOT = { check_variable = { pww_dbk_4 = 4 } } }
@@ -6715,6 +9509,26 @@ defined_text = {
 	}
 	text = {
 		localization_key = pww_dt_h_b_nosp
+	}
+}
+defined_text = {
+	name = pww_dt_sl_hsbs_5
+	text = {
+		trigger = { ROOT = { check_variable = { pww_dbtp_5 > 0.5 } } }
+		localization_key = pww_dt_hs_b_sp_5
+	}
+	text = {
+		localization_key = pww_dt_h_b_nosp
+	}
+}
+defined_text = {
+	name = pww_dt_sl_hsres_5
+	text = {
+		trigger = { ROOT = { check_variable = { pww_dbh_5 > 0.004 } } }
+		localization_key = pww_dt_hs_ress_5
+	}
+	text = {
+		localization_key = pww_dt_hs_res_5
 	}
 }
 defined_text = {
@@ -6771,7 +9585,7 @@ defined_text = {
 	}
 	text = {
 		trigger = { ROOT = { check_variable = { pww_dbk_5 = 3 } } }
-		localization_key = pww_dt_hs_res_5
+		localization_key = pww_dt_hs_resw_5
 	}
 	text = {
 		trigger = { ROOT = { check_variable = { pww_dbk_5 = 4 } } }
@@ -6803,6 +9617,26 @@ defined_text = {
 	}
 	text = {
 		localization_key = pww_dt_h_b_nosp
+	}
+}
+defined_text = {
+	name = pww_dt_sl_hsbs_6
+	text = {
+		trigger = { ROOT = { check_variable = { pww_dbtp_6 > 0.5 } } }
+		localization_key = pww_dt_hs_b_sp_6
+	}
+	text = {
+		localization_key = pww_dt_h_b_nosp
+	}
+}
+defined_text = {
+	name = pww_dt_sl_hsres_6
+	text = {
+		trigger = { ROOT = { check_variable = { pww_dbh_6 > 0.004 } } }
+		localization_key = pww_dt_hs_ress_6
+	}
+	text = {
+		localization_key = pww_dt_hs_res_6
 	}
 }
 defined_text = {
@@ -6859,7 +9693,7 @@ defined_text = {
 	}
 	text = {
 		trigger = { ROOT = { check_variable = { pww_dbk_6 = 3 } } }
-		localization_key = pww_dt_hs_res_6
+		localization_key = pww_dt_hs_resw_6
 	}
 	text = {
 		trigger = { ROOT = { check_variable = { pww_dbk_6 = 4 } } }
@@ -6891,6 +9725,26 @@ defined_text = {
 	}
 	text = {
 		localization_key = pww_dt_h_b_nosp
+	}
+}
+defined_text = {
+	name = pww_dt_sl_hsbs_7
+	text = {
+		trigger = { ROOT = { check_variable = { pww_dbtp_7 > 0.5 } } }
+		localization_key = pww_dt_hs_b_sp_7
+	}
+	text = {
+		localization_key = pww_dt_h_b_nosp
+	}
+}
+defined_text = {
+	name = pww_dt_sl_hsres_7
+	text = {
+		trigger = { ROOT = { check_variable = { pww_dbh_7 > 0.004 } } }
+		localization_key = pww_dt_hs_ress_7
+	}
+	text = {
+		localization_key = pww_dt_hs_res_7
 	}
 }
 defined_text = {
@@ -6947,7 +9801,7 @@ defined_text = {
 	}
 	text = {
 		trigger = { ROOT = { check_variable = { pww_dbk_7 = 3 } } }
-		localization_key = pww_dt_hs_res_7
+		localization_key = pww_dt_hs_resw_7
 	}
 	text = {
 		trigger = { ROOT = { check_variable = { pww_dbk_7 = 4 } } }
@@ -6962,9 +9816,19 @@ defined_text = {
 	}
 }
 defined_text = {
+	name = pww_dt_sl_rtitle
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_do_act = 2 } } }
+		localization_key = pww_dt_rtitle_2
+	}
+	text = {
+		localization_key = pww_dt_rtitle_0
+	}
+}
+defined_text = {
 	name = pww_dt_sl_hra_0
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbts_0 > 0.5 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbts_0 > 0.5 } } }
 		localization_key = pww_dt_hr_a_sh_0
 	}
 	text = {
@@ -6974,7 +9838,7 @@ defined_text = {
 defined_text = {
 	name = pww_dt_sl_hrb_0
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbsp_0 > 0.5 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbsp_0 > 0.5 } } }
 		localization_key = pww_dt_hr_b_sp_0
 	}
 	text = {
@@ -6982,25 +9846,45 @@ defined_text = {
 	}
 }
 defined_text = {
+	name = pww_dt_sl_hrbs_0
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbsp_0 > 0.5 } } }
+		localization_key = pww_dt_hr_b_sp_0
+	}
+	text = {
+		localization_key = pww_dt_h_b_nosp
+	}
+}
+defined_text = {
+	name = pww_dt_sl_hrres_0
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbh_0 > 0.004 } } }
+		localization_key = pww_dt_hr_ress_0
+	}
+	text = {
+		localization_key = pww_dt_hr_res_0
+	}
+}
+defined_text = {
 	name = pww_dt_sl_hir_0
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbk_0 = 1 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 1 } } }
 		localization_key = pww_dt_hr_civ_0
 	}
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbk_0 = 2 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 2 } } }
 		localization_key = pww_dt_hr_pp_0
 	}
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbk_0 = 3 } } }
-		localization_key = pww_dt_hr_res_0
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 3 } } }
+		localization_key = pww_dt_hr_resw_0
 	}
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbk_0 = 4 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 4 } } }
 		localization_key = pww_dt_hr_eq_0
 	}
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbk_0 = 5 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_0 = 5 } } }
 		localization_key = pww_dt_hr_lic_0
 	}
 	text = {
@@ -7010,7 +9894,7 @@ defined_text = {
 defined_text = {
 	name = pww_dt_sl_hra_1
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbts_1 > 0.5 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbts_1 > 0.5 } } }
 		localization_key = pww_dt_hr_a_sh_1
 	}
 	text = {
@@ -7020,7 +9904,7 @@ defined_text = {
 defined_text = {
 	name = pww_dt_sl_hrb_1
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbsp_1 > 0.5 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbsp_1 > 0.5 } } }
 		localization_key = pww_dt_hr_b_sp_1
 	}
 	text = {
@@ -7028,25 +9912,45 @@ defined_text = {
 	}
 }
 defined_text = {
+	name = pww_dt_sl_hrbs_1
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbsp_1 > 0.5 } } }
+		localization_key = pww_dt_hr_b_sp_1
+	}
+	text = {
+		localization_key = pww_dt_h_b_nosp
+	}
+}
+defined_text = {
+	name = pww_dt_sl_hrres_1
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbh_1 > 0.004 } } }
+		localization_key = pww_dt_hr_ress_1
+	}
+	text = {
+		localization_key = pww_dt_hr_res_1
+	}
+}
+defined_text = {
 	name = pww_dt_sl_hir_1
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbk_1 = 1 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 1 } } }
 		localization_key = pww_dt_hr_civ_1
 	}
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbk_1 = 2 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 2 } } }
 		localization_key = pww_dt_hr_pp_1
 	}
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbk_1 = 3 } } }
-		localization_key = pww_dt_hr_res_1
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 3 } } }
+		localization_key = pww_dt_hr_resw_1
 	}
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbk_1 = 4 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 4 } } }
 		localization_key = pww_dt_hr_eq_1
 	}
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbk_1 = 5 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_1 = 5 } } }
 		localization_key = pww_dt_hr_lic_1
 	}
 	text = {
@@ -7056,7 +9960,7 @@ defined_text = {
 defined_text = {
 	name = pww_dt_sl_hra_2
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbts_2 > 0.5 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbts_2 > 0.5 } } }
 		localization_key = pww_dt_hr_a_sh_2
 	}
 	text = {
@@ -7066,7 +9970,7 @@ defined_text = {
 defined_text = {
 	name = pww_dt_sl_hrb_2
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbsp_2 > 0.5 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbsp_2 > 0.5 } } }
 		localization_key = pww_dt_hr_b_sp_2
 	}
 	text = {
@@ -7074,25 +9978,45 @@ defined_text = {
 	}
 }
 defined_text = {
+	name = pww_dt_sl_hrbs_2
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbsp_2 > 0.5 } } }
+		localization_key = pww_dt_hr_b_sp_2
+	}
+	text = {
+		localization_key = pww_dt_h_b_nosp
+	}
+}
+defined_text = {
+	name = pww_dt_sl_hrres_2
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbh_2 > 0.004 } } }
+		localization_key = pww_dt_hr_ress_2
+	}
+	text = {
+		localization_key = pww_dt_hr_res_2
+	}
+}
+defined_text = {
 	name = pww_dt_sl_hir_2
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbk_2 = 1 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 1 } } }
 		localization_key = pww_dt_hr_civ_2
 	}
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbk_2 = 2 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 2 } } }
 		localization_key = pww_dt_hr_pp_2
 	}
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbk_2 = 3 } } }
-		localization_key = pww_dt_hr_res_2
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 3 } } }
+		localization_key = pww_dt_hr_resw_2
 	}
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbk_2 = 4 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 4 } } }
 		localization_key = pww_dt_hr_eq_2
 	}
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbk_2 = 5 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_2 = 5 } } }
 		localization_key = pww_dt_hr_lic_2
 	}
 	text = {
@@ -7102,7 +10026,7 @@ defined_text = {
 defined_text = {
 	name = pww_dt_sl_hra_3
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbts_3 > 0.5 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbts_3 > 0.5 } } }
 		localization_key = pww_dt_hr_a_sh_3
 	}
 	text = {
@@ -7112,7 +10036,7 @@ defined_text = {
 defined_text = {
 	name = pww_dt_sl_hrb_3
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbsp_3 > 0.5 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbsp_3 > 0.5 } } }
 		localization_key = pww_dt_hr_b_sp_3
 	}
 	text = {
@@ -7120,25 +10044,45 @@ defined_text = {
 	}
 }
 defined_text = {
+	name = pww_dt_sl_hrbs_3
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbsp_3 > 0.5 } } }
+		localization_key = pww_dt_hr_b_sp_3
+	}
+	text = {
+		localization_key = pww_dt_h_b_nosp
+	}
+}
+defined_text = {
+	name = pww_dt_sl_hrres_3
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbh_3 > 0.004 } } }
+		localization_key = pww_dt_hr_ress_3
+	}
+	text = {
+		localization_key = pww_dt_hr_res_3
+	}
+}
+defined_text = {
 	name = pww_dt_sl_hir_3
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbk_3 = 1 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 1 } } }
 		localization_key = pww_dt_hr_civ_3
 	}
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbk_3 = 2 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 2 } } }
 		localization_key = pww_dt_hr_pp_3
 	}
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbk_3 = 3 } } }
-		localization_key = pww_dt_hr_res_3
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 3 } } }
+		localization_key = pww_dt_hr_resw_3
 	}
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbk_3 = 4 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 4 } } }
 		localization_key = pww_dt_hr_eq_3
 	}
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbk_3 = 5 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_3 = 5 } } }
 		localization_key = pww_dt_hr_lic_3
 	}
 	text = {
@@ -7148,7 +10092,7 @@ defined_text = {
 defined_text = {
 	name = pww_dt_sl_hra_4
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbtp_4 > 0.5 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbtp_4 > 0.5 } } }
 		localization_key = pww_dt_hr_a_sp_4
 	}
 	text = {
@@ -7158,7 +10102,7 @@ defined_text = {
 defined_text = {
 	name = pww_dt_sl_hrb_4
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbss_4 > 0.5 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbss_4 > 0.5 } } }
 		localization_key = pww_dt_hr_b_sh_4
 	}
 	text = {
@@ -7166,25 +10110,45 @@ defined_text = {
 	}
 }
 defined_text = {
+	name = pww_dt_sl_hrbs_4
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbss_4 > 0.5 } } }
+		localization_key = pww_dt_hr_bs_sh_4
+	}
+	text = {
+		localization_key = pww_dt_h_bs_enough
+	}
+}
+defined_text = {
+	name = pww_dt_sl_hrres_4
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbh_4 > 0.004 } } }
+		localization_key = pww_dt_hr_ress_4
+	}
+	text = {
+		localization_key = pww_dt_hr_res_4
+	}
+}
+defined_text = {
 	name = pww_dt_sl_hir_4
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbk_4 = 1 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 1 } } }
 		localization_key = pww_dt_hr_civ_4
 	}
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbk_4 = 2 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 2 } } }
 		localization_key = pww_dt_hr_pp_4
 	}
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbk_4 = 3 } } }
-		localization_key = pww_dt_hr_res_4
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 3 } } }
+		localization_key = pww_dt_hr_resw_4
 	}
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbk_4 = 4 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 4 } } }
 		localization_key = pww_dt_hr_eq_4
 	}
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbk_4 = 5 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_4 = 5 } } }
 		localization_key = pww_dt_hr_lic_4
 	}
 	text = {
@@ -7194,7 +10158,7 @@ defined_text = {
 defined_text = {
 	name = pww_dt_sl_hra_5
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbtp_5 > 0.5 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbtp_5 > 0.5 } } }
 		localization_key = pww_dt_hr_a_sp_5
 	}
 	text = {
@@ -7204,7 +10168,7 @@ defined_text = {
 defined_text = {
 	name = pww_dt_sl_hrb_5
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbss_5 > 0.5 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbss_5 > 0.5 } } }
 		localization_key = pww_dt_hr_b_sh_5
 	}
 	text = {
@@ -7212,25 +10176,45 @@ defined_text = {
 	}
 }
 defined_text = {
+	name = pww_dt_sl_hrbs_5
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbss_5 > 0.5 } } }
+		localization_key = pww_dt_hr_bs_sh_5
+	}
+	text = {
+		localization_key = pww_dt_h_bs_enough
+	}
+}
+defined_text = {
+	name = pww_dt_sl_hrres_5
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbh_5 > 0.004 } } }
+		localization_key = pww_dt_hr_ress_5
+	}
+	text = {
+		localization_key = pww_dt_hr_res_5
+	}
+}
+defined_text = {
 	name = pww_dt_sl_hir_5
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbk_5 = 1 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 1 } } }
 		localization_key = pww_dt_hr_civ_5
 	}
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbk_5 = 2 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 2 } } }
 		localization_key = pww_dt_hr_pp_5
 	}
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbk_5 = 3 } } }
-		localization_key = pww_dt_hr_res_5
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 3 } } }
+		localization_key = pww_dt_hr_resw_5
 	}
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbk_5 = 4 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 4 } } }
 		localization_key = pww_dt_hr_eq_5
 	}
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbk_5 = 5 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_5 = 5 } } }
 		localization_key = pww_dt_hr_lic_5
 	}
 	text = {
@@ -7240,7 +10224,7 @@ defined_text = {
 defined_text = {
 	name = pww_dt_sl_hra_6
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbtp_6 > 0.5 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbtp_6 > 0.5 } } }
 		localization_key = pww_dt_hr_a_sp_6
 	}
 	text = {
@@ -7250,7 +10234,7 @@ defined_text = {
 defined_text = {
 	name = pww_dt_sl_hrb_6
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbss_6 > 0.5 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbss_6 > 0.5 } } }
 		localization_key = pww_dt_hr_b_sh_6
 	}
 	text = {
@@ -7258,25 +10242,45 @@ defined_text = {
 	}
 }
 defined_text = {
+	name = pww_dt_sl_hrbs_6
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbss_6 > 0.5 } } }
+		localization_key = pww_dt_hr_bs_sh_6
+	}
+	text = {
+		localization_key = pww_dt_h_bs_enough
+	}
+}
+defined_text = {
+	name = pww_dt_sl_hrres_6
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbh_6 > 0.004 } } }
+		localization_key = pww_dt_hr_ress_6
+	}
+	text = {
+		localization_key = pww_dt_hr_res_6
+	}
+}
+defined_text = {
 	name = pww_dt_sl_hir_6
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbk_6 = 1 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 1 } } }
 		localization_key = pww_dt_hr_civ_6
 	}
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbk_6 = 2 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 2 } } }
 		localization_key = pww_dt_hr_pp_6
 	}
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbk_6 = 3 } } }
-		localization_key = pww_dt_hr_res_6
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 3 } } }
+		localization_key = pww_dt_hr_resw_6
 	}
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbk_6 = 4 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 4 } } }
 		localization_key = pww_dt_hr_eq_6
 	}
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbk_6 = 5 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_6 = 5 } } }
 		localization_key = pww_dt_hr_lic_6
 	}
 	text = {
@@ -7286,7 +10290,7 @@ defined_text = {
 defined_text = {
 	name = pww_dt_sl_hra_7
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbtp_7 > 0.5 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbtp_7 > 0.5 } } }
 		localization_key = pww_dt_hr_a_sp_7
 	}
 	text = {
@@ -7296,7 +10300,7 @@ defined_text = {
 defined_text = {
 	name = pww_dt_sl_hrb_7
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbss_7 > 0.5 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_dbss_7 > 0.5 } } }
 		localization_key = pww_dt_hr_b_sh_7
 	}
 	text = {
@@ -7304,64 +10308,46 @@ defined_text = {
 	}
 }
 defined_text = {
-	name = pww_dt_sl_hir_7
+	name = pww_dt_sl_hrbs_7
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbk_7 = 1 } } }
-		localization_key = pww_dt_hr_civ_7
+		trigger = { ROOT = { check_variable = { pww_drx_dbss_7 > 0.5 } } }
+		localization_key = pww_dt_hr_bs_sh_7
 	}
 	text = {
-		trigger = { ROOT = { check_variable = { pww_dbk_7 = 2 } } }
-		localization_key = pww_dt_hr_pp_7
-	}
-	text = {
-		trigger = { ROOT = { check_variable = { pww_dbk_7 = 3 } } }
-		localization_key = pww_dt_hr_res_7
-	}
-	text = {
-		trigger = { ROOT = { check_variable = { pww_dbk_7 = 4 } } }
-		localization_key = pww_dt_hr_eq_7
-	}
-	text = {
-		trigger = { ROOT = { check_variable = { pww_dbk_7 = 5 } } }
-		localization_key = pww_dt_hr_lic_7
-	}
-	text = {
-		localization_key = pww_dt_empty
+		localization_key = pww_dt_h_bs_enough
 	}
 }
 defined_text = {
-	name = pww_dt_sl_rterms
+	name = pww_dt_sl_hrres_7
 	text = {
-		trigger = { ROOT = { check_variable = { pww_do_len = 0 } check_variable = { pww_do_bind = 0 } } }
-		localization_key = pww_dt_rterms_0_0
+		trigger = { ROOT = { check_variable = { pww_drx_dbh_7 > 0.004 } } }
+		localization_key = pww_dt_hr_ress_7
 	}
 	text = {
-		trigger = { ROOT = { check_variable = { pww_do_len = 0 } check_variable = { pww_do_bind = 1 } } }
-		localization_key = pww_dt_rterms_0_1
+		localization_key = pww_dt_hr_res_7
+	}
+}
+defined_text = {
+	name = pww_dt_sl_hir_7
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 1 } } }
+		localization_key = pww_dt_hr_civ_7
 	}
 	text = {
-		trigger = { ROOT = { check_variable = { pww_do_len = 1 } check_variable = { pww_do_bind = 0 } } }
-		localization_key = pww_dt_rterms_1_0
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 2 } } }
+		localization_key = pww_dt_hr_pp_7
 	}
 	text = {
-		trigger = { ROOT = { check_variable = { pww_do_len = 1 } check_variable = { pww_do_bind = 1 } } }
-		localization_key = pww_dt_rterms_1_1
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 3 } } }
+		localization_key = pww_dt_hr_resw_7
 	}
 	text = {
-		trigger = { ROOT = { check_variable = { pww_do_len = 2 } check_variable = { pww_do_bind = 0 } } }
-		localization_key = pww_dt_rterms_2_0
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 4 } } }
+		localization_key = pww_dt_hr_eq_7
 	}
 	text = {
-		trigger = { ROOT = { check_variable = { pww_do_len = 2 } check_variable = { pww_do_bind = 1 } } }
-		localization_key = pww_dt_rterms_2_1
-	}
-	text = {
-		trigger = { ROOT = { check_variable = { pww_do_len = 3 } check_variable = { pww_do_bind = 0 } } }
-		localization_key = pww_dt_rterms_3_0
-	}
-	text = {
-		trigger = { ROOT = { check_variable = { pww_do_len = 3 } check_variable = { pww_do_bind = 1 } } }
-		localization_key = pww_dt_rterms_3_1
+		trigger = { ROOT = { check_variable = { pww_drx_dbk_7 = 5 } } }
+		localization_key = pww_dt_hr_lic_7
 	}
 	text = {
 		localization_key = pww_dt_empty
@@ -7370,7 +10356,7 @@ defined_text = {
 defined_text = {
 	name = pww_dt_sl_counter_1
 	text = {
-		trigger = { ROOT = { check_variable = { pww_do_frame = 1 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_do_frame = 1 } } }
 		localization_key = pww_dt_counter_1s
 	}
 	text = {
@@ -7380,10 +10366,58 @@ defined_text = {
 defined_text = {
 	name = pww_dt_sl_counter_2
 	text = {
-		trigger = { ROOT = { check_variable = { pww_do_frame = 1 } } }
+		trigger = { ROOT = { check_variable = { pww_drx_do_frame = 1 } } }
 		localization_key = pww_dt_counter_2s
 	}
 	text = {
 		localization_key = pww_dt_counter_2
+	}
+}
+defined_text = {
+	name = pww_dt_sl_rhint
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_do_act = 2 } } }
+		localization_key = pww_dt_counter_hint_p
+	}
+	text = {
+		localization_key = pww_dt_counter_hint
+	}
+}
+defined_text = {
+	name = pww_dt_sl_rterms
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_do_len = 0 } check_variable = { pww_drx_do_bind = 0 } } }
+		localization_key = pww_dt_rterms_0_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_do_len = 0 } check_variable = { pww_drx_do_bind = 1 } } }
+		localization_key = pww_dt_rterms_0_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_do_len = 1 } check_variable = { pww_drx_do_bind = 0 } } }
+		localization_key = pww_dt_rterms_1_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_do_len = 1 } check_variable = { pww_drx_do_bind = 1 } } }
+		localization_key = pww_dt_rterms_1_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_do_len = 2 } check_variable = { pww_drx_do_bind = 0 } } }
+		localization_key = pww_dt_rterms_2_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_do_len = 2 } check_variable = { pww_drx_do_bind = 1 } } }
+		localization_key = pww_dt_rterms_2_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_do_len = 3 } check_variable = { pww_drx_do_bind = 0 } } }
+		localization_key = pww_dt_rterms_3_0
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_drx_do_len = 3 } check_variable = { pww_drx_do_bind = 1 } } }
+		localization_key = pww_dt_rterms_3_1
+	}
+	text = {
+		localization_key = pww_dt_empty
 	}
 }

@@ -5,7 +5,8 @@
 # buyers' shortfalls are the live game's.
 # Day 1 blocks every natural sale (ITA's 30-day human limit pushed ahead, the
 # AI-to-AI window full) so only the scripted sellers below act. Day 32:
-#   ai_to_ai     British Malaya (300 unsold rubber) runs its sale intent with
+#   ai_to_ai     British Malaya (300 unsold rubber; an IRRA member made
+#                tempted, so it undercuts the cartel) runs its sale intent with
 #                ITA blocked: it drafts a rubber sale (we give rubber, they
 #                pay, at or a little below market) to an AI short of rubber,
 #                and the real Propose Trade Deal action carries it: the buyer
@@ -47,6 +48,18 @@ on_actions = {
 						set_variable = { pww_diplo_test_res = 2 }
 						set_variable = { pww_diplo_test_unsold = 300 }
 						set_variable = { pww_diplo_test_exported = 0 }
+						# Malaya is in IRRA (Valuation v2: members hold the cartel
+						# price): a tempted member undercuts, so the glut sale
+						# runs (diplo_value_v2 C tests the cartel limits).
+						set_temp_variable = { pww_in_res = 2 }
+						if = {
+							limit = { has_global_flag = pww_cartel_loaded }
+							pww_cartel_find_member = yes
+							if = {
+								limit = { check_variable = { pww_out_cm > -1 } }
+								set_variable = { global.pww_cm_tempt^pww_out_cm = 50 }
+							}
+						}
 						clr_country_flag = pww_diplo_ai_offer
 						clr_country_flag = pww_diplo_ai_sell_cd
 						pww_diplo_ai_sale_intent = yes
@@ -182,7 +195,15 @@ on_actions = {
 						check_variable = { pww_dr_from = TUR }
 					}
 					set_global_flag = pww_dtest_gs_recv
-					log = "PWW_RESULT diplo_glut_sale.received PASS [GetDateText] Turkey's chromium sale reached the human Italy's receive screen (day [?global.pww_dtest_gs_day|0]; frame [?pww_do_frame|0], rows [?pww_dbk_0|0]x[?pww_dba_0|0] for [?pww_dbk_4|0]x[?pww_dba_4|2])"
+					# The receive window reads the sender's snapshot (pww_drx_*).
+					var:pww_dr_from = {
+						set_temp_variable = { pww_dtest_gs_rf = pww_drx_do_frame }
+						set_temp_variable = { pww_dtest_gs_rk0 = pww_drx_dbk_0 }
+						set_temp_variable = { pww_dtest_gs_ra0 = pww_drx_dba_0 }
+						set_temp_variable = { pww_dtest_gs_rk4 = pww_drx_dbk_4 }
+						set_temp_variable = { pww_dtest_gs_ra4 = pww_drx_dba_4 }
+					}
+					log = "PWW_RESULT diplo_glut_sale.received PASS [GetDateText] Turkey's chromium sale reached the human Italy's receive screen (day [?global.pww_dtest_gs_day|0]; frame [?pww_dtest_gs_rf|0], rows [?pww_dtest_gs_rk0|0]x[?pww_dtest_gs_ra0|0] for [?pww_dtest_gs_rk4|0]x[?pww_dtest_gs_ra4|2])"
 				}
 				if = {
 					limit = {

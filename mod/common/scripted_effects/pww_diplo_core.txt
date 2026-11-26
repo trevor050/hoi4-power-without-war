@@ -47,7 +47,7 @@
 #
 # TALKS (negotiations, pww_diplo_talks.txt)          global.pww_dt_<field>
 #   sender, target     countries (sender = the side that tables offers)
-#   act                0 Propose Trade Deal, 1 Lease Mines
+#   act                0 Propose Trade Deal, 1 Lease Mines, 2 Poach Supplier
 #   status             0 open, 1 signed, 2 broken off, 3 expired,
 #                      4 superseded (holder opened an auction)
 #   opened, expires    num_days
@@ -373,14 +373,21 @@ pww_diplo_read_res = {
 # Market position of one resource (country scope). in: pww_dg_res (0..6).
 # Runs pww_diplo_read_res first (pww_dg_prod / _net / _desp are set too).
 # out: pww_dg_exp     resource_exported@res (units it already sells)
-#      pww_dg_unsold  unsold output: the positive part of resource@res (what
-#                     is left after its own use and its exports earns nothing)
+#      pww_dg_unsold  unsold output: the positive part of resource@res minus
+#                     what storage takes (pww_stock_in_<res>: the stockpiles
+#                     lane stores part of the leftover without a cost
+#                     modifier, so resource@ still shows it)
+#      pww_dg_stin    the storage intake subtracted above (0 for oil, or
+#                     without the stockpiles lane)
+#      pww_dg_spare   pww_dg_unsold + pww_dg_stin: units it can sell without
+#                     losing a sale or eating into its own use
 #      pww_dg_imp     resource_imported@res (what it buys on the open market)
 #      pww_dg_demand  what it would buy from us: its imports plus any
 #                     shortfall still open (the negative part of resource@res)
 # Test hooks: country vars pww_diplo_test_unsold / pww_diplo_test_exported
 # replace those figures (tests cannot lower resource@ in game), for every
-# resource or only for resource pww_diplo_test_res when that is set.
+# resource or only for resource pww_diplo_test_res when that is set. A test
+# unsold figure also zeroes the storage intake (it stands for all the spare).
 ###############################################################################
 pww_diplo_read_market = {
 	pww_diplo_read_res = yes
@@ -423,6 +430,38 @@ pww_diplo_read_market = {
 	}
 	set_temp_variable = { pww_dg_unsold = pww_dg_net }
 	clamp_temp_variable = { var = pww_dg_unsold min = 0 max = 99999 }
+	# Storage already takes part of the leftover (Valuation v2).
+	set_temp_variable = { pww_dg_stin = 0 }
+	if = {
+		limit = { check_variable = { pww_dg_res = 1 } }
+		set_temp_variable = { pww_dg_stin = pww_stock_in_aluminium }
+	}
+	else_if = {
+		limit = { check_variable = { pww_dg_res = 2 } }
+		set_temp_variable = { pww_dg_stin = pww_stock_in_rubber }
+	}
+	else_if = {
+		limit = { check_variable = { pww_dg_res = 3 } }
+		set_temp_variable = { pww_dg_stin = pww_stock_in_tungsten }
+	}
+	else_if = {
+		limit = { check_variable = { pww_dg_res = 4 } }
+		set_temp_variable = { pww_dg_stin = pww_stock_in_steel }
+	}
+	else_if = {
+		limit = { check_variable = { pww_dg_res = 5 } }
+		set_temp_variable = { pww_dg_stin = pww_stock_in_chromium }
+	}
+	else_if = {
+		limit = { check_variable = { pww_dg_res = 6 } }
+		set_temp_variable = { pww_dg_stin = pww_stock_in_coal }
+	}
+	if = {
+		limit = { check_variable = { pww_dg_stin > pww_dg_unsold } }
+		set_temp_variable = { pww_dg_stin = pww_dg_unsold }
+	}
+	clamp_temp_variable = { var = pww_dg_stin min = 0 max = 99999 }
+	subtract_from_temp_variable = { pww_dg_unsold = pww_dg_stin }
 	set_temp_variable = { pww_dg_demand = pww_dg_net }
 	multiply_temp_variable = { pww_dg_demand = -1 }
 	clamp_temp_variable = { var = pww_dg_demand min = 0 max = 99999 }
@@ -437,11 +476,157 @@ pww_diplo_read_market = {
 		if = {
 			limit = { has_variable = pww_diplo_test_unsold }
 			set_temp_variable = { pww_dg_unsold = pww_diplo_test_unsold }
+			set_temp_variable = { pww_dg_stin = 0 }
 		}
 		if = {
 			limit = { has_variable = pww_diplo_test_exported }
 			set_temp_variable = { pww_dg_exp = pww_diplo_test_exported }
 		}
+	}
+	# Test hook: pww_diplo_test_demand (same resource filter) replaces what it
+	# would buy: imports stand for it, and a shortfall reads as none.
+	if = {
+		limit = {
+			has_variable = pww_diplo_test_demand
+			OR = {
+				NOT = { has_variable = pww_diplo_test_res }
+				check_variable = { pww_diplo_test_res = pww_dg_res }
+			}
+		}
+		set_temp_variable = { pww_dg_demand = pww_diplo_test_demand }
+		set_temp_variable = { pww_dg_imp = pww_diplo_test_demand }
+		if = {
+			limit = { check_variable = { pww_dg_net < 0 } }
+			set_temp_variable = { pww_dg_net = 0 }
+		}
+	}
+	set_temp_variable = { pww_dg_spare = pww_dg_unsold }
+	add_to_temp_variable = { pww_dg_spare = pww_dg_stin }
+}
+
+###############################################################################
+# Reserve value of one unit (country scope; Valuation v2). in: pww_dg_res.
+# out: pww_dg_room   1 when the stockpiles lane is loaded, the resource is not
+#                    oil, the country keeps stockpiles (flag pww_stock_active)
+#                    and its storage of it is not full (fill <=
+#                    global.pww_stock_c_full)
+#      pww_dg_rrate  what one unit is worth to it in storage, as a share of
+#                    market (pww_stock_value_<res> x 8): 0.4 at zero world
+#                    tension to 1.2 near war (1.3 at war), times 1 - fill^2;
+#                    0 without room (the buyer's rate)
+#      pww_dg_stocked 1 when the stockpiles lane prices its spare output:
+#                    lane loaded, not oil, flag pww_stock_active
+#      pww_dg_wrate  the seller's walk-away for a spare unit: the same reserve
+#                    value at EVERY fill (no room cut-off), so it falls
+#                    smoothly to ~0 as storage fills; 0 unless stocked
+#      pww_dg_fill   its fill of that storage (0..100; 0 without the lane)
+# Keeps every other pww_dg_* read. Calls the stockpiles lane only through
+# meta_effect under its load flag, so this lane loads alone.
+###############################################################################
+pww_diplo_read_reserve = {
+	set_temp_variable = { pww_dg_room = 0 }
+	set_temp_variable = { pww_dg_rrate = 0 }
+	set_temp_variable = { pww_dg_fill = 0 }
+	set_temp_variable = { pww_dg_stocked = 0 }
+	set_temp_variable = { pww_dg_wrate = 0 }
+	if = {
+		limit = {
+			has_global_flag = pww_stock_loaded
+			has_country_flag = pww_stock_active
+			check_variable = { pww_dg_res > 0 }
+		}
+		if = {
+			limit = { check_variable = { pww_dg_res = 1 } }
+			set_temp_variable = { pww_dg_fill = pww_stock_fill_aluminium }
+			meta_effect = { text = { pww_stock_value_aluminium = [Y] } Y = "yes" }
+		}
+		else_if = {
+			limit = { check_variable = { pww_dg_res = 2 } }
+			set_temp_variable = { pww_dg_fill = pww_stock_fill_rubber }
+			meta_effect = { text = { pww_stock_value_rubber = [Y] } Y = "yes" }
+		}
+		else_if = {
+			limit = { check_variable = { pww_dg_res = 3 } }
+			set_temp_variable = { pww_dg_fill = pww_stock_fill_tungsten }
+			meta_effect = { text = { pww_stock_value_tungsten = [Y] } Y = "yes" }
+		}
+		else_if = {
+			limit = { check_variable = { pww_dg_res = 4 } }
+			set_temp_variable = { pww_dg_fill = pww_stock_fill_steel }
+			meta_effect = { text = { pww_stock_value_steel = [Y] } Y = "yes" }
+		}
+		else_if = {
+			limit = { check_variable = { pww_dg_res = 5 } }
+			set_temp_variable = { pww_dg_fill = pww_stock_fill_chromium }
+			meta_effect = { text = { pww_stock_value_chromium = [Y] } Y = "yes" }
+		}
+		else = {
+			set_temp_variable = { pww_dg_fill = pww_stock_fill_coal }
+			meta_effect = { text = { pww_stock_value_coal = [Y] } Y = "yes" }
+		}
+		set_temp_variable = { pww_dg_stocked = 1 }
+		set_temp_variable = { pww_dg_wrate = pww_stock_unit_value }
+		multiply_temp_variable = { pww_dg_wrate = 8 }
+		clamp_temp_variable = { var = pww_dg_wrate min = 0 max = 2 }
+		if = {
+			limit = { NOT = { check_variable = { pww_dg_fill > global.pww_stock_c_full } } }
+			set_temp_variable = { pww_dg_room = 1 }
+			set_temp_variable = { pww_dg_rrate = pww_dg_wrate }
+		}
+	}
+}
+
+###############################################################################
+# Delivered cost of a resource flow (any scope; Valuation v2).
+# in : pww_dsh_s (seller), pww_dsh_b (buyer), pww_dsh_r (resource 0..6)
+# out: pww_dsh_cost   shipping in civilian factories per unit a day (market
+#                     is 0.125); 0 without the logistics lane
+#      pww_dsh_share  pww_dsh_cost / 0.125
+#      pww_dsh_route  0 land, 1 sea, 2 none (undeliverable)
+# Through meta_effect under pww_logi_loaded (pww_logi_delivered_cost). The
+# buyer bears it: the buyer's valuation of goods it receives and the AI's
+# choice of partners subtract it; market figures on the screen do not.
+###############################################################################
+pww_diplo_ship = {
+	set_temp_variable = { pww_dsh_cost = 0 }
+	set_temp_variable = { pww_dsh_share = 0 }
+	set_temp_variable = { pww_dsh_route = 0 }
+	if = {
+		limit = {
+			has_global_flag = pww_logi_loaded
+			NOT = { check_variable = { pww_dsh_s = pww_dsh_b } }
+		}
+		set_temp_variable = { pww_in_seller = pww_dsh_s }
+		set_temp_variable = { pww_in_buyer = pww_dsh_b }
+		set_temp_variable = { pww_in_resource = pww_dsh_r }
+		meta_effect = { text = { pww_logi_delivered_cost = [Y] } Y = "yes" }
+		set_temp_variable = { pww_dsh_cost = pww_logi_cost_per_unit }
+		set_temp_variable = { pww_dsh_route = pww_logi_route }
+		set_temp_variable = { pww_dsh_share = pww_dsh_cost }
+		multiply_temp_variable = { pww_dsh_share = 8 }
+	}
+}
+
+###############################################################################
+# Trade bond of an ordered pair (any scope; Valuation v2).
+# in : pww_dbo_s (seller), pww_dbo_b (buyer)
+# out: pww_dbo_v (0..100; 0 without the relationships lane), pww_dbo_band
+#      (0 strangers .. 3 old partners, 4 soured)
+# Through meta_effect under pww_rel_loaded (pww_rel_get).
+###############################################################################
+pww_diplo_bond = {
+	set_temp_variable = { pww_dbo_v = 0 }
+	set_temp_variable = { pww_dbo_band = 0 }
+	if = {
+		limit = {
+			has_global_flag = pww_rel_loaded
+			NOT = { check_variable = { pww_dbo_s = pww_dbo_b } }
+		}
+		set_temp_variable = { pww_in_seller = pww_dbo_s }
+		set_temp_variable = { pww_in_buyer = pww_dbo_b }
+		meta_effect = { text = { pww_rel_get = [Y] } Y = "yes" }
+		set_temp_variable = { pww_dbo_v = pww_rel_out }
+		set_temp_variable = { pww_dbo_band = pww_rel_band }
 	}
 }
 

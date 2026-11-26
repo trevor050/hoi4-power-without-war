@@ -10,6 +10,8 @@
 # Actions
 #   pww_diplo_propose_agreement   negotiated supply agreement     10 PP
 #   pww_diplo_lease_rights        negotiated named-state lease    25 PP
+#   pww_diplo_poach_supplier      a better delivered deal than    15 PP
+#                                 one of their mod supply deals
 #   pww_diplo_demand_quiet        demand, back channel            25 PP
 #   pww_diplo_demand_public       demand, public ultimatum        50 PP
 #   pww_diplo_pledge_support      patron pledge (reserved deal)   25 PP
@@ -232,6 +234,20 @@ scripted_diplomatic_actions = {
 					add = var:pww_dacc
 				}
 			}
+			pww_diplo_acc_bond = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_do_e_bond }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_lock = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_do_e_lock }
+					add = var:pww_dacc
+				}
+			}
 			pww_diplo_acc_unworkable = {
 				base = 0
 				modifier = {
@@ -256,6 +272,261 @@ scripted_diplomatic_actions = {
 					NOT = { has_country_flag = pww_diplo_pending }
 				}
 				check_variable = { ROOT.pww_diplo_ai_offer_to = THIS }
+				add = 101
+			}
+		}
+	}
+
+	pww_diplo_poach_supplier = {
+		allowed = { always = yes }
+		# Only when they buy under a mod supply deal from someone else that
+		# either side may end (a fixed contract cannot be poached; vanilla
+		# trade is invisible to script).
+		visible = {
+			NOT = { tag = ROOT }
+			NOT = { has_war_with = ROOT }
+			any_of = {
+				array = pww_ag_ids
+				value = pww_dpv_a
+				check_variable = { global.pww_ag_status^pww_dpv_a = 1 }
+				check_variable = { global.pww_ag_kind^pww_dpv_a = 0 }
+				check_variable = { global.pww_ag_committal^pww_dpv_a = 0 }
+				check_variable = { global.pww_ag_buyer^pww_dpv_a = THIS }
+				NOT = { check_variable = { global.pww_ag_seller^pww_dpv_a = ROOT } }
+			}
+		}
+		selectable = {
+			exists = yes
+		}
+		requires_acceptance = yes
+		cost = 15
+		command_power = 0
+		show_acceptance_on_action_button = no
+		icon = 1
+
+		send_scripted_gui = pww_diplo_send_offer_gui
+		reset_send_effect = {
+			set_temp_variable = { pww_dk_target = THIS }
+			set_temp_variable = { pww_dk_act = 2 }
+			ROOT = {
+				if = {
+					limit = {
+						is_ai = yes
+						has_country_flag = pww_diplo_ai_resend_poach
+						check_variable = { pww_do_target = pww_dk_target }
+						check_variable = { pww_do_act = 2 }
+					}
+					clr_country_flag = pww_diplo_ai_resend_poach
+					pww_diplo_offer_changed = yes
+				}
+				else = {
+					pww_diplo_offer_begin = yes
+					# An AI sends the draft it prepared on its tick (kept by
+					# offer_begin); it only drafts afresh when none is kept.
+					if = {
+						limit = {
+							is_ai = yes
+							check_variable = { pww_dob_keep = 0 }
+						}
+						pww_diplo_ai_build_bundle = yes
+						pww_diplo_refresh_display = yes
+						pww_diplo_bundle_mirror = yes
+					}
+				}
+			}
+		}
+		can_be_sent = {
+			# AI senders build the draft in reset_send_effect; ai_acceptance
+			# rejects anything unworkable.
+			OR = {
+				ROOT = { is_ai = yes }
+				AND = {
+						ROOT = {
+							check_variable = { pww_do_valid = 0 }
+							check_variable = { pww_dd_closed = 0 }
+							check_variable = { pww_do_act = 2 }
+							check_variable = { pww_do_target = PREV }
+						}
+				}
+			}
+		}
+		send_description = pww_diplo_offer_send_desc
+
+		on_sent_effect = {
+			if = {
+				limit = { has_global_flag = pww_diplo_debug }
+				log = "[GetDateText] PWW_DIPLO poach sent [ROOT.GetTag]->[THIS.GetTag] incumbent=[?ROOT.pww_do_p_inc.GetTag] total=[?ROOT.pww_do_e_total|0]"
+			}
+			ROOT = {
+				clr_country_flag = pww_diplo_ai_poach
+				set_country_flag = { flag = pww_diplo_pending days = 30 value = 1 }
+			}
+		}
+		complete_effect = {
+			ROOT = {
+				clr_country_flag = pww_diplo_pending
+				pww_diplo_talk_accepted = yes
+			}
+		}
+		reject_effect = {
+			if = {
+				limit = {
+					is_ai = no
+					ROOT = { is_ai = yes }
+				}
+				# A human receiver declined an AI poach offer.
+				ROOT = {
+					clr_country_flag = pww_diplo_pending
+					if = {
+						limit = { always = yes }
+						set_temp_variable = { pww_dtc_t = pww_do_talk }
+						set_temp_variable = { pww_dtc_status = 2 }
+						if = {
+							limit = {
+								check_variable = { pww_dtc_t > -1 }
+								check_variable = { global.pww_dt_status^pww_dtc_t = 0 }
+							}
+							pww_diplo_talk_close = yes
+						}
+					}
+				}
+			}
+			else = {
+				ROOT = {
+					clr_country_flag = pww_diplo_pending
+					pww_diplo_eval_bundle = yes
+					pww_diplo_talk_reply = yes
+				}
+			}
+		}
+
+		receive_scripted_gui = pww_diplo_recv_offer_gui
+		reset_receive_effect = {
+			ROOT = {
+				pww_diplo_mirror_for_receiver = yes
+			}
+			if = {
+				limit = { has_global_flag = pww_diplo_debug }
+				log = "[GetDateText] PWW_DIPLO poach received [ROOT.GetTag]->[THIS.GetTag] incumbent=[?ROOT.pww_do_p_inc.GetTag] frame=[?pww_do_frame|0]"
+			}
+		}
+		can_be_accepted = { always = yes }
+		receive_description = pww_diplo_offer_receive_desc
+
+		accept_title = pww_diplo_offer_accept_title
+		accept_description = pww_diplo_offer_accept_desc
+		reject_title = pww_diplo_offer_reject_title
+		reject_description = pww_diplo_offer_reject_desc
+
+		ai_acceptance = {
+			pww_diplo_acc_terms = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_do_e_terms }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_need = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_do_e_need }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_want = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_do_e_want }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_red_line = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_do_e_red }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_trust = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_do_e_trust }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_relations = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_do_e_rel }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_patron = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_do_e_patron }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_reserve = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_do_e_reserve }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_fair = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_do_e_fair }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_repeat = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_do_e_repeat }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_bond = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_do_e_bond }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_lock = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_do_e_lock }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_unworkable = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_do_e_invalid }
+					add = var:pww_dacc
+				}
+				modifier = {
+					NOT = { check_variable = { ROOT.pww_do_target = THIS } }
+					add = -1000
+				}
+				modifier = {
+					check_variable = { ROOT.pww_dd_closed = 1 }
+					add = -1000
+				}
+			}
+		}
+		ai_desire = {
+			base = -1
+			modifier = {
+				ROOT = {
+					has_country_flag = pww_diplo_ai_poach
+					NOT = { has_country_flag = pww_diplo_pending }
+				}
+				check_variable = { ROOT.pww_diplo_ai_poach_to = THIS }
 				add = 101
 			}
 		}
@@ -466,6 +737,20 @@ scripted_diplomatic_actions = {
 				base = 0
 				modifier = {
 					set_temp_variable = { pww_dacc = ROOT.pww_do_e_repeat }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_bond = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_do_e_bond }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_lock = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_do_e_lock }
 					add = var:pww_dacc
 				}
 			}

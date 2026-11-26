@@ -122,6 +122,8 @@ ui = {
     # AI acceptance reasons (fuzzy hints)
     "pww_diplo_acc_terms": "What they give against what they get",
     "pww_diplo_acc_need": "How badly they need it",
+    "pww_diplo_acc_bond": "Our trading history",
+    "pww_diplo_acc_lock": "Too little trust for a fixed contract",
     "pww_diplo_acc_want": "Something they quietly want",
     "pww_diplo_acc_sweeteners": "Sweeteners and face-saving",
     "pww_diplo_acc_red_line": "A clause they cannot sign",
@@ -281,6 +283,7 @@ ui = {
 ACTIONS = {
     "pww_diplo_propose_agreement": ("Propose Trade Deal", "$pww_act_propose_agreement_desc$"),
     "pww_diplo_lease_rights": ("Lease Mines", "$pww_act_lease_rights_desc$"),
+    "pww_diplo_poach_supplier": ("Poach Supplier", "Offer them a better delivered deal than one of their current supply deals. A long-standing supplier holds on: the older the tie, the bigger the saving must be. Fixed contracts cannot be poached."),
     "pww_diplo_demand_quiet": ("Demand (Quiet)", "$pww_act_demand_quiet_desc$"),
     "pww_diplo_demand_public": ("Demand (Public)", "$pww_act_demand_public_desc$"),
     "pww_diplo_pledge_support": ("Pledge Support", "$pww_act_pledge_support_desc$"),

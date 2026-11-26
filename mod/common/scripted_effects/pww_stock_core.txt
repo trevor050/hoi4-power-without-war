@@ -33,9 +33,10 @@
 #        c_fill_cost = 1 applies the whole intake as a cost instead (the
 #        spec's literal mechanism; cuts exports by ~min_export x intake).
 #        A cartel member's quota request pww_cartel_store_<res> (units a day)
-#        raises the intake to min(request, B, room / period); that extra is
-#        applied as country_resource_cost_<res> (pww_stock_cost_<res>):
-#        withholding exports is the quota's purpose.
+#        is a minimum fill while storage has room: the intake rises to
+#        min(request, room / period), not capped at B; that extra is applied
+#        as country_resource_cost_<res> (pww_stock_cost_<res>): withholding
+#        exports is the quota's purpose.
 #     4. Draw when B < 0 and stock > 0: out = min(-B, cap x c_draw_rate
 #        (throughput), stock / period). Applied as country_resource_<res>.
 #        Part of a draw leaks into exports under the country's trade law

@@ -55,6 +55,7 @@ TESTS: list[Test] = [
     T("tests/diplomacy/diplo_auction", ["--tag", "SWI"]),
     T("tests/diplomacy/diplo_haggle", ["--tag", "GER"]),
     T("tests/diplomacy/diplo_glut_sale", ["--tag", "ITA"]),
+    T("tests/diplomacy/diplo_value_v2", ["--tag", "GER"]),
     T("tests/diplomacy/diplo_seed_reload",
       ["--autosave", "MONTHLY", "--clear-saves"], ["--continue-last-save"]),
     T("tests/situations/sit_wolfram_ai", ["--tag", "HAI"]),
@@ -70,6 +71,8 @@ TESTS: list[Test] = [
       notes="trade talks screenshots (Italy starts short of chromium and coal); never run by this script"),
     T("tests/diplomacy/diplo_gui_look", ["--leave-running", "--screenshot"], group="manual",
       notes="manual GUI look; never run by this script"),
+    T("tests/diplomacy/diplo_price_survey", ["--tag", "HAI", "--days", "400", "--timeout", "3000"], group="manual",
+      notes="one all-AI year; summarize with tests/diplomacy/diplo_price_survey/price_report.py <game.log>"),
 ]
 for _d in sorted((REPO / "tests" / "engine").glob("t*")):
     if _d.is_dir():

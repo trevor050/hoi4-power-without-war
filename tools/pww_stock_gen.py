@@ -121,13 +121,13 @@ pww_stock_tick_{r} = {{
 		multiply_temp_variable = {{ pww_stk_m = global.pww_stock_c_fill_rate }}
 {tmin("pww_stk_f", "pww_stk_m")}		set_temp_variable = {{ pww_stk_cst = pww_stk_f }}
 		multiply_temp_variable = {{ pww_stk_cst = global.pww_stock_c_fill_cost }}
-		# A cartel quota (pww_cartel_store_<res>, units a day) may ask storage
-		# to take more: the extra is withheld through the cost modifier
-		# (cutting exports is the quota's purpose), within B and capacity.
+		# A cartel quota (pww_cartel_store_<res>, units a day) is a minimum
+		# fill while storage has room: the extra over the normal share is
+		# withheld through the cost modifier (cutting exports is the quota's
+		# purpose, so it is not capped at B), within capacity only.
 		if = {{
 			limit = {{ check_variable = {{ pww_cartel_store_{r} > pww_stk_f }} }}
 			set_temp_variable = {{ pww_stk_g = pww_cartel_store_{r} }}
-			if = {{ limit = {{ check_variable = {{ pww_stk_g > pww_stk_b }} }} set_temp_variable = {{ pww_stk_g = pww_stk_b }} }}
 			set_temp_variable = {{ pww_stk_m = pww_stock_cap_{r} }}
 			subtract_from_temp_variable = {{ pww_stk_m = pww_stock_{r} }}
 			divide_temp_variable = {{ pww_stk_m = global.pww_stock_c_period }}

@@ -1,0 +1,60 @@
+# Valuation v2 look (manual screenshots, not in the suite). Run with
+#   --tag GER --size 1920x1080 --leave-running --test tests/diplomacy/diplo_v2_look
+# Day 2: the United States sells Britain 20 coal a day under an open deal
+# (0.33 political power a day), so Germany sees Poach Supplier on Britain
+# (a sea route: the coal row shows its shipping). Open Britain's diplomacy
+# view and click Poach Supplier.
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { is_ai = no }
+				add_to_variable = { global.pww_dtest_v2l_day = 1 }
+				if = {
+					limit = { check_variable = { global.pww_dtest_v2l_day = 2 } }
+					set_global_flag = pww_diplo_debug
+					add_political_power = 200
+					USA = { set_temp_variable = { pww_dtv_usa = THIS } }
+					ENG = { set_temp_variable = { pww_dtv_eng = THIS } }
+					pww_diplo_ledger_clear = yes
+					set_temp_variable = { pww_l_seller = pww_dtv_usa }
+					set_temp_variable = { pww_l_buyer = pww_dtv_eng }
+					set_temp_variable = { pww_l_kind = 0 }
+					set_temp_variable = { pww_l_res = 6 }
+					set_temp_variable = { pww_l_amount = 20 }
+					set_temp_variable = { pww_l_committal = 0 }
+					set_temp_variable = { pww_l_term_days = 365 }
+					set_temp_variable = { pww_l_pp = 0.33 }
+					set_temp_variable = { pww_l_activate = 1 }
+					pww_ledger_create_agreement = yes
+					log = "PWW_RESULT diplo_v2_look.setup INFO agreement=[?pww_l_new_id|0] result=[?pww_l_result|0] fail=[?pww_l_fail|0]"
+				}
+				# Probe: what Poach Supplier drafts on Britain (every 20 days).
+				set_temp_variable = { pww_dtv_m = global.pww_dtest_v2l_day }
+				modulo_temp_variable = { var = pww_dtv_m value = 20 }
+				if = {
+					limit = {
+						check_variable = { pww_dtv_m = 3 }
+						check_variable = { global.pww_dtest_v2l_day < 130 }
+					}
+					ENG = { set_temp_variable = { pww_dtv_eng = THIS } }
+					set_temp_variable = { pww_dk_target = pww_dtv_eng }
+					set_temp_variable = { pww_dk_act = 2 }
+					pww_diplo_offer_begin = yes
+					set_temp_variable = { pww_dtv_a = pww_do_pinc_ag }
+					log = "PWW_RESULT diplo_v2_look.probe INFO day=[?global.pww_dtest_v2l_day|0] keep=[?pww_dob_keep|0] pinc=[?pww_dtv_a|0] ag_res=[?global.pww_ag_res^pww_dtv_a|0] ag_seller=[?global.pww_ag_seller^pww_dtv_a.GetTag] ag_amt=[?global.pww_ag_amount^pww_dtv_a|0] p_res=[?pww_do_p_res|0] row0=[?pww_dob_k^0|0]/[?pww_dob_x^0|0]x[?pww_dob_a^0|1] mirror=[?pww_dbk_0|0]/[?pww_dbx_0|0] valid=[?pww_do_valid|0] terms=[?pww_do_e_terms|0] ok=[?pww_do_ok|0] eng_ags=[?pww_dtv_eng.pww_ag_ids^num|0]"
+					set_temp_variable = { pww_dtc_t = pww_do_talk }
+					set_temp_variable = { pww_dtc_status = 4 }
+					if = {
+						limit = { check_variable = { pww_dtc_t > -1 } check_variable = { global.pww_dt_status^pww_dtc_t = 0 } }
+						pww_diplo_talk_close = yes
+					}
+				}
+				if = {
+					limit = { check_variable = { global.pww_dtest_v2l_day = 130 } }
+					log = "PWW_DONE diplo_v2_look"
+				}
+			}
+		}
+	}
+}

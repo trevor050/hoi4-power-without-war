@@ -1,0 +1,607 @@
+# Diplomacy test: Valuation v2. Run with --tag GER. Day 32 (core has computed
+# desperation once; logistics and relationships are initialized):
+#   S storage_seller  POR sells tungsten from a large unsold glut: its
+#                     walk-away is its reserve value at every fill (~0.4 of
+#                     market at low tension when empty), falling smoothly to ~0
+#                     when full (fill 0 > 50 > 90 > 100, no jump). A price
+#                     between the two signs with full storage and is refused
+#                     with empty storage.
+#   W walk_curve      (INFO) the curve at fill 0/50/90/100 at peace (day 32)
+#                     and near war (day 41, world tension raised to the top on
+#                     day 40): near war it is ~3x the peace curve.
+#   R recv_isolated   day 41: the human (GER) has a send draft open to Portugal;
+#                     the United States delivers a proposal to GER
+#                     (pww_diplo_mirror_for_receiver, what the action's
+#                     reset_receive_effect runs). GER's send display (rows,
+#                     values, totals, marker) is unchanged, and the receive
+#                     window's snapshot (pww_drx_*, on the sender) holds the
+#                     American rows.
+#   B storage_buyer   GER sells steel beyond POR's demand (none) at 35% of
+#                     market: POR takes it while its steel storage has room
+#                     (its reserve value) and refuses once storage is full.
+#   D delivered       Italy buys coal: Germany (overland) and the United
+#                     States (by sea) table the same bundle. Italy's best
+#                     accepted price from Germany is at least 0.1 of market
+#                     above the American one (shipping is the buyer's).
+#   L lock            a fixed contract with a stranger is refused for lack of
+#                     trust (lock part, reply line 111-113); with bond 50 it
+#                     signs; a clearly generous one signs without the bond.
+#   C cartel          British Malaya (IRRA) drafts a rubber sale at or above
+#                     the cartel price and within its quota room; tempted
+#                     (temptation 50) it undercuts. Turkey in a chromium
+#                     price war sells at least 0.05 cheaper than without one.
+#   P poach           the United States sells Italy 20 coal a day (open deal,
+#                     0.33 political power a day). Germany's Poach Supplier
+#                     draft wins while the incumbent bond is 20 and loses at
+#                     100; signed, the American deal ends and (day 40) the
+#                     switch cut the American bond. A fixed contract is never
+#                     picked as an incumbent.
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = GER }
+				add_to_variable = { global.pww_dtest_vv_day = 1 }
+				if = {
+					limit = { check_variable = { global.pww_dtest_vv_day = 32 } }
+					set_global_flag = pww_diplo_debug
+					set_temp_variable = { pww_dtv_rsv = 2 }
+					set_temp_variable = { pww_dtv_bind = 0 }
+					GER = { set_temp_variable = { pww_dtv_ger = THIS } }
+					POR = { set_temp_variable = { pww_dtv_por = THIS } }
+					ITA = { set_temp_variable = { pww_dtv_ita = THIS } }
+					USA = { set_temp_variable = { pww_dtv_usa = THIS } }
+
+					# --- S: the seller walks away at its reserve value ---------
+					# A spare unit is worth the seller's reserve value at every
+					# fill: it falls smoothly to ~0 as storage fills (no jump to
+					# a glut rate when full, no floor).
+					POR = {
+						set_variable = { pww_desp_tungsten = 0 }
+						set_variable = { pww_diplo_test_res = 3 }
+						set_variable = { pww_diplo_test_unsold = 999 }
+						set_variable = { pww_diplo_test_exported = 0 }
+					}
+					set_temp_variable = { pww_dtv_tgt = pww_dtv_por }
+					set_temp_variable = { pww_dtv_r = 3 }
+					set_temp_variable = { pww_dtv_dir = 0 }
+					set_temp_variable = { pww_dtv_pf = 0.6 }
+					set_temp_variable = { pww_dg_res = 3 }
+					POR = { pww_diplo_read_res = yes }
+					set_temp_variable = { pww_dtv_u = pww_dg_prod }
+					multiply_temp_variable = { pww_dtv_u = 0.3 }
+					round_temp_variable = pww_dtv_u
+					set_temp_variable = { pww_dtv_sr = 3 }
+					set_temp_variable = { pww_dtv_fill = 0 }
+					POR = { pww_dtv_fill = yes }
+					pww_dtv_draft = yes
+					set_temp_variable = { pww_dtv_s_ap = pww_do_ap_pp }
+					pww_dtv_walk_curve = yes
+					set_temp_variable = { pww_dtv_s_re = pww_dtv_w0 }
+					set_temp_variable = { pww_dtv_s_rf = pww_dtv_w100 }
+					set_variable = { global.pww_dtest_vv_tension0 = global.threat }
+					# A price halfway between the two walk-aways (to POR, at its
+					# political power appetite): the full seller takes it, the
+					# empty one (which values the tungsten more) refuses.
+					set_temp_variable = { pww_dtv_mid = pww_dtv_s_re }
+					add_to_temp_variable = { pww_dtv_mid = pww_dtv_s_rf }
+					divide_temp_variable = { pww_dtv_mid = 2 }
+					set_temp_variable = { pww_dtv_pp = pww_dtv_u }
+					divide_temp_variable = { pww_dtv_pp = 8 }
+					multiply_temp_variable = { pww_dtv_pp = pww_dtv_mid }
+					divide_temp_variable = { pww_dtv_pp = 9 }
+					divide_temp_variable = { pww_dtv_pp = pww_dtv_s_ap }
+					set_temp_variable = { pww_dtv_fill = 0 }
+					POR = { pww_dtv_fill = yes }
+					pww_dtv_set_pp = yes
+					set_temp_variable = { pww_dtv_tag = 1 }
+					pww_dtv_log = yes
+					set_temp_variable = { pww_dtv_s_oke = pww_do_ok }
+					set_temp_variable = { pww_dtv_s_te = pww_do_e_terms }
+					set_temp_variable = { pww_dtv_fill = 100 }
+					POR = { pww_dtv_fill = yes }
+					pww_diplo_offer_changed = yes
+					set_temp_variable = { pww_dtv_tag = 2 }
+					pww_dtv_log = yes
+					set_temp_variable = { pww_dtv_s_okf = pww_do_ok }
+					set_temp_variable = { pww_dtv_s_tf = pww_do_e_terms }
+					log = "PWW_RESULT diplo_value_v2.walk_curve INFO peace (tension [?global.threat|2]): walk-away at fill 0/50/90/100 = [?pww_dtv_w0|3] / [?pww_dtv_w50|3] / [?pww_dtv_w90|3] / [?pww_dtv_w100|3] of market"
+					if = {
+						limit = {
+							check_variable = { pww_dtv_w0 > pww_dtv_w50 }
+							check_variable = { pww_dtv_w50 > pww_dtv_w90 }
+							check_variable = { pww_dtv_w90 > pww_dtv_w100 }
+							check_variable = { pww_dtv_w0 > 0.3 }
+							check_variable = { pww_dtv_w100 < 0.01 }
+							check_variable = { pww_dtv_s_oke = 0 }
+							check_variable = { pww_dtv_s_okf = 1 }
+						}
+						log = "PWW_RESULT diplo_value_v2.S_storage_seller PASS POR sells [?pww_dtv_u|0] tungsten from a glut: walk-away falls smoothly with fill ([?pww_dtv_w0|2] empty, [?pww_dtv_w50|2] half, [?pww_dtv_w90|2] at 90%, [?pww_dtv_w100|2] full); at [?pww_dtv_mid|2] of market the full seller signs (terms [?pww_dtv_s_tf|0]) and the empty one refuses (terms [?pww_dtv_s_te|0])"
+					}
+					else = {
+						log = "PWW_RESULT diplo_value_v2.S_storage_seller FAIL walk 0/50/90/100=[?pww_dtv_w0|3]/[?pww_dtv_w50|3]/[?pww_dtv_w90|3]/[?pww_dtv_w100|3] ok empty=[?pww_dtv_s_oke|0] full=[?pww_dtv_s_okf|0] terms [?pww_dtv_s_te|0]/[?pww_dtv_s_tf|0] units=[?pww_dtv_u|0]"
+					}
+					pww_dtv_close = yes
+					POR = {
+						clear_variable = pww_diplo_test_unsold
+						clear_variable = pww_diplo_test_exported
+						clear_variable = pww_diplo_test_res
+						set_variable = { pww_stock_fill_tungsten = 0 }
+					}
+
+					# --- B: a buyer with room takes cheap surplus ------------
+					POR = {
+						set_variable = { pww_desp_steel = 0 }
+						set_variable = { pww_diplo_test_res = 4 }
+						set_variable = { pww_diplo_test_demand = 0 }
+					}
+					set_temp_variable = { pww_dtv_r = 4 }
+					set_temp_variable = { pww_dtv_dir = 1 }
+					set_temp_variable = { pww_dtv_u = 40 }
+					set_temp_variable = { pww_dtv_pf = 0.35 }
+					set_temp_variable = { pww_dtv_sr = 4 }
+					set_temp_variable = { pww_dtv_fill = 0 }
+					POR = { pww_dtv_fill = yes }
+					pww_dtv_draft = yes
+					# 35% of market to POR (its political power appetite).
+					set_temp_variable = { pww_dtv_pp = pww_dtv_u }
+					divide_temp_variable = { pww_dtv_pp = 8 }
+					multiply_temp_variable = { pww_dtv_pp = 0.35 }
+					divide_temp_variable = { pww_dtv_pp = 9 }
+					divide_temp_variable = { pww_dtv_pp = pww_do_ap_pp }
+					pww_dtv_set_pp = yes
+					set_temp_variable = { pww_dtv_tag = 3 }
+					pww_dtv_log = yes
+					set_temp_variable = { pww_dtv_b_oke = pww_do_ok }
+					set_temp_variable = { pww_dtv_b_re = pww_do_b_rate }
+					set_temp_variable = { pww_dtv_b_te = pww_do_e_terms }
+					set_temp_variable = { pww_dtv_fill = 100 }
+					POR = { pww_dtv_fill = yes }
+					pww_diplo_offer_changed = yes
+					set_temp_variable = { pww_dtv_tag = 4 }
+					pww_dtv_log = yes
+					set_temp_variable = { pww_dtv_b_okf = pww_do_ok }
+					set_temp_variable = { pww_dtv_b_rf = pww_do_b_rate }
+					set_temp_variable = { pww_dtv_b_tf = pww_do_e_terms }
+					if = {
+						limit = {
+							check_variable = { pww_dtv_b_oke = 1 }
+							check_variable = { pww_dtv_b_okf = 0 }
+							check_variable = { pww_dtv_b_re > 0.35 }
+						}
+						log = "PWW_RESULT diplo_value_v2.B_storage_buyer PASS POR (no steel demand) values 40 steel beyond its demand at [?pww_dtv_b_re|2] of market with empty storage: takes it at 35% (terms [?pww_dtv_b_te|0]); full storage values it at [?pww_dtv_b_rf|2]: refused (terms [?pww_dtv_b_tf|0])"
+					}
+					else = {
+						log = "PWW_RESULT diplo_value_v2.B_storage_buyer FAIL ok empty=[?pww_dtv_b_oke|0] full=[?pww_dtv_b_okf|0] rate empty=[?pww_dtv_b_re|2] full=[?pww_dtv_b_rf|2] terms [?pww_dtv_b_te|0]/[?pww_dtv_b_tf|0]"
+					}
+					pww_dtv_close = yes
+					POR = {
+						clear_variable = pww_diplo_test_demand
+						clear_variable = pww_diplo_test_res
+						set_variable = { pww_stock_fill_steel = 0 }
+					}
+
+					# --- D: delivered cost picks the supplier ----------------
+					set_temp_variable = { pww_dtv_tgt = pww_dtv_ita }
+					set_temp_variable = { pww_dtv_r = 6 }
+					set_temp_variable = { pww_dtv_dir = 1 }
+					set_temp_variable = { pww_dtv_u = 20 }
+					set_temp_variable = { pww_dtv_pf = 1 }
+					pww_dtv_draft = yes
+					set_temp_variable = { pww_dtv_tag = 5 }
+					pww_dtv_log = yes
+					set_temp_variable = { pww_dtv_d_sl = pww_do_b_ship }
+					pww_dtv_best_price = yes
+					set_temp_variable = { pww_dtv_d_bl = pww_dtv_best }
+					pww_dtv_close = yes
+					USA = {
+						pww_dtv_draft = yes
+						set_temp_variable = { pww_dtv_tag = 6 }
+						pww_dtv_log = yes
+						set_temp_variable = { pww_dtv_d_ss = pww_do_b_ship }
+						pww_dtv_best_price = yes
+						set_temp_variable = { pww_dtv_d_bs = pww_dtv_best }
+						# At Germany's best price the American offer is refused.
+						set_temp_variable = { pww_dtv_pp = pww_dtv_u }
+						divide_temp_variable = { pww_dtv_pp = 8 }
+						multiply_temp_variable = { pww_dtv_pp = pww_dtv_d_bl }
+						divide_temp_variable = { pww_dtv_pp = 9 }
+						pww_dtv_set_pp = yes
+						set_temp_variable = { pww_dtv_d_oks = pww_do_ok }
+						pww_dtv_close = yes
+					}
+					set_temp_variable = { pww_dtv_d_gap = pww_dtv_d_bl }
+					subtract_from_temp_variable = { pww_dtv_d_gap = pww_dtv_d_bs }
+					if = {
+						limit = {
+							check_variable = { pww_dtv_d_bl > 0.01 }
+							check_variable = { pww_dtv_d_gap > 0.099 }
+							check_variable = { pww_dtv_d_oks = 0 }
+							check_variable = { pww_dtv_d_ss > pww_dtv_d_sl }
+						}
+						log = "PWW_RESULT diplo_value_v2.D_delivered PASS Italy buys 20 coal: overland from Germany (shipping [?pww_dtv_d_sl|3] factories a day) up to [?pww_dtv_d_bl|2] of market, by sea from the United States (shipping [?pww_dtv_d_ss|3]) only up to [?pww_dtv_d_bs|2]; at Germany's price the American offer is refused"
+					}
+					else = {
+						log = "PWW_RESULT diplo_value_v2.D_delivered FAIL best land=[?pww_dtv_d_bl|2] sea=[?pww_dtv_d_bs|2] shipping land=[?pww_dtv_d_sl|3] sea=[?pww_dtv_d_ss|3] sea at land price ok=[?pww_dtv_d_oks|0]"
+					}
+
+					# --- L: bond gates a fixed contract ----------------------
+					# POR sells out of what it already exports: at market the
+					# terms are even (not generous).
+					POR = {
+						set_variable = { pww_desp_tungsten = 0 }
+						set_variable = { pww_diplo_test_res = 3 }
+						set_variable = { pww_diplo_test_unsold = 0 }
+						set_variable = { pww_diplo_test_exported = 999 }
+					}
+					set_temp_variable = { pww_dtv_bb = pww_dtv_ger }
+					set_temp_variable = { pww_dtv_bv = 5 }
+					POR = { pww_dtv_set_bond = yes }
+					set_temp_variable = { pww_dtv_tgt = pww_dtv_por }
+					set_temp_variable = { pww_dtv_r = 3 }
+					set_temp_variable = { pww_dtv_dir = 0 }
+					set_temp_variable = { pww_dtv_u = 20 }
+					set_temp_variable = { pww_dtv_pf = 1 }
+					set_temp_variable = { pww_dtv_bind = 1 }
+					pww_dtv_draft = yes
+					# At market to POR (its political power appetite)
+					set_temp_variable = { pww_dtv_pp = 2.5 }
+					divide_temp_variable = { pww_dtv_pp = 9 }
+					divide_temp_variable = { pww_dtv_pp = pww_do_ap_pp }
+					pww_dtv_set_pp = yes
+					# A red line that never binds here (4): the trust gate alone.
+					set_temp_variable = { pww_dtv_t = pww_do_talk }
+					set_variable = { global.pww_dt_redline^pww_dtv_t = 4 }
+					pww_diplo_offer_changed = yes
+					set_temp_variable = { pww_dtv_tag = 7 }
+					pww_dtv_log = yes
+					set_temp_variable = { pww_dtv_l_ok0 = pww_do_ok }
+					set_temp_variable = { pww_dtv_l_lf0 = pww_do_lockfail }
+					set_temp_variable = { pww_dtv_bv = 50 }
+					POR = { pww_dtv_set_bond = yes }
+					pww_diplo_offer_changed = yes
+					set_temp_variable = { pww_dtv_tag = 8 }
+					pww_dtv_log = yes
+					set_temp_variable = { pww_dtv_l_ok1 = pww_do_ok }
+					set_temp_variable = { pww_dtv_l_lf1 = pww_do_lockfail }
+					set_temp_variable = { pww_dtv_bv = 5 }
+					POR = { pww_dtv_set_bond = yes }
+					set_temp_variable = { pww_dtv_keep = pww_dtv_pp }
+					multiply_temp_variable = { pww_dtv_pp = 1.4 }
+					pww_dtv_set_pp = yes
+					set_temp_variable = { pww_dtv_tag = 9 }
+					pww_dtv_log = yes
+					set_temp_variable = { pww_dtv_l_ok2 = pww_do_ok }
+					set_temp_variable = { pww_dtv_l_lf2 = pww_do_lockfail }
+					# Back to market with the stranger: refused, and the reply says why.
+					set_temp_variable = { pww_dtv_pp = pww_dtv_keep }
+					pww_dtv_set_pp = yes
+					set_temp_variable = { pww_dtv_t = pww_do_talk }
+					pww_diplo_eval_bundle = yes
+					pww_diplo_talk_reply = yes
+					set_temp_variable = { pww_dtv_l_line = global.pww_dt_line^pww_dtv_t }
+					if = {
+						limit = {
+							check_variable = { pww_dtv_l_ok0 = 0 }
+							check_variable = { pww_dtv_l_lf0 = 1 }
+							check_variable = { pww_dtv_l_ok1 = 1 }
+							check_variable = { pww_dtv_l_lf1 = 0 }
+							check_variable = { pww_dtv_l_ok2 = 1 }
+							check_variable = { pww_dtv_l_lf2 = 0 }
+							check_variable = { pww_dtv_l_line > 110 }
+							check_variable = { pww_dtv_l_line < 114 }
+						}
+						log = "PWW_RESULT diplo_value_v2.L_lock PASS fixed contract at market: bond 5 refused for lack of trust (reply line [?pww_dtv_l_line|0]), bond 50 signs, bond 5 at 140% (clearly generous) signs"
+					}
+					else = {
+						log = "PWW_RESULT diplo_value_v2.L_lock FAIL bond5 ok=[?pww_dtv_l_ok0|0] lock=[?pww_dtv_l_lf0|0] bond50 ok=[?pww_dtv_l_ok1|0] lock=[?pww_dtv_l_lf1|0] generous ok=[?pww_dtv_l_ok2|0] lock=[?pww_dtv_l_lf2|0] line=[?pww_dtv_l_line|0]"
+					}
+					pww_dtv_close = yes
+					set_temp_variable = { pww_dtv_bind = 0 }
+					POR = {
+						clear_variable = pww_diplo_test_unsold
+						clear_variable = pww_diplo_test_exported
+						clear_variable = pww_diplo_test_res
+					}
+
+					# --- C: cartel limits on AI sale drafts ------------------
+					set_temp_variable = { pww_dtv_cid = global.pww_cart_by_res^2 }
+					MAL = {
+						set_variable = { pww_diplo_test_res = 2 }
+						set_variable = { pww_diplo_test_unsold = 300 }
+						set_variable = { pww_diplo_test_exported = 0 }
+						set_temp_variable = { pww_in_res = 2 }
+						pww_cartel_find_member = yes
+						set_temp_variable = { pww_dtv_cm = pww_out_cm }
+						if = {
+							limit = { check_variable = { pww_dtv_cm > -1 } }
+							set_variable = { global.pww_cm_tempt^pww_dtv_cm = 0 }
+						}
+						set_temp_variable = { pww_dk_target = pww_dtv_ita }
+						set_temp_variable = { pww_dk_act = 0 }
+						set_variable = { pww_diplo_ai_offer_sell = 1 }
+						set_variable = { pww_diplo_ai_offer_to = pww_dtv_ita }
+						pww_diplo_offer_begin = yes
+						set_variable = { pww_do_res = 2 }
+						pww_diplo_ai_build_sale = yes
+						set_temp_variable = { pww_dtv_c_pf = pww_do_sale_pf }
+						set_temp_variable = { pww_dtv_c_cp = pww_do_sale_cprice }
+						set_temp_variable = { pww_dtv_c_ch = pww_do_sale_cheat }
+						set_temp_variable = { pww_dtv_c_u = pww_dob_a^0 }
+						set_temp_variable = { pww_in_res = 2 }
+						pww_cartel_sale_limits = yes
+						set_temp_variable = { pww_dtv_c_room = pww_out_cartel_room }
+						if = {
+							limit = { check_variable = { pww_dtv_cm > -1 } }
+							set_variable = { global.pww_cm_tempt^pww_dtv_cm = 50 }
+						}
+						pww_diplo_ai_build_sale = yes
+						set_temp_variable = { pww_dtv_c_pf2 = pww_do_sale_pf }
+						set_temp_variable = { pww_dtv_c_ch2 = pww_do_sale_cheat }
+						if = {
+							limit = { check_variable = { pww_dtv_cm > -1 } }
+							set_variable = { global.pww_cm_tempt^pww_dtv_cm = 0 }
+						}
+						pww_dtv_close = yes
+						clear_variable = pww_diplo_test_unsold
+						clear_variable = pww_diplo_test_exported
+						clear_variable = pww_diplo_test_res
+						set_variable = { pww_diplo_ai_offer_sell = 0 }
+					}
+					set_temp_variable = { pww_dtv_c_lo = pww_dtv_c_cp }
+					subtract_from_temp_variable = { pww_dtv_c_lo = 0.001 }
+					set_temp_variable = { pww_dtv_c_roomp = pww_dtv_c_room }
+					add_to_temp_variable = { pww_dtv_c_roomp = 0.5 }
+					TUR = {
+						set_variable = { pww_diplo_test_res = 5 }
+						set_variable = { pww_diplo_test_unsold = 100 }
+						set_variable = { pww_diplo_test_exported = 0 }
+						set_temp_variable = { pww_dk_target = pww_dtv_ita }
+						set_temp_variable = { pww_dk_act = 0 }
+						set_variable = { pww_diplo_ai_offer_sell = 1 }
+						set_variable = { pww_diplo_ai_offer_to = pww_dtv_ita }
+						pww_diplo_offer_begin = yes
+						set_variable = { pww_do_res = 5 }
+						pww_diplo_ai_build_sale = yes
+						set_temp_variable = { pww_dtv_c_tn = pww_do_sale_pf }
+						set_country_flag = { flag = pww_cartel_pricewar_chromium days = 30 value = 1 }
+						pww_diplo_ai_build_sale = yes
+						set_temp_variable = { pww_dtv_c_tw = pww_do_sale_pf }
+						clr_country_flag = pww_cartel_pricewar_chromium
+						pww_dtv_close = yes
+						clear_variable = pww_diplo_test_unsold
+						clear_variable = pww_diplo_test_exported
+						clear_variable = pww_diplo_test_res
+						set_variable = { pww_diplo_ai_offer_sell = 0 }
+					}
+					set_temp_variable = { pww_dtv_c_tg = pww_dtv_c_tn }
+					subtract_from_temp_variable = { pww_dtv_c_tg = pww_dtv_c_tw }
+					log = "PWW_RESULT diplo_value_v2.C_values INFO IRRA=[?pww_dtv_cid|0] MAL entry=[?pww_dtv_cm|0] cartel price=[?pww_dtv_c_cp|2] drafted pf=[?pww_dtv_c_pf|2] units=[?pww_dtv_c_u|0] quota room=[?pww_dtv_c_room|1] cheat=[?pww_dtv_c_ch|0] | tempted pf=[?pww_dtv_c_pf2|2] cheat=[?pww_dtv_c_ch2|0] | TUR chromium pf=[?pww_dtv_c_tn|2] price war pf=[?pww_dtv_c_tw|2]"
+					if = {
+						limit = {
+							check_variable = { pww_dtv_cm > -1 }
+							check_variable = { pww_dtv_c_cp > 0.5 }
+							check_variable = { pww_dtv_c_pf > pww_dtv_c_lo }
+							check_variable = { pww_dtv_c_ch = 0 }
+							check_variable = { pww_dtv_c_u < pww_dtv_c_roomp }
+							check_variable = { pww_dtv_c_ch2 = 1 }
+							check_variable = { pww_dtv_c_pf2 < pww_dtv_c_cp }
+							check_variable = { pww_dtv_c_tg > 0.049 }
+						}
+						log = "PWW_RESULT diplo_value_v2.C_cartel PASS Malaya drafts rubber at [?pww_dtv_c_pf|2] of market (IRRA price [?pww_dtv_c_cp|2]), [?pww_dtv_c_u|0] units within quota room [?pww_dtv_c_room|1]; tempted it undercuts at [?pww_dtv_c_pf2|2]; Turkey in a price war sells chromium at [?pww_dtv_c_tw|2] instead of [?pww_dtv_c_tn|2]"
+					}
+					else = {
+						log = "PWW_RESULT diplo_value_v2.C_cartel FAIL see C_values"
+					}
+
+					# --- P: poaching -----------------------------------------
+					# The incumbent: USA sells Italy 20 coal a day, open deal.
+					pww_diplo_ledger_clear = yes
+					set_temp_variable = { pww_l_seller = pww_dtv_usa }
+					set_temp_variable = { pww_l_buyer = pww_dtv_ita }
+					set_temp_variable = { pww_l_kind = 0 }
+					set_temp_variable = { pww_l_res = 6 }
+					set_temp_variable = { pww_l_amount = 20 }
+					set_temp_variable = { pww_l_committal = 0 }
+					set_temp_variable = { pww_l_term_days = 365 }
+					set_temp_variable = { pww_l_pp = 0.33 }
+					set_temp_variable = { pww_l_activate = 1 }
+					pww_ledger_create_agreement = yes
+					set_variable = { global.pww_dtest_vv_inc = pww_l_new_id }
+					set_temp_variable = { pww_dtv_inc = pww_l_new_id }
+					# A fixed American steel deal with Italy: never poachable.
+					pww_diplo_ledger_clear = yes
+					set_temp_variable = { pww_l_seller = pww_dtv_usa }
+					set_temp_variable = { pww_l_buyer = pww_dtv_ita }
+					set_temp_variable = { pww_l_kind = 0 }
+					set_temp_variable = { pww_l_res = 4 }
+					set_temp_variable = { pww_l_amount = 8 }
+					set_temp_variable = { pww_l_committal = 1 }
+					set_temp_variable = { pww_l_term_days = 365 }
+					set_temp_variable = { pww_l_pp = 0.1 }
+					set_temp_variable = { pww_l_activate = 1 }
+					pww_ledger_create_agreement = yes
+					set_temp_variable = { pww_dtv_fix = pww_l_new_id }
+					set_temp_variable = { pww_dtv_bb = pww_dtv_ita }
+					set_temp_variable = { pww_dtv_bv = 20 }
+					USA = {
+						pww_dtv_set_bond = yes
+						set_variable = { pww_rel_months@var:pww_dtv_ita = 5 }
+					}
+					# Fixed steel deal: no incumbent.
+					set_variable = { pww_do_ppref = 4 }
+					set_temp_variable = { pww_dk_target = pww_dtv_ita }
+					set_temp_variable = { pww_dk_act = 2 }
+					set_variable = { pww_do_target = pww_dtv_ita }
+					pww_diplo_poach_pick = yes
+					set_temp_variable = { pww_dtv_p_fixpick = pww_do_pinc_ag }
+					# Coal: the American deal.
+					set_variable = { pww_do_ppref = 6 }
+					pww_diplo_offer_begin = yes
+					set_temp_variable = { pww_dtv_t = pww_do_talk }
+					set_variable = { global.pww_dt_reserve^pww_dtv_t = 2 }
+					set_variable = { global.pww_dt_rel^pww_dtv_t = 0 }
+					pww_diplo_offer_changed = yes
+					set_temp_variable = { pww_dtv_tag = 10 }
+					pww_dtv_log = yes
+					log = "PWW_RESULT diplo_value_v2.P_values INFO incumbent=[?pww_do_pinc_ag|0] (created [?pww_dtv_inc|0], fixed [?pww_dtv_fix|0] status [?global.pww_ag_status^pww_dtv_fix|0], fixed pick [?pww_dtv_p_fixpick|0]) incumbent pays [?pww_do_p_pay|2] + ship [?pww_do_p_ship|3] for [?pww_do_p_amt|0], band [?pww_do_p_band|0] bond [?pww_do_p_bond|0] hold x[?pww_do_p_mult|2]; we give [?pww_dob_a^0|0] for [?pww_do_mk_m1|2]"
+					set_temp_variable = { pww_dtv_p_pick = pww_do_pinc_ag }
+					set_temp_variable = { pww_dtv_p_ok20 = pww_do_ok }
+					set_temp_variable = { pww_dtv_p_t20 = pww_do_e_terms }
+					set_temp_variable = { pww_dtv_bv = 100 }
+					USA = { pww_dtv_set_bond = yes }
+					pww_diplo_offer_changed = yes
+					set_temp_variable = { pww_dtv_tag = 11 }
+					pww_dtv_log = yes
+					set_temp_variable = { pww_dtv_p_ok100 = pww_do_ok }
+					set_temp_variable = { pww_dtv_p_t100 = pww_do_e_terms }
+					set_temp_variable = { pww_dtv_p_m100 = pww_do_p_mult }
+					set_temp_variable = { pww_dtv_bv = 20 }
+					USA = { pww_dtv_set_bond = yes }
+					pww_diplo_offer_changed = yes
+					set_temp_variable = { pww_dtv_ag0 = global.pww_next_agreement_id }
+					pww_diplo_talk_accepted = yes
+					set_temp_variable = { pww_dtv_p_new = pww_dsd_ag }
+					set_temp_variable = { pww_dtv_p_signed = pww_dsd_ok }
+					set_temp_variable = { pww_dtv_p_inc_st = global.pww_ag_status^pww_dtv_inc }
+					set_variable = { global.pww_dtest_vv_bond0 = 20 }
+					set_variable = { pww_do_ppref = -1 }
+					if = {
+						limit = {
+							check_variable = { pww_dtv_p_fixpick = -1 }
+							check_variable = { pww_dtv_p_pick = pww_dtv_inc }
+							check_variable = { pww_dtv_p_ok20 = 1 }
+							check_variable = { pww_dtv_p_ok100 = 0 }
+							check_variable = { pww_dtv_p_signed = 1 }
+							check_variable = { global.pww_ag_seller^pww_dtv_p_new = pww_dtv_ger }
+							check_variable = { global.pww_ag_buyer^pww_dtv_p_new = pww_dtv_ita }
+							check_variable = { global.pww_ag_status^pww_dtv_p_new = 1 }
+							check_variable = { pww_dtv_p_inc_st = 4 }
+						}
+						log = "PWW_RESULT diplo_value_v2.P_poach PASS Germany poaches Italy's American coal: accepted at incumbent bond 20 (terms [?pww_dtv_p_t20|0]), refused at bond 100 (hold x[?pww_dtv_p_m100|2], terms [?pww_dtv_p_t100|0]); signed, agreement [?pww_dtv_p_new|0] active and the American deal terminated; the fixed steel deal is never an incumbent"
+					}
+					else = {
+						log = "PWW_RESULT diplo_value_v2.P_poach FAIL fixed pick=[?pww_dtv_p_fixpick|0] pick=[?pww_dtv_p_pick|0] (inc [?pww_dtv_inc|0]) ok20=[?pww_dtv_p_ok20|0] ok100=[?pww_dtv_p_ok100|0] signed=[?pww_dtv_p_signed|0] new=[?pww_dtv_p_new|0] inc status=[?pww_dtv_p_inc_st|0]"
+					}
+				}
+				# The relationships lane books the switch from the ledger queue.
+				if = {
+					limit = { check_variable = { global.pww_dtest_vv_day = 40 } }
+					ITA = { set_temp_variable = { pww_dtv_ita = THIS } }
+					USA = { set_temp_variable = { pww_dtv_b40 = pww_rel_bond@var:pww_dtv_ita } }
+					set_temp_variable = { pww_dtv_cut = global.pww_dtest_vv_bond0 }
+					subtract_from_temp_variable = { pww_dtv_cut = 5 }
+					if = {
+						limit = { check_variable = { pww_dtv_b40 < pww_dtv_cut } }
+						log = "PWW_RESULT diplo_value_v2.P_switch PASS the switch away cut the American bond with Italy from [?global.pww_dtest_vv_bond0|0] to [?pww_dtv_b40|1]"
+					}
+					else = {
+						log = "PWW_RESULT diplo_value_v2.P_switch FAIL American bond with Italy [?pww_dtv_b40|1] (was [?global.pww_dtest_vv_bond0|0])"
+					}
+					# Near war: world tension to the top for the W curve tomorrow.
+					add_named_threat = { threat = 100 name = GER_communist_propaganda }
+				}
+				if = {
+					limit = { check_variable = { global.pww_dtest_vv_day = 41 } }
+					GER = { set_temp_variable = { pww_dtv_ger = THIS } }
+					POR = { set_temp_variable = { pww_dtv_por = THIS } }
+					USA = { set_temp_variable = { pww_dtv_usa = THIS } }
+					set_temp_variable = { pww_dtv_rsv = 2 }
+					set_temp_variable = { pww_dtv_bind = 0 }
+					# --- W: the walk-away curve near war ----------------------
+					POR = {
+						set_variable = { pww_diplo_test_res = 3 }
+						set_variable = { pww_diplo_test_unsold = 999 }
+						set_variable = { pww_diplo_test_exported = 0 }
+					}
+					set_temp_variable = { pww_dtv_tgt = pww_dtv_por }
+					set_temp_variable = { pww_dtv_r = 3 }
+					set_temp_variable = { pww_dtv_dir = 0 }
+					set_temp_variable = { pww_dtv_pf = 0.6 }
+					set_temp_variable = { pww_dtv_u = 10 }
+					set_temp_variable = { pww_dtv_sr = 3 }
+					pww_dtv_draft = yes
+					pww_dtv_walk_curve = yes
+					pww_dtv_close = yes
+					POR = {
+						clear_variable = pww_diplo_test_unsold
+						clear_variable = pww_diplo_test_exported
+						clear_variable = pww_diplo_test_res
+						set_variable = { pww_stock_fill_tungsten = 0 }
+					}
+					log = "PWW_RESULT diplo_value_v2.walk_curve INFO near war (tension [?global.threat|2], was [?global.pww_dtest_vv_tension0|2]): walk-away at fill 0/50/90/100 = [?pww_dtv_w0|3] / [?pww_dtv_w50|3] / [?pww_dtv_w90|3] / [?pww_dtv_w100|3] of market"
+					if = {
+						limit = {
+							check_variable = { pww_dtv_w0 > 0.8 }
+							check_variable = { pww_dtv_w0 > pww_dtv_w50 }
+							check_variable = { pww_dtv_w50 > pww_dtv_w90 }
+							check_variable = { pww_dtv_w90 > pww_dtv_w100 }
+							check_variable = { pww_dtv_w100 < 0.01 }
+						}
+						log = "PWW_RESULT diplo_value_v2.W_walk_war PASS near war the walk-away is [?pww_dtv_w0|2] of market empty, falling smoothly to [?pww_dtv_w100|2] full"
+					}
+					else = {
+						log = "PWW_RESULT diplo_value_v2.W_walk_war FAIL tension=[?global.threat|2] walk 0/50/90/100=[?pww_dtv_w0|3]/[?pww_dtv_w50|3]/[?pww_dtv_w90|3]/[?pww_dtv_w100|3]"
+					}
+
+					# --- R: an incoming proposal leaves the send window alone --
+					# GER (human) has a send draft open: buying 10 tungsten from
+					# Portugal for political power.
+					set_temp_variable = { pww_dtv_tgt = pww_dtv_por }
+					set_temp_variable = { pww_dtv_r = 3 }
+					set_temp_variable = { pww_dtv_dir = 0 }
+					set_temp_variable = { pww_dtv_u = 10 }
+					set_temp_variable = { pww_dtv_pf = 1 }
+					pww_dtv_draft = yes
+					pww_diplo_bundle_mirror = yes
+					pww_dtv_display_sig = yes
+					set_temp_variable = { pww_dtv_r_sig0 = pww_dtv_sig }
+					set_temp_variable = { pww_dtv_r_k0 = pww_dbk_0 }
+					set_temp_variable = { pww_dtv_r_a0 = pww_dba_0 }
+					set_temp_variable = { pww_dtv_r_t0 = pww_dbm_t0 }
+					# The United States tables a proposal to GER: selling 25 coal.
+					USA = {
+						set_temp_variable = { pww_dtv_tgt = pww_dtv_ger }
+						set_temp_variable = { pww_dtv_r = 6 }
+						set_temp_variable = { pww_dtv_dir = 1 }
+						set_temp_variable = { pww_dtv_u = 25 }
+						set_temp_variable = { pww_dtv_pf = 0.9 }
+						pww_dtv_draft = yes
+						pww_diplo_mirror_for_receiver = yes
+						set_temp_variable = { pww_dtv_r_uk0 = pww_drx_dbk_0 }
+						set_temp_variable = { pww_dtv_r_ux0 = pww_drx_dbx_0 }
+						set_temp_variable = { pww_dtv_r_ua0 = pww_drx_dba_0 }
+						set_temp_variable = { pww_dtv_r_ut1 = pww_drx_dbm_t1 }
+						# The sender drafting again later does not touch the snapshot.
+						set_variable = { pww_dbk_0 = 0 }
+						set_temp_variable = { pww_dtv_r_uk0b = pww_drx_dbk_0 }
+						pww_dtv_close = yes
+					}
+					pww_dtv_display_sig = yes
+					set_temp_variable = { pww_dtv_r_sig1 = pww_dtv_sig }
+					log = "PWW_RESULT diplo_value_v2.recv_isolated INFO GER send display before/after: sig [?pww_dtv_r_sig0|3] / [?pww_dtv_sig|3], row 0 kind [?pww_dtv_r_k0|0]->[?pww_dbk_0|0] amount [?pww_dtv_r_a0|0]->[?pww_dba_0|0], we give [?pww_dtv_r_t0|2]->[?pww_dbm_t0|2]; USA receive snapshot row 0 kind [?pww_dtv_r_uk0|0] res [?pww_dtv_r_ux0|0] x [?pww_dtv_r_ua0|0], they give [?pww_dtv_r_ut1|2]; GER pww_dr_from=[?pww_dr_from.GetTag]"
+					if = {
+						limit = {
+							check_variable = { pww_dtv_r_sig0 = pww_dtv_r_sig1 }
+							check_variable = { pww_dtv_r_k0 = pww_dbk_0 }
+							check_variable = { pww_dtv_r_a0 = pww_dba_0 }
+							check_variable = { pww_dtv_r_t0 = pww_dbm_t0 }
+							check_variable = { pww_dbk_0 = 2 }
+							check_variable = { pww_dtv_r_uk0 = 3 }
+							check_variable = { pww_dtv_r_ux0 = 6 }
+							check_variable = { pww_dtv_r_ua0 = 25 }
+							check_variable = { pww_dtv_r_uk0b = 3 }
+							check_variable = { pww_dr_from = pww_dtv_usa }
+						}
+						log = "PWW_RESULT diplo_value_v2.R_recv_isolated PASS an American proposal delivered to GER left GER's open send draft unchanged (political power row, totals, marker); the receive window reads the American snapshot (25 coal), which the sender's later drafting does not touch"
+					}
+					else = {
+						log = "PWW_RESULT diplo_value_v2.R_recv_isolated FAIL sig [?pww_dtv_r_sig0|3]/[?pww_dtv_r_sig1|3] k0 [?pww_dtv_r_k0|0]/[?pww_dbk_0|0] a0 [?pww_dtv_r_a0|2]/[?pww_dba_0|2] t0 [?pww_dtv_r_t0|2]/[?pww_dbm_t0|2] usa snap [?pww_dtv_r_uk0|0]/[?pww_dtv_r_ux0|0]/[?pww_dtv_r_ua0|0] after redraft [?pww_dtv_r_uk0b|0] from [?pww_dr_from.GetTag]"
+					}
+					pww_dtv_close = yes
+					log = "PWW_DONE diplo_value_v2"
+				}
+			}
+		}
+	}
+}

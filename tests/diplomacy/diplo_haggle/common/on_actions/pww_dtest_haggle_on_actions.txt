@@ -17,8 +17,8 @@
 #   C desperate      GER sells 16 steel to POR above market (3 factories):
 #                    refused while POR is comfortable, accepted while POR is
 #                    desperate for steel.
-#   D dislike        at market from an Italy with unsold aluminium, reserve
-#                    3: accepted at Italy's own relations, refused once Italy
+#   D dislike        at market for aluminium Italy already exports (worth
+#                    market to it), reserve 3: accepted at Italy's own relations, refused once Italy
 #                    dislikes GER (snub -150), accepted again above market.
 #   E partners       INFO: natural at-market verdicts with five other minors.
 #   F bundle_sign    GER buys steel and tungsten from SWE for civilian
@@ -68,6 +68,9 @@ on_actions = {
 				if = {
 					limit = { check_variable = { global.pww_dtest_day = 32 } }
 					set_global_flag = pww_diplo_debug
+					# These cases test the market model; the trust gate on fixed
+					# contracts (Valuation v2) is tested in diplo_value_v2.
+					set_variable = { global.pww_rel_c_lock = 0 }
 					POR = {
 						set_temp_variable = { pww_dtest_hg_tgt = THIS }
 						set_variable = { pww_desp_tungsten = 0 }
@@ -218,10 +221,14 @@ on_actions = {
 					}
 
 					# --- D: dislike outweighs a fair price -------------------
-					# Italy has unsold aluminium: at market it is a routine sale.
+					# Italy sells aluminium it already exports: each unit is worth
+					# market to it (it loses that sale), so at market is a fair,
+					# routine sale. (Spare output is worth only its walk-away, the
+					# reserve value, ~0 with full storage: a market price for it
+					# would be a windfall no snub outweighs.)
 					ITA = { set_temp_variable = { pww_dtest_hg_tgt = THIS } }
-					set_temp_variable = { pww_dtest_hg_uns = 999 }
-					set_temp_variable = { pww_dtest_hg_exp = 0 }
+					set_temp_variable = { pww_dtest_hg_uns = 0 }
+					set_temp_variable = { pww_dtest_hg_exp = 999 }
 					pww_dtest_hg_market = yes
 					set_temp_variable = { pww_dtest_hg_res = 1 }
 					set_temp_variable = { pww_dtest_hg_dir = 0 }
@@ -255,7 +262,7 @@ on_actions = {
 							check_variable = { pww_dtest_hg_d_high = 1 }
 							check_variable = { pww_dtest_hg_d_rel1 < pww_dtest_hg_d_rel0 }
 						}
-						log = "PWW_RESULT diplo_haggle.D_dislike PASS at market from a seller with unsold output (reserve 3): accepted at relations [?pww_dtest_hg_d_rel0|0], refused at relations [?pww_dtest_hg_d_rel1|0] after the snub, accepted again above market"
+						log = "PWW_RESULT diplo_haggle.D_dislike PASS at market for exported output (reserve 3): accepted at relations [?pww_dtest_hg_d_rel0|0], refused at relations [?pww_dtest_hg_d_rel1|0] after the snub, accepted again above market"
 					}
 					else = {
 						log = "PWW_RESULT diplo_haggle.D_dislike FAIL neutral=[?pww_dtest_hg_d_neu|0] (rel [?pww_dtest_hg_d_rel0|0]) disliked=[?pww_dtest_hg_d_dis|0] (rel [?pww_dtest_hg_d_rel1|0]) disliked_above=[?pww_dtest_hg_d_high|0]"

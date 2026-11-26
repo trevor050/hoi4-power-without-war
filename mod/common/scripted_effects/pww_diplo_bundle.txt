@@ -61,6 +61,7 @@
 #   fair  +10 when the deal is at or above market to it (pww_do_mk not -1)
 #         and SCARCITY is under 0.5: a routine sale of what it can spare
 #   relations  frozen normalized opinion / 4, doubled when negative
+#   bond / lock  see TRADE BONDS below (Valuation v2)
 #   red line  -1000 when crossed; the terms red lines (1 two years or more,
 #         3 political power, 7 either side may end it) bind only when SCARCITY
 #         is 0.5 or more and terms are under 25; the share and lease red
@@ -69,13 +70,47 @@
 #   want, trust (halved when either side may end it), patron, repeat: as in
 #   pww_diplo_talks.txt.
 # MARKET FLOOR (pww_diplo_eval_glut; reads pww_diplo_read_market: produced,
-#   exported, unsold = the positive part of resource@). Units a seller gives
-#   come first from its unsold output, worth only the glut rate to it
-#   (1 - 0.3 x min(unsold / output / 0.4, 1): 0.7 once 40% of its output finds
-#   no buyer), then from what it already exports (market value: it loses that
-#   sale), then from its own use (x 1.25). The open market is the reference:
-#   an at-market offer for output it can spare signs; a glut seller takes down
-#   to about 70% of market for unsold units.
+#   exported, spare = the positive part of resource@ (unsold output plus
+#   what storage takes of it)). Units a seller gives come first from its
+#   spare output, worth its WALK-AWAY rate, then from what it already exports
+#   (market value: it loses that sale), then from its own use (x 1.25).
+#   Walk-away (Valuation v2): with the stockpiles lane, a spare unit is worth
+#   its reserve value (pww_diplo_read_reserve: pww_stock_value_<res> x 8, 0.4
+#   of market at zero world tension to 1.2 near war, 1.3 at war, x (1 -
+#   fill^2)) at EVERY fill: it falls smoothly to ~0 as storage fills, with no
+#   jump and no floor (a full warehouse is the cheapest seller). Oil and no
+#   stockpiles lane (or a country that keeps none) use the glut rate (1 - 0.3
+#   x min(spare / output / 0.4, 1): 0.7 once 40% of its output finds no
+#   buyer). The hidden asking margin (reserve) still applies on top, and the
+#   AI sale draft asks well above it (pww_diplo_ai_build_sale). The open
+#   market is the reference: an at-market offer for output it can spare
+#   signs.
+# BUYER VALUE (Valuation v2): resource units the target receives within its
+#   demand (imports plus open shortfall; a desperate buyer counts up to
+#   desperation / 50 of the units as needed) count at market x (1 +
+#   desperation / 50); units beyond it at its own reserve value while its
+#   storage has room, nothing once full (oil, or no stockpiles lane: market).
+#   A buyer that is not short of it haggles in full (scarcity 1) unless it
+#   buys for storage with room (0.25: a routine purchase).
+# DELIVERED COST (Valuation v2): the buyer pays the shipping
+#   (pww_diplo_ship: pww_logi_delivered_cost per unit x units), subtracted
+#   from a buying target's gain; an undeliverable route is invalid 65. The
+#   sea-route figure shows on the row (pww_dob_h, mirror pww_dbh_<n>). Market
+#   figures, totals, the verdict and Balance it leave it out.
+# TRADE BONDS (Valuation v2; pww_diplo_bond = pww_rel_get of the main pair
+#   seller -> buyer): bond part pww_do_e_bond = bond / 10 (0..10); talks open
+#   with + bond / 4 patience (stronger direction). A fixed contract
+#   (pww_do_bind 1) needs bond >= global.pww_rel_c_lock (35) unless the terms
+#   are clearly generous (>= 25): else pww_do_e_lock -1000, pww_do_lockfail 1
+#   (send verdict row line; reply lines 111-113). AI drafts are fixed only
+#   with that trust (pww_do_lockwhy 1 when open for lack of it: receive line);
+#   a lease or a seen red line 7 forces fixed at +30% price.
+# CARTELS: AI sale drafts call pww_cartel_sale_limits (pww_diplo_sale_cartel):
+#   at or above the cartel price, within quota room, unless the member
+#   deliberately cheats (temptation 30+ or cohesion under 40, with
+#   global.pww_cartel_c_ai_cheat on); ex-members in a price war sell 10%
+#   cheaper. See pww_diplo_ai_build_sale.
+# POACHING (act 2, Poach Supplier): see the POACHING block below.
 # SCARCITY (pww_do_scar, 0..1, the largest of): per resource it sells,
 #   0.25 x the share of the units not covered by unsold output (redirecting
 #   sales); the ask beyond its unsold output plus half its exports, over half
@@ -161,6 +196,11 @@ pww_diplo_bundle_ensure = {
 		resize_array = { array = pww_dob_p value = 1 size = 8 }
 	}
 	if = {
+		limit = { NOT = { check_variable = { pww_dob_h^num = 8 } } }
+		clear_array = pww_dob_h
+		resize_array = { array = pww_dob_h value = 0 size = 8 }
+	}
+	if = {
 		limit = { NOT = { has_variable = pww_do_len } }
 		set_variable = { pww_do_len = 1 }
 		set_variable = { pww_do_bind = 0 }
@@ -185,6 +225,7 @@ pww_diplo_bundle_clear = {
 		set_variable = { pww_dob_v^pww_dbc_i = 0 }
 		set_variable = { pww_dob_m^pww_dbc_i = 0 }
 		set_variable = { pww_dob_p^pww_dbc_i = 1 }
+		set_variable = { pww_dob_h^pww_dbc_i = 0 }
 	}
 	set_variable = { pww_do_len = 1 }
 	set_variable = { pww_do_bind = 0 }
@@ -217,6 +258,7 @@ pww_diplo_bundle_remove = {
 			set_variable = { pww_dob_v^pww_dbr_p = pww_dob_v^pww_dbr_j }
 			set_variable = { pww_dob_m^pww_dbr_p = pww_dob_m^pww_dbr_j }
 			set_variable = { pww_dob_p^pww_dbr_p = pww_dob_p^pww_dbr_j }
+			set_variable = { pww_dob_h^pww_dbr_p = pww_dob_h^pww_dbr_j }
 		}
 	}
 	set_variable = { pww_dob_k^pww_dbr_end = 0 }
@@ -226,6 +268,7 @@ pww_diplo_bundle_remove = {
 	set_variable = { pww_dob_v^pww_dbr_end = 0 }
 	set_variable = { pww_dob_m^pww_dbr_end = 0 }
 	set_variable = { pww_dob_p^pww_dbr_end = 1 }
+	set_variable = { pww_dob_h^pww_dbr_end = 0 }
 }
 
 # Sender scope. in: pww_dba_side, pww_dba_kind, pww_dba_x.
@@ -923,9 +966,9 @@ pww_diplo_bundle_balance = {
 #
 # pww_diplo_eval_glut: one resource the target sells. in: pww_dvb_a (units a
 #   day), pww_dg_prod / _unsold / _exp (pww_diplo_read_market on the target).
-#   Units split three ways: from unsold output (worth only the glut rate to
-#   it: 1 - 0.3 x min(unsold / production / 0.4, 1), so 0.7 when 40% or more
-#   of its output finds no buyer), from what it already exports (market value:
+#   Units split three ways: from spare output (worth its walk-away: the
+#   reserve value with stockpiles, else the glut rate 1 - 0.3 x min(unsold /
+#   production / 0.4, 1)), from what it already exports (market value:
 #   it loses that sale), and beyond both, out of its own use (x 1.25).
 #   out: pww_dvb_wu (weighted units), pww_dvb_ng (share of the units not
 #   covered by unsold output, 0..1), pww_dvb_sover (share taken from its own
@@ -933,7 +976,8 @@ pww_diplo_bundle_balance = {
 #   item, for tests and logs).
 ###############################################################################
 pww_diplo_eval_glut = {
-	set_temp_variable = { pww_dvg_u = pww_dg_unsold }
+	# Spare = unsold output plus what storage takes of it (pww_dg_spare).
+	set_temp_variable = { pww_dvg_u = pww_dg_spare }
 	if = {
 		limit = { check_variable = { pww_dvg_u < 1 } }
 		set_temp_variable = { pww_dvg_u = 0 }
@@ -949,6 +993,14 @@ pww_diplo_eval_glut = {
 	clamp_temp_variable = { var = pww_dvg_g min = 0 max = 1 }
 	multiply_temp_variable = { pww_dvg_g = -0.3 }
 	add_to_temp_variable = { pww_dvg_g = 1 }
+	# Valuation v2: with stockpiles a spare unit is worth its reserve value
+	# at every fill (pww_diplo_read_reserve, run by the caller): it falls
+	# smoothly to ~0 as storage fills. Oil and no stockpiles lane keep the
+	# glut rate.
+	if = {
+		limit = { check_variable = { pww_dg_stocked = 1 } }
+		set_temp_variable = { pww_dvg_g = pww_dg_wrate }
+	}
 	set_temp_variable = { pww_dvg_ug = pww_dvb_a }
 	if = {
 		limit = { check_variable = { pww_dvg_ug > pww_dvg_u } }
@@ -977,6 +1029,7 @@ pww_diplo_eval_glut = {
 	set_variable = { pww_do_glut_rate = pww_dvg_g }
 	set_variable = { pww_do_unsold = pww_dvg_u }
 	set_variable = { pww_do_exported = pww_dg_exp }
+	set_variable = { pww_do_s_room = pww_dg_room }
 }
 
 # Contested resource pww_dvb_x: out pww_dvb_c 0..1. 1 when a live situation
@@ -1149,6 +1202,7 @@ pww_diplo_eval_bundle = {
 			set_temp_variable = { pww_dvb_fm = 1 }
 			set_temp_variable = { pww_dvb_ap = 1 }
 			set_temp_variable = { pww_dvb_goods = 0 }
+			set_variable = { pww_dob_h^pww_dvb_i = 0 }
 			if = {
 				limit = { check_variable = { pww_dbg_side = 0 } }
 				add_to_temp_variable = { pww_dvb_n0 = 1 }
@@ -1411,28 +1465,102 @@ pww_diplo_eval_bundle = {
 					add_to_temp_variable = { pww_dvb_g0 = pww_dvb_mv }
 					add_to_temp_variable = { pww_dvb_m0 = pww_dvb_mv }
 					set_temp_variable = { pww_dg_res = pww_dvb_x }
-					var:pww_dv_t = { pww_diplo_read_res = yes }
+					var:pww_dv_t = {
+						pww_diplo_read_market = yes
+						pww_diplo_read_reserve = yes
+					}
 					set_temp_variable = { pww_dvb_f = pww_dg_desp }
 					divide_temp_variable = { pww_dvb_f = 50 }
 					add_to_temp_variable = { pww_dvb_f = 1 }
-					multiply_temp_variable = { pww_dvb_w = pww_dvb_f }
 					set_temp_variable = { pww_dvb_nd = pww_dg_desp }
 					divide_temp_variable = { pww_dvb_nd = 4 }
 					if = {
 						limit = { check_variable = { pww_dvb_nd > pww_dvb_need } }
 						set_temp_variable = { pww_dvb_need = pww_dvb_nd }
 					}
+					if = {
+						limit = { check_variable = { pww_dvb_goods = 1 } }
+						# Valuation v2 (BUYER VALUE): units within its demand
+						# (imports plus open shortfall; a desperate buyer counts
+						# up to desperation / 50 of the units as needed) at market
+						# x (1 + desperation / 50); units beyond it at its own
+						# reserve value while its storage has room, nothing once
+						# it is full (oil, or a game without the stockpiles lane:
+						# market, as before). Shipping is the buyer's.
+						set_temp_variable = { pww_dvb_dd = pww_dvb_a }
+						multiply_temp_variable = { pww_dvb_dd = pww_dg_desp }
+						divide_temp_variable = { pww_dvb_dd = 50 }
+						if = {
+							limit = { check_variable = { pww_dg_demand > pww_dvb_dd } }
+							set_temp_variable = { pww_dvb_dd = pww_dg_demand }
+						}
+						if = {
+							limit = { check_variable = { pww_dvb_dd > pww_dvb_a } }
+							set_temp_variable = { pww_dvb_dd = pww_dvb_a }
+						}
+						set_temp_variable = { pww_dvb_db = pww_dvb_a }
+						subtract_from_temp_variable = { pww_dvb_db = pww_dvb_dd }
+						set_temp_variable = { pww_dvb_br = 1 }
+						if = {
+							limit = {
+								has_global_flag = pww_stock_loaded
+								check_variable = { pww_dvb_x > 0 }
+							}
+							set_temp_variable = { pww_dvb_br = pww_dg_rrate }
+						}
+						set_variable = { pww_do_b_rate = pww_dvb_br }
+						set_variable = { pww_do_b_within = pww_dvb_dd }
+						multiply_temp_variable = { pww_dvb_dd = pww_dvb_f }
+						multiply_temp_variable = { pww_dvb_db = pww_dvb_br }
+						set_temp_variable = { pww_dvb_w = pww_dvb_dd }
+						add_to_temp_variable = { pww_dvb_w = pww_dvb_db }
+						divide_temp_variable = { pww_dvb_w = 8 }
+						# Delivered cost: shipping from us to them, per unit.
+						set_temp_variable = { pww_dsh_s = THIS }
+						set_temp_variable = { pww_dsh_b = pww_dv_t }
+						set_temp_variable = { pww_dsh_r = pww_dvb_x }
+						pww_diplo_ship = yes
+						if = {
+							limit = {
+								check_variable = { pww_dsh_route = 2 }
+								check_variable = { pww_do_valid = 0 }
+							}
+							set_variable = { pww_do_valid = 65 }
+						}
+						set_temp_variable = { pww_dvb_sc = pww_dsh_cost }
+						multiply_temp_variable = { pww_dvb_sc = pww_dvb_a }
+						subtract_from_temp_variable = { pww_dvb_w = pww_dvb_sc }
+						set_variable = { pww_do_b_ship = pww_dvb_sc }
+						if = {
+							limit = { check_variable = { pww_dsh_route = 1 } }
+							set_variable = { pww_dob_h^pww_dvb_i = pww_dvb_sc }
+						}
+					}
+					else = {
+						multiply_temp_variable = { pww_dvb_w = pww_dvb_f }
+					}
 					# A buyer short of it (or importing it) would buy it on the
 					# market anyway: no haggling; one with enough has no reason to
-					# hurry.
-					var:pww_dv_t = { pww_diplo_read_market = yes }
+					# hurry, unless it buys for storage that has room (a routine
+					# purchase: mild haggling).
 					if = {
 						limit = {
 							check_variable = { pww_dg_net > -0.5 }
 							check_variable = { pww_dg_desp < 0.5 }
 							check_variable = { pww_dg_imp < 1 }
 						}
-						set_temp_variable = { pww_dvb_scar = 1 }
+						set_temp_variable = { pww_dvb_s = 1 }
+						if = {
+							limit = {
+								check_variable = { pww_dvb_goods = 1 }
+								check_variable = { pww_dg_room = 1 }
+							}
+							set_temp_variable = { pww_dvb_s = 0.25 }
+						}
+						if = {
+							limit = { check_variable = { pww_dvb_s > pww_dvb_scar } }
+							set_temp_variable = { pww_dvb_scar = pww_dvb_s }
+						}
 					}
 				}
 				else = {
@@ -1450,7 +1578,10 @@ pww_diplo_eval_bundle = {
 					limit = { check_variable = { pww_dvb_goods > 0 } }
 					add_to_temp_variable = { pww_dvb_g1 = pww_dvb_mv }
 					set_temp_variable = { pww_dg_res = pww_dvb_x }
-					var:pww_dv_t = { pww_diplo_read_market = yes }
+					var:pww_dv_t = {
+						pww_diplo_read_market = yes
+						pww_diplo_read_reserve = yes
+					}
 					set_temp_variable = { pww_dvb_ng = 1 }
 					set_temp_variable = { pww_dvb_sover = 0 }
 					if = {
@@ -1472,7 +1603,7 @@ pww_diplo_eval_bundle = {
 						multiply_temp_variable = { pww_dvb_tt = 0.5 }
 						set_temp_variable = { pww_dvb_td = pww_dvb_tt }
 						add_to_temp_variable = { pww_dvb_td = 1 }
-						add_to_temp_variable = { pww_dvb_tt = pww_dg_unsold }
+						add_to_temp_variable = { pww_dvb_tt = pww_dg_spare }
 						multiply_temp_variable = { pww_dvb_tt = -1 }
 						add_to_temp_variable = { pww_dvb_tt = pww_dvb_a }
 						divide_temp_variable = { pww_dvb_tt = pww_dvb_td }
@@ -1554,6 +1685,11 @@ pww_diplo_eval_bundle = {
 			check_variable = { pww_dvb_lease1 = 0 }
 		}
 		set_variable = { pww_do_valid = 63 }
+	}
+	# Poach Supplier compares the offer with their current supplier (POACHING).
+	if = {
+		limit = { check_variable = { pww_do_act = 2 } }
+		pww_diplo_eval_poach = yes
 	}
 
 	# Main item, kept for other readers
@@ -1676,6 +1812,13 @@ pww_diplo_eval_bundle = {
 			set_temp_variable = { pww_dvb_scar = pww_dvb_s }
 		}
 	}
+	if = {
+		limit = {
+			check_variable = { pww_do_act = 2 }
+			check_variable = { pww_dvb_scar < 0.5 }
+		}
+		set_temp_variable = { pww_dvb_scar = 0.5 }
+	}
 	clamp_temp_variable = { var = pww_dvb_scar min = 0 max = 1 }
 	set_variable = { pww_do_scar = pww_dvb_scar }
 
@@ -1689,9 +1832,36 @@ pww_diplo_eval_bundle = {
 	}
 	divide_temp_variable = { pww_dv_terms = pww_dv_b }
 	multiply_temp_variable = { pww_dv_terms = 100 }
+	if = {
+		limit = { check_variable = { pww_do_act = 2 } }
+		set_temp_variable = { pww_dv_terms = pww_dvp_terms }
+	}
 	clamp_temp_variable = { var = pww_dv_terms min = -100 max = 100 }
 	round_temp_variable = pww_dv_terms
 	set_variable = { pww_do_e_terms = pww_dv_terms }
+
+	# Trade bond of the main pair (TRADE BONDS): acceptance and the lock on
+	# fixed contracts.
+	set_temp_variable = { pww_dbo_s = pww_do_seller }
+	set_temp_variable = { pww_dbo_b = pww_do_buyer }
+	pww_diplo_bond = yes
+	set_variable = { pww_do_bond = pww_dbo_v }
+	set_variable = { pww_do_bond_band = pww_dbo_band }
+	set_variable = { pww_do_e_bond = pww_dbo_v }
+	divide_variable = { pww_do_e_bond = 10 }
+	round_variable = pww_do_e_bond
+	set_variable = { pww_do_e_lock = 0 }
+	set_variable = { pww_do_lockfail = 0 }
+	if = {
+		limit = {
+			check_variable = { pww_do_bind = 1 }
+			has_global_flag = pww_rel_loaded
+			check_variable = { pww_dbo_v < global.pww_rel_c_lock }
+			check_variable = { pww_dv_terms < 25 }
+		}
+		set_variable = { pww_do_e_lock = -1000 }
+		set_variable = { pww_do_lockfail = 1 }
+	}
 
 	round_temp_variable = pww_dvb_need
 	set_variable = { pww_do_e_need = pww_dvb_need }
@@ -1857,6 +2027,8 @@ pww_diplo_eval_bundle = {
 	add_to_variable = { pww_do_e_total = pww_do_e_patron }
 	add_to_variable = { pww_do_e_total = pww_do_e_repeat }
 	add_to_variable = { pww_do_e_total = pww_do_e_invalid }
+	add_to_variable = { pww_do_e_total = pww_do_e_bond }
+	add_to_variable = { pww_do_e_total = pww_do_e_lock }
 	set_variable = { pww_do_ok = 0 }
 	if = {
 		limit = { check_variable = { pww_do_e_total > 0 } }
@@ -1877,6 +2049,210 @@ pww_diplo_eval_bundle = {
 	set_temp_variable = { pww_band_value = pww_dvb_v1 }
 	pww_core_value_to_band = yes
 	set_variable = { pww_do_band_get = pww_band }
+}
+
+###############################################################################
+# POACHING (Poach Supplier, act 2). Sender scope; target = pww_do_target.
+#
+# pww_diplo_poach_pick: the incumbent, an agreement the target buys under
+#   that can be poached: active supply (kind 0), either side may end it
+#   (committal 0: a fixed contract cannot be poached), the target the buyer,
+#   another seller than us. Prefers a resource we produce, then the largest
+#   amount. out: pww_do_pinc_ag (-1 none). Visible supply deals only: vanilla
+#   pairwise trade is not in the ledger.
+# pww_diplo_eval_poach (from pww_diplo_eval_bundle): the target compares
+#   delivered costs per unit. Incumbent: its price ((civ + 9 x political
+#   power a day) / amount; a bundle sibling without payment counts at
+#   market) plus shipping from the incumbent. Ours: what they pay us at
+#   market rates (m1) / the units we give, plus shipping from us, times the
+#   incumbent's hold (pww_rel_poach_premium: 1 + 0.005 x the highest bond of
+#   their other suppliers of it). terms = (incumbent - ours x hold) / 0.125
+#   x 100: the saving as a share of market. Scarcity at least 0.5 (switching
+#   is a real decision: their asking margin bites at half). Invalid 66 when
+#   the incumbent deal is gone, 67 when our side lacks its resource.
+#   Display (sender, copied to the receiver): pww_do_p_inc (incumbent
+#   seller), pww_do_p_res, pww_do_p_amt, pww_do_p_pay (civ-equivalents a day
+#   for its amount), pww_do_p_ship, pww_do_p_bond / _band (incumbent pair),
+#   pww_do_p_mult.
+# Signing (pww_diplo_talk_accepted): the new agreements, then the target
+#   withdraws from the incumbent deal (pww_ledger_withdraw: a clean exit,
+#   cause 10); the relationships lane reads that as a switch away (bond
+#   damage) when the old pair had 3+ honored months, else a withdrawal.
+###############################################################################
+pww_diplo_poach_pick = {
+	set_variable = { pww_do_pinc_ag = -1 }
+	set_temp_variable = { pww_dpp_best = -1 }
+	set_temp_variable = { pww_dpp_me = THIS }
+	# An AI poacher names the resource (pww_do_ppref, -1 any).
+	set_temp_variable = { pww_dpp_pref = -1 }
+	if = {
+		limit = { has_variable = pww_do_ppref }
+		set_temp_variable = { pww_dpp_pref = pww_do_ppref }
+	}
+	var:pww_do_target = {
+		set_temp_variable = { pww_dpp_t = THIS }
+		for_each_loop = {
+			array = pww_ag_ids
+			value = pww_dpp_a
+			if = {
+				limit = {
+					check_variable = { global.pww_ag_status^pww_dpp_a = 1 }
+					check_variable = { global.pww_ag_kind^pww_dpp_a = 0 }
+					check_variable = { global.pww_ag_committal^pww_dpp_a = 0 }
+					check_variable = { global.pww_ag_buyer^pww_dpp_a = pww_dpp_t }
+					NOT = { check_variable = { global.pww_ag_seller^pww_dpp_a = pww_dpp_me } }
+					OR = {
+						check_variable = { pww_dpp_pref < 0 }
+						check_variable = { global.pww_ag_res^pww_dpp_a = pww_dpp_pref }
+					}
+				}
+				set_temp_variable = { pww_dpp_v = global.pww_ag_amount^pww_dpp_a }
+				set_temp_variable = { pww_dg_res = global.pww_ag_res^pww_dpp_a }
+				var:pww_dpp_me = { pww_diplo_read_res = yes }
+				if = {
+					limit = { check_variable = { pww_dg_prod > 0.999 } }
+					add_to_temp_variable = { pww_dpp_v = 10000 }
+				}
+				if = {
+					limit = { check_variable = { pww_dpp_v > pww_dpp_best } }
+					set_temp_variable = { pww_dpp_best = pww_dpp_v }
+					set_temp_variable = { pww_dpp_pick = pww_dpp_a }
+				}
+			}
+		}
+	}
+	if = {
+		limit = { check_variable = { pww_dpp_best > -1 } }
+		set_variable = { pww_do_pinc_ag = pww_dpp_pick }
+	}
+}
+
+# Sender scope. 1 in pww_dpq_ok when agreement pww_dpq_ag can still be
+# poached from the current target by us.
+pww_diplo_poach_check = {
+	set_temp_variable = { pww_dpq_ok = 0 }
+	if = {
+		limit = {
+			check_variable = { pww_dpq_ag > -1 }
+			check_variable = { pww_dpq_ag < global.pww_next_agreement_id }
+		}
+		if = {
+			limit = {
+				check_variable = { global.pww_ag_status^pww_dpq_ag = 1 }
+				check_variable = { global.pww_ag_kind^pww_dpq_ag = 0 }
+				check_variable = { global.pww_ag_committal^pww_dpq_ag = 0 }
+				check_variable = { global.pww_ag_buyer^pww_dpq_ag = pww_do_target }
+				NOT = { check_variable = { global.pww_ag_seller^pww_dpq_ag = THIS } }
+			}
+			set_temp_variable = { pww_dpq_ok = 1 }
+		}
+	}
+}
+
+pww_diplo_eval_poach = {
+	set_temp_variable = { pww_dvp_terms = -100 }
+	set_temp_variable = { pww_dpq_ag = pww_do_pinc_ag }
+	pww_diplo_poach_check = yes
+	if = {
+		limit = { check_variable = { pww_dpq_ok = 0 } }
+		if = {
+			limit = { check_variable = { pww_do_valid = 0 } }
+			set_variable = { pww_do_valid = 66 }
+		}
+	}
+	else = {
+		set_temp_variable = { pww_dvp_ag = pww_do_pinc_ag }
+		set_temp_variable = { pww_dvp_r = global.pww_ag_res^pww_dvp_ag }
+		set_temp_variable = { pww_dvp_inc = global.pww_ag_seller^pww_dvp_ag }
+		set_temp_variable = { pww_dvp_amt = global.pww_ag_amount^pww_dvp_ag }
+		if = {
+			limit = { check_variable = { pww_dvp_amt < 1 } }
+			set_temp_variable = { pww_dvp_amt = 1 }
+		}
+		# Our units of that resource
+		set_temp_variable = { pww_dvp_a = 0 }
+		for_loop_effect = {
+			start = 0
+			end = 4
+			value = pww_dvp_i
+			if = {
+				limit = {
+					check_variable = { pww_dob_k^pww_dvp_i = 3 }
+					check_variable = { pww_dob_x^pww_dvp_i = pww_dvp_r }
+				}
+				add_to_temp_variable = { pww_dvp_a = pww_dob_a^pww_dvp_i }
+			}
+		}
+		if = {
+			limit = {
+				check_variable = { pww_dvp_a < 1 }
+				check_variable = { pww_do_valid = 0 }
+			}
+			set_variable = { pww_do_valid = 67 }
+		}
+		# Incumbent price a day (civilian-factory equivalents)
+		set_temp_variable = { pww_dvp_c = global.pww_ag_civ^pww_dvp_ag }
+		set_temp_variable = { pww_dvp_pp = global.pww_ag_pp^pww_dvp_ag }
+		multiply_temp_variable = { pww_dvp_pp = 9 }
+		add_to_temp_variable = { pww_dvp_c = pww_dvp_pp }
+		if = {
+			limit = {
+				check_variable = { pww_dvp_c < 0.001 }
+				check_variable = { pww_dvp_c > -0.001 }
+				is_in_array = { array = global.pww_dlk_ag value = pww_dvp_ag }
+			}
+			set_temp_variable = { pww_dvp_c = pww_dvp_amt }
+			divide_temp_variable = { pww_dvp_c = 8 }
+		}
+		clamp_temp_variable = { var = pww_dvp_c min = 0 max = 999 }
+		set_variable = { pww_do_p_pay = pww_dvp_c }
+		set_temp_variable = { pww_dvp_ip = pww_dvp_c }
+		divide_temp_variable = { pww_dvp_ip = pww_dvp_amt }
+		# Incumbent shipping
+		set_temp_variable = { pww_dsh_s = pww_dvp_inc }
+		set_temp_variable = { pww_dsh_b = pww_do_target }
+		set_temp_variable = { pww_dsh_r = pww_dvp_r }
+		pww_diplo_ship = yes
+		add_to_temp_variable = { pww_dvp_ip = pww_dsh_cost }
+		set_temp_variable = { pww_dvp_is = pww_dsh_cost }
+		multiply_temp_variable = { pww_dvp_is = pww_dvp_amt }
+		set_variable = { pww_do_p_ship = pww_dvp_is }
+		# Our price a day per unit, delivered
+		set_temp_variable = { pww_dvp_op = pww_dvb_m1 }
+		set_temp_variable = { pww_dvp_ad = pww_dvp_a }
+		if = {
+			limit = { check_variable = { pww_dvp_ad < 1 } }
+			set_temp_variable = { pww_dvp_ad = 1 }
+		}
+		divide_temp_variable = { pww_dvp_op = pww_dvp_ad }
+		set_temp_variable = { pww_dsh_s = THIS }
+		pww_diplo_ship = yes
+		add_to_temp_variable = { pww_dvp_op = pww_dsh_cost }
+		# The incumbent's hold on them
+		set_temp_variable = { pww_dvp_mult = 1 }
+		if = {
+			limit = { has_global_flag = pww_rel_loaded }
+			set_temp_variable = { pww_in_seller = THIS }
+			set_temp_variable = { pww_in_buyer = pww_do_target }
+			set_temp_variable = { pww_in_resource = pww_dvp_r }
+			meta_effect = { text = { pww_rel_poach_premium = [Y] } Y = "yes" }
+			set_temp_variable = { pww_dvp_mult = pww_rel_poach_mult }
+		}
+		multiply_temp_variable = { pww_dvp_op = pww_dvp_mult }
+		set_temp_variable = { pww_dvp_terms = pww_dvp_ip }
+		subtract_from_temp_variable = { pww_dvp_terms = pww_dvp_op }
+		multiply_temp_variable = { pww_dvp_terms = 800 }
+		# Display
+		set_variable = { pww_do_p_inc = pww_dvp_inc }
+		set_variable = { pww_do_p_res = pww_dvp_r }
+		set_variable = { pww_do_p_amt = pww_dvp_amt }
+		set_variable = { pww_do_p_mult = pww_dvp_mult }
+		set_temp_variable = { pww_dbo_s = pww_dvp_inc }
+		set_temp_variable = { pww_dbo_b = pww_do_target }
+		pww_diplo_bond = yes
+		set_variable = { pww_do_p_bond = pww_dbo_v }
+		set_variable = { pww_do_p_band = pww_dbo_band }
+	}
 }
 
 # Sender scope. pww_do_sig: a number unique (in practice) to the bundle.
@@ -2015,7 +2391,32 @@ pww_diplo_sign_bundle = {
 	}
 	if = {
 		limit = { has_global_flag = pww_diplo_debug }
-		log = "[GetDateText] PWW_DIPLO sign bundle [THIS.GetTag]->[?pww_do_target.GetTag] act=[?pww_do_act|0] main=[?pww_do_main|0] res=[?pww_do_res|0] n0=[?pww_do_n0|0] n1=[?pww_do_n1|0] term=[?pww_do_term|0] bind=[?pww_do_bind|0] civ=[?pww_dsb_civ|0] pp=[?pww_dsb_pp|2] agreements=[?pww_dsb_ids^num|0] ok=[?pww_dsd_ok|0] ag=[?pww_dsd_ag|0] fail=[?pww_dsd_fail|0] valid=[?pww_do_valid|0]"
+		# Price factor: the payment side's market value over the goods side's
+		# (the side of the main item); 1 = at market. The seller's walk-away
+		# for the main resource as it stands now (pww_diplo_eval_glut_rate).
+		set_temp_variable = { pww_dsb_pf = 0 }
+		set_temp_variable = { pww_dsb_seller = pww_do_target }
+		if = {
+			limit = { check_variable = { pww_dsb_main < 4 } }
+			set_temp_variable = { pww_dsb_seller = THIS }
+			if = {
+				limit = { check_variable = { pww_do_mk_m0 > 0.001 } }
+				set_temp_variable = { pww_dsb_pf = pww_do_mk_m1 }
+				divide_temp_variable = { pww_dsb_pf = pww_do_mk_m0 }
+			}
+		}
+		else_if = {
+			limit = { check_variable = { pww_do_mk_m1 > 0.001 } }
+			set_temp_variable = { pww_dsb_pf = pww_do_mk_m0 }
+			divide_temp_variable = { pww_dsb_pf = pww_do_mk_m1 }
+		}
+		set_temp_variable = { pww_dg_res = pww_do_res }
+		var:pww_dsb_seller = {
+			pww_diplo_read_market = yes
+			pww_diplo_read_reserve = yes
+			pww_diplo_eval_glut_rate = yes
+		}
+		log = "[GetDateText] PWW_DIPLO sign bundle [THIS.GetTag]->[?pww_do_target.GetTag] act=[?pww_do_act|0] main=[?pww_do_main|0] res=[?pww_do_res|0] n0=[?pww_do_n0|0] n1=[?pww_do_n1|0] term=[?pww_do_term|0] bind=[?pww_do_bind|0] civ=[?pww_dsb_civ|0] pp=[?pww_dsb_pp|2] agreements=[?pww_dsb_ids^num|0] ok=[?pww_dsd_ok|0] ag=[?pww_dsd_ag|0] fail=[?pww_dsd_fail|0] valid=[?pww_do_valid|0] sale=[?pww_diplo_ai_offer_sell|0] seller=[?pww_dsb_seller.GetTag] m0=[?pww_do_mk_m0|3] m1=[?pww_do_mk_m1|3] pf=[?pww_dsb_pf|3] walk=[?pww_dvg_g|3] stocked=[?pww_dg_stocked|0] fill=[?pww_dg_fill|0] spare=[?pww_dg_spare|0] prod=[?pww_dg_prod|0]"
 	}
 }
 
@@ -2217,6 +2618,10 @@ pww_diplo_bundle_sibling_end = {
 ###############################################################################
 pww_diplo_ai_build_bundle = {
 	if = {
+		limit = { check_variable = { pww_do_act = 2 } }
+		pww_diplo_poach_defaults = yes
+	}
+	else_if = {
 		limit = {
 			check_variable = { pww_diplo_ai_offer_sell = 1 }
 			check_variable = { pww_diplo_ai_offer_to = pww_do_target }
@@ -2232,7 +2637,27 @@ pww_diplo_ai_build_bundle = {
 pww_diplo_ai_build_buy = {
 	pww_diplo_bundle_clear = yes
 	set_variable = { pww_do_len = 1 }
-	set_variable = { pww_do_bind = 1 }
+	# A fixed contract only with a trusted supplier (TRADE BONDS): bond of
+	# (target -> us) at least global.pww_rel_c_lock; else either side may end
+	# it. A seen red line 7 (no open deal) forces fixed: then the price must
+	# be generous (below).
+	set_temp_variable = { pww_dbo_s = pww_do_target }
+	set_temp_variable = { pww_dbo_b = THIS }
+	pww_diplo_bond = yes
+	set_temp_variable = { pww_dab_trust = 1 }
+	if = {
+		limit = {
+			has_global_flag = pww_rel_loaded
+			check_variable = { pww_dbo_v < global.pww_rel_c_lock }
+		}
+		set_temp_variable = { pww_dab_trust = 0 }
+	}
+	set_variable = { pww_do_bind = pww_dab_trust }
+	set_variable = { pww_do_lockwhy = 0 }
+	if = {
+		limit = { check_variable = { pww_dab_trust = 0 } }
+		set_variable = { pww_do_lockwhy = 1 }
+	}
 	set_temp_variable = { pww_dab_t = pww_do_talk }
 	set_temp_variable = { pww_dab_rl = -1 }
 	set_temp_variable = { pww_dab_w = -1 }
@@ -2320,14 +2745,36 @@ pww_diplo_ai_build_buy = {
 		limit = { check_variable = { pww_dab_pf > 1.4 } }
 		set_temp_variable = { pww_dab_pf = 1.4 }
 	}
+	# A fixed contract without the trust for it must be clearly generous.
+	if = {
+		limit = {
+			check_variable = { pww_dab_trust = 0 }
+			OR = {
+				check_variable = { pww_do_act = 1 }
+				check_variable = { pww_dab_rl = 7 }
+			}
+		}
+		add_to_temp_variable = { pww_dab_pf = 0.3 }
+		set_variable = { pww_do_bind = 1 }
+	}
 	set_temp_variable = { pww_dab_owe = pww_do_gap }
 	multiply_temp_variable = { pww_dab_owe = pww_dab_pf }
 	# A wanted item first, worth about a fifth of the price.
 	set_temp_variable = { pww_dab_wv = pww_dab_owe }
 	multiply_temp_variable = { pww_dab_wv = 0.2 }
+	set_temp_variable = { pww_dab_once_ok = 1 }
+	if = {
+		limit = {
+			check_variable = { pww_dab_trust = 0 }
+			check_variable = { pww_do_act = 0 }
+			NOT = { check_variable = { pww_dab_rl = 7 } }
+		}
+		set_temp_variable = { pww_dab_once_ok = 0 }
+	}
 	if = {
 		limit = {
 			check_variable = { pww_dab_w = 0 }
+			check_variable = { pww_dab_once_ok = 1 }
 			check_variable = { num_equipment@infantry_equipment > 1500 }
 		}
 		set_temp_variable = { pww_dba_side = 0 }
@@ -2356,6 +2803,7 @@ pww_diplo_ai_build_buy = {
 	else_if = {
 		limit = {
 			check_variable = { pww_dab_w = 3 }
+			check_variable = { pww_dab_once_ok = 1 }
 			check_variable = { num_equipment@motorized_equipment > 300 }
 		}
 		set_temp_variable = { pww_dba_side = 0 }
@@ -2366,6 +2814,7 @@ pww_diplo_ai_build_buy = {
 	else_if = {
 		limit = {
 			check_variable = { pww_dab_w = 4 }
+			check_variable = { pww_dab_once_ok = 1 }
 			has_tech = infantry_weapons
 		}
 		set_temp_variable = { pww_dba_side = 0 }
@@ -2510,6 +2959,7 @@ pww_diplo_ai_build_buy = {
 	if = {
 		limit = {
 			check_variable = { pww_dab_rest > 0.249 }
+			check_variable = { pww_dab_once_ok = 1 }
 			check_variable = { pww_dab_stock > 999 }
 		}
 		# Rifles worth the rest at their 0.85 discount, in 250s, from stock.
@@ -2601,17 +3051,37 @@ pww_diplo_ai_build_buy = {
 
 ###############################################################################
 # AI sale draft (AI sender scope; SALES in the header of pww_diplo_ticks.txt).
-# Sells pww_do_res from our unsold output, up to the target's demand
-# (imports plus open shortfall, pww_diplo_read_market), at
-# 95% of market (90% when 40% or more of our output is unsold), 5% less each
-# round (round 0 is the first draft), never under 75%; paid in the target's
+# Sells pww_do_res from our spare output (unsold plus storage intake), up to
+# the target's demand (imports plus open shortfall, pww_diplo_read_market),
+# at 95% of market (90% when 40% or more of our output is spare), 5% less
+# each round (round 0 is the first draft), less the buyer's shipping share
+# (delivered cost: the buyer pays it), never under our own walk-away (the
+# reserve value with stockpiles, else the glut rate) + 0.05, nor 0.5.
+# Cartel member (pww_cartel_sale_limits): at or above the cartel price and
+# within the quota room, unless it deliberately cheats (pww_dsl_cheat:
+# global.pww_cartel_c_ai_cheat on and its temptation 30+ or cohesion under
+# 40). An ex-member in a price war (flag pww_cartel_pricewar_<res>) sells 10%
+# cheaper, down to its bare walk-away, while it lasts. Paid in the target's
 # free civilian factories (whole, rounded down) and political power for the
-# rest (unless that is their red line). One year, fixed.
+# rest (unless that is their red line). One year; fixed only when the buyer
+# trusts us (bond of (us -> them) at least global.pww_rel_c_lock).
 ###############################################################################
 pww_diplo_ai_build_sale = {
 	pww_diplo_bundle_clear = yes
 	set_variable = { pww_do_len = 1 }
+	set_temp_variable = { pww_dbo_s = THIS }
+	set_temp_variable = { pww_dbo_b = pww_do_target }
+	pww_diplo_bond = yes
 	set_variable = { pww_do_bind = 1 }
+	set_variable = { pww_do_lockwhy = 0 }
+	if = {
+		limit = {
+			has_global_flag = pww_rel_loaded
+			check_variable = { pww_dbo_v < global.pww_rel_c_lock }
+		}
+		set_variable = { pww_do_bind = 0 }
+		set_variable = { pww_do_lockwhy = 1 }
+	}
 	set_temp_variable = { pww_dsl_t = pww_do_talk }
 	set_temp_variable = { pww_dsl_rl = -1 }
 	set_temp_variable = { pww_dsl_round = 0 }
@@ -2626,11 +3096,15 @@ pww_diplo_ai_build_sale = {
 		}
 		set_temp_variable = { pww_dsl_round = global.pww_dt_round^pww_dsl_t }
 	}
-	# Units: our unsold output, at most their demand.
+	# Units: our spare output, at most their demand.
 	set_temp_variable = { pww_dg_res = pww_do_res }
 	pww_diplo_read_market = yes
-	set_temp_variable = { pww_dsl_u = pww_dg_unsold }
-	set_temp_variable = { pww_dsl_q = pww_dg_unsold }
+	pww_diplo_read_reserve = yes
+	set_temp_variable = { pww_dsl_u = pww_dg_spare }
+	set_temp_variable = { pww_dsl_q = pww_dg_spare }
+	pww_diplo_eval_glut_rate = yes
+	set_temp_variable = { pww_dsl_walk = pww_dvg_g }
+	pww_diplo_sale_cartel = yes
 	set_temp_variable = { pww_dsl_p = pww_dg_prod }
 	if = {
 		limit = { check_variable = { pww_dsl_p < 1 } }
@@ -2645,6 +3119,14 @@ pww_diplo_ai_build_sale = {
 			check_variable = { pww_dsl_sh < pww_dsl_u }
 		}
 		set_temp_variable = { pww_dsl_u = pww_dsl_sh }
+	}
+	# Within the cartel quota room unless cheating.
+	if = {
+		limit = {
+			check_variable = { pww_dsl_cheat = 0 }
+			check_variable = { pww_dsl_u > pww_dsl_room }
+		}
+		set_temp_variable = { pww_dsl_u = pww_dsl_room }
 	}
 	subtract_from_temp_variable = { pww_dsl_u = 0.499 }
 	round_temp_variable = pww_dsl_u
@@ -2670,10 +3152,52 @@ pww_diplo_ai_build_sale = {
 	set_temp_variable = { pww_dsl_b = pww_dsl_round }
 	multiply_temp_variable = { pww_dsl_b = 0.05 }
 	subtract_from_temp_variable = { pww_dsl_pf = pww_dsl_b }
-	clamp_temp_variable = { var = pww_dsl_pf min = 0.75 max = 1 }
+	# Delivered cost: the buyer pays the shipping, so the ask makes room.
+	set_temp_variable = { pww_dsh_s = THIS }
+	set_temp_variable = { pww_dsh_b = pww_do_target }
+	set_temp_variable = { pww_dsh_r = pww_do_res }
+	pww_diplo_ship = yes
+	subtract_from_temp_variable = { pww_dsl_pf = pww_dsh_share }
+	# Floor: our own walk-away (+0.05), at least 0.5; a price war: bare.
+	set_temp_variable = { pww_dsl_floor = pww_dsl_walk }
+	add_to_temp_variable = { pww_dsl_floor = 0.05 }
+	if = {
+		limit = { check_variable = { pww_dsl_pw = 1 } }
+		subtract_from_temp_variable = { pww_dsl_pf = 0.1 }
+		subtract_from_temp_variable = { pww_dsl_floor = 0.05 }
+	}
+	if = {
+		limit = { check_variable = { pww_dsl_floor < 0.5 } }
+		set_temp_variable = { pww_dsl_floor = 0.5 }
+	}
+	if = {
+		limit = { check_variable = { pww_dsl_pf < pww_dsl_floor } }
+		set_temp_variable = { pww_dsl_pf = pww_dsl_floor }
+	}
+	if = {
+		limit = { check_variable = { pww_dsl_pf > 1 } }
+		set_temp_variable = { pww_dsl_pf = 1 }
+	}
+	# Cartel price (a factor of market) unless cheating.
+	if = {
+		limit = {
+			check_variable = { pww_dsl_cheat = 0 }
+			check_variable = { pww_dsl_price > pww_dsl_pf }
+		}
+		set_temp_variable = { pww_dsl_pf = pww_dsl_price }
+	}
 	set_temp_variable = { pww_dsl_ask = pww_do_mk_m0 }
 	multiply_temp_variable = { pww_dsl_ask = pww_dsl_pf }
 	set_variable = { pww_do_sale_pf = pww_dsl_pf }
+	pww_diplo_bundle_ask_pay = yes
+	pww_diplo_eval_bundle = yes
+}
+
+# Sender scope. Their side pays pww_dsl_ask (civilian-factory equivalents):
+# the target's free civilian factories, whole and rounded down, then
+# political power a day for the rest (unless red line 3 is seen: pww_dsl_rl),
+# else one factory (unworkable until they free one).
+pww_diplo_bundle_ask_pay = {
 	# Their free civilian factories, whole and rounded down
 	var:pww_do_target = { set_temp_variable = { pww_dsl_free = num_of_civilian_factories_available_for_projects } }
 	set_temp_variable = { pww_dsl_civ = pww_dsl_ask }
@@ -2736,7 +3260,82 @@ pww_diplo_ai_build_sale = {
 			set_variable = { pww_dob_a^pww_dba_new = 1 }
 		}
 	}
-	pww_diplo_eval_bundle = yes
+}
+
+# Seller scope, after pww_diplo_read_market and pww_diplo_read_reserve.
+# out: pww_dvg_g, the walk-away rate for spare units (see MARKET FLOOR).
+pww_diplo_eval_glut_rate = {
+	set_temp_variable = { pww_dvg_u = pww_dg_spare }
+	set_temp_variable = { pww_dvg_p = pww_dg_prod }
+	if = {
+		limit = { check_variable = { pww_dvg_p < 1 } }
+		set_temp_variable = { pww_dvg_p = 1 }
+	}
+	set_temp_variable = { pww_dvg_g = pww_dvg_u }
+	divide_temp_variable = { pww_dvg_g = pww_dvg_p }
+	divide_temp_variable = { pww_dvg_g = 0.4 }
+	clamp_temp_variable = { var = pww_dvg_g min = 0 max = 1 }
+	multiply_temp_variable = { pww_dvg_g = -0.3 }
+	add_to_temp_variable = { pww_dvg_g = 1 }
+	if = {
+		limit = { check_variable = { pww_dg_stocked = 1 } }
+		set_temp_variable = { pww_dvg_g = pww_dg_wrate }
+	}
+}
+
+# Seller scope. in pww_dg_res. Cartel limits for an AI sale (through
+# meta_effect under pww_cartel_loaded). out: pww_dsl_price (cartel price
+# factor, 0 unbound), pww_dsl_room (units a day of quota room, 99999
+# unbound), pww_dsl_cheat (1 when the member deliberately undercuts),
+# pww_dsl_pw (1 in a price war over it after a collapse).
+pww_diplo_sale_cartel = {
+	set_temp_variable = { pww_dsl_price = 0 }
+	set_temp_variable = { pww_dsl_room = 99999 }
+	set_temp_variable = { pww_dsl_cheat = 0 }
+	set_temp_variable = { pww_dsl_pw = 0 }
+	set_temp_variable = { pww_dsl_cr = pww_dg_res }
+	if = {
+		limit = {
+			has_global_flag = pww_cartel_loaded
+			check_variable = { pww_dsl_cr > 0 }
+		}
+		set_temp_variable = { pww_in_res = pww_dsl_cr }
+		meta_effect = { text = { pww_cartel_sale_limits = [Y] } Y = "yes" }
+		set_temp_variable = { pww_dsl_price = pww_out_cartel_price }
+		set_temp_variable = { pww_dsl_room = pww_out_cartel_room }
+		if = {
+			limit = {
+				check_variable = { pww_dsl_price > 0 }
+				check_variable = { pww_out_cm > -1 }
+				check_variable = { global.pww_cartel_c_ai_cheat = 1 }
+			}
+			set_temp_variable = { pww_dsl_cid = global.pww_cm_cart^pww_out_cm }
+			if = {
+				limit = {
+					OR = {
+						check_variable = { global.pww_cm_tempt^pww_out_cm > 29.999 }
+						check_variable = { global.pww_cart_cohesion^pww_dsl_cid < 40 }
+					}
+				}
+				set_temp_variable = { pww_dsl_cheat = 1 }
+			}
+		}
+		if = {
+			limit = {
+				OR = {
+					AND = { check_variable = { pww_dsl_cr = 1 } has_country_flag = pww_cartel_pricewar_aluminium }
+					AND = { check_variable = { pww_dsl_cr = 2 } has_country_flag = pww_cartel_pricewar_rubber }
+					AND = { check_variable = { pww_dsl_cr = 3 } has_country_flag = pww_cartel_pricewar_tungsten }
+					AND = { check_variable = { pww_dsl_cr = 4 } has_country_flag = pww_cartel_pricewar_steel }
+					AND = { check_variable = { pww_dsl_cr = 5 } has_country_flag = pww_cartel_pricewar_chromium }
+					AND = { check_variable = { pww_dsl_cr = 6 } has_country_flag = pww_cartel_pricewar_coal }
+				}
+			}
+			set_temp_variable = { pww_dsl_pw = 1 }
+		}
+	}
+	set_variable = { pww_do_sale_cheat = pww_dsl_cheat }
+	set_variable = { pww_do_sale_cprice = pww_dsl_price }
 }
 
 ###############################################################################
@@ -2894,6 +3493,7 @@ pww_diplo_ai_counter_sale_own = {
 			limit = { check_variable = { pww_dob_k^pww_dac_i = 3 } }
 			set_temp_variable = { pww_dg_res = pww_dob_x^pww_dac_i }
 			pww_diplo_read_market = yes
+			pww_diplo_read_reserve = yes
 			set_temp_variable = { pww_dvb_a = pww_dob_a^pww_dac_i }
 			pww_diplo_eval_glut = yes
 			divide_temp_variable = { pww_dvb_wu = 8 }
@@ -2909,6 +3509,22 @@ pww_diplo_ai_counter_sale_own = {
 	divide_temp_variable = { pww_dac_own = pww_dac_base }
 	multiply_temp_variable = { pww_dac_own = 100 }
 	set_temp_variable = { pww_dac_need = -0.001 }
+	# A cartel member does not go under the cartel price (unless cheating).
+	set_temp_variable = { pww_dg_res = pww_do_res }
+	pww_diplo_sale_cartel = yes
+	if = {
+		limit = {
+			check_variable = { pww_dsl_cheat = 0 }
+			check_variable = { pww_dsl_price > 0 }
+		}
+		set_temp_variable = { pww_dac_cp = pww_do_mk_m0 }
+		multiply_temp_variable = { pww_dac_cp = pww_dsl_price }
+		subtract_from_temp_variable = { pww_dac_cp = 0.001 }
+		if = {
+			limit = { check_variable = { pww_do_mk_m1 < pww_dac_cp } }
+			set_temp_variable = { pww_dac_need = 9999 }
+		}
+	}
 }
 
 # Sale counters (AI seller, human buyer): 1 a lower price (every payment item

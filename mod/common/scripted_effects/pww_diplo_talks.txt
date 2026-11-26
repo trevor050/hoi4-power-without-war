@@ -31,7 +31,9 @@
 #   71-76 rival, 81-85 stalling (83 = same terms again), 90 signed, 91 failed
 #   to register, 92 closed, 93 superseded by an auction, 94 opening, 95
 #   expired, 96/97 an AI sender took / refused a human counter, 101-106 the
-#   price is too low (sets global.pww_dt_floor: the "go below market" clue).
+#   price is too low (sets global.pww_dt_floor: the "go below market" clue),
+#   111-113 too little trust for a fixed contract (bond under
+#   global.pww_rel_c_lock and the terms not clearly generous).
 #
 # AUCTION BID VALUES (old single-term model, bids only). Civilian-factory
 # equivalents:
@@ -285,6 +287,21 @@ pww_diplo_talk_create = {
 	set_temp_variable = { pww_dk_b = pww_dk_rel }
 	divide_temp_variable = { pww_dk_b = 2 }
 	add_to_temp_variable = { pww_dk_pat = pww_dk_b }
+	# Trade bond (either direction, the stronger): old partners sit longer
+	# at the table (+ bond / 4, up to +25).
+	set_temp_variable = { pww_dbo_s = pww_dk_party }
+	set_temp_variable = { pww_dbo_b = pww_dk_other }
+	pww_diplo_bond = yes
+	set_temp_variable = { pww_dk_bond = pww_dbo_v }
+	set_temp_variable = { pww_dbo_s = pww_dk_other }
+	set_temp_variable = { pww_dbo_b = pww_dk_party }
+	pww_diplo_bond = yes
+	if = {
+		limit = { check_variable = { pww_dbo_v > pww_dk_bond } }
+		set_temp_variable = { pww_dk_bond = pww_dbo_v }
+	}
+	divide_temp_variable = { pww_dk_bond = 4 }
+	add_to_temp_variable = { pww_dk_pat = pww_dk_bond }
 	clamp_temp_variable = { var = pww_dk_pat min = 20 max = 95 }
 	round_temp_variable = pww_dk_pat
 	set_temp_variable = { pww_dk_res = pww_dk_seed }
@@ -372,10 +389,98 @@ pww_diplo_offer_begin = {
 	set_variable = { pww_dbm_side = -1 }
 	set_variable = { pww_dbm_page = 0 }
 	if = {
+		limit = { check_variable = { pww_do_act = 2 } }
+		# Poach Supplier: the incumbent may have changed since the last visit.
+		set_temp_variable = { pww_dpq_ag = pww_do_pinc_ag }
+		pww_diplo_poach_check = yes
+		if = {
+			limit = { check_variable = { pww_dpq_ok = 0 } }
+			set_temp_variable = { pww_dob_keep = 0 }
+		}
+	}
+	if = {
 		limit = { check_variable = { pww_dob_keep = 0 } }
-		pww_diplo_bundle_defaults = yes
+		if = {
+			limit = { check_variable = { pww_do_act = 2 } }
+			pww_diplo_poach_defaults = yes
+		}
+		else = {
+			pww_diplo_bundle_defaults = yes
+		}
 	}
 	pww_diplo_offer_changed = yes
+}
+
+# Sender scope (act 2). Picks the incumbent (pww_diplo_poach_pick) and drafts
+# a better delivered deal: the resource they buy, as many units as now (at
+# most half our output), for 90% of the incumbent's price a unit (market when
+# it has none), less our shipping, paid in their free civilian factories and
+# political power. One year, either side may end it.
+pww_diplo_poach_defaults = {
+	pww_diplo_bundle_clear = yes
+	set_variable = { pww_do_len = 1 }
+	set_variable = { pww_do_bind = 0 }
+	pww_diplo_poach_pick = yes
+	set_temp_variable = { pww_dpd_ag = pww_do_pinc_ag }
+	if = {
+		limit = { check_variable = { pww_dpd_ag > -1 } }
+		set_temp_variable = { pww_dpd_r = global.pww_ag_res^pww_dpd_ag }
+		set_temp_variable = { pww_dpd_u = global.pww_ag_amount^pww_dpd_ag }
+		set_temp_variable = { pww_dg_res = pww_dpd_r }
+		pww_diplo_read_res = yes
+		set_temp_variable = { pww_dpd_cap = pww_dg_prod }
+		multiply_temp_variable = { pww_dpd_cap = 0.5 }
+		if = {
+			limit = { check_variable = { pww_dpd_u > pww_dpd_cap } }
+			set_temp_variable = { pww_dpd_u = pww_dpd_cap }
+		}
+		round_temp_variable = pww_dpd_u
+		if = {
+			limit = { check_variable = { pww_dpd_u < 1 } }
+			set_temp_variable = { pww_dpd_u = 1 }
+		}
+		set_temp_variable = { pww_dba_side = 0 }
+		set_temp_variable = { pww_dba_kind = 3 }
+		set_temp_variable = { pww_dba_x = pww_dpd_r }
+		pww_diplo_bundle_add = yes
+		if = {
+			limit = { check_variable = { pww_dba_new > -1 } }
+			set_variable = { pww_dob_a^pww_dba_new = pww_dpd_u }
+		}
+		pww_diplo_eval_bundle = yes
+		# Price factor: 90% of the incumbent's price per unit (vs market),
+		# 5% less each round of the talk.
+		set_temp_variable = { pww_dpd_m = 0.9 }
+		set_temp_variable = { pww_dpd_t = pww_do_talk }
+		if = {
+			limit = {
+				check_variable = { pww_dpd_t > -1 }
+				check_variable = { pww_dpd_t < global.pww_next_talk_id }
+			}
+			set_temp_variable = { pww_dpd_rd = global.pww_dt_round^pww_dpd_t }
+			multiply_temp_variable = { pww_dpd_rd = 0.05 }
+			subtract_from_temp_variable = { pww_dpd_m = pww_dpd_rd }
+		}
+		set_temp_variable = { pww_dpd_pf = pww_dpd_m }
+		set_temp_variable = { pww_dpd_ia = global.pww_ag_amount^pww_dpd_ag }
+		if = {
+			limit = { check_variable = { pww_dpd_ia > 0.999 } }
+			set_temp_variable = { pww_dpd_pf = pww_do_p_pay }
+			multiply_temp_variable = { pww_dpd_pf = 8 }
+			divide_temp_variable = { pww_dpd_pf = pww_dpd_ia }
+			multiply_temp_variable = { pww_dpd_pf = pww_dpd_m }
+		}
+		set_temp_variable = { pww_dsh_s = THIS }
+		set_temp_variable = { pww_dsh_b = pww_do_target }
+		set_temp_variable = { pww_dsh_r = pww_dpd_r }
+		pww_diplo_ship = yes
+		subtract_from_temp_variable = { pww_dpd_pf = pww_dsh_share }
+		clamp_temp_variable = { var = pww_dpd_pf min = 0.3 max = 1.5 }
+		set_temp_variable = { pww_dsl_ask = pww_do_mk_m0 }
+		multiply_temp_variable = { pww_dsl_ask = pww_dpd_pf }
+		set_temp_variable = { pww_dsl_rl = -1 }
+		pww_diplo_bundle_ask_pay = yes
+	}
 }
 
 # Sender scope. Re-evaluate and refresh every display mirror.
@@ -1046,6 +1151,15 @@ pww_diplo_talk_reply = {
 				}
 			}
 			else_if = {
+				# Not enough trust for a fixed contract (TRADE BONDS): the
+				# specific reason comes before any want is revealed.
+				limit = { check_variable = { pww_do_lockfail = 1 } }
+				subtract_from_temp_variable = { pww_dr_pat = 5 }
+				modulo_temp_variable = { var = pww_dr_k value = 3 }
+				set_temp_variable = { pww_dr_line = 111 }
+				add_to_temp_variable = { pww_dr_line = pww_dr_k }
+			}
+			else_if = {
 				# Reveal the hidden want, unless the draft already carries it
 				# (then they acknowledge it below and name the real obstacle).
 				limit = {
@@ -1404,6 +1518,10 @@ pww_diplo_talk_accepted = {
 		}
 		if = {
 			limit = { check_variable = { pww_dsd_ok = 1 } }
+			if = {
+				limit = { check_variable = { pww_do_act = 2 } }
+				pww_diplo_poach_switch = yes
+			}
 			set_variable = { global.pww_dt_status^pww_dta_t = 1 }
 			set_variable = { global.pww_dt_ag^pww_dta_t = pww_dsd_ag }
 			set_variable = { global.pww_dt_last_ok^pww_dta_t = 1 }
@@ -1425,6 +1543,30 @@ pww_diplo_talk_accepted = {
 	}
 	pww_diplo_refresh_display = yes
 	add_to_variable = { pww_diplo_dirty = 1 }
+}
+
+# Sender scope, after a poach signed: the target withdraws from the incumbent
+# deal (non-committal: a clean exit, cause 10; the relationships lane then
+# books the switch away). out: pww_dps_done (1 withdrawn).
+pww_diplo_poach_switch = {
+	set_temp_variable = { pww_dps_done = 0 }
+	set_temp_variable = { pww_dpq_ag = pww_do_pinc_ag }
+	pww_diplo_poach_check = yes
+	if = {
+		limit = { check_variable = { pww_dpq_ok = 1 } }
+		pww_diplo_ledger_clear = yes
+		set_temp_variable = { pww_l_ag = pww_dpq_ag }
+		set_temp_variable = { pww_l_by = pww_do_target }
+		pww_ledger_withdraw = yes
+		if = {
+			limit = { check_variable = { global.pww_ag_status^pww_dpq_ag = 4 } }
+			set_temp_variable = { pww_dps_done = 1 }
+		}
+		if = {
+			limit = { has_global_flag = pww_diplo_debug }
+			log = "[GetDateText] PWW_DIPLO poach switch [THIS.GetTag] took [?pww_do_target.GetTag] from [?pww_do_p_inc.GetTag] agreement=[?pww_dpq_ag|0] done=[?pww_dps_done|0]"
+		}
+	}
 }
 
 ###############################################################################
@@ -1484,10 +1626,12 @@ pww_diplo_ai_prepare_offer = {
 }
 
 ###############################################################################
-# Receiver mirror (sender scope): the bundle's display variables are copied
-# to the target, so the receive GUI reads the same names in either scope
-# (pww_diplo_bundle_copy_display). pww_dr_counter (the human's counter mark)
-# starts clear. The counter itself: pww_diplo_ai_consider_counter
+# Receiver mirror (sender scope, at delivery): the receive window reads ROOT =
+# the sender, from a snapshot in its own namespace (pww_diplo_bundle_snapshot_recv:
+# pww_drx_*), never the live mirror a send window reads. Nothing is written on
+# the target's display variables, so an incoming proposal cannot repaint a
+# send window the receiver has open. pww_dr_counter (the receiver's counter
+# mark) starts clear. The counter itself: pww_diplo_ai_consider_counter
 # (pww_diplo_bundle.txt).
 ###############################################################################
 pww_diplo_mirror_for_receiver = {
@@ -1502,5 +1646,5 @@ pww_diplo_mirror_for_receiver = {
 		set_variable = { pww_dr_counter = 0 }
 		add_to_variable = { pww_diplo_dirty = 1 }
 	}
-	pww_diplo_bundle_copy_display = yes
+	pww_diplo_bundle_snapshot_recv = yes
 }
