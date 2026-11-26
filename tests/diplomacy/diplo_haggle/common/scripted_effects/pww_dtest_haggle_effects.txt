@@ -238,3 +238,119 @@ pww_dtest_hg_bundle_sign = {
 		log = "PWW_RESULT diplo_haggle.F_linked_end FAIL main status=[?global.pww_ag_status^pww_dtest_hg_main|0] sibling status=[?global.pww_ag_status^pww_dtest_hg_sib|0]"
 	}
 }
+
+# GER scope, after an evaluation. Case I: checks that what the screen shows is
+# the acceptance model's market baseline. out:
+#   pww_dtest_hg_rowok  1 when every row's value is its raw market value at the
+#                       form's rate (political power 0.9, equipment 0.85) and
+#                       the displayed row figure is that value rounded
+#   pww_dtest_hg_s0/s1  row values summed per side (must equal m0 / m1)
+#   pww_dtest_hg_sumok  1 when the sums and the displayed totals match m0 / m1
+#   pww_dtest_hg_tm     terms from the displayed totals: (m0 - m1) / base x 100
+#                       (equals pww_do_e_terms while the seller's desperation is 0)
+pww_dtest_hg_check_market = {
+	set_temp_variable = { pww_dtest_hg_rowok = 1 }
+	set_temp_variable = { pww_dtest_hg_s0 = 0 }
+	set_temp_variable = { pww_dtest_hg_s1 = 0 }
+	for_loop_effect = {
+		start = 0
+		end = 8
+		value = pww_dtest_hg_i
+		if = {
+			limit = { check_variable = { pww_dob_k^pww_dtest_hg_i > 0 } }
+			set_temp_variable = { pww_dtest_hg_fm = 1 }
+			if = {
+				limit = { check_variable = { pww_dob_k^pww_dtest_hg_i = 2 } }
+				set_temp_variable = { pww_dtest_hg_fm = 0.9 }
+			}
+			if = {
+				limit = { check_variable = { pww_dob_k^pww_dtest_hg_i = 4 } }
+				set_temp_variable = { pww_dtest_hg_fm = 0.85 }
+			}
+			set_temp_variable = { pww_dtest_hg_w = pww_dob_v^pww_dtest_hg_i }
+			multiply_temp_variable = { pww_dtest_hg_w = pww_dtest_hg_fm }
+			subtract_from_temp_variable = { pww_dtest_hg_w = pww_dob_m^pww_dtest_hg_i }
+			if = {
+				limit = {
+					OR = {
+						check_variable = { pww_dtest_hg_w > 0.002 }
+						check_variable = { pww_dtest_hg_w < -0.002 }
+					}
+				}
+				set_temp_variable = { pww_dtest_hg_rowok = 0 }
+			}
+			if = {
+				limit = { check_variable = { pww_dtest_hg_i < 4 } }
+				add_to_temp_variable = { pww_dtest_hg_s0 = pww_dob_m^pww_dtest_hg_i }
+			}
+			else = {
+				add_to_temp_variable = { pww_dtest_hg_s1 = pww_dob_m^pww_dtest_hg_i }
+			}
+		}
+	}
+	# Displayed row figures (generated per-slot mirror) within rounding.
+	set_temp_variable = { pww_dtest_hg_d = pww_dbv_0 }
+	subtract_from_temp_variable = { pww_dtest_hg_d = pww_dob_m^0 }
+	if = { limit = { OR = { check_variable = { pww_dtest_hg_d > 0.051 } check_variable = { pww_dtest_hg_d < -0.051 } } } set_temp_variable = { pww_dtest_hg_rowok = 0 } }
+	set_temp_variable = { pww_dtest_hg_d = pww_dbv_4 }
+	subtract_from_temp_variable = { pww_dtest_hg_d = pww_dob_m^4 }
+	if = { limit = { OR = { check_variable = { pww_dtest_hg_d > 0.051 } check_variable = { pww_dtest_hg_d < -0.051 } } } set_temp_variable = { pww_dtest_hg_rowok = 0 } }
+	set_temp_variable = { pww_dtest_hg_sumok = 1 }
+	set_temp_variable = { pww_dtest_hg_d = pww_dtest_hg_s0 }
+	subtract_from_temp_variable = { pww_dtest_hg_d = pww_do_mk_m0 }
+	if = { limit = { OR = { check_variable = { pww_dtest_hg_d > 0.002 } check_variable = { pww_dtest_hg_d < -0.002 } } } set_temp_variable = { pww_dtest_hg_sumok = 0 } }
+	set_temp_variable = { pww_dtest_hg_d = pww_dtest_hg_s1 }
+	subtract_from_temp_variable = { pww_dtest_hg_d = pww_do_mk_m1 }
+	if = { limit = { OR = { check_variable = { pww_dtest_hg_d > 0.002 } check_variable = { pww_dtest_hg_d < -0.002 } } } set_temp_variable = { pww_dtest_hg_sumok = 0 } }
+	set_temp_variable = { pww_dtest_hg_d = pww_dbm_t0 }
+	subtract_from_temp_variable = { pww_dtest_hg_d = pww_do_mk_m0 }
+	if = { limit = { OR = { check_variable = { pww_dtest_hg_d > 0.051 } check_variable = { pww_dtest_hg_d < -0.051 } } } set_temp_variable = { pww_dtest_hg_sumok = 0 } }
+	set_temp_variable = { pww_dtest_hg_d = pww_dbm_t1 }
+	subtract_from_temp_variable = { pww_dtest_hg_d = pww_do_mk_m1 }
+	if = { limit = { OR = { check_variable = { pww_dtest_hg_d > 0.051 } check_variable = { pww_dtest_hg_d < -0.051 } } } set_temp_variable = { pww_dtest_hg_sumok = 0 } }
+	# Terms from the totals alone
+	set_temp_variable = { pww_dtest_hg_b = pww_do_mk_base }
+	if = {
+		limit = { check_variable = { pww_dtest_hg_b < 0.25 } }
+		set_temp_variable = { pww_dtest_hg_b = 0.25 }
+	}
+	set_temp_variable = { pww_dtest_hg_tm = pww_do_mk_m0 }
+	subtract_from_temp_variable = { pww_dtest_hg_tm = pww_do_mk_m1 }
+	divide_temp_variable = { pww_dtest_hg_tm = pww_dtest_hg_b }
+	multiply_temp_variable = { pww_dtest_hg_tm = 100 }
+	clamp_temp_variable = { var = pww_dtest_hg_tm min = -100 max = 100 }
+	round_temp_variable = pww_dtest_hg_tm
+	set_temp_variable = { pww_dtest_hg_td = pww_dtest_hg_tm }
+	subtract_from_temp_variable = { pww_dtest_hg_td = pww_do_e_terms }
+}
+
+# GER scope, after a draft with POR tungsten on their side (slot 4). Runs
+# Balance it and checks: at market, valid, their side untouched, and the market
+# figures agree with the acceptance terms. in: pww_dtest_hg_tag (log label).
+# out: pww_dtest_hg_iok (1 pass).
+pww_dtest_hg_balance_case = {
+	set_temp_variable = { pww_dtest_hg_k4 = pww_dob_k^4 }
+	set_temp_variable = { pww_dtest_hg_x4 = pww_dob_x^4 }
+	set_temp_variable = { pww_dtest_hg_a4 = pww_dob_a^4 }
+	set_temp_variable = { pww_dtest_hg_mk0 = pww_do_mk }
+	pww_diplo_bundle_balance = yes
+	pww_dtest_hg_check_market = yes
+	set_temp_variable = { pww_dtest_hg_iok = 0 }
+	if = {
+		limit = {
+			check_variable = { pww_do_mk = 0 }
+			check_variable = { pww_do_valid = 0 }
+			check_variable = { pww_dbl_msg = 0 }
+			check_variable = { pww_dob_k^4 = pww_dtest_hg_k4 }
+			check_variable = { pww_dob_x^4 = pww_dtest_hg_x4 }
+			check_variable = { pww_dob_a^4 = pww_dtest_hg_a4 }
+			check_variable = { pww_do_n1 = 1 }
+			check_variable = { pww_dtest_hg_rowok = 1 }
+			check_variable = { pww_dtest_hg_sumok = 1 }
+			check_variable = { pww_dtest_hg_td < 1.01 }
+			check_variable = { pww_dtest_hg_td > -1.01 }
+		}
+		set_temp_variable = { pww_dtest_hg_iok = 1 }
+	}
+	log = "PWW_RESULT diplo_haggle.I_values INFO case=[?pww_dtest_hg_tag|0] before=[?pww_dtest_hg_mk0|0] after=[?pww_do_mk|0] valid=[?pww_do_valid|0] msg=[?pww_dbl_msg|0] we_give=[?pww_dob_k^0|0]x[?pww_dob_a^0|2]+[?pww_dob_k^1|0]x[?pww_dob_a^1|2] they_give=[?pww_dob_k^4|0]x[?pww_dob_a^4|0] m0=[?pww_do_mk_m0|3] m1=[?pww_do_mk_m1|3] shown=[?pww_dbm_t0|2]/[?pww_dbm_t1|2] rows=[?pww_dbv_0|2],[?pww_dbv_1|2]|[?pww_dbv_4|2] gap=[?pww_do_gap|3] tol=[?pww_do_mk_tol|3] rowok=[?pww_dtest_hg_rowok|0] sumok=[?pww_dtest_hg_sumok|0] terms=[?pww_do_e_terms|0] terms_from_totals=[?pww_dtest_hg_tm|0] marker_x=[?pww_dbm_bx|0]"
+}

@@ -396,6 +396,8 @@ for g, w in windows.items():
         out.append("\t\teffects = {\n" + "".join(effects[g]) + "\t\t}\n")
     if triggers.get(g):
         out.append("\t\ttriggers = {\n" + "".join(triggers[g]) + "\t\t}\n")
+    if talks.PROPS.get(g):
+        out.append("\t\tproperties = {\n" + "".join(talks.PROPS[g]) + "\t\t}\n")
     out.append("\t\tai_enabled = { always = no }\n\t}\n")
 out.append("}\n")
 with open(SG_OUT, "w", encoding="utf-8", newline="\n") as f:

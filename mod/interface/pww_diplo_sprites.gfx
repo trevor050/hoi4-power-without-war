@@ -48,6 +48,12 @@ spriteTypes = {
 		borderSize = { x = 12 y = 12 }
 	}
 	corneredTileSpriteType = {
+		name = "GFX_pww_dt_track"
+		size = { x = 140 y = 12 }
+		textureFile = "gfx/interface/tiles/tiled_progress_bar.dds"
+		borderSize = { x = 6 y = 5 }
+	}
+	corneredTileSpriteType = {
 		name = "GFX_pww_dt_menurow"
 		size = { x = 416 y = 20 }
 		textureFile = "gfx/interface/diplo_countrylist_entry.dds"

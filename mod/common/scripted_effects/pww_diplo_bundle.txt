@@ -26,6 +26,9 @@
 #                 units / 8, political power x 10, one-time items spread over
 #                 the term (equipment IC / 5 / days, a licence 365 / days),
 #                 a lease the state's output / 8
+#   pww_dob_m^n   market value at the payment form's rate (derived; what the
+#                 screen shows on the row): pww_dob_v x the form discount
+#                 (political power 0.9, equipment 0.85, everything else 1)
 # Terms: pww_do_len (0 six months, 1 one year, 2 two years, 5 five years ->
 #   pww_do_term days), pww_do_bind (0 either side may end it, 1 fixed
 #   contract = ledger committal). Equipment, licences and leases are
@@ -61,11 +64,13 @@
 #   more, 2 no more than 60% of their output, 3 no political power, 4 never
 #   crossed here, 5 no more than 45% of their output, 6 no lease and no more
 #   than 30% (patron treaty), 7 no deal either side may end.
-# Market line (display only, same numbers): what we ask at market against
-#   what our offer is worth to them (form discounts, no desperation); "at
-#   market" within max(5% of the goods value, 0.05 factories). Amounts are the
-#   real ones the evaluation uses: nothing is rounded between the screen and
-#   the AI.
+# Market figures (display, same numbers): every row shows its pww_dob_m
+#   (market value at the form's rate), the totals row shows m0 (we give) and
+#   m1 (they give); terms with no desperation and no lease premium is exactly
+#   (m0 - m1) / base x 100. "At market" when |m1 - m0| is within max(5% of
+#   the goods value, 0.05 factories) (pww_do_mk_tol). Amounts are the real ones
+#   the evaluation uses: nothing is rounded between the screen and the AI.
+#   "Balance it" (pww_diplo_bundle_balance) moves our payments into that band.
 #
 # LEDGER (pww_diplo_sign_bundle). Each goods item (resource or lease) is one
 # agreement: giver = seller, receiver = buyer, same term and committal. The
@@ -96,6 +101,12 @@ pww_diplo_bundle_ensure = {
 		resize_array = { array = pww_dob_s value = 0 size = 8 }
 		resize_array = { array = pww_dob_v value = 0 size = 8 }
 	}
+	# Added after the first release: saves from before it lack the array.
+	if = {
+		limit = { NOT = { check_variable = { pww_dob_m^num = 8 } } }
+		clear_array = pww_dob_m
+		resize_array = { array = pww_dob_m value = 0 size = 8 }
+	}
 	if = {
 		limit = { NOT = { has_variable = pww_do_len } }
 		set_variable = { pww_do_len = 1 }
@@ -119,6 +130,7 @@ pww_diplo_bundle_clear = {
 		set_variable = { pww_dob_a^pww_dbc_i = 0 }
 		set_variable = { pww_dob_s^pww_dbc_i = 0 }
 		set_variable = { pww_dob_v^pww_dbc_i = 0 }
+		set_variable = { pww_dob_m^pww_dbc_i = 0 }
 	}
 	set_variable = { pww_do_len = 1 }
 	set_variable = { pww_do_bind = 0 }
@@ -149,6 +161,7 @@ pww_diplo_bundle_remove = {
 			set_variable = { pww_dob_a^pww_dbr_p = pww_dob_a^pww_dbr_j }
 			set_variable = { pww_dob_s^pww_dbr_p = pww_dob_s^pww_dbr_j }
 			set_variable = { pww_dob_v^pww_dbr_p = pww_dob_v^pww_dbr_j }
+			set_variable = { pww_dob_m^pww_dbr_p = pww_dob_m^pww_dbr_j }
 		}
 	}
 	set_variable = { pww_dob_k^pww_dbr_end = 0 }
@@ -156,6 +169,7 @@ pww_diplo_bundle_remove = {
 	set_variable = { pww_dob_a^pww_dbr_end = 0 }
 	set_variable = { pww_dob_s^pww_dbr_end = 0 }
 	set_variable = { pww_dob_v^pww_dbr_end = 0 }
+	set_variable = { pww_dob_m^pww_dbr_end = 0 }
 }
 
 # Sender scope. in: pww_dba_side, pww_dba_kind, pww_dba_x.
@@ -575,6 +589,280 @@ pww_diplo_bundle_pay_at_market = {
 }
 
 ###############################################################################
+# "Balance it" (send screen button). Sender scope, draft open.
+# Moves OUR payments so the bundle sits at market (|pww_do_gap| within
+# pww_do_mk_tol); their side is never touched. Order:
+#   1. civilian factories already on our side: whole factories (rounded to
+#      the nearest when that lands in the band, else down, the rest paid in
+#      political power; removed when under one and something else can pay)
+#   2. political power already on our side: to the hundredth
+#   3. an equipment shipment already on our side: by stepper steps
+#   4. no payment on our side at all: add whole civilian factories
+#   5. still short: add political power
+# Capacity: our free civilian factories, our daily political power gain
+# (rounded down to the hundredth, at most 2), our stock.
+# out: pww_dbl_msg (0 done or nothing to do, 2 we cannot pay enough,
+# 3 we give more and have no payment left to lower), read by the screen.
+###############################################################################
+# out: pww_dbl_ci / pww_dbl_pi / pww_dbl_ei (index of our civilian factories,
+# political power, first equipment item; -1 none), pww_dbl_np (payment items
+# on our side, licences included).
+pww_diplo_bundle_find_pay = {
+	set_temp_variable = { pww_dbl_ci = -1 }
+	set_temp_variable = { pww_dbl_pi = -1 }
+	set_temp_variable = { pww_dbl_ei = -1 }
+	set_temp_variable = { pww_dbl_np = 0 }
+	for_loop_effect = {
+		start = 0
+		end = 4
+		value = pww_dbl_i
+		if = {
+			limit = { check_variable = { pww_dob_k^pww_dbl_i = 1 } }
+			set_temp_variable = { pww_dbl_ci = pww_dbl_i }
+			add_to_temp_variable = { pww_dbl_np = 1 }
+		}
+		else_if = {
+			limit = { check_variable = { pww_dob_k^pww_dbl_i = 2 } }
+			set_temp_variable = { pww_dbl_pi = pww_dbl_i }
+			add_to_temp_variable = { pww_dbl_np = 1 }
+		}
+		else_if = {
+			limit = { check_variable = { pww_dob_k^pww_dbl_i = 4 } }
+			if = {
+				limit = { check_variable = { pww_dbl_ei < 0 } }
+				set_temp_variable = { pww_dbl_ei = pww_dbl_i }
+			}
+			add_to_temp_variable = { pww_dbl_np = 1 }
+		}
+		else_if = {
+			limit = { check_variable = { pww_dob_k^pww_dbl_i = 5 } }
+			add_to_temp_variable = { pww_dbl_np = 1 }
+		}
+	}
+}
+
+# After an evaluation. out: pww_dbl_out (1 when outside the at-market band).
+pww_diplo_bundle_balance_gap = {
+	set_temp_variable = { pww_dbl_out = 0 }
+	set_temp_variable = { pww_dbl_ng = pww_do_gap }
+	multiply_temp_variable = { pww_dbl_ng = -1 }
+	if = {
+		limit = {
+			OR = {
+				check_variable = { pww_do_gap > pww_do_mk_tol }
+				check_variable = { pww_dbl_ng > pww_do_mk_tol }
+			}
+		}
+		set_temp_variable = { pww_dbl_out = 1 }
+	}
+}
+
+pww_diplo_bundle_balance_step = {
+	pww_diplo_eval_bundle = yes
+	pww_diplo_bundle_find_pay = yes
+	pww_diplo_bundle_balance_gap = yes
+}
+
+# in: pww_dbl_pi, pww_dbl_ppcap. Political power a day worth the gap
+# (counted at 90%: 0.1 a day = 0.9 factories), to the hundredth.
+pww_diplo_bundle_balance_pp = {
+	set_temp_variable = { pww_dbl_t = pww_do_gap }
+	divide_temp_variable = { pww_dbl_t = 9 }
+	add_to_temp_variable = { pww_dbl_t = pww_dob_a^pww_dbl_pi }
+	multiply_temp_variable = { pww_dbl_t = 100 }
+	round_temp_variable = pww_dbl_t
+	divide_temp_variable = { pww_dbl_t = 100 }
+	if = {
+		limit = { check_variable = { pww_dbl_t > pww_dbl_ppcap } }
+		set_temp_variable = { pww_dbl_t = pww_dbl_ppcap }
+	}
+	if = {
+		limit = { check_variable = { pww_dbl_t < 0.01 } }
+		set_temp_variable = { pww_dbl_t = 0.01 }
+	}
+	set_variable = { pww_dob_a^pww_dbl_pi = pww_dbl_t }
+}
+
+# in: pww_dbl_t (factories wanted). out: pww_dbl_r whole factories: the
+# nearest when that lands in the band or nothing finer can pay, else rounded
+# down (political power pays the rest); at most our free factories.
+pww_diplo_bundle_balance_civ = {
+	set_temp_variable = { pww_dbl_r = pww_dbl_t }
+	round_temp_variable = pww_dbl_r
+	set_temp_variable = { pww_dbl_d = pww_dbl_r }
+	subtract_from_temp_variable = { pww_dbl_d = pww_dbl_t }
+	if = {
+		limit = { check_variable = { pww_dbl_d < 0 } }
+		multiply_temp_variable = { pww_dbl_d = -1 }
+	}
+	if = {
+		limit = {
+			check_variable = { pww_dbl_d > pww_do_mk_tol }
+			OR = {
+				check_variable = { pww_dbl_canpp = 1 }
+				check_variable = { pww_dbl_pi > -1 }
+			}
+		}
+		set_temp_variable = { pww_dbl_r = pww_dbl_t }
+		subtract_from_temp_variable = { pww_dbl_r = 0.4999 }
+		round_temp_variable = pww_dbl_r
+	}
+	if = {
+		limit = { check_variable = { pww_dbl_r > pww_dbl_free } }
+		set_temp_variable = { pww_dbl_r = pww_dbl_free }
+		round_temp_variable = pww_dbl_r
+	}
+}
+
+pww_diplo_bundle_balance = {
+	pww_diplo_bundle_ensure = yes
+	set_temp_variable = { pww_dbl_m = 0 }
+	set_temp_variable = { pww_dbl_free = num_of_civilian_factories_available_for_projects }
+	set_temp_variable = { pww_dbl_ppcap = political_power_daily }
+	multiply_temp_variable = { pww_dbl_ppcap = 100 }
+	subtract_from_temp_variable = { pww_dbl_ppcap = 0.499 }
+	round_temp_variable = pww_dbl_ppcap
+	divide_temp_variable = { pww_dbl_ppcap = 100 }
+	clamp_temp_variable = { var = pww_dbl_ppcap min = 0 max = 2 }
+	set_temp_variable = { pww_dbl_canpp = 0 }
+	if = {
+		limit = { check_variable = { pww_dbl_ppcap > 0.009 } }
+		set_temp_variable = { pww_dbl_canpp = 1 }
+	}
+	if = {
+		limit = { check_variable = { pww_dbl_ppcap < 0.01 } }
+		set_temp_variable = { pww_dbl_ppcap = 0.01 }
+	}
+	pww_diplo_bundle_balance_step = yes
+
+	# 1. Civilian factories already on our side
+	if = {
+		limit = {
+			check_variable = { pww_dbl_out = 1 }
+			check_variable = { pww_dbl_ci > -1 }
+		}
+		set_temp_variable = { pww_dbl_t = pww_dob_a^pww_dbl_ci }
+		add_to_temp_variable = { pww_dbl_t = pww_do_gap }
+		pww_diplo_bundle_balance_civ = yes
+		if = {
+			limit = { check_variable = { pww_dbl_r < 1 } }
+			if = {
+				limit = {
+					OR = {
+						check_variable = { pww_dbl_canpp = 1 }
+						check_variable = { pww_dbl_np > 1 }
+					}
+				}
+				set_temp_variable = { pww_dba_n = pww_dbl_ci }
+				pww_diplo_bundle_remove = yes
+			}
+			else = {
+				set_variable = { pww_dob_a^pww_dbl_ci = 1 }
+			}
+		}
+		else = {
+			set_variable = { pww_dob_a^pww_dbl_ci = pww_dbl_r }
+		}
+		pww_diplo_bundle_balance_step = yes
+	}
+	# 2. Political power already on our side
+	if = {
+		limit = {
+			check_variable = { pww_dbl_out = 1 }
+			check_variable = { pww_dbl_pi > -1 }
+		}
+		pww_diplo_bundle_balance_pp = yes
+		pww_diplo_bundle_balance_step = yes
+	}
+	# 3. An equipment shipment already on our side
+	if = {
+		limit = {
+			check_variable = { pww_dbl_out = 1 }
+			check_variable = { pww_dbl_ei > -1 }
+		}
+		set_temp_variable = { pww_dg_eq = pww_dob_x^pww_dbl_ei }
+		pww_diplo_equip_step = yes
+		pww_diplo_read_equip = yes
+		# units = gap x term x 5 / IC per unit / 0.85, to whole steps
+		set_temp_variable = { pww_dbl_t = pww_do_gap }
+		multiply_temp_variable = { pww_dbl_t = pww_do_term }
+		multiply_temp_variable = { pww_dbl_t = 5 }
+		divide_temp_variable = { pww_dbl_t = pww_dg_cost }
+		divide_temp_variable = { pww_dbl_t = 0.85 }
+		divide_temp_variable = { pww_dbl_t = pww_dg_step }
+		round_temp_variable = pww_dbl_t
+		multiply_temp_variable = { pww_dbl_t = pww_dg_step }
+		add_to_temp_variable = { pww_dbl_t = pww_dob_a^pww_dbl_ei }
+		set_temp_variable = { pww_dbl_s = pww_dg_stock }
+		divide_temp_variable = { pww_dbl_s = pww_dg_step }
+		subtract_from_temp_variable = { pww_dbl_s = 0.4999 }
+		round_temp_variable = pww_dbl_s
+		multiply_temp_variable = { pww_dbl_s = pww_dg_step }
+		if = {
+			limit = { check_variable = { pww_dbl_t > pww_dbl_s } }
+			set_temp_variable = { pww_dbl_t = pww_dbl_s }
+		}
+		if = {
+			limit = { check_variable = { pww_dbl_t < pww_dg_step } }
+			set_temp_variable = { pww_dbl_t = pww_dg_step }
+		}
+		set_variable = { pww_dob_a^pww_dbl_ei = pww_dbl_t }
+		pww_diplo_bundle_balance_step = yes
+	}
+	# 4. No payment on our side: whole civilian factories
+	if = {
+		limit = {
+			check_variable = { pww_dbl_out = 1 }
+			check_variable = { pww_do_gap > 0 }
+			check_variable = { pww_dbl_np = 0 }
+		}
+		set_temp_variable = { pww_dbl_t = pww_do_gap }
+		pww_diplo_bundle_balance_civ = yes
+		if = {
+			limit = { check_variable = { pww_dbl_r > 0.999 } }
+			set_temp_variable = { pww_dba_side = 0 }
+			set_temp_variable = { pww_dba_kind = 1 }
+			set_temp_variable = { pww_dba_x = 0 }
+			pww_diplo_bundle_add = yes
+			if = {
+				limit = { check_variable = { pww_dba_new > -1 } }
+				set_variable = { pww_dob_a^pww_dba_new = pww_dbl_r }
+			}
+		}
+		pww_diplo_bundle_balance_step = yes
+	}
+	# 5. Still short: political power
+	if = {
+		limit = {
+			check_variable = { pww_dbl_out = 1 }
+			check_variable = { pww_do_gap > 0 }
+			check_variable = { pww_dbl_pi < 0 }
+			check_variable = { pww_dbl_canpp = 1 }
+		}
+		set_temp_variable = { pww_dba_side = 0 }
+		set_temp_variable = { pww_dba_kind = 2 }
+		set_temp_variable = { pww_dba_x = 0 }
+		pww_diplo_bundle_add = yes
+		pww_diplo_bundle_balance_step = yes
+		if = {
+			limit = { check_variable = { pww_dbl_pi > -1 } }
+			pww_diplo_bundle_balance_pp = yes
+			pww_diplo_bundle_balance_step = yes
+		}
+	}
+	if = {
+		limit = { check_variable = { pww_dbl_out = 1 } }
+		set_temp_variable = { pww_dbl_m = 3 }
+		if = {
+			limit = { check_variable = { pww_do_gap > 0 } }
+			set_temp_variable = { pww_dbl_m = 2 }
+		}
+	}
+	pww_diplo_offer_changed = yes
+	set_variable = { pww_dbl_msg = pww_dbl_m }
+}
+
+###############################################################################
 # Evaluate the bundle. Sender scope; target = pww_do_target.
 ###############################################################################
 pww_diplo_eval_bundle = {
@@ -607,6 +895,7 @@ pww_diplo_eval_bundle = {
 	set_temp_variable = { pww_dvb_v0 = 0 }
 	set_temp_variable = { pww_dvb_v1 = 0 }
 	set_temp_variable = { pww_dvb_m0 = 0 }
+	set_temp_variable = { pww_dvb_m1 = 0 }
 	set_temp_variable = { pww_dvb_gain = 0 }
 	set_temp_variable = { pww_dvb_loss = 0 }
 	set_temp_variable = { pww_dvb_need = 0 }
@@ -842,6 +1131,10 @@ pww_diplo_eval_bundle = {
 			}
 			set_variable = { pww_dob_a^pww_dvb_i = pww_dvb_a }
 			set_variable = { pww_dob_v^pww_dvb_i = pww_dvb_mv }
+			# Market value at the form's rate (goods keep fm 1): the row figure.
+			set_temp_variable = { pww_dvb_mm = pww_dvb_mv }
+			multiply_temp_variable = { pww_dvb_mm = pww_dvb_fm }
+			set_variable = { pww_dob_m^pww_dvb_i = pww_dvb_mm }
 
 			# Main goods item: their side first, else ours.
 			if = {
@@ -892,6 +1185,7 @@ pww_diplo_eval_bundle = {
 			}
 			else = {
 				add_to_temp_variable = { pww_dvb_v1 = pww_dvb_mv }
+				add_to_temp_variable = { pww_dvb_m1 = pww_dvb_mm }
 				set_temp_variable = { pww_dvb_w = pww_dvb_mv }
 				if = {
 					limit = { check_variable = { pww_dvb_goods > 0 } }
@@ -972,12 +1266,16 @@ pww_diplo_eval_bundle = {
 		}
 	}
 
-	# Market figures (display). gap = what we ask minus what our offer is
-	# worth to them; a positive gap is ours to fill.
+	# Market figures (display). m0 / m1: each side at market, payments at
+	# their form's rate: the acceptance terms below with desperation and the
+	# lease premium taken out. gap = what we ask minus what our offer is
+	# worth; a positive gap is ours to fill. v0 / v1 (raw) are kept for the
+	# AI's own drafting.
 	set_variable = { pww_do_mk_v0 = pww_dvb_v0 }
 	set_variable = { pww_do_mk_v1 = pww_dvb_v1 }
 	set_variable = { pww_do_mk_m0 = pww_dvb_m0 }
-	set_temp_variable = { pww_dvb_gap = pww_dvb_v1 }
+	set_variable = { pww_do_mk_m1 = pww_dvb_m1 }
+	set_temp_variable = { pww_dvb_gap = pww_dvb_m1 }
 	subtract_from_temp_variable = { pww_dvb_gap = pww_dvb_m0 }
 	set_variable = { pww_do_gap = pww_dvb_gap }
 	set_temp_variable = { pww_dvb_base = pww_dvb_g0 }
@@ -999,6 +1297,8 @@ pww_diplo_eval_bundle = {
 		limit = { check_variable = { pww_dvb_tol < 0.05 } }
 		set_temp_variable = { pww_dvb_tol = 0.05 }
 	}
+	set_variable = { pww_do_mk_tol = pww_dvb_tol }
+	set_variable = { pww_do_mk_base = pww_dvb_base }
 	# pww_do_mk: -1 we ask more than we give (below market for a buyer),
 	# 0 at market, 1 we give more. pww_do_frame: 0 we buy goods, 1 we sell
 	# goods, 2 goods both ways (or none).

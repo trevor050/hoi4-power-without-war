@@ -380,6 +380,8 @@ pww_diplo_offer_begin = {
 
 # Sender scope. Re-evaluate and refresh every display mirror.
 pww_diplo_offer_changed = {
+	# Any edit clears the Balance it message (balance sets it after this).
+	set_variable = { pww_dbl_msg = 0 }
 	pww_diplo_eval_bundle = yes
 	pww_diplo_refresh_display = yes
 	pww_diplo_bundle_mirror = yes

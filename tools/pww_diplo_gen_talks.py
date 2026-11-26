@@ -14,6 +14,14 @@ width for its hint lines ("We're short 30 · they have 112 spare"), so it uses
 a symmetric 40 px margin (x 40..544): two 244-wide columns with a 16 px
 gutter centred on the frame. No layout engine: every position is computed
 here.
+
+Everything sits TOP px lower than the first layout (playtest: the block
+touched the popup's title frame). Market values: line 2 of every row opens
+with the item's market value in civilian factories (pww_dob_m: the figure the
+acceptance terms use before desperation), the totals row sums each side
+(pww_do_mk_m0 / m1), a marker on a track leans toward the side that gets
+more, and "Balance it" moves our payments to market
+(pww_diplo_bundle_balance).
 """
 
 GL, GR = 40, 544
@@ -21,12 +29,21 @@ CW = GR - GL
 COLW = 244
 COLX = (GL, GR - COLW)
 FONT = "hoi_16mbs"
-ROW_Y0 = 66          # first item row
+TOP = 10             # gap under the popup's title frame
+ROW_Y0 = 66 + TOP    # first item row
 ROW_H = 40           # two text lines per item
-TERMS_Y = 232
-MENU_Y = 46
+TERMS_Y = 232 + TOP
+MENU_Y = 46 + TOP
 H_SEND = 486
 H_RECV = 470
+# Unit of every market value (civilian factories), after the number. The game
+# eats the first space after a text icon, so the token carries its own.
+FAC = " £civ_factory "
+# Balance track: between the two totals on the totals row.
+TRK_W = 140
+TRK_X = GL + (CW - TRK_W) // 2
+TRK_HALF = TRK_W // 2 - 8        # marker travel each way from the centre
+MK_X0 = TRK_X + TRK_W // 2 - 5   # marker (10 px wide) at the centre
 
 RES = ["Oil", "Aluminium", "Rubber", "Tungsten", "Steel", "Chromium", "Coal"]
 RES_LC = [r.lower() for r in RES]
@@ -49,6 +66,7 @@ RL_CHIP = ["lease out a mine", "sign for two years or more", "sell most of their
 PAT_WORDS = ["§Rnearly gone§!", "§Orunning thin§!", "§Ysteady§!", "§Gpatient§!"]
 
 L = {}   # loc key -> text
+PROPS = {}  # scripted GUI name -> properties lines (element x from a variable)
 
 
 def side_of(n):
@@ -77,6 +95,19 @@ class B:
         self.body = ""
         self.eff = []
         self.trg = []
+        self.props = []
+
+    def icon(self, key, x, y, sprite, vis=None, x_var=None, tooltip=None):
+        name = f"{self.p}_{key}"
+        self.body += (f'\t\ticonType = {{\n\t\t\tname = "{name}"\n\t\t\tposition = {{ x = {x} y = {y} }}\n'
+                      f'\t\t\tspriteType = "{sprite}"\n')
+        if tooltip:
+            self.body += f'\t\t\tpdx_tooltip = "{tooltip}"\n'
+        self.body += "\t\t}\n"
+        if vis:
+            self.vis(key, vis)
+        if x_var:
+            self.props.append(f"\t\t\t{name} = {{ x = {x_var} }}\n")
 
     def tb(self, key, x, y, text, w, h=18, font=FONT, fmt="left", vis=None, tooltip=None):
         name = f"{self.p}_{key}"
@@ -156,6 +187,22 @@ def num(var, dec=0):
     return f"[?ROOT.{var}|{dec}]"
 
 
+def money(name, var, unit=FAC):
+    """Scripted loc for a market value written by the mirror's formatter
+    (var rounded, var_f: 0 two decimals, 1 one, 2 whole, 3 exactly one).
+    unit: the text after the number; None for the long 'factories' form."""
+    if unit is None:
+        cases = [(R(cv(f"{var}_f", "=", 3)), loc(f"{name}_3", "§Y~1§! factory")),
+                 (R(cv(f"{var}_f", "=", 2)), loc(f"{name}_2", f"§Y~{num(var)}§! factories")),
+                 (R(cv(f"{var}_f", "=", 1)), loc(f"{name}_1", f"§Y~{num(var, 1)}§! factories"))]
+        dt(name, cases, loc(f"{name}_0", f"§Y~{num(var, 2)}§! factories"))
+    else:
+        cases = [(R(cv(f"{var}_f", ">", 1)), loc(f"{name}_2", f"§Y~{num(var)}§!{unit}")),
+                 (R(cv(f"{var}_f", "=", 1)), loc(f"{name}_1", f"§Y~{num(var, 1)}§!{unit}"))]
+        dt(name, cases, loc(f"{name}_0", f"§Y~{num(var, 2)}§!{unit}"))
+    return name
+
+
 # ----------------------------------------------------------------------------
 # Per-slot scripted loc (shared by send and receive)
 # ----------------------------------------------------------------------------
@@ -186,6 +233,8 @@ def build_slot_loc():
         ], loc(f"pww_dt_am_{n}", f"§Y{num(a)}§!"))
         # Lease state line
         loc(f"pww_dt_state_{n}", f"[?ROOT.pww_dbs_{n}.GetName] · {num(f'pww_dbu_{n}')} a day")
+        # Market value of the item (rows; a lease shows it on line 1)
+        money(f"pww_dt_sl_v_{n}", f"pww_dbv_{n}")
         # Summary list item and separator
         cases = [(R(f"{cv(f'pww_dbk_{n}', '=', 1)} {cv(a, '=', 1)}"),
                   loc(f"pww_dt_li_civ1_{n}", "§Y1 civilian factory§!")),
@@ -228,28 +277,29 @@ def build_hint_loc(n, recv):
     th_sh, th_sp = ("pww_dbss", "pww_dbsp") if recv else ("pww_dbts", "pww_dbtp")
     nm = f"pww_dt_sl_hi{tag}_{n}"
     f = f"pww_dbf_{n}"
-    # resource parts
+    val = f"[pww_dt_sl_v_{n}]"
+    # resource parts (compact: the line also carries the market value)
     if we_give:
-        a_cases = [(R(cv(f"{us_sp}_{n}", ">", 0.5)), loc(f"pww_dt_h{tag}_a_sp_{n}", f"We have {num(f'{us_sp}_{n}')} spare"))]
-        a_def = loc("pww_dt_h_a_nosp", "We have none spare")
+        a_cases = [(R(cv(f"{us_sp}_{n}", ">", 0.5)), loc(f"pww_dt_h{tag}_a_sp_{n}", f"{num(f'{us_sp}_{n}')} spare"))]
+        a_def = loc("pww_dt_h_a_nosp", "none spare")
         b_cases = [(R(cv(f"{th_sh}_{n}", ">", 0.5)), loc(f"pww_dt_h{tag}_b_sh_{n}", f"they're short {num(f'{th_sh}_{n}')}"))]
         b_def = loc("pww_dt_h_b_enough", "they have enough")
     else:
-        a_cases = [(R(cv(f"{us_sh}_{n}", ">", 0.5)), loc(f"pww_dt_h{tag}_a_sh_{n}", f"We're short {num(f'{us_sh}_{n}')}"))]
-        a_def = loc("pww_dt_h_a_enough", "We have enough")
-        b_cases = [(R(cv(f"{th_sp}_{n}", ">", 0.5)), loc(f"pww_dt_h{tag}_b_sp_{n}", f"they have {num(f'{th_sp}_{n}')} spare"))]
-        b_def = loc("pww_dt_h_b_nosp", "they have none spare")
+        a_cases = [(R(cv(f"{us_sh}_{n}", ">", 0.5)), loc(f"pww_dt_h{tag}_a_sh_{n}", f"we're short {num(f'{us_sh}_{n}')}"))]
+        a_def = loc("pww_dt_h_a_enough", "we have enough")
+        b_cases = [(R(cv(f"{th_sp}_{n}", ">", 0.5)), loc(f"pww_dt_h{tag}_b_sp_{n}", f"they have {num(f'{th_sp}_{n}')}"))]
+        b_def = loc("pww_dt_h_b_nosp", "they have none")
     dt(f"pww_dt_sl_h{tag}a_{n}", a_cases, a_def)
     dt(f"pww_dt_sl_h{tag}b_{n}", b_cases, b_def)
-    loc(f"pww_dt_h{tag}_res_{n}", f"§g[pww_dt_sl_h{tag}a_{n}] · [pww_dt_sl_h{tag}b_{n}]§!")
+    loc(f"pww_dt_h{tag}_res_{n}", f"{val} §g· [pww_dt_sl_h{tag}a_{n}] · [pww_dt_sl_h{tag}b_{n}]§!")
     giver_us = we_give
-    who = "We" if giver_us else "They"
+    who = "we" if giver_us else "they"
     cases = [
-        (kind_is(n, 1), loc(f"pww_dt_h{tag}_civ_{n}", f"§g{who} have {num(f)} free§!")),
-        (kind_is(n, 2), loc(f"pww_dt_h{tag}_pp_{n}", f"§gPer day · {who.lower()} gain {num(f, 2)} a day§!")),
+        (kind_is(n, 1), loc(f"pww_dt_h{tag}_civ_{n}", f"{val} §g· {who} have {num(f)} free§!")),
+        (kind_is(n, 2), loc(f"pww_dt_h{tag}_pp_{n}", f"{val} §g· {who} gain {num(f, 2)} a day§!")),
         (kind_is(n, 3), f"pww_dt_h{tag}_res_{n}"),
-        (kind_is(n, 4), loc(f"pww_dt_h{tag}_eq_{n}", f"§gIn three shipments · {who.lower()} hold {num(f)}§!")),
-        (kind_is(n, 5), loc(f"pww_dt_h{tag}_lic_{s}", "§gThey may build our design§!" if giver_us else "§gWe may build their design§!")),
+        (kind_is(n, 4), loc(f"pww_dt_h{tag}_eq_{n}", f"{val} §g· {who} hold {num(f)}§!")),
+        (kind_is(n, 5), loc(f"pww_dt_h{tag}_lic_{n}", f"{val} §g· " + ("they may build our design§!" if giver_us else "we may build their design§!"))),
     ]
     dt(nm, cases, "pww_dt_empty")
     return nm
@@ -283,6 +333,9 @@ def build_rows(b, recv):
                                 "pww_diplo_offer_changed = yes"), tooltip="pww_dt_tt_remove")
         lease = R(cv(k, "=", 6))
         b.tb(f"i{n}_hi", x, y + 20, f"[{hint}]", COLW, vis=closed + R(f"{cv(k, '>', 0)} {cv(k, '<', 6)}"))
+        # A lease's line 2 is its state picker: its value sits at the end of line 1.
+        vr = COLW if recv else COLW - 20
+        b.tb(f"i{n}_lv", x + vr - 76, y + 1, f"[pww_dt_sl_v_{n}]", 74, fmt="right", vis=closed + lease)
         if recv:
             b.tb(f"i{n}_lst", x, y + 20, f"pww_dt_state_{n}", COLW, vis=lease)
         else:
@@ -299,11 +352,11 @@ def build_rows(b, recv):
 # ----------------------------------------------------------------------------
 def party_header(b, recv):
     us, them = ("THIS", "ROOT") if recv else ("ROOT", "THIS")
-    b.tb("us", GL, 2, loc(f"pww_dt_us_{int(recv)}", f"[{us}.GetFlag] [{us}.GetName]"), 220, font="hoi_18mbs")
-    b.tb("us_sub", GL, 22, loc("pww_dt_you", "§gYou§!"), 220)
-    b.tb("and", 262, 10, loc("pww_dt_and", "§gand§!"), 60, fmt="centre")
-    b.tb("them", GR - 220, 2, loc(f"pww_dt_them_{int(recv)}", f"[{them}.GetName] [{them}.GetFlag]"), 220, font="hoi_18mbs", fmt="right")
-    b.tb("them_sub", GR - 220, 22, f"[pww_dt_sl_top_{int(recv)}]", 220, fmt="right")
+    b.tb("us", GL, 2 + TOP, loc(f"pww_dt_us_{int(recv)}", f"[{us}.GetFlag] [{us}.GetName]"), 220, font="hoi_18mbs")
+    b.tb("us_sub", GL, 22 + TOP, loc("pww_dt_you", "§gYou§!"), 220)
+    b.tb("and", 262, 10 + TOP, loc("pww_dt_and", "§gand§!"), 60, fmt="centre")
+    b.tb("them", GR - 220, 2 + TOP, loc(f"pww_dt_them_{int(recv)}", f"[{them}.GetName] [{them}.GetFlag]"), 220, font="hoi_18mbs", fmt="right")
+    b.tb("them_sub", GR - 220, 22 + TOP, f"[pww_dt_sl_top_{int(recv)}]", 220, fmt="right")
 
 
 def divider(b, key, y, vis=None):
@@ -326,6 +379,8 @@ def menu(b):
         pv = " ".join(cv(page, "=", p) for p in p_set)
         b.btn(f"mbg{rows}", GL, MENU_Y, "GFX_pww_dt_menu", w=CW, h=h, vis=MENU_OPEN + " " + R(f"OR = {{ {pv} }}"))
     b.tb("mtitle", GL + 12, MENU_Y + 9, "[pww_dt_sl_mtitle]", 300, font="hoi_18mbs", vis=MENU_OPEN)
+    # Market rate shared by every row of the page (resources, licences, leases).
+    b.tb("mrate", GL + 160, MENU_Y + 11, "[pww_dt_sl_mrate]", CW - 196, fmt="right", vis=MENU_OPEN)
     b.btn("mclose", GR - 26, MENU_Y + 10, "GFX_closebutton_16", vis=MENU_OPEN,
           click=root_do("set_variable = { pww_dbm_side = -1 }", "set_variable = { pww_dbm_page = 0 }",
                         "add_to_variable = { pww_diplo_dirty = 1 }"))
@@ -367,9 +422,31 @@ def menu(b):
     loc("pww_dt_back", "Back")
 
 
+# Market rates for the add menu. Same formulas as pww_diplo_eval_bundle:
+# 8 resource units a day = 1 factory, political power x 10 at 90%, equipment
+# IC / 5 factory-days at 85% spread over the term, a licence 1 factory-year.
+EQ_STEP = [250, 25, 25, 25, 25, 50, 5, 1]      # pww_diplo_equip_step
+EQ_COST = [0.5, 4, 4, 5, 5, 1.5, 10, 70]
+P0_RATE = [f"§Y~1§!{FAC} §gper 8 a day", f"§Y~1§!{FAC} §geach", f"§Y~0.9§!{FAC} §gper 0.1 a day",
+           "§gat build cost", f"§Y~1§!{FAC} §gfor a year", f"§Y~1§!{FAC} §gper 8 a day mined"]
+
+
+def eq_rate(e):
+    """One stepper step of equipment e, valued over a one-year deal."""
+    v = EQ_STEP[e] * EQ_COST[e] * 0.85 / 5 / 365
+    return f"§Y~{v:.2f}§!{FAC} §ga year§!"
+
+
 def menu_loc():
     dt("pww_dt_sl_mtitle", [(R(cv("pww_dbm_side", "=", 0)), loc("pww_dt_mtitle_0", "Add to our side")),
                             ], loc("pww_dt_mtitle_1", "Ask for something"))
+    dt("pww_dt_sl_mrate", [
+        (R(cv("pww_dbm_page", "=", 0)), loc("pww_dt_mrate_0", f"§gMarket values in civilian factories§!{FAC}")),
+        (R(cv("pww_dbm_page", "=", 1)), loc("pww_dt_mrate_1", f"§g8 a day of any resource:§! §Y~1§!{FAC}")),
+        (R(cv("pww_dbm_page", "=", 2)), loc("pww_dt_mrate_2", "§gOne step, valued over a year§!")),
+        (R(cv("pww_dbm_page", "=", 3)), loc("pww_dt_mrate_3", f"§gAny licence:§! §Y~1§!{FAC} §gfor a year§!")),
+        (R(cv("pww_dbm_page", "=", 4)), loc("pww_dt_mrate_4", f"§g8 a day of output:§! §Y~1§!{FAC}")),
+    ], "pww_dt_empty")
     p0_label = ["Resource", "Civilian factories", "Political power per day", "Equipment shipment",
                 "Production licence", "Mine lease"]
     p0_icon = ["£resources_strip|5", "£civ_factory", "£pol_power", "£production_cost", "£tech_mod", "£resources_strip|4"]
@@ -386,25 +463,26 @@ def menu_loc():
                 k_off = loc(f"pww_dt_ml_p0_{j}_off", f"§g{p0_label[j]}§!")
                 lab += [(R(f"{pg} {cv(f'pww_dbm_en_{j}', '=', 0)}"), k_off), (R(pg), k_on)]
                 if s == 0:
-                    texts = [("from our surplus", "we produce nothing spare"),
+                    texts = [("our surplus", "we produce nothing spare"),
                              (f"we have {num(g + '_civ')} free", "none free"),
                              (f"we gain {num(g + '_pp', 2)} a day", "already listed"),
                              ("rifles, guns, trucks", "our stockpile is empty"),
-                             ("let them build our designs", "nothing we can license"),
-                             ("lease them one of our mines", "we own no producing mines")]
+                             ("our designs", "nothing we can license"),
+                             ("one of our mines", "we own no producing mines")]
                 else:
                     texts = [("what they produce", "they produce nothing"),
                              (f"they have {num(g + '_civ')} free", "none free"),
                              (f"they gain {num(g + '_pp', 2)} a day", "already listed"),
                              ("what they've built", "their stockpile is empty"),
-                             ("build their designs", "nothing they can license"),
-                             ("lease one of their mines", "they own no producing mines")]
+                             ("their designs", "nothing they can license"),
+                             ("one of their mines", "they own no producing mines")]
                 on_t, off_t = texts[j]
+                on_t = P0_RATE[j] + "§! §g· " + on_t
                 if j in (1, 2):
                     hint.append((R(f"{pg} {cv(f'pww_dbm_en_{j}', '=', 0)} {cv(f'pww_dmh_has{j}', '=', 1)}"),
                                  loc("pww_dt_mh_listed", "§Ralready on the table§!")))
                 hint += [(R(f"{pg} {cv(f'pww_dbm_en_{j}', '=', 0)}"), loc(f"pww_dt_mh_p0_{s}_{j}_off", f"§R{off_t}§!")),
-                         (R(pg), loc(f"pww_dt_mh_p0_{s}_{j}", f"§g{on_t}§!"))]
+                         (R(pg), loc(f"pww_dt_mh_p0_{s}_{j}", f"{on_t}§!"))]
             # page 1: resources
             if j < 7:
                 pg = f"{sd} {cv('pww_dbm_page', '=', 1)}"
@@ -434,7 +512,7 @@ def menu_loc():
             lab += [(R(f"{pg} {cv(f'pww_dbm_en_{j}', '=', 0)}"), loc(f"pww_dt_ml_eq_{j}_off", f"§g{EQ[j]}§!")),
                     (R(pg), loc(f"pww_dt_ml_eq_{j}", f"£production_cost {EQ[j]}"))]
             hint += [(R(f"{pg} {cv(f'pww_dbm_en_{j}', '=', 0)}"), loc(f"pww_dt_mh_eq{s}_{j}_off", "§Rnot enough in stock§!")),
-                     (R(pg), loc(f"pww_dt_mh_eq{s}_{j}", f"§g{who} {num(f'pww_dmg{s}_e{j}')}§!"))]
+                     (R(pg), loc(f"pww_dt_mh_eq{s}_{j}", f"§g{EQ_STEP[j]}:§! {eq_rate(j)} §g· {who} {num(f'pww_dmg{s}_e{j}')}§!"))]
             # page 3: licences
             pg = f"{sd} {cv('pww_dbm_page', '=', 3)}"
             lab += [(R(f"{pg} {cv(f'pww_dbm_en_{j}', '=', 0)}"), loc(f"pww_dt_ml_lic_{j}_off", f"§g{LIC[j]}§!")),
@@ -503,21 +581,11 @@ def summary_loc():
                                       loc(f"pww_dt_pay_none_{recv}", "§gThey ask nothing of us.§!" if recv else "§gOffer something in return.§!"))],
            loc(f"pww_dt_pay_{recv}", f"You pay {side_list(pay_s)}."))
         loc(f"pww_dt_summary_{recv}", f"[pww_dt_sl_get_{recv}] [pww_dt_sl_pay_{recv}]")
-    # Market figures: one decimal, whole numbers without it; 1 factory singular.
-    for v in ("v0", "v1", "m0"):
-        dt(f"pww_dt_sl_f_{v}", [
-            (R(cv(f"pww_dbm_{v}_one", "=", 1)), loc(f"pww_dt_f_{v}_one", "§Y1§! factory")),
-            (R(cv(f"pww_dbm_{v}_int", "=", 1)), loc(f"pww_dt_f_{v}_int", f"§Y{num(f'pww_dbm_{v}')}§! factories")),
-        ], loc(f"pww_dt_f_{v}", f"§Y{num(f'pww_dbm_{v}', 1)}§! factories"))
-    # Send perspective
-    one = R(f"{cv('pww_dbm_one', '=', 1)}")
-    first = [(R(f"{cv('pww_do_frame', '=', 0)} {cv('pww_dbm_one', '=', 1)}"),
-              loc("pww_dt_mk_buy_one", "At market, [pww_dt_sl_li_4] costs [pww_dt_sl_f_v1].")),
-             (R(cv("pww_do_frame", "=", 0)), loc("pww_dt_mk_buy", "At market, what you ask for costs [pww_dt_sl_f_v1].")),
-             (R(f"{cv('pww_do_frame', '=', 1)} {cv('pww_dbm_one0', '=', 1)}"),
-              loc("pww_dt_mk_sell_one", "At market, [pww_dt_sl_li_0] is worth [pww_dt_sl_f_v0].")),
-             (R(cv("pww_do_frame", "=", 1)), loc("pww_dt_mk_sell", "At market, what you give is worth [pww_dt_sl_f_v0]."))]
-    dt("pww_dt_sl_mk_first", first, loc("pww_dt_mk_mixed", "At market, you give [pww_dt_sl_f_m0] and get [pww_dt_sl_f_v1]."))
+    # Market totals (each side at market, payments at their form's rate).
+    money("pww_dt_sl_t0", "pww_dbm_t0", None)
+    money("pww_dt_sl_t1", "pww_dbm_t1", None)
+    loc("pww_dt_tot_0", "§gWe give§! [pww_dt_sl_t0]")
+    loc("pww_dt_tot_1", "§gThey give§! [pww_dt_sl_t1]")
     verdict = []
     for fr, words in ((0, ("Your offer is §Rbelow market§!.", "Your offer is §Yat market§!.", "Your offer is §Gabove market§!.")),
                       (1, ("Your price is §Rabove market§!.", "Your price is §Yat market§!.", "Your price is §Gbelow market§!.")),
@@ -525,12 +593,20 @@ def summary_loc():
         for mk, w in zip((-1, 0, 1), words):
             verdict.append((R(f"{cv('pww_do_frame', '=', fr)} {cv('pww_do_mk', '=', mk)}"), loc(f"pww_dt_mkv_{fr}_{mk + 1}", w)))
     dt("pww_dt_sl_mk_verdict", verdict, "pww_dt_empty")
-    loc("pww_dt_market_0", "§g[pww_dt_sl_mk_first]§! [pww_dt_sl_mk_verdict]")
-    # Receive perspective: raw market both ways.
-    rv = [(R(cv("pww_dbm_rmk", "=", -1)), loc("pww_dt_rmk_0", "Their offer is §Rbelow market§!.")),
-          (R(cv("pww_dbm_rmk", "=", 0)), loc("pww_dt_rmk_1", "Their offer is §Yat market§!."))]
+    # Send verdict row: an invalid draft's reason, else a Balance it message, else the verdict.
+    dt("pww_dt_sl_mkrow", [
+        (R(f"NOT = {{ {cv('pww_do_valid', '=', 0)} }}"), loc("pww_dt_mkrow_inv", "[pww_dt_sl_invalid]")),
+        (R(cv("pww_dbl_msg", "=", 2)), loc("pww_dt_bal_short", "§RCannot balance: not enough free factories or political power.§!")),
+        (R(cv("pww_dbl_msg", "=", 3)), loc("pww_dt_bal_over", "§RWe already give more. Give less or ask for more.§!")),
+    ], loc("pww_dt_mkrow_v", "[pww_dt_sl_mk_verdict]"))
+    loc("pww_dt_balance", "Balance it")
+    loc("pww_dt_tt_balance", "Set our payments so the deal is at market value. Their side does not change.")
+    loc("pww_dt_tt_track", "Leans toward the side that gets more at market value. The centre is an even deal.")
+    # Receive perspective (the receiver is "we"): one line, totals then verdict.
+    rv = [(R(cv("pww_do_mk", "=", -1)), loc("pww_dt_rmk_0", "Their offer is §Rbelow market§!.")),
+          (R(cv("pww_do_mk", "=", 0)), loc("pww_dt_rmk_1", "Their offer is §Yat market§!."))]
     dt("pww_dt_sl_rmk", rv, loc("pww_dt_rmk_2", "Their offer is §Gabove market§!."))
-    loc("pww_dt_market_1", "§gAt market, you give [pww_dt_sl_f_v1] and get [pww_dt_sl_f_v0].§! [pww_dt_sl_rmk]")
+    loc("pww_dt_market_1", "§gWe give§! [pww_dt_sl_t1] §g· they give§! [pww_dt_sl_t0]§g.§! [pww_dt_sl_rmk]")
     # Invalid reasons (send)
     inv = {51: "Put something on each side of the table.",
            52: "A trade deal needs a resource or a mine lease on one side.",
@@ -587,9 +663,9 @@ def envoy_loc():
 def build_send(effects, triggers):
     b = B("pww_diplo_send_offer_gui", "pww_so")
     party_header(b, False)
-    divider(b, "div0", 36)
-    b.tb("h0", COLX[0], 46, loc("pww_dt_h_give", "§gWE GIVE§!"), COLW, vis=MENU_CLOSED)
-    b.tb("h1", COLX[1], 46, loc("pww_dt_h_get", "§gTHEY GIVE§!"), COLW, vis=MENU_CLOSED)
+    divider(b, "div0", 36 + TOP)
+    b.tb("h0", COLX[0], 46 + TOP, loc("pww_dt_h_give", "§gWE GIVE§!"), COLW, vis=MENU_CLOSED)
+    b.tb("h1", COLX[1], 46 + TOP, loc("pww_dt_h_get", "§gTHEY GIVE§!"), COLW, vis=MENU_CLOSED)
     build_rows(b, False)
     for s in (0, 1):
         for c in range(4):
@@ -608,36 +684,47 @@ def build_send(effects, triggers):
              ("_u2", 2 * ROW_H, R(f"{cv(n0, '<', 2)} {cv(n1, '<', 2)}"))]
     for sfx, up, tier in tiers:
         terms(b, False, up, sfx, tier)
-        divider(b, "div1" + sfx, 306 - up, tier)
-        b.tb("sum" + sfx, GL, 314 - up, "pww_dt_summary_0", CW, h=52, vis=tier)
-        b.tb("mkt" + sfx, GL, 366 - up, "pww_dt_market_0", CW, h=34, vis=tier + " " + R(cv("pww_do_valid", "=", 0)))
-        b.tb("inv" + sfx, GL, 366 - up, "[pww_dt_sl_invalid]", CW, h=34, vis=tier + " " + R(f"NOT = {{ {cv('pww_do_valid', '=', 0)} }}"))
-        divider(b, "div2" + sfx, 400 - up, tier)
-        b.tb("envoy" + sfx, GL, 408 - up, "pww_dt_envoy", CW, h=36, vis=tier)
-        b.tb("chips" + sfx, GL, 446 - up, "pww_dt_chips", CW, h=18, vis=tier)
+        divider(b, "div1" + sfx, 312 - up, tier)
+        b.tb("sum" + sfx, GL, 318 - up, "pww_dt_summary_0", CW, h=36, vis=tier)
+        # Totals row: we give (left), the balance track, they give (right).
+        y = 356 - up
+        b.tb("tot0" + sfx, GL, y, "pww_dt_tot_0", TRK_X - GL - 4, vis=tier)
+        b.icon("trk" + sfx, TRK_X, y + 3, "GFX_pww_dt_track", vis=tier, tooltip="pww_dt_tt_track")
+        b.tb("tick" + sfx, TRK_X + TRK_W // 2 - 10, y, loc("pww_dt_tick", "§g|§!"), 20, fmt="centre", vis=tier)
+        b.icon("mk" + sfx, MK_X0, y - 1, "GFX_progress_marker", vis=tier, x_var="ROOT.pww_dbm_bx")
+        b.tb("tot1" + sfx, TRK_X + TRK_W + 4, y, "pww_dt_tot_1", GR - TRK_X - TRK_W - 4, fmt="right", vis=tier)
+        # Verdict row: verdict (or why the draft is invalid, or why Balance it could not) and the button.
+        b.tb("mkv" + sfx, GL, y + 25, "[pww_dt_sl_mkrow]", CW - 120, vis=tier)
+        b.btn("bal" + sfx, GR - 112, y + 22, "GFX_pww_dt_seg", w=112, h=22, text="pww_dt_balance", vis=tier,
+              click=root_do("pww_diplo_bundle_balance = yes"), enabled=R(cv("pww_do_n1", ">", 0)),
+              tooltip="pww_dt_tt_balance")
+        divider(b, "div2" + sfx, 404 - up, tier)
+        b.tb("envoy" + sfx, GL, 410 - up, "pww_dt_envoy", CW, h=36, vis=tier)
+        b.tb("chips" + sfx, GL, 448 - up, "pww_dt_chips", CW, h=18, vis=tier)
     menu(b)
     # Centred above the gap between the vanilla Cancel and Send buttons.
     b.tb("round", 200, 468, "[pww_dt_sl_round]", 184, fmt="centre")
     effects[b.g] = b.eff
     triggers[b.g] = b.trg
+    PROPS[b.g] = b.props
     return b.window("pww_diplo_send_offer", H_SEND)
 
 
 def build_recv(effects, triggers):
     b = B("pww_diplo_recv_offer_gui", "pww_ro")
     party_header(b, True)
-    divider(b, "div0", 36)
-    b.tb("h0", COLX[0], 46, "pww_dt_h_give", COLW)
-    b.tb("h1", COLX[1], 46, "pww_dt_h_get", COLW)
+    divider(b, "div0", 36 + TOP)
+    b.tb("h0", COLX[0], 46 + TOP, "pww_dt_h_give", COLW)
+    b.tb("h1", COLX[1], 46 + TOP, "pww_dt_h_get", COLW)
     build_rows(b, True)
     terms(b, True)
-    divider(b, "div1", 258)
-    b.tb("sum", GL, 266, "pww_dt_summary_1", CW, h=52)
-    b.tb("mkt", GL, 318, "pww_dt_market_1", CW)
-    divider(b, "div2", 340)
-    b.tb("line", GL, 350, "[pww_dt_sl_rline]", CW, h=36)
+    divider(b, "div1", 266)
+    b.tb("sum", GL, 272, "pww_dt_summary_1", CW, h=36)
+    b.tb("mkt", GL, 310, "pww_dt_market_1", CW)
+    divider(b, "div2", 332)
+    b.tb("line", GL, 338, "[pww_dt_sl_rline]", CW, h=36)
     # Counter marks: decline with one marked to send it back as a counter.
-    y = 388
+    y = 376
     for v, t in ((1, "Counter: ask them to pay more"), (2, "Counter: give them less"), (3, "Counter: a shorter term")):
         on = cv("pww_dr_counter", "=", v)
         click = (f"\t\t\t\tif = {{ limit = {{ {on} }} set_variable = {{ pww_dr_counter = 0 }} }}\n"
@@ -692,6 +779,12 @@ SPRITES = """	corneredTileSpriteType = {
 		borderSize = { x = 12 y = 12 }
 	}
 	corneredTileSpriteType = {
+		name = "GFX_pww_dt_track"
+		size = { x = 140 y = 12 }
+		textureFile = "gfx/interface/tiles/tiled_progress_bar.dds"
+		borderSize = { x = 6 y = 5 }
+	}
+	corneredTileSpriteType = {
 		name = "GFX_pww_dt_menurow"
 		size = { x = 416 y = 20 }
 		textureFile = "gfx/interface/diplo_countrylist_entry.dds"
@@ -704,6 +797,27 @@ SPRITES = """	corneredTileSpriteType = {
 # ----------------------------------------------------------------------------
 # Display mirror effects (scripted effects file)
 # ----------------------------------------------------------------------------
+def fmt_value(src, name):
+    """Copies a market value for display: name = src rounded (two decimals
+    under 10, so the rows visibly add up to the totals; one from 10), name_f =
+    0 two decimals, 1 one, 2 whole, 3 exactly 1 (read by money())."""
+    return (f"\tset_temp_variable = {{ pww_dgm_v = {src} }}\n"
+            f"\tset_variable = {{ {name}_f = 1 }}\n"
+            "\tif = {\n\t\tlimit = { check_variable = { pww_dgm_v < 9.995 } }\n"
+            "\t\tmultiply_temp_variable = { pww_dgm_v = 100 }\n\t\tround_temp_variable = pww_dgm_v\n"
+            "\t\tdivide_temp_variable = { pww_dgm_v = 100 }\n"
+            "\t\tset_temp_variable = { pww_dgm_i = pww_dgm_v }\n\t\tmultiply_temp_variable = { pww_dgm_i = 10 }\n"
+            "\t\tset_temp_variable = { pww_dgm_j = pww_dgm_i }\n\t\tround_temp_variable = pww_dgm_j\n"
+            f"\t\tif = {{ limit = {{ NOT = {{ check_variable = {{ pww_dgm_i = pww_dgm_j }} }} }} set_variable = {{ {name}_f = 0 }} }}\n"
+            "\t}\n\telse = {\n"
+            "\t\tmultiply_temp_variable = { pww_dgm_v = 10 }\n\t\tround_temp_variable = pww_dgm_v\n"
+            "\t\tdivide_temp_variable = { pww_dgm_v = 10 }\n\t}\n"
+            "\tset_temp_variable = { pww_dgm_i = pww_dgm_v }\n\tround_temp_variable = pww_dgm_i\n"
+            f"\tif = {{ limit = {{ check_variable = {{ pww_dgm_i = pww_dgm_v }} }} set_variable = {{ {name}_f = 2 }} }}\n"
+            f"\tif = {{ limit = {{ check_variable = {{ pww_dgm_v = 1 }} }} set_variable = {{ {name}_f = 3 }} }}\n"
+            f"\tset_variable = {{ {name} = pww_dgm_v }}\n")
+
+
 def mirror_effects():
     o = ["###############################################################################\n"
          "# Power Without War: trade talks display mirror (GENERATED by\n"
@@ -714,8 +828,9 @@ def mirror_effects():
          "# pww_dbx_<n>, pww_dba_<n> amount, pww_dbs_<n> lease state, pww_dbu_<n> lease\n"
          "# output, pww_dbf_<n> the giver's figure: free factories, political power a\n"
          "# day or stock; resource rows pww_dbss/sp (sender short/spare) and\n"
-         "# pww_dbts/tp (target)), the market figures (pww_dbm_v0/v1/m0 with _int and\n"
-         "# _one flags, pww_dbm_one / one0, pww_dbm_rmk) and the add-menu figures\n"
+         "# pww_dbts/tp (target)), the market values (pww_dbv_<n> per row,\n"
+         "# pww_dbm_t0 / t1 totals, each with a\n"
+         "# _f format flag; pww_dbm_bx the balance marker's x) and the add-menu figures\n"
          "# (pww_dmg<side>_*: civ, pp, r<res>_sp/_sh, e<eq>, s<res>, top/topa) and\n"
          "# enabled rows pww_dbm_en_<row>. Side 0 figures are the sender's, side 1 the\n"
          "# target's.\n"
@@ -753,30 +868,25 @@ def mirror_effects():
                  f"\t\tset_variable = {{ pww_dbs_{n} = pww_dob_s^{n} }}\n"
                  f"\t\tset_variable = {{ pww_dbu_{n} = pww_dob_v^{n} }}\n"
                  f"\t\tmultiply_variable = {{ pww_dbu_{n} = 8 }}\n\t}}\n")
-    # market figures
-    for v, src in (("v0", "pww_do_mk_v0"), ("v1", "pww_do_mk_v1"), ("m0", "pww_do_mk_m0")):
-        m.append(f"\tset_temp_variable = {{ pww_dgm_v = {src} }}\n"
-                 f"\tmultiply_temp_variable = {{ pww_dgm_v = 10 }}\n\tround_temp_variable = pww_dgm_v\n"
-                 f"\tdivide_temp_variable = {{ pww_dgm_v = 10 }}\n"
-                 f"\tset_variable = {{ pww_dbm_{v} = pww_dgm_v }}\n"
-                 f"\tset_temp_variable = {{ pww_dgm_i = pww_dgm_v }}\n\tround_temp_variable = pww_dgm_i\n"
-                 f"\tset_variable = {{ pww_dbm_{v}_int = 0 }}\n\tset_variable = {{ pww_dbm_{v}_one = 0 }}\n"
-                 f"\tif = {{ limit = {{ check_variable = {{ pww_dgm_i = pww_dgm_v }} }} set_variable = {{ pww_dbm_{v}_int = 1 }} }}\n"
-                 f"\tif = {{ limit = {{ check_variable = {{ pww_dgm_v = 1 }} }} set_variable = {{ pww_dbm_{v}_one = 1 }} }}\n")
-    m.append("\tset_variable = { pww_dbm_one = 0 }\n"
-             "\tif = { limit = { check_variable = { pww_do_n1 = 1 } check_variable = { pww_dbk_4 = 3 } } set_variable = { pww_dbm_one = 1 } }\n"
-             "\tset_variable = { pww_dbm_one0 = 0 }\n"
-             "\tif = { limit = { check_variable = { pww_do_n0 = 1 } check_variable = { pww_dbk_0 = 3 } } set_variable = { pww_dbm_one0 = 1 } }\n"
-             "\t# Receive view: raw market both ways.\n"
-             "\tset_temp_variable = { pww_dgm_d = pww_do_mk_v0 }\n"
-             "\tsubtract_from_temp_variable = { pww_dgm_d = pww_do_mk_v1 }\n"
-             "\tset_temp_variable = { pww_dgm_t = pww_do_mk_v1 }\n"
-             "\tmultiply_temp_variable = { pww_dgm_t = 0.05 }\n"
-             "\tif = { limit = { check_variable = { pww_dgm_t < 0.05 } } set_temp_variable = { pww_dgm_t = 0.05 } }\n"
-             "\tset_variable = { pww_dbm_rmk = 0 }\n"
-             "\tif = { limit = { check_variable = { pww_dgm_d > pww_dgm_t } } set_variable = { pww_dbm_rmk = 1 } }\n"
-             "\tmultiply_temp_variable = { pww_dgm_d = -1 }\n"
-             "\tif = { limit = { check_variable = { pww_dgm_d > pww_dgm_t } } set_variable = { pww_dbm_rmk = -1 } }\n")
+    # market values: per row, side totals, balance marker
+    for n in range(8):
+        m.append(fmt_value(f"pww_dob_m^{n}", f"pww_dbv_{n}"))
+    m.append(fmt_value("pww_do_mk_m0", "pww_dbm_t0"))
+    m.append(fmt_value("pww_do_mk_m1", "pww_dbm_t1"))
+    m.append("\t# Marker x: leans toward the side that gets more (left: we get more),\n"
+             "\t# full tilt at a 50% imbalance.\n"
+             "\tset_temp_variable = { pww_dgm_b = pww_do_mk_m0 }\n"
+             "\tif = { limit = { check_variable = { pww_do_mk_m1 > pww_dgm_b } } set_temp_variable = { pww_dgm_b = pww_do_mk_m1 } }\n"
+             "\tif = { limit = { check_variable = { pww_dgm_b < 0.25 } } set_temp_variable = { pww_dgm_b = 0.25 } }\n"
+             "\tset_temp_variable = { pww_dgm_tl = pww_do_mk_m1 }\n"
+             "\tsubtract_from_temp_variable = { pww_dgm_tl = pww_do_mk_m0 }\n"
+             "\tdivide_temp_variable = { pww_dgm_tl = pww_dgm_b }\n"
+             "\tmultiply_temp_variable = { pww_dgm_tl = 2 }\n"
+             "\tclamp_temp_variable = { var = pww_dgm_tl min = -1 max = 1 }\n"
+             f"\tmultiply_temp_variable = {{ pww_dgm_tl = -{TRK_HALF} }}\n"
+             f"\tadd_to_temp_variable = {{ pww_dgm_tl = {MK_X0} }}\n"
+             "\tround_temp_variable = pww_dgm_tl\n"
+             "\tset_variable = { pww_dbm_bx = pww_dgm_tl }\n")
     # menu figures per side
     for s in (0, 1):
         sc = "THIS" if s == 0 else "var:pww_do_target"
@@ -848,9 +958,9 @@ def mirror_effects():
         names += [f"pww_dbk_{n}", f"pww_dbx_{n}", f"pww_dba_{n}", f"pww_dbf_{n}", f"pww_dbss_{n}", f"pww_dbsp_{n}",
                   f"pww_dbts_{n}", f"pww_dbtp_{n}", f"pww_dbu_{n}"]
     names += ["pww_do_len", "pww_do_bind", "pww_do_n0", "pww_do_n1", "pww_do_frame", "pww_do_mk", "pww_do_valid",
-              "pww_dbm_rmk", "pww_dbm_one", "pww_dbm_one0", "pww_dd_line", "pww_dd_round", "pww_dd_closed"]
-    for v in ("v0", "v1", "m0"):
-        names += [f"pww_dbm_{v}", f"pww_dbm_{v}_int", f"pww_dbm_{v}_one"]
+              "pww_dd_line", "pww_dd_round", "pww_dd_closed"]
+    for v in [f"pww_dbv_{n}" for n in range(8)] + ["pww_dbm_t0", "pww_dbm_t1"]:
+        names += [v, f"{v}_f"]
     for s in (0, 1):
         names += [f"pww_dmg{s}_top", f"pww_dmg{s}_topa"]
     cp = ["pww_diplo_bundle_copy_display = {\n\tvar:pww_do_target = {\n"]

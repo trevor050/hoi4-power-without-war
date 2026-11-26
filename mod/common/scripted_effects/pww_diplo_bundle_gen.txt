@@ -7,8 +7,9 @@
 # pww_dbx_<n>, pww_dba_<n> amount, pww_dbs_<n> lease state, pww_dbu_<n> lease
 # output, pww_dbf_<n> the giver's figure: free factories, political power a
 # day or stock; resource rows pww_dbss/sp (sender short/spare) and
-# pww_dbts/tp (target)), the market figures (pww_dbm_v0/v1/m0 with _int and
-# _one flags, pww_dbm_one / one0, pww_dbm_rmk) and the add-menu figures
+# pww_dbts/tp (target)), the market values (pww_dbv_<n> per row,
+# pww_dbm_t0 / t1 totals, each with a
+# _f format flag; pww_dbm_bx the balance marker's x) and the add-menu figures
 # (pww_dmg<side>_*: civ, pp, r<res>_sp/_sh, e<eq>, s<res>, top/topa) and
 # enabled rows pww_dbm_en_<row>. Side 0 figures are the sender's, side 1 the
 # target's.
@@ -337,53 +338,250 @@ pww_diplo_bundle_mirror = {
 		set_variable = { pww_dbu_7 = pww_dob_v^7 }
 		multiply_variable = { pww_dbu_7 = 8 }
 	}
-	set_temp_variable = { pww_dgm_v = pww_do_mk_v0 }
-	multiply_temp_variable = { pww_dgm_v = 10 }
-	round_temp_variable = pww_dgm_v
-	divide_temp_variable = { pww_dgm_v = 10 }
-	set_variable = { pww_dbm_v0 = pww_dgm_v }
+	set_temp_variable = { pww_dgm_v = pww_dob_m^0 }
+	set_variable = { pww_dbv_0_f = 1 }
+	if = {
+		limit = { check_variable = { pww_dgm_v < 9.995 } }
+		multiply_temp_variable = { pww_dgm_v = 100 }
+		round_temp_variable = pww_dgm_v
+		divide_temp_variable = { pww_dgm_v = 100 }
+		set_temp_variable = { pww_dgm_i = pww_dgm_v }
+		multiply_temp_variable = { pww_dgm_i = 10 }
+		set_temp_variable = { pww_dgm_j = pww_dgm_i }
+		round_temp_variable = pww_dgm_j
+		if = { limit = { NOT = { check_variable = { pww_dgm_i = pww_dgm_j } } } set_variable = { pww_dbv_0_f = 0 } }
+	}
+	else = {
+		multiply_temp_variable = { pww_dgm_v = 10 }
+		round_temp_variable = pww_dgm_v
+		divide_temp_variable = { pww_dgm_v = 10 }
+	}
 	set_temp_variable = { pww_dgm_i = pww_dgm_v }
 	round_temp_variable = pww_dgm_i
-	set_variable = { pww_dbm_v0_int = 0 }
-	set_variable = { pww_dbm_v0_one = 0 }
-	if = { limit = { check_variable = { pww_dgm_i = pww_dgm_v } } set_variable = { pww_dbm_v0_int = 1 } }
-	if = { limit = { check_variable = { pww_dgm_v = 1 } } set_variable = { pww_dbm_v0_one = 1 } }
-	set_temp_variable = { pww_dgm_v = pww_do_mk_v1 }
-	multiply_temp_variable = { pww_dgm_v = 10 }
-	round_temp_variable = pww_dgm_v
-	divide_temp_variable = { pww_dgm_v = 10 }
-	set_variable = { pww_dbm_v1 = pww_dgm_v }
+	if = { limit = { check_variable = { pww_dgm_i = pww_dgm_v } } set_variable = { pww_dbv_0_f = 2 } }
+	if = { limit = { check_variable = { pww_dgm_v = 1 } } set_variable = { pww_dbv_0_f = 3 } }
+	set_variable = { pww_dbv_0 = pww_dgm_v }
+	set_temp_variable = { pww_dgm_v = pww_dob_m^1 }
+	set_variable = { pww_dbv_1_f = 1 }
+	if = {
+		limit = { check_variable = { pww_dgm_v < 9.995 } }
+		multiply_temp_variable = { pww_dgm_v = 100 }
+		round_temp_variable = pww_dgm_v
+		divide_temp_variable = { pww_dgm_v = 100 }
+		set_temp_variable = { pww_dgm_i = pww_dgm_v }
+		multiply_temp_variable = { pww_dgm_i = 10 }
+		set_temp_variable = { pww_dgm_j = pww_dgm_i }
+		round_temp_variable = pww_dgm_j
+		if = { limit = { NOT = { check_variable = { pww_dgm_i = pww_dgm_j } } } set_variable = { pww_dbv_1_f = 0 } }
+	}
+	else = {
+		multiply_temp_variable = { pww_dgm_v = 10 }
+		round_temp_variable = pww_dgm_v
+		divide_temp_variable = { pww_dgm_v = 10 }
+	}
 	set_temp_variable = { pww_dgm_i = pww_dgm_v }
 	round_temp_variable = pww_dgm_i
-	set_variable = { pww_dbm_v1_int = 0 }
-	set_variable = { pww_dbm_v1_one = 0 }
-	if = { limit = { check_variable = { pww_dgm_i = pww_dgm_v } } set_variable = { pww_dbm_v1_int = 1 } }
-	if = { limit = { check_variable = { pww_dgm_v = 1 } } set_variable = { pww_dbm_v1_one = 1 } }
+	if = { limit = { check_variable = { pww_dgm_i = pww_dgm_v } } set_variable = { pww_dbv_1_f = 2 } }
+	if = { limit = { check_variable = { pww_dgm_v = 1 } } set_variable = { pww_dbv_1_f = 3 } }
+	set_variable = { pww_dbv_1 = pww_dgm_v }
+	set_temp_variable = { pww_dgm_v = pww_dob_m^2 }
+	set_variable = { pww_dbv_2_f = 1 }
+	if = {
+		limit = { check_variable = { pww_dgm_v < 9.995 } }
+		multiply_temp_variable = { pww_dgm_v = 100 }
+		round_temp_variable = pww_dgm_v
+		divide_temp_variable = { pww_dgm_v = 100 }
+		set_temp_variable = { pww_dgm_i = pww_dgm_v }
+		multiply_temp_variable = { pww_dgm_i = 10 }
+		set_temp_variable = { pww_dgm_j = pww_dgm_i }
+		round_temp_variable = pww_dgm_j
+		if = { limit = { NOT = { check_variable = { pww_dgm_i = pww_dgm_j } } } set_variable = { pww_dbv_2_f = 0 } }
+	}
+	else = {
+		multiply_temp_variable = { pww_dgm_v = 10 }
+		round_temp_variable = pww_dgm_v
+		divide_temp_variable = { pww_dgm_v = 10 }
+	}
+	set_temp_variable = { pww_dgm_i = pww_dgm_v }
+	round_temp_variable = pww_dgm_i
+	if = { limit = { check_variable = { pww_dgm_i = pww_dgm_v } } set_variable = { pww_dbv_2_f = 2 } }
+	if = { limit = { check_variable = { pww_dgm_v = 1 } } set_variable = { pww_dbv_2_f = 3 } }
+	set_variable = { pww_dbv_2 = pww_dgm_v }
+	set_temp_variable = { pww_dgm_v = pww_dob_m^3 }
+	set_variable = { pww_dbv_3_f = 1 }
+	if = {
+		limit = { check_variable = { pww_dgm_v < 9.995 } }
+		multiply_temp_variable = { pww_dgm_v = 100 }
+		round_temp_variable = pww_dgm_v
+		divide_temp_variable = { pww_dgm_v = 100 }
+		set_temp_variable = { pww_dgm_i = pww_dgm_v }
+		multiply_temp_variable = { pww_dgm_i = 10 }
+		set_temp_variable = { pww_dgm_j = pww_dgm_i }
+		round_temp_variable = pww_dgm_j
+		if = { limit = { NOT = { check_variable = { pww_dgm_i = pww_dgm_j } } } set_variable = { pww_dbv_3_f = 0 } }
+	}
+	else = {
+		multiply_temp_variable = { pww_dgm_v = 10 }
+		round_temp_variable = pww_dgm_v
+		divide_temp_variable = { pww_dgm_v = 10 }
+	}
+	set_temp_variable = { pww_dgm_i = pww_dgm_v }
+	round_temp_variable = pww_dgm_i
+	if = { limit = { check_variable = { pww_dgm_i = pww_dgm_v } } set_variable = { pww_dbv_3_f = 2 } }
+	if = { limit = { check_variable = { pww_dgm_v = 1 } } set_variable = { pww_dbv_3_f = 3 } }
+	set_variable = { pww_dbv_3 = pww_dgm_v }
+	set_temp_variable = { pww_dgm_v = pww_dob_m^4 }
+	set_variable = { pww_dbv_4_f = 1 }
+	if = {
+		limit = { check_variable = { pww_dgm_v < 9.995 } }
+		multiply_temp_variable = { pww_dgm_v = 100 }
+		round_temp_variable = pww_dgm_v
+		divide_temp_variable = { pww_dgm_v = 100 }
+		set_temp_variable = { pww_dgm_i = pww_dgm_v }
+		multiply_temp_variable = { pww_dgm_i = 10 }
+		set_temp_variable = { pww_dgm_j = pww_dgm_i }
+		round_temp_variable = pww_dgm_j
+		if = { limit = { NOT = { check_variable = { pww_dgm_i = pww_dgm_j } } } set_variable = { pww_dbv_4_f = 0 } }
+	}
+	else = {
+		multiply_temp_variable = { pww_dgm_v = 10 }
+		round_temp_variable = pww_dgm_v
+		divide_temp_variable = { pww_dgm_v = 10 }
+	}
+	set_temp_variable = { pww_dgm_i = pww_dgm_v }
+	round_temp_variable = pww_dgm_i
+	if = { limit = { check_variable = { pww_dgm_i = pww_dgm_v } } set_variable = { pww_dbv_4_f = 2 } }
+	if = { limit = { check_variable = { pww_dgm_v = 1 } } set_variable = { pww_dbv_4_f = 3 } }
+	set_variable = { pww_dbv_4 = pww_dgm_v }
+	set_temp_variable = { pww_dgm_v = pww_dob_m^5 }
+	set_variable = { pww_dbv_5_f = 1 }
+	if = {
+		limit = { check_variable = { pww_dgm_v < 9.995 } }
+		multiply_temp_variable = { pww_dgm_v = 100 }
+		round_temp_variable = pww_dgm_v
+		divide_temp_variable = { pww_dgm_v = 100 }
+		set_temp_variable = { pww_dgm_i = pww_dgm_v }
+		multiply_temp_variable = { pww_dgm_i = 10 }
+		set_temp_variable = { pww_dgm_j = pww_dgm_i }
+		round_temp_variable = pww_dgm_j
+		if = { limit = { NOT = { check_variable = { pww_dgm_i = pww_dgm_j } } } set_variable = { pww_dbv_5_f = 0 } }
+	}
+	else = {
+		multiply_temp_variable = { pww_dgm_v = 10 }
+		round_temp_variable = pww_dgm_v
+		divide_temp_variable = { pww_dgm_v = 10 }
+	}
+	set_temp_variable = { pww_dgm_i = pww_dgm_v }
+	round_temp_variable = pww_dgm_i
+	if = { limit = { check_variable = { pww_dgm_i = pww_dgm_v } } set_variable = { pww_dbv_5_f = 2 } }
+	if = { limit = { check_variable = { pww_dgm_v = 1 } } set_variable = { pww_dbv_5_f = 3 } }
+	set_variable = { pww_dbv_5 = pww_dgm_v }
+	set_temp_variable = { pww_dgm_v = pww_dob_m^6 }
+	set_variable = { pww_dbv_6_f = 1 }
+	if = {
+		limit = { check_variable = { pww_dgm_v < 9.995 } }
+		multiply_temp_variable = { pww_dgm_v = 100 }
+		round_temp_variable = pww_dgm_v
+		divide_temp_variable = { pww_dgm_v = 100 }
+		set_temp_variable = { pww_dgm_i = pww_dgm_v }
+		multiply_temp_variable = { pww_dgm_i = 10 }
+		set_temp_variable = { pww_dgm_j = pww_dgm_i }
+		round_temp_variable = pww_dgm_j
+		if = { limit = { NOT = { check_variable = { pww_dgm_i = pww_dgm_j } } } set_variable = { pww_dbv_6_f = 0 } }
+	}
+	else = {
+		multiply_temp_variable = { pww_dgm_v = 10 }
+		round_temp_variable = pww_dgm_v
+		divide_temp_variable = { pww_dgm_v = 10 }
+	}
+	set_temp_variable = { pww_dgm_i = pww_dgm_v }
+	round_temp_variable = pww_dgm_i
+	if = { limit = { check_variable = { pww_dgm_i = pww_dgm_v } } set_variable = { pww_dbv_6_f = 2 } }
+	if = { limit = { check_variable = { pww_dgm_v = 1 } } set_variable = { pww_dbv_6_f = 3 } }
+	set_variable = { pww_dbv_6 = pww_dgm_v }
+	set_temp_variable = { pww_dgm_v = pww_dob_m^7 }
+	set_variable = { pww_dbv_7_f = 1 }
+	if = {
+		limit = { check_variable = { pww_dgm_v < 9.995 } }
+		multiply_temp_variable = { pww_dgm_v = 100 }
+		round_temp_variable = pww_dgm_v
+		divide_temp_variable = { pww_dgm_v = 100 }
+		set_temp_variable = { pww_dgm_i = pww_dgm_v }
+		multiply_temp_variable = { pww_dgm_i = 10 }
+		set_temp_variable = { pww_dgm_j = pww_dgm_i }
+		round_temp_variable = pww_dgm_j
+		if = { limit = { NOT = { check_variable = { pww_dgm_i = pww_dgm_j } } } set_variable = { pww_dbv_7_f = 0 } }
+	}
+	else = {
+		multiply_temp_variable = { pww_dgm_v = 10 }
+		round_temp_variable = pww_dgm_v
+		divide_temp_variable = { pww_dgm_v = 10 }
+	}
+	set_temp_variable = { pww_dgm_i = pww_dgm_v }
+	round_temp_variable = pww_dgm_i
+	if = { limit = { check_variable = { pww_dgm_i = pww_dgm_v } } set_variable = { pww_dbv_7_f = 2 } }
+	if = { limit = { check_variable = { pww_dgm_v = 1 } } set_variable = { pww_dbv_7_f = 3 } }
+	set_variable = { pww_dbv_7 = pww_dgm_v }
 	set_temp_variable = { pww_dgm_v = pww_do_mk_m0 }
-	multiply_temp_variable = { pww_dgm_v = 10 }
-	round_temp_variable = pww_dgm_v
-	divide_temp_variable = { pww_dgm_v = 10 }
-	set_variable = { pww_dbm_m0 = pww_dgm_v }
+	set_variable = { pww_dbm_t0_f = 1 }
+	if = {
+		limit = { check_variable = { pww_dgm_v < 9.995 } }
+		multiply_temp_variable = { pww_dgm_v = 100 }
+		round_temp_variable = pww_dgm_v
+		divide_temp_variable = { pww_dgm_v = 100 }
+		set_temp_variable = { pww_dgm_i = pww_dgm_v }
+		multiply_temp_variable = { pww_dgm_i = 10 }
+		set_temp_variable = { pww_dgm_j = pww_dgm_i }
+		round_temp_variable = pww_dgm_j
+		if = { limit = { NOT = { check_variable = { pww_dgm_i = pww_dgm_j } } } set_variable = { pww_dbm_t0_f = 0 } }
+	}
+	else = {
+		multiply_temp_variable = { pww_dgm_v = 10 }
+		round_temp_variable = pww_dgm_v
+		divide_temp_variable = { pww_dgm_v = 10 }
+	}
 	set_temp_variable = { pww_dgm_i = pww_dgm_v }
 	round_temp_variable = pww_dgm_i
-	set_variable = { pww_dbm_m0_int = 0 }
-	set_variable = { pww_dbm_m0_one = 0 }
-	if = { limit = { check_variable = { pww_dgm_i = pww_dgm_v } } set_variable = { pww_dbm_m0_int = 1 } }
-	if = { limit = { check_variable = { pww_dgm_v = 1 } } set_variable = { pww_dbm_m0_one = 1 } }
-	set_variable = { pww_dbm_one = 0 }
-	if = { limit = { check_variable = { pww_do_n1 = 1 } check_variable = { pww_dbk_4 = 3 } } set_variable = { pww_dbm_one = 1 } }
-	set_variable = { pww_dbm_one0 = 0 }
-	if = { limit = { check_variable = { pww_do_n0 = 1 } check_variable = { pww_dbk_0 = 3 } } set_variable = { pww_dbm_one0 = 1 } }
-	# Receive view: raw market both ways.
-	set_temp_variable = { pww_dgm_d = pww_do_mk_v0 }
-	subtract_from_temp_variable = { pww_dgm_d = pww_do_mk_v1 }
-	set_temp_variable = { pww_dgm_t = pww_do_mk_v1 }
-	multiply_temp_variable = { pww_dgm_t = 0.05 }
-	if = { limit = { check_variable = { pww_dgm_t < 0.05 } } set_temp_variable = { pww_dgm_t = 0.05 } }
-	set_variable = { pww_dbm_rmk = 0 }
-	if = { limit = { check_variable = { pww_dgm_d > pww_dgm_t } } set_variable = { pww_dbm_rmk = 1 } }
-	multiply_temp_variable = { pww_dgm_d = -1 }
-	if = { limit = { check_variable = { pww_dgm_d > pww_dgm_t } } set_variable = { pww_dbm_rmk = -1 } }
+	if = { limit = { check_variable = { pww_dgm_i = pww_dgm_v } } set_variable = { pww_dbm_t0_f = 2 } }
+	if = { limit = { check_variable = { pww_dgm_v = 1 } } set_variable = { pww_dbm_t0_f = 3 } }
+	set_variable = { pww_dbm_t0 = pww_dgm_v }
+	set_temp_variable = { pww_dgm_v = pww_do_mk_m1 }
+	set_variable = { pww_dbm_t1_f = 1 }
+	if = {
+		limit = { check_variable = { pww_dgm_v < 9.995 } }
+		multiply_temp_variable = { pww_dgm_v = 100 }
+		round_temp_variable = pww_dgm_v
+		divide_temp_variable = { pww_dgm_v = 100 }
+		set_temp_variable = { pww_dgm_i = pww_dgm_v }
+		multiply_temp_variable = { pww_dgm_i = 10 }
+		set_temp_variable = { pww_dgm_j = pww_dgm_i }
+		round_temp_variable = pww_dgm_j
+		if = { limit = { NOT = { check_variable = { pww_dgm_i = pww_dgm_j } } } set_variable = { pww_dbm_t1_f = 0 } }
+	}
+	else = {
+		multiply_temp_variable = { pww_dgm_v = 10 }
+		round_temp_variable = pww_dgm_v
+		divide_temp_variable = { pww_dgm_v = 10 }
+	}
+	set_temp_variable = { pww_dgm_i = pww_dgm_v }
+	round_temp_variable = pww_dgm_i
+	if = { limit = { check_variable = { pww_dgm_i = pww_dgm_v } } set_variable = { pww_dbm_t1_f = 2 } }
+	if = { limit = { check_variable = { pww_dgm_v = 1 } } set_variable = { pww_dbm_t1_f = 3 } }
+	set_variable = { pww_dbm_t1 = pww_dgm_v }
+	# Marker x: leans toward the side that gets more (left: we get more),
+	# full tilt at a 50% imbalance.
+	set_temp_variable = { pww_dgm_b = pww_do_mk_m0 }
+	if = { limit = { check_variable = { pww_do_mk_m1 > pww_dgm_b } } set_temp_variable = { pww_dgm_b = pww_do_mk_m1 } }
+	if = { limit = { check_variable = { pww_dgm_b < 0.25 } } set_temp_variable = { pww_dgm_b = 0.25 } }
+	set_temp_variable = { pww_dgm_tl = pww_do_mk_m1 }
+	subtract_from_temp_variable = { pww_dgm_tl = pww_do_mk_m0 }
+	divide_temp_variable = { pww_dgm_tl = pww_dgm_b }
+	multiply_temp_variable = { pww_dgm_tl = 2 }
+	clamp_temp_variable = { var = pww_dgm_tl min = -1 max = 1 }
+	multiply_temp_variable = { pww_dgm_tl = -62 }
+	add_to_temp_variable = { pww_dgm_tl = 287 }
+	round_temp_variable = pww_dgm_tl
+	set_variable = { pww_dbm_bx = pww_dgm_tl }
 	THIS = {
 		set_temp_variable = { pww_dgm_c = num_of_civilian_factories_available_for_projects }
 		set_temp_variable = { pww_dgm_p = political_power_daily }
@@ -882,21 +1080,29 @@ pww_diplo_bundle_copy_display = {
 		set_variable = { pww_do_frame = PREV.pww_do_frame }
 		set_variable = { pww_do_mk = PREV.pww_do_mk }
 		set_variable = { pww_do_valid = PREV.pww_do_valid }
-		set_variable = { pww_dbm_rmk = PREV.pww_dbm_rmk }
-		set_variable = { pww_dbm_one = PREV.pww_dbm_one }
-		set_variable = { pww_dbm_one0 = PREV.pww_dbm_one0 }
 		set_variable = { pww_dd_line = PREV.pww_dd_line }
 		set_variable = { pww_dd_round = PREV.pww_dd_round }
 		set_variable = { pww_dd_closed = PREV.pww_dd_closed }
-		set_variable = { pww_dbm_v0 = PREV.pww_dbm_v0 }
-		set_variable = { pww_dbm_v0_int = PREV.pww_dbm_v0_int }
-		set_variable = { pww_dbm_v0_one = PREV.pww_dbm_v0_one }
-		set_variable = { pww_dbm_v1 = PREV.pww_dbm_v1 }
-		set_variable = { pww_dbm_v1_int = PREV.pww_dbm_v1_int }
-		set_variable = { pww_dbm_v1_one = PREV.pww_dbm_v1_one }
-		set_variable = { pww_dbm_m0 = PREV.pww_dbm_m0 }
-		set_variable = { pww_dbm_m0_int = PREV.pww_dbm_m0_int }
-		set_variable = { pww_dbm_m0_one = PREV.pww_dbm_m0_one }
+		set_variable = { pww_dbv_0 = PREV.pww_dbv_0 }
+		set_variable = { pww_dbv_0_f = PREV.pww_dbv_0_f }
+		set_variable = { pww_dbv_1 = PREV.pww_dbv_1 }
+		set_variable = { pww_dbv_1_f = PREV.pww_dbv_1_f }
+		set_variable = { pww_dbv_2 = PREV.pww_dbv_2 }
+		set_variable = { pww_dbv_2_f = PREV.pww_dbv_2_f }
+		set_variable = { pww_dbv_3 = PREV.pww_dbv_3 }
+		set_variable = { pww_dbv_3_f = PREV.pww_dbv_3_f }
+		set_variable = { pww_dbv_4 = PREV.pww_dbv_4 }
+		set_variable = { pww_dbv_4_f = PREV.pww_dbv_4_f }
+		set_variable = { pww_dbv_5 = PREV.pww_dbv_5 }
+		set_variable = { pww_dbv_5_f = PREV.pww_dbv_5_f }
+		set_variable = { pww_dbv_6 = PREV.pww_dbv_6 }
+		set_variable = { pww_dbv_6_f = PREV.pww_dbv_6_f }
+		set_variable = { pww_dbv_7 = PREV.pww_dbv_7 }
+		set_variable = { pww_dbv_7_f = PREV.pww_dbv_7_f }
+		set_variable = { pww_dbm_t0 = PREV.pww_dbm_t0 }
+		set_variable = { pww_dbm_t0_f = PREV.pww_dbm_t0_f }
+		set_variable = { pww_dbm_t1 = PREV.pww_dbm_t1 }
+		set_variable = { pww_dbm_t1_f = PREV.pww_dbm_t1_f }
 		set_variable = { pww_dmg0_top = PREV.pww_dmg0_top }
 		set_variable = { pww_dmg0_topa = PREV.pww_dmg0_topa }
 		set_variable = { pww_dmg1_top = PREV.pww_dmg1_top }

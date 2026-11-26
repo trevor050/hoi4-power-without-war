@@ -428,6 +428,11 @@ scripted_gui = {
 					pww_diplo_offer_changed = yes
 				}
 			}
+			pww_so_bal_click = {
+				ROOT = {
+					pww_diplo_bundle_balance = yes
+				}
+			}
 			pww_so_len0_off_u1_click = {
 				ROOT = {
 					set_variable = { pww_do_len = 0 }
@@ -464,6 +469,11 @@ scripted_gui = {
 					pww_diplo_offer_changed = yes
 				}
 			}
+			pww_so_bal_u1_click = {
+				ROOT = {
+					pww_diplo_bundle_balance = yes
+				}
+			}
 			pww_so_len0_off_u2_click = {
 				ROOT = {
 					set_variable = { pww_do_len = 0 }
@@ -498,6 +508,11 @@ scripted_gui = {
 				ROOT = {
 					set_variable = { pww_do_bind = 1 }
 					pww_diplo_offer_changed = yes
+				}
+			}
+			pww_so_bal_u2_click = {
+				ROOT = {
+					pww_diplo_bundle_balance = yes
 				}
 			}
 			pww_so_mclose_click = {
@@ -652,6 +667,7 @@ scripted_gui = {
 			pww_so_i0_pl_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_0 > 0 } check_variable = { pww_dbk_0 < 5 } } }
 			pww_so_i0_x_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_0 > 0 } } }
 			pww_so_i0_hi_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_0 > 0 } check_variable = { pww_dbk_0 < 6 } } }
+			pww_so_i0_lv_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_0 = 6 } } }
 			pww_so_i0_lmi_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_0 = 6 } } }
 			pww_so_i0_lst_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_0 = 6 } } }
 			pww_so_i0_lpl_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_0 = 6 } } }
@@ -662,6 +678,7 @@ scripted_gui = {
 			pww_so_i1_pl_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_1 > 0 } check_variable = { pww_dbk_1 < 5 } } }
 			pww_so_i1_x_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_1 > 0 } } }
 			pww_so_i1_hi_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_1 > 0 } check_variable = { pww_dbk_1 < 6 } } }
+			pww_so_i1_lv_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_1 = 6 } } }
 			pww_so_i1_lmi_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_1 = 6 } } }
 			pww_so_i1_lst_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_1 = 6 } } }
 			pww_so_i1_lpl_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_1 = 6 } } }
@@ -672,6 +689,7 @@ scripted_gui = {
 			pww_so_i2_pl_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_2 > 0 } check_variable = { pww_dbk_2 < 5 } } }
 			pww_so_i2_x_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_2 > 0 } } }
 			pww_so_i2_hi_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_2 > 0 } check_variable = { pww_dbk_2 < 6 } } }
+			pww_so_i2_lv_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_2 = 6 } } }
 			pww_so_i2_lmi_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_2 = 6 } } }
 			pww_so_i2_lst_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_2 = 6 } } }
 			pww_so_i2_lpl_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_2 = 6 } } }
@@ -682,6 +700,7 @@ scripted_gui = {
 			pww_so_i3_pl_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_3 > 0 } check_variable = { pww_dbk_3 < 5 } } }
 			pww_so_i3_x_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_3 > 0 } } }
 			pww_so_i3_hi_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_3 > 0 } check_variable = { pww_dbk_3 < 6 } } }
+			pww_so_i3_lv_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_3 = 6 } } }
 			pww_so_i3_lmi_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_3 = 6 } } }
 			pww_so_i3_lst_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_3 = 6 } } }
 			pww_so_i3_lpl_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_3 = 6 } } }
@@ -692,6 +711,7 @@ scripted_gui = {
 			pww_so_i4_pl_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_4 > 0 } check_variable = { pww_dbk_4 < 5 } } }
 			pww_so_i4_x_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_4 > 0 } } }
 			pww_so_i4_hi_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_4 > 0 } check_variable = { pww_dbk_4 < 6 } } }
+			pww_so_i4_lv_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_4 = 6 } } }
 			pww_so_i4_lmi_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_4 = 6 } } }
 			pww_so_i4_lst_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_4 = 6 } } }
 			pww_so_i4_lpl_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_4 = 6 } } }
@@ -702,6 +722,7 @@ scripted_gui = {
 			pww_so_i5_pl_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_5 > 0 } check_variable = { pww_dbk_5 < 5 } } }
 			pww_so_i5_x_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_5 > 0 } } }
 			pww_so_i5_hi_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_5 > 0 } check_variable = { pww_dbk_5 < 6 } } }
+			pww_so_i5_lv_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_5 = 6 } } }
 			pww_so_i5_lmi_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_5 = 6 } } }
 			pww_so_i5_lst_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_5 = 6 } } }
 			pww_so_i5_lpl_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_5 = 6 } } }
@@ -712,6 +733,7 @@ scripted_gui = {
 			pww_so_i6_pl_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_6 > 0 } check_variable = { pww_dbk_6 < 5 } } }
 			pww_so_i6_x_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_6 > 0 } } }
 			pww_so_i6_hi_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_6 > 0 } check_variable = { pww_dbk_6 < 6 } } }
+			pww_so_i6_lv_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_6 = 6 } } }
 			pww_so_i6_lmi_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_6 = 6 } } }
 			pww_so_i6_lst_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_6 = 6 } } }
 			pww_so_i6_lpl_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_6 = 6 } } }
@@ -722,6 +744,7 @@ scripted_gui = {
 			pww_so_i7_pl_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_7 > 0 } check_variable = { pww_dbk_7 < 5 } } }
 			pww_so_i7_x_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_7 > 0 } } }
 			pww_so_i7_hi_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_7 > 0 } check_variable = { pww_dbk_7 < 6 } } }
+			pww_so_i7_lv_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_7 = 6 } } }
 			pww_so_i7_lmi_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_7 = 6 } } }
 			pww_so_i7_lst_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_7 = 6 } } }
 			pww_so_i7_lpl_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_dbk_7 = 6 } } }
@@ -751,8 +774,14 @@ scripted_gui = {
 			pww_so_note_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { OR = { check_variable = { pww_do_n0 > 2 } check_variable = { pww_do_n1 > 2 } } } ROOT = { check_variable = { pww_do_once = 1 } } }
 			pww_so_div1_visible = { ROOT = { OR = { check_variable = { pww_do_n0 > 2 } check_variable = { pww_do_n1 > 2 } } } }
 			pww_so_sum_visible = { ROOT = { OR = { check_variable = { pww_do_n0 > 2 } check_variable = { pww_do_n1 > 2 } } } }
-			pww_so_mkt_visible = { ROOT = { OR = { check_variable = { pww_do_n0 > 2 } check_variable = { pww_do_n1 > 2 } } } ROOT = { check_variable = { pww_do_valid = 0 } } }
-			pww_so_inv_visible = { ROOT = { OR = { check_variable = { pww_do_n0 > 2 } check_variable = { pww_do_n1 > 2 } } } ROOT = { NOT = { check_variable = { pww_do_valid = 0 } } } }
+			pww_so_tot0_visible = { ROOT = { OR = { check_variable = { pww_do_n0 > 2 } check_variable = { pww_do_n1 > 2 } } } }
+			pww_so_trk_visible = { ROOT = { OR = { check_variable = { pww_do_n0 > 2 } check_variable = { pww_do_n1 > 2 } } } }
+			pww_so_tick_visible = { ROOT = { OR = { check_variable = { pww_do_n0 > 2 } check_variable = { pww_do_n1 > 2 } } } }
+			pww_so_mk_visible = { ROOT = { OR = { check_variable = { pww_do_n0 > 2 } check_variable = { pww_do_n1 > 2 } } } }
+			pww_so_tot1_visible = { ROOT = { OR = { check_variable = { pww_do_n0 > 2 } check_variable = { pww_do_n1 > 2 } } } }
+			pww_so_mkv_visible = { ROOT = { OR = { check_variable = { pww_do_n0 > 2 } check_variable = { pww_do_n1 > 2 } } } }
+			pww_so_bal_visible = { ROOT = { OR = { check_variable = { pww_do_n0 > 2 } check_variable = { pww_do_n1 > 2 } } } }
+			pww_so_bal_click_enabled = { ROOT = { check_variable = { pww_do_n1 > 0 } } }
 			pww_so_div2_visible = { ROOT = { OR = { check_variable = { pww_do_n0 > 2 } check_variable = { pww_do_n1 > 2 } } } }
 			pww_so_envoy_visible = { ROOT = { OR = { check_variable = { pww_do_n0 > 2 } check_variable = { pww_do_n1 > 2 } } } }
 			pww_so_chips_visible = { ROOT = { OR = { check_variable = { pww_do_n0 > 2 } check_variable = { pww_do_n1 > 2 } } } }
@@ -774,8 +803,14 @@ scripted_gui = {
 			pww_so_note_u1_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_do_n0 < 3 } check_variable = { pww_do_n1 < 3 } OR = { check_variable = { pww_do_n0 > 1 } check_variable = { pww_do_n1 > 1 } } } ROOT = { check_variable = { pww_do_once = 1 } } }
 			pww_so_div1_u1_visible = { ROOT = { check_variable = { pww_do_n0 < 3 } check_variable = { pww_do_n1 < 3 } OR = { check_variable = { pww_do_n0 > 1 } check_variable = { pww_do_n1 > 1 } } } }
 			pww_so_sum_u1_visible = { ROOT = { check_variable = { pww_do_n0 < 3 } check_variable = { pww_do_n1 < 3 } OR = { check_variable = { pww_do_n0 > 1 } check_variable = { pww_do_n1 > 1 } } } }
-			pww_so_mkt_u1_visible = { ROOT = { check_variable = { pww_do_n0 < 3 } check_variable = { pww_do_n1 < 3 } OR = { check_variable = { pww_do_n0 > 1 } check_variable = { pww_do_n1 > 1 } } } ROOT = { check_variable = { pww_do_valid = 0 } } }
-			pww_so_inv_u1_visible = { ROOT = { check_variable = { pww_do_n0 < 3 } check_variable = { pww_do_n1 < 3 } OR = { check_variable = { pww_do_n0 > 1 } check_variable = { pww_do_n1 > 1 } } } ROOT = { NOT = { check_variable = { pww_do_valid = 0 } } } }
+			pww_so_tot0_u1_visible = { ROOT = { check_variable = { pww_do_n0 < 3 } check_variable = { pww_do_n1 < 3 } OR = { check_variable = { pww_do_n0 > 1 } check_variable = { pww_do_n1 > 1 } } } }
+			pww_so_trk_u1_visible = { ROOT = { check_variable = { pww_do_n0 < 3 } check_variable = { pww_do_n1 < 3 } OR = { check_variable = { pww_do_n0 > 1 } check_variable = { pww_do_n1 > 1 } } } }
+			pww_so_tick_u1_visible = { ROOT = { check_variable = { pww_do_n0 < 3 } check_variable = { pww_do_n1 < 3 } OR = { check_variable = { pww_do_n0 > 1 } check_variable = { pww_do_n1 > 1 } } } }
+			pww_so_mk_u1_visible = { ROOT = { check_variable = { pww_do_n0 < 3 } check_variable = { pww_do_n1 < 3 } OR = { check_variable = { pww_do_n0 > 1 } check_variable = { pww_do_n1 > 1 } } } }
+			pww_so_tot1_u1_visible = { ROOT = { check_variable = { pww_do_n0 < 3 } check_variable = { pww_do_n1 < 3 } OR = { check_variable = { pww_do_n0 > 1 } check_variable = { pww_do_n1 > 1 } } } }
+			pww_so_mkv_u1_visible = { ROOT = { check_variable = { pww_do_n0 < 3 } check_variable = { pww_do_n1 < 3 } OR = { check_variable = { pww_do_n0 > 1 } check_variable = { pww_do_n1 > 1 } } } }
+			pww_so_bal_u1_visible = { ROOT = { check_variable = { pww_do_n0 < 3 } check_variable = { pww_do_n1 < 3 } OR = { check_variable = { pww_do_n0 > 1 } check_variable = { pww_do_n1 > 1 } } } }
+			pww_so_bal_u1_click_enabled = { ROOT = { check_variable = { pww_do_n1 > 0 } } }
 			pww_so_div2_u1_visible = { ROOT = { check_variable = { pww_do_n0 < 3 } check_variable = { pww_do_n1 < 3 } OR = { check_variable = { pww_do_n0 > 1 } check_variable = { pww_do_n1 > 1 } } } }
 			pww_so_envoy_u1_visible = { ROOT = { check_variable = { pww_do_n0 < 3 } check_variable = { pww_do_n1 < 3 } OR = { check_variable = { pww_do_n0 > 1 } check_variable = { pww_do_n1 > 1 } } } }
 			pww_so_chips_u1_visible = { ROOT = { check_variable = { pww_do_n0 < 3 } check_variable = { pww_do_n1 < 3 } OR = { check_variable = { pww_do_n0 > 1 } check_variable = { pww_do_n1 > 1 } } } }
@@ -797,8 +832,14 @@ scripted_gui = {
 			pww_so_note_u2_visible = { ROOT = { check_variable = { pww_dbm_side < 0 } } ROOT = { check_variable = { pww_do_n0 < 2 } check_variable = { pww_do_n1 < 2 } } ROOT = { check_variable = { pww_do_once = 1 } } }
 			pww_so_div1_u2_visible = { ROOT = { check_variable = { pww_do_n0 < 2 } check_variable = { pww_do_n1 < 2 } } }
 			pww_so_sum_u2_visible = { ROOT = { check_variable = { pww_do_n0 < 2 } check_variable = { pww_do_n1 < 2 } } }
-			pww_so_mkt_u2_visible = { ROOT = { check_variable = { pww_do_n0 < 2 } check_variable = { pww_do_n1 < 2 } } ROOT = { check_variable = { pww_do_valid = 0 } } }
-			pww_so_inv_u2_visible = { ROOT = { check_variable = { pww_do_n0 < 2 } check_variable = { pww_do_n1 < 2 } } ROOT = { NOT = { check_variable = { pww_do_valid = 0 } } } }
+			pww_so_tot0_u2_visible = { ROOT = { check_variable = { pww_do_n0 < 2 } check_variable = { pww_do_n1 < 2 } } }
+			pww_so_trk_u2_visible = { ROOT = { check_variable = { pww_do_n0 < 2 } check_variable = { pww_do_n1 < 2 } } }
+			pww_so_tick_u2_visible = { ROOT = { check_variable = { pww_do_n0 < 2 } check_variable = { pww_do_n1 < 2 } } }
+			pww_so_mk_u2_visible = { ROOT = { check_variable = { pww_do_n0 < 2 } check_variable = { pww_do_n1 < 2 } } }
+			pww_so_tot1_u2_visible = { ROOT = { check_variable = { pww_do_n0 < 2 } check_variable = { pww_do_n1 < 2 } } }
+			pww_so_mkv_u2_visible = { ROOT = { check_variable = { pww_do_n0 < 2 } check_variable = { pww_do_n1 < 2 } } }
+			pww_so_bal_u2_visible = { ROOT = { check_variable = { pww_do_n0 < 2 } check_variable = { pww_do_n1 < 2 } } }
+			pww_so_bal_u2_click_enabled = { ROOT = { check_variable = { pww_do_n1 > 0 } } }
 			pww_so_div2_u2_visible = { ROOT = { check_variable = { pww_do_n0 < 2 } check_variable = { pww_do_n1 < 2 } } }
 			pww_so_envoy_u2_visible = { ROOT = { check_variable = { pww_do_n0 < 2 } check_variable = { pww_do_n1 < 2 } } }
 			pww_so_chips_u2_visible = { ROOT = { check_variable = { pww_do_n0 < 2 } check_variable = { pww_do_n1 < 2 } } }
@@ -806,6 +847,7 @@ scripted_gui = {
 			pww_so_mbg7_visible = { ROOT = { check_variable = { pww_dbm_side > -1 } } ROOT = { OR = { check_variable = { pww_dbm_page = 1 } check_variable = { pww_dbm_page = 4 } } } }
 			pww_so_mbg8_visible = { ROOT = { check_variable = { pww_dbm_side > -1 } } ROOT = { OR = { check_variable = { pww_dbm_page = 2 } check_variable = { pww_dbm_page = 3 } } } }
 			pww_so_mtitle_visible = { ROOT = { check_variable = { pww_dbm_side > -1 } } }
+			pww_so_mrate_visible = { ROOT = { check_variable = { pww_dbm_side > -1 } } }
 			pww_so_mclose_visible = { ROOT = { check_variable = { pww_dbm_side > -1 } } }
 			pww_so_m0_visible = { ROOT = { check_variable = { pww_dbm_side > -1 } } ROOT = { OR = { check_variable = { pww_dbm_page = 0 } check_variable = { pww_dbm_page = 1 } check_variable = { pww_dbm_page = 2 } check_variable = { pww_dbm_page = 3 } check_variable = { pww_dbm_page = 4 } } } }
 			pww_so_m0_click_enabled = { ROOT = { check_variable = { pww_dbm_en_0 = 1 } } }
@@ -841,6 +883,11 @@ scripted_gui = {
 			pww_so_m7_h_visible = { ROOT = { check_variable = { pww_dbm_side > -1 } } ROOT = { OR = { check_variable = { pww_dbm_page = 2 } check_variable = { pww_dbm_page = 3 } } } }
 			pww_so_mback7_visible = { ROOT = { check_variable = { pww_dbm_side > -1 } } ROOT = { OR = { check_variable = { pww_dbm_page = 1 } check_variable = { pww_dbm_page = 4 } } } }
 			pww_so_mback8_visible = { ROOT = { check_variable = { pww_dbm_side > -1 } } ROOT = { OR = { check_variable = { pww_dbm_page = 2 } check_variable = { pww_dbm_page = 3 } } } }
+		}
+		properties = {
+			pww_so_mk = { x = ROOT.pww_dbm_bx }
+			pww_so_mk_u1 = { x = ROOT.pww_dbm_bx }
+			pww_so_mk_u2 = { x = ROOT.pww_dbm_bx }
 		}
 		ai_enabled = { always = no }
 	}
@@ -1208,41 +1255,49 @@ scripted_gui = {
 			pww_ro_i0_am_visible = { ROOT = { check_variable = { pww_dbk_0 > 0 } check_variable = { pww_dbk_0 < 5 } } }
 			pww_ro_i0_nmw_visible = { ROOT = { check_variable = { pww_dbk_0 > 4 } } }
 			pww_ro_i0_hi_visible = { ROOT = { check_variable = { pww_dbk_0 > 0 } check_variable = { pww_dbk_0 < 6 } } }
+			pww_ro_i0_lv_visible = { ROOT = { check_variable = { pww_dbk_0 = 6 } } }
 			pww_ro_i0_lst_visible = { ROOT = { check_variable = { pww_dbk_0 = 6 } } }
 			pww_ro_i1_nm_visible = { ROOT = { check_variable = { pww_dbk_1 > 0 } check_variable = { pww_dbk_1 < 5 } } }
 			pww_ro_i1_am_visible = { ROOT = { check_variable = { pww_dbk_1 > 0 } check_variable = { pww_dbk_1 < 5 } } }
 			pww_ro_i1_nmw_visible = { ROOT = { check_variable = { pww_dbk_1 > 4 } } }
 			pww_ro_i1_hi_visible = { ROOT = { check_variable = { pww_dbk_1 > 0 } check_variable = { pww_dbk_1 < 6 } } }
+			pww_ro_i1_lv_visible = { ROOT = { check_variable = { pww_dbk_1 = 6 } } }
 			pww_ro_i1_lst_visible = { ROOT = { check_variable = { pww_dbk_1 = 6 } } }
 			pww_ro_i2_nm_visible = { ROOT = { check_variable = { pww_dbk_2 > 0 } check_variable = { pww_dbk_2 < 5 } } }
 			pww_ro_i2_am_visible = { ROOT = { check_variable = { pww_dbk_2 > 0 } check_variable = { pww_dbk_2 < 5 } } }
 			pww_ro_i2_nmw_visible = { ROOT = { check_variable = { pww_dbk_2 > 4 } } }
 			pww_ro_i2_hi_visible = { ROOT = { check_variable = { pww_dbk_2 > 0 } check_variable = { pww_dbk_2 < 6 } } }
+			pww_ro_i2_lv_visible = { ROOT = { check_variable = { pww_dbk_2 = 6 } } }
 			pww_ro_i2_lst_visible = { ROOT = { check_variable = { pww_dbk_2 = 6 } } }
 			pww_ro_i3_nm_visible = { ROOT = { check_variable = { pww_dbk_3 > 0 } check_variable = { pww_dbk_3 < 5 } } }
 			pww_ro_i3_am_visible = { ROOT = { check_variable = { pww_dbk_3 > 0 } check_variable = { pww_dbk_3 < 5 } } }
 			pww_ro_i3_nmw_visible = { ROOT = { check_variable = { pww_dbk_3 > 4 } } }
 			pww_ro_i3_hi_visible = { ROOT = { check_variable = { pww_dbk_3 > 0 } check_variable = { pww_dbk_3 < 6 } } }
+			pww_ro_i3_lv_visible = { ROOT = { check_variable = { pww_dbk_3 = 6 } } }
 			pww_ro_i3_lst_visible = { ROOT = { check_variable = { pww_dbk_3 = 6 } } }
 			pww_ro_i4_nm_visible = { ROOT = { check_variable = { pww_dbk_4 > 0 } check_variable = { pww_dbk_4 < 5 } } }
 			pww_ro_i4_am_visible = { ROOT = { check_variable = { pww_dbk_4 > 0 } check_variable = { pww_dbk_4 < 5 } } }
 			pww_ro_i4_nmw_visible = { ROOT = { check_variable = { pww_dbk_4 > 4 } } }
 			pww_ro_i4_hi_visible = { ROOT = { check_variable = { pww_dbk_4 > 0 } check_variable = { pww_dbk_4 < 6 } } }
+			pww_ro_i4_lv_visible = { ROOT = { check_variable = { pww_dbk_4 = 6 } } }
 			pww_ro_i4_lst_visible = { ROOT = { check_variable = { pww_dbk_4 = 6 } } }
 			pww_ro_i5_nm_visible = { ROOT = { check_variable = { pww_dbk_5 > 0 } check_variable = { pww_dbk_5 < 5 } } }
 			pww_ro_i5_am_visible = { ROOT = { check_variable = { pww_dbk_5 > 0 } check_variable = { pww_dbk_5 < 5 } } }
 			pww_ro_i5_nmw_visible = { ROOT = { check_variable = { pww_dbk_5 > 4 } } }
 			pww_ro_i5_hi_visible = { ROOT = { check_variable = { pww_dbk_5 > 0 } check_variable = { pww_dbk_5 < 6 } } }
+			pww_ro_i5_lv_visible = { ROOT = { check_variable = { pww_dbk_5 = 6 } } }
 			pww_ro_i5_lst_visible = { ROOT = { check_variable = { pww_dbk_5 = 6 } } }
 			pww_ro_i6_nm_visible = { ROOT = { check_variable = { pww_dbk_6 > 0 } check_variable = { pww_dbk_6 < 5 } } }
 			pww_ro_i6_am_visible = { ROOT = { check_variable = { pww_dbk_6 > 0 } check_variable = { pww_dbk_6 < 5 } } }
 			pww_ro_i6_nmw_visible = { ROOT = { check_variable = { pww_dbk_6 > 4 } } }
 			pww_ro_i6_hi_visible = { ROOT = { check_variable = { pww_dbk_6 > 0 } check_variable = { pww_dbk_6 < 6 } } }
+			pww_ro_i6_lv_visible = { ROOT = { check_variable = { pww_dbk_6 = 6 } } }
 			pww_ro_i6_lst_visible = { ROOT = { check_variable = { pww_dbk_6 = 6 } } }
 			pww_ro_i7_nm_visible = { ROOT = { check_variable = { pww_dbk_7 > 0 } check_variable = { pww_dbk_7 < 5 } } }
 			pww_ro_i7_am_visible = { ROOT = { check_variable = { pww_dbk_7 > 0 } check_variable = { pww_dbk_7 < 5 } } }
 			pww_ro_i7_nmw_visible = { ROOT = { check_variable = { pww_dbk_7 > 4 } } }
 			pww_ro_i7_hi_visible = { ROOT = { check_variable = { pww_dbk_7 > 0 } check_variable = { pww_dbk_7 < 6 } } }
+			pww_ro_i7_lv_visible = { ROOT = { check_variable = { pww_dbk_7 = 6 } } }
 			pww_ro_i7_lst_visible = { ROOT = { check_variable = { pww_dbk_7 = 6 } } }
 			pww_ro_c1_off_visible = { NOT = { check_variable = { pww_dr_counter = 1 } } }
 			pww_ro_c1_on_visible = { check_variable = { pww_dr_counter = 1 } }

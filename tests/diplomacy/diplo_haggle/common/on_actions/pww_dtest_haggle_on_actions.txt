@@ -26,6 +26,11 @@
 #                    numbers the evaluation uses (below / at / above).
 #   H lease_mines    Lease Mines opens on a lease of one of POR's producing
 #                    states, paid for, under a fixed contract.
+#   I balance_it     "Balance it" brings below-market, above-market,
+#                    empty-side and political-power-only drafts to market
+#                    without touching their side, and the market values the
+#                    screen shows (rows, totals) are the acceptance model's:
+#                    terms computed from the shown totals equal the terms.
 # Day 32 so core has computed every country's desperation once.
 on_actions = {
 	on_daily = {
@@ -253,6 +258,58 @@ on_actions = {
 					}
 					else = {
 						log = "PWW_RESULT diplo_haggle.G_market_line FAIL below=[?pww_dtest_hg_g0|0] (terms [?pww_dtest_hg_g0t|0]) above=[?pww_dtest_hg_g2|0] (terms [?pww_dtest_hg_g2t|0]) exact=[?pww_dtest_hg_g1|0] v1=[?pww_dtest_hg_g1v|2] m0=[?pww_dtest_hg_g1m|2]"
+					}
+
+					# --- I: Balance it, and the shown market figures ---------
+					# POR tungsten (POR's desperation 0, so the terms are the
+					# market terms): below market, above market, nothing on our
+					# side, political power only.
+					set_temp_variable = { pww_dtest_hg_price = 0 }
+					pww_dtest_hg_draft = yes
+					set_temp_variable = { pww_dtest_hg_tag = 91 }
+					pww_dtest_hg_balance_case = yes
+					set_temp_variable = { pww_dtest_hg_i1 = pww_dtest_hg_iok }
+					set_temp_variable = { pww_dtest_hg_price = 2 }
+					pww_dtest_hg_draft = yes
+					set_temp_variable = { pww_dtest_hg_tag = 92 }
+					pww_dtest_hg_balance_case = yes
+					set_temp_variable = { pww_dtest_hg_i2 = pww_dtest_hg_iok }
+					set_temp_variable = { pww_dtest_hg_price = 1 }
+					pww_dtest_hg_draft = yes
+					set_temp_variable = { pww_dba_n = 0 }
+					pww_diplo_bundle_remove = yes
+					pww_diplo_offer_changed = yes
+					set_temp_variable = { pww_dtest_hg_i3n = pww_do_n0 }
+					set_temp_variable = { pww_dtest_hg_tag = 93 }
+					pww_dtest_hg_balance_case = yes
+					set_temp_variable = { pww_dtest_hg_i3 = pww_dtest_hg_iok }
+					set_temp_variable = { pww_dtest_hg_price = 0 }
+					pww_dtest_hg_draft = yes
+					set_temp_variable = { pww_dba_n = 0 }
+					pww_diplo_bundle_remove = yes
+					set_temp_variable = { pww_dba_side = 0 }
+					set_temp_variable = { pww_dba_kind = 2 }
+					set_temp_variable = { pww_dba_x = 0 }
+					pww_diplo_bundle_add = yes
+					set_variable = { pww_dob_a^pww_dba_new = 0.01 }
+					pww_diplo_offer_changed = yes
+					set_temp_variable = { pww_dtest_hg_tag = 94 }
+					pww_dtest_hg_balance_case = yes
+					set_temp_variable = { pww_dtest_hg_i4 = pww_dtest_hg_iok }
+					set_temp_variable = { pww_dtest_hg_i4k = pww_dob_k^0 }
+					if = {
+						limit = {
+							check_variable = { pww_dtest_hg_i1 = 1 }
+							check_variable = { pww_dtest_hg_i2 = 1 }
+							check_variable = { pww_dtest_hg_i3 = 1 }
+							check_variable = { pww_dtest_hg_i3n = 0 }
+							check_variable = { pww_dtest_hg_i4 = 1 }
+							check_variable = { pww_dtest_hg_i4k = 2 }
+						}
+						log = "PWW_RESULT diplo_haggle.I_balance_it PASS Balance it brings below-market, above-market, empty-side and political-power-only drafts to market without touching their side; rows and totals shown are the acceptance model's market figures (terms from the totals = the terms)"
+					}
+					else = {
+						log = "PWW_RESULT diplo_haggle.I_balance_it FAIL below=[?pww_dtest_hg_i1|0] above=[?pww_dtest_hg_i2|0] empty=[?pww_dtest_hg_i3|0] (n0 before [?pww_dtest_hg_i3n|0]) pp_only=[?pww_dtest_hg_i4|0] (kind [?pww_dtest_hg_i4k|0]); see I_values"
 					}
 
 					# --- F: a bundle reaches the ledger as linked agreements --
