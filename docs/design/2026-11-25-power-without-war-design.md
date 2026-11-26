@@ -18,7 +18,7 @@ Historical grounding is a pillar: the Wolfram War, the Statutory List, Schacht's
 ## 2. Pillars
 
 1. **Decisions, not buttons.** Every lever has a cost, a risk, and a counterplay.
-2. **Physical, not financial.** No currency. Value is computed internally and never shown as a number.
+2. **Physical, not financial.** No currency. Market prices are visible in civilian-factory equivalents (the unit vanilla trade already uses), so the player can price a deal. A counterparty's personal valuation (reserve, desperation, wants, opinion) is never shown as a number. (Revised after the first playtest: hiding market prices left the player unable to start.)
 3. **Legible fuzziness.** The player reads states and causes ("Strained → Wavering: your cruisers off Lisbon"), never scores.
 4. **Hard but fair, from every seat.** Claimant, holder, and patron each have winning moves. No crisis is a meter.
 5. **Alive but not noisy.** The world generates crises; the player sees only the few in their seats.
