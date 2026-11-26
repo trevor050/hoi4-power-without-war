@@ -1,0 +1,15 @@
+###############################################################################
+# Power Without War: trade relationships on_actions
+#
+#   on_daily   per country: lazy init once core is initialized; the first
+#              country each day runs the global sweep (ledger queue, coercion
+#              registry, monthly honored scan); each country decays its own
+#              bond records on its bucket day.
+###############################################################################
+on_actions = {
+	on_daily = {
+		effect = {
+			pww_rel_on_daily = yes
+		}
+	}
+}

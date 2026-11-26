@@ -1,0 +1,16 @@
+###############################################################################
+# Power Without War: logistics on_actions
+#
+#   on_daily   per country: lazy init once core is initialized (core arrays
+#              and buckets exist), then the country's neighbor table is
+#              rebuilt on its bucket day (every 30 days).
+# No on_startup hook: init waits for core (on_startup order across files is
+# not guaranteed) and runs on the first daily pulse.
+###############################################################################
+on_actions = {
+	on_daily = {
+		effect = {
+			pww_logi_on_daily = yes
+		}
+	}
+}

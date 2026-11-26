@@ -1,0 +1,9 @@
+# Logistics cost test helpers (test mod only). in pww_lgt_s, pww_lgt_b,
+# pww_lgt_r. Runs the public effect and logs an INFO line.
+pww_lgtest_pair = {
+	set_temp_variable = { pww_in_seller = pww_lgt_s }
+	set_temp_variable = { pww_in_buyer = pww_lgt_b }
+	set_temp_variable = { pww_in_resource = pww_lgt_r }
+	pww_logi_delivered_cost = yes
+	log = "PWW_RESULT logi_cost.pair INFO [?pww_lgt_s.GetTag]->[?pww_lgt_b.GetTag] res=[?pww_lgt_r|0] route=[?pww_logi_route|0] dist=[?pww_logi_dist|0] hops=[?pww_logi_hops|0] raid=[?pww_logi_raid|4] cost=[?pww_logi_cost_per_unit|4] share=[?pww_logi_cost_share|3]"
+}

@@ -1,0 +1,34 @@
+# Trade relationship test helpers (test mod only).
+
+# in pww_rbt_s, pww_rbt_b, pww_rbt_n (months), pww_rbt_v (value).
+# Test hook: zeroing pww_rel_gd@<buyer> opens a fresh 30-day window, so each
+# call counts as one honored month without waiting a month of game time.
+pww_rbtest_months = {
+	for_loop_effect = {
+		start = 0
+		end = pww_rbt_n
+		value = pww_rbt_k
+		var:pww_rbt_s = { set_variable = { pww_rel_gd@var:pww_rbt_b = 0 } }
+		set_temp_variable = { pww_in_seller = pww_rbt_s }
+		set_temp_variable = { pww_in_buyer = pww_rbt_b }
+		set_temp_variable = { pww_in_value = pww_rbt_v }
+		pww_rel_on_honored = yes
+	}
+}
+
+# in pww_rbt_s, pww_rbt_b. out pww_rel_out, pww_rel_band, pww_rel_months_out.
+pww_rbtest_get = {
+	set_temp_variable = { pww_in_seller = pww_rbt_s }
+	set_temp_variable = { pww_in_buyer = pww_rbt_b }
+	pww_rel_get = yes
+}
+
+# in pww_rbt_s. Runs the seller's decay pass pww_rbt_n times (one per month).
+pww_rbtest_decay = {
+	for_loop_effect = {
+		start = 0
+		end = pww_rbt_n
+		value = pww_rbt_k
+		var:pww_rbt_s = { pww_rel_country_tick = yes }
+	}
+}

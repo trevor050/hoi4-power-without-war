@@ -1,0 +1,812 @@
+###############################################################################
+# Power Without War: trade relationships (bond per ordered seller -> buyer)
+#
+# A bond (0..100) measures how established a supply relationship is. It grows
+# with honored mod agreements over time (value x months, diminishing near
+# 100), falls on defaults, cutoffs and switching away from a long-time
+# supplier, and decays toward a structural baseline without trade.
+# Consumers (Valuation v2, UI): read with pww_rel_get. Bond gates locked
+# contracts (global.pww_rel_c_lock) and raises the cost of poaching
+# (pww_rel_poach_premium).
+#
+# NAMING NOTE: the ledger owns pww_rel_n@<country> and pww_rel_day@<country>
+#   (reliability window, pww_ledger_reputation.txt). This lane never touches
+#   them; every name below is distinct.
+#
+# STORAGE (on the SELLER country, per-target variables keyed by the buyer)
+#   pww_rel_bond@<buyer>    0..100 bond of the ordered pair (seller, buyer)
+#   pww_rel_base@<buyer>    structural baseline at the last decay (0..30)
+#   pww_rel_months@<buyer>  honored agreement-months (one per pair per month)
+#   pww_rel_last@<buyer>    num_days of the last honored month (0 never)
+#   pww_rel_gm@<buyer>      bond gained in the current 30-day window
+#   pww_rel_gd@<buyer>      num_days that window opened
+#   pww_rel_hurt@<buyer>    num_days of the last default/cutoff/switch (0 never)
+#   array pww_rel_buyers    buyers that have a record with this seller
+#   Unset reads 0. A pair with no record has bond = its live baseline.
+#
+# BASELINE (pww_rel_baseline; 0 when at war or either embargoes the other)
+#   +15 same faction, +20 subject/overlord either way, +5 guarantee either
+#   way, +5 mutual normalized opinion average >= 50 (+2 at >= 25); max 30.
+#   Seeded at game start for every pair with a baseline above 0.
+#
+# GROWTH (pww_rel_on_honored, once per active agreement per month)
+#   gain = (honor_base + honor_per x clamp(value, 0, 4)) x (100 - bond) / 100
+#   value = the agreement's civ-equivalent value (ledger pww_ag_value).
+#   Capped at global.pww_rel_c_month_cap per pair per 30 days (several
+#   agreements between one pair do not stack without limit). One honored
+#   month per pair per window counts toward pww_rel_months.
+#   Example: one 1.5-civ deal from 0: ~25 after 1 year, ~45 after 2, ~75
+#   after 5.
+# DAMAGE
+#   default (either party; ledger status 5 or 6): bond x 0.5 - 10; reverse
+#     pair x 0.75 - 5; months halved.
+#   cutoff (coercion suspension registry kinds 1, 3, 4, 5): bond x 0.6 - 8.
+#   switch away (buyer drops a supplier of >= 3 honored months for another
+#     source of the same resource): bond - (5 + 0.3 x bond), months 0.
+#   plain withdrawal (non-committal exit, cause 10, no switch): bond -
+#     (2 + 0.1 x bond).
+#   full term served (status 3 cause 9): +2 x (100 - bond) / 100.
+# DECAY (seller's bucket day, every 30 days, per recorded buyer)
+#   At war: bond halves. Honored within 45 days: no decay. Above baseline:
+#   - max(0.5, 4% of the gap). Below baseline: +1 a month, but not within
+#   365 days of a hurt.
+#
+# PUBLIC EFFECTS (inputs in temps; set right before the call)
+#   pww_rel_init = yes            idempotent; global flag pww_rel_loaded,
+#                                 tunables, seeding, queue cursors
+#   pww_rel_get = yes             in pww_in_seller, pww_in_buyer.
+#                                 out pww_rel_out (0..100), pww_rel_band
+#                                 (0..4, loc pww_rel_band_N), pww_rel_months_out
+#   pww_rel_baseline = yes        in pww_in_seller, pww_in_buyer.
+#                                 out pww_rel_base_out
+#   pww_rel_on_honored = yes      in pww_in_seller, pww_in_buyer, pww_in_value
+#   pww_rel_on_default = yes      in pww_in_seller, pww_in_buyer
+#   pww_rel_on_cutoff = yes       in pww_in_seller, pww_in_buyer
+#   pww_rel_on_switch_away = yes  in pww_in_seller (old supplier), pww_in_buyer
+#   pww_rel_poach_premium = yes   in pww_in_seller (would-be new supplier),
+#                                 pww_in_buyer, pww_in_resource.
+#                                 out pww_rel_poach_bond (highest bond of the
+#                                 buyer's other active suppliers of that
+#                                 resource), pww_rel_poach_incumbent (that
+#                                 supplier or 0), pww_rel_poach_mult
+#                                 (1 + bond x pww_rel_c_poach)
+#   pww_rel_on_daily = yes        (country) on_daily entry (lazy init after
+#                                 core, daily sweep, bucket-day decay)
+#   pww_rel_country_tick = yes    (country) decay of its records, bucket day
+#   pww_rel_daily_sweep = yes     (any) ledger queue + coercion registry poll;
+#                                 monthly honored scan every 30 days
+#
+# BANDS (pww_rel_band; thresholds global.pww_rel_c_band1..3)
+#   0 strangers (< 15), 1 occasional partners (15..34), 2 trusted suppliers
+#   (35..59), 3 old partners (>= 60), 4 soured (hurt within 365 days and
+#   bond < 35).
+#
+# FEEDS (no ledger edits needed; all polled read-only)
+#   Ledger queue global.pww_lq_* (seq cursor global.pww_rel_lq_seen):
+#     kind 1 status 5/6 -> default; status 4 cause 10 -> switch or withdrawal;
+#     status 3 cause 9 -> completion bonus.
+#   Coercion suspension registry global.pww_cs_* (index cursor
+#     global.pww_rel_cs_seen): kinds 1, 3, 4, 5 -> cutoff.
+#   Active agreements (global.pww_ag_status = 1, any kind) -> honored, once
+#     per 30 days (global.pww_rel_last_scan).
+#
+# DEBUG: global flag pww_rel_debug logs "PWW_REL ..." lines.
+# TEMPS: internal temps use pww_rl*_ prefixes.
+###############################################################################
+
+pww_rel_init = {
+	if = {
+		limit = { NOT = { has_global_flag = pww_rel_loaded } }
+		set_global_flag = pww_rel_loaded
+		set_variable = { global.pww_rel_version = 1 }
+		set_variable = { global.pww_rel_c_honor_base = 1.2 }
+		set_variable = { global.pww_rel_c_honor_per = 0.8 }
+		set_variable = { global.pww_rel_c_month_cap = 5 }
+		set_variable = { global.pww_rel_c_lock = 35 }
+		set_variable = { global.pww_rel_c_poach = 0.005 }
+		set_variable = { global.pww_rel_c_band1 = 15 }
+		set_variable = { global.pww_rel_c_band2 = 35 }
+		set_variable = { global.pww_rel_c_band3 = 60 }
+		set_variable = { global.pww_rel_c_decay = 0.04 }
+		set_variable = { global.pww_rel_c_decay_min = 0.5 }
+		set_variable = { global.pww_rel_c_idle_days = 45 }
+		set_variable = { global.pww_rel_c_hurt_days = 365 }
+		set_variable = { global.pww_rel_c_long_months = 3 }
+		# Queue cursors: skip history when the mod joins a running game.
+		set_variable = { global.pww_rel_lq_seen = -1 }
+		if = {
+			limit = { check_variable = { global.pww_lq_seq^num > 0 } }
+			set_temp_variable = { pww_rli_n = global.pww_lq_seq^num }
+			subtract_from_temp_variable = { pww_rli_n = 1 }
+			set_variable = { global.pww_rel_lq_seen = global.pww_lq_seq^pww_rli_n }
+		}
+		set_variable = { global.pww_rel_cs_seen = global.pww_cs_ag^num }
+		set_variable = { global.pww_rel_last_scan = global.num_days }
+		pww_rel_seed = yes
+		if = {
+			limit = { has_global_flag = pww_rel_debug }
+			log = "[GetDateText] PWW_REL init done"
+		}
+	}
+}
+
+# Country scope. on_daily entry point (pww_rel_on_actions.txt).
+pww_rel_on_daily = {
+	if = {
+		limit = {
+			NOT = { has_global_flag = pww_rel_loaded }
+			has_global_flag = pww_initialized
+		}
+		pww_rel_init = yes
+	}
+	if = {
+		limit = { has_global_flag = pww_rel_loaded }
+		if = {
+			limit = { NOT = { check_variable = { global.pww_rel_last_day = global.num_days } } }
+			set_variable = { global.pww_rel_last_day = global.num_days }
+			pww_rel_daily_sweep = yes
+		}
+		if = {
+			limit = {
+				has_variable = pww_bucket
+				check_variable = { pww_bucket = global.pww_day_mod30 }
+				NOT = { check_variable = { pww_rel_tick_day = global.num_days } }
+			}
+			set_variable = { pww_rel_tick_day = global.num_days }
+			pww_rel_country_tick = yes
+		}
+	}
+}
+
+# Seeds every ordered pair with a positive structural baseline.
+pww_rel_seed = {
+	every_country = {
+		limit = { exists = yes }
+		set_temp_variable = { pww_rls_s = THIS }
+		every_other_country = {
+			limit = { exists = yes }
+			set_temp_variable = { pww_in_seller = pww_rls_s }
+			set_temp_variable = { pww_in_buyer = THIS }
+			pww_rel_baseline = yes
+			if = {
+				limit = { check_variable = { pww_rel_base_out > 0 } }
+				set_temp_variable = { pww_rls_b = THIS }
+				var:pww_rls_s = {
+					set_variable = { pww_rel_bond@var:pww_rls_b = pww_rel_base_out }
+					set_variable = { pww_rel_base@var:pww_rls_b = pww_rel_base_out }
+					if = {
+						limit = { NOT = { is_in_array = { array = pww_rel_buyers value = pww_rls_b } } }
+						add_to_array = { array = pww_rel_buyers value = pww_rls_b }
+					}
+				}
+			}
+		}
+	}
+}
+
+###############################################################################
+# Baseline. in pww_in_seller, pww_in_buyer. out pww_rel_base_out.
+###############################################################################
+pww_rel_baseline = {
+	set_temp_variable = { pww_rel_base_out = 0 }
+	set_temp_variable = { pww_rlb_s = pww_in_seller }
+	set_temp_variable = { pww_rlb_b = pww_in_buyer }
+	if = {
+		limit = {
+			NOT = { check_variable = { pww_rlb_s = pww_rlb_b } }
+			var:pww_rlb_s = { exists = yes }
+			var:pww_rlb_b = { exists = yes }
+			var:pww_rlb_s = {
+				NOT = { has_war_with = var:pww_rlb_b }
+				NOT = { is_embargoing = var:pww_rlb_b }
+			}
+			var:pww_rlb_b = { NOT = { is_embargoing = var:pww_rlb_s } }
+		}
+		var:pww_rlb_s = {
+			if = {
+				limit = { is_in_faction_with = var:pww_rlb_b }
+				add_to_temp_variable = { pww_rel_base_out = 15 }
+			}
+			if = {
+				limit = {
+					OR = {
+						is_subject_of = var:pww_rlb_b
+						var:pww_rlb_b = { is_subject_of = var:pww_rlb_s }
+					}
+				}
+				add_to_temp_variable = { pww_rel_base_out = 20 }
+			}
+			if = {
+				limit = {
+					OR = {
+						has_guaranteed = var:pww_rlb_b
+						var:pww_rlb_b = { has_guaranteed = var:pww_rlb_s }
+					}
+				}
+				add_to_temp_variable = { pww_rel_base_out = 5 }
+			}
+			set_temp_variable = { pww_opinion_target = pww_rlb_b }
+			pww_core_norm_opinion = yes
+			set_temp_variable = { pww_rlb_op = pww_norm_opinion }
+		}
+		var:pww_rlb_b = {
+			set_temp_variable = { pww_opinion_target = pww_rlb_s }
+			pww_core_norm_opinion = yes
+			add_to_temp_variable = { pww_rlb_op = pww_norm_opinion }
+		}
+		divide_temp_variable = { pww_rlb_op = 2 }
+		if = {
+			limit = { check_variable = { pww_rlb_op > 49.99 } }
+			add_to_temp_variable = { pww_rel_base_out = 5 }
+		}
+		else_if = {
+			limit = { check_variable = { pww_rlb_op > 24.99 } }
+			add_to_temp_variable = { pww_rel_base_out = 2 }
+		}
+		clamp_temp_variable = { var = pww_rel_base_out min = 0 max = 30 }
+	}
+}
+
+###############################################################################
+# Read. in pww_in_seller, pww_in_buyer. out pww_rel_out, pww_rel_band,
+# pww_rel_months_out.
+###############################################################################
+pww_rel_get = {
+	set_temp_variable = { pww_rel_out = 0 }
+	set_temp_variable = { pww_rel_band = 0 }
+	set_temp_variable = { pww_rel_months_out = 0 }
+	set_temp_variable = { pww_rlg_s = pww_in_seller }
+	set_temp_variable = { pww_rlg_b = pww_in_buyer }
+	set_temp_variable = { pww_rlg_has = 0 }
+	set_temp_variable = { pww_rlg_hurt = 0 }
+	if = {
+		limit = {
+			var:pww_rlg_s = { exists = yes }
+			var:pww_rlg_b = { exists = yes }
+			NOT = { check_variable = { pww_rlg_s = pww_rlg_b } }
+		}
+		var:pww_rlg_s = {
+			if = {
+				limit = { is_in_array = { array = pww_rel_buyers value = pww_rlg_b } }
+				set_temp_variable = { pww_rlg_has = 1 }
+				set_temp_variable = { pww_rel_out = pww_rel_bond@var:pww_rlg_b }
+				set_temp_variable = { pww_rel_months_out = pww_rel_months@var:pww_rlg_b }
+				set_temp_variable = { pww_rlg_hurt = pww_rel_hurt@var:pww_rlg_b }
+			}
+		}
+		if = {
+			limit = { check_variable = { pww_rlg_has = 0 } }
+			pww_rel_baseline = yes
+			set_temp_variable = { pww_rel_out = pww_rel_base_out }
+		}
+	}
+	if = {
+		limit = { check_variable = { pww_rel_out > global.pww_rel_c_band3 } }
+		set_temp_variable = { pww_rel_band = 3 }
+	}
+	else_if = {
+		limit = { check_variable = { pww_rel_out > global.pww_rel_c_band2 } }
+		set_temp_variable = { pww_rel_band = 2 }
+	}
+	else_if = {
+		limit = { check_variable = { pww_rel_out > global.pww_rel_c_band1 } }
+		set_temp_variable = { pww_rel_band = 1 }
+	}
+	if = {
+		limit = {
+			check_variable = { pww_rlg_hurt > 0 }
+			check_variable = { pww_rel_out < global.pww_rel_c_band2 }
+		}
+		set_temp_variable = { pww_rlg_age = global.num_days }
+		subtract_from_temp_variable = { pww_rlg_age = pww_rlg_hurt }
+		if = {
+			limit = { check_variable = { pww_rlg_age < global.pww_rel_c_hurt_days } }
+			set_temp_variable = { pww_rel_band = 4 }
+		}
+	}
+}
+
+###############################################################################
+# Internal. Seller scope; temp pww_rlx_b = buyer. Makes sure a record exists
+# (new records start at the live baseline).
+###############################################################################
+pww_rel_touch = {
+	if = {
+		limit = { NOT = { is_in_array = { array = pww_rel_buyers value = pww_rlx_b } } }
+		add_to_array = { array = pww_rel_buyers value = pww_rlx_b }
+		set_temp_variable = { pww_rlx_keep_s = pww_in_seller }
+		set_temp_variable = { pww_rlx_keep_b = pww_in_buyer }
+		set_temp_variable = { pww_in_seller = THIS }
+		set_temp_variable = { pww_in_buyer = pww_rlx_b }
+		pww_rel_baseline = yes
+		set_temp_variable = { pww_in_seller = pww_rlx_keep_s }
+		set_temp_variable = { pww_in_buyer = pww_rlx_keep_b }
+		set_variable = { pww_rel_bond@var:pww_rlx_b = pww_rel_base_out }
+		set_variable = { pww_rel_base@var:pww_rlx_b = pww_rel_base_out }
+	}
+}
+
+###############################################################################
+# Honored month. in pww_in_seller, pww_in_buyer, pww_in_value.
+###############################################################################
+pww_rel_on_honored = {
+	pww_rel_init = yes
+	set_temp_variable = { pww_rlh_s = pww_in_seller }
+	set_temp_variable = { pww_rlx_b = pww_in_buyer }
+	set_temp_variable = { pww_rlh_v = pww_in_value }
+	clamp_temp_variable = { var = pww_rlh_v min = 0 max = 4 }
+	if = {
+		limit = {
+			NOT = { check_variable = { pww_rlh_s = pww_rlx_b } }
+			var:pww_rlh_s = { exists = yes }
+			var:pww_rlx_b = { exists = yes }
+		}
+		var:pww_rlh_s = {
+			pww_rel_touch = yes
+			# 30-day window: cap and one honored month per pair
+			set_temp_variable = { pww_rlh_age = global.num_days }
+			subtract_from_temp_variable = { pww_rlh_age = pww_rel_gd@var:pww_rlx_b }
+			if = {
+				limit = {
+					OR = {
+						check_variable = { pww_rel_gd@var:pww_rlx_b = 0 }
+						check_variable = { pww_rlh_age > 29 }
+					}
+				}
+				set_variable = { pww_rel_gd@var:pww_rlx_b = global.num_days }
+				set_variable = { pww_rel_gm@var:pww_rlx_b = 0 }
+				add_to_variable = { pww_rel_months@var:pww_rlx_b = 1 }
+			}
+			set_temp_variable = { pww_rlh_b0 = pww_rel_bond@var:pww_rlx_b }
+			set_temp_variable = { pww_rlh_g = pww_rlh_v }
+			multiply_temp_variable = { pww_rlh_g = global.pww_rel_c_honor_per }
+			add_to_temp_variable = { pww_rlh_g = global.pww_rel_c_honor_base }
+			set_temp_variable = { pww_rlh_room = 100 }
+			subtract_from_temp_variable = { pww_rlh_room = pww_rlh_b0 }
+			multiply_temp_variable = { pww_rlh_g = pww_rlh_room }
+			divide_temp_variable = { pww_rlh_g = 100 }
+			# monthly cap per pair
+			set_temp_variable = { pww_rlh_left = global.pww_rel_c_month_cap }
+			subtract_from_temp_variable = { pww_rlh_left = pww_rel_gm@var:pww_rlx_b }
+			if = {
+				limit = { check_variable = { pww_rlh_g > pww_rlh_left } }
+				set_temp_variable = { pww_rlh_g = pww_rlh_left }
+			}
+			if = {
+				limit = { check_variable = { pww_rlh_g > 0 } }
+				add_to_variable = { pww_rel_gm@var:pww_rlx_b = pww_rlh_g }
+				add_to_temp_variable = { pww_rlh_b0 = pww_rlh_g }
+				clamp_temp_variable = { var = pww_rlh_b0 min = 0 max = 100 }
+				set_variable = { pww_rel_bond@var:pww_rlx_b = pww_rlh_b0 }
+			}
+			set_variable = { pww_rel_last@var:pww_rlx_b = global.num_days }
+			if = {
+				limit = { has_global_flag = pww_rel_debug }
+				log = "[GetDateText] PWW_REL honored [THIS.GetTag]->[?pww_rlx_b.GetTag] v=[?pww_rlh_v|2] +[?pww_rlh_g|2] bond=[?pww_rel_bond@var:pww_rlx_b|2] months=[?pww_rel_months@var:pww_rlx_b|0]"
+			}
+		}
+	}
+}
+
+###############################################################################
+# Damage. in pww_in_seller, pww_in_buyer.
+###############################################################################
+# Internal. Seller scope, temp pww_rlx_b. Multiplies the bond by pww_rld_mul,
+# subtracts pww_rld_sub, clamps at 0 and records the hurt day.
+pww_rel_damage = {
+	pww_rel_touch = yes
+	set_temp_variable = { pww_rld_b0 = pww_rel_bond@var:pww_rlx_b }
+	set_temp_variable = { pww_rld_b1 = pww_rld_b0 }
+	multiply_temp_variable = { pww_rld_b1 = pww_rld_mul }
+	subtract_from_temp_variable = { pww_rld_b1 = pww_rld_sub }
+	clamp_temp_variable = { var = pww_rld_b1 min = 0 max = 100 }
+	set_variable = { pww_rel_bond@var:pww_rlx_b = pww_rld_b1 }
+	set_variable = { pww_rel_hurt@var:pww_rlx_b = global.num_days }
+	if = {
+		limit = { has_global_flag = pww_rel_debug }
+		log = "[GetDateText] PWW_REL damage [THIS.GetTag]->[?pww_rlx_b.GetTag] [?pww_rld_why|0] [?pww_rld_b0|2] -> [?pww_rel_bond@var:pww_rlx_b|2]"
+	}
+}
+
+pww_rel_on_default = {
+	pww_rel_init = yes
+	set_temp_variable = { pww_rldf_s = pww_in_seller }
+	set_temp_variable = { pww_rldf_b = pww_in_buyer }
+	if = {
+		limit = {
+			NOT = { check_variable = { pww_rldf_s = pww_rldf_b } }
+			var:pww_rldf_s = { exists = yes }
+			var:pww_rldf_b = { exists = yes }
+		}
+		set_temp_variable = { pww_rld_why = 1 }
+		set_temp_variable = { pww_rlx_b = pww_rldf_b }
+		set_temp_variable = { pww_rld_mul = 0.5 }
+		set_temp_variable = { pww_rld_sub = 10 }
+		var:pww_rldf_s = {
+			pww_rel_damage = yes
+			set_temp_variable = { pww_rldf_m = pww_rel_months@var:pww_rlx_b }
+			divide_temp_variable = { pww_rldf_m = 2 }
+			round_temp_variable = pww_rldf_m
+			set_variable = { pww_rel_months@var:pww_rlx_b = pww_rldf_m }
+		}
+		set_temp_variable = { pww_rlx_b = pww_rldf_s }
+		set_temp_variable = { pww_rld_mul = 0.75 }
+		set_temp_variable = { pww_rld_sub = 5 }
+		set_temp_variable = { pww_rlk_s = pww_in_seller }
+		set_temp_variable = { pww_rlk_b = pww_in_buyer }
+		set_temp_variable = { pww_in_seller = pww_rldf_b }
+		set_temp_variable = { pww_in_buyer = pww_rldf_s }
+		var:pww_rldf_b = { pww_rel_damage = yes }
+		set_temp_variable = { pww_in_seller = pww_rlk_s }
+		set_temp_variable = { pww_in_buyer = pww_rlk_b }
+	}
+}
+
+pww_rel_on_cutoff = {
+	pww_rel_init = yes
+	set_temp_variable = { pww_rlc_s = pww_in_seller }
+	set_temp_variable = { pww_rlx_b = pww_in_buyer }
+	if = {
+		limit = {
+			NOT = { check_variable = { pww_rlc_s = pww_rlx_b } }
+			var:pww_rlc_s = { exists = yes }
+			var:pww_rlx_b = { exists = yes }
+		}
+		set_temp_variable = { pww_rld_why = 2 }
+		set_temp_variable = { pww_rld_mul = 0.6 }
+		set_temp_variable = { pww_rld_sub = 8 }
+		var:pww_rlc_s = { pww_rel_damage = yes }
+	}
+}
+
+pww_rel_on_switch_away = {
+	pww_rel_init = yes
+	set_temp_variable = { pww_rlw_s = pww_in_seller }
+	set_temp_variable = { pww_rlx_b = pww_in_buyer }
+	if = {
+		limit = {
+			NOT = { check_variable = { pww_rlw_s = pww_rlx_b } }
+			var:pww_rlw_s = { exists = yes }
+			var:pww_rlx_b = { exists = yes }
+		}
+		set_temp_variable = { pww_rld_why = 3 }
+		var:pww_rlw_s = {
+			pww_rel_touch = yes
+			# loss = 5 + 0.3 x bond  ->  bond x 0.7 - 5
+			set_temp_variable = { pww_rld_mul = 0.7 }
+			set_temp_variable = { pww_rld_sub = 5 }
+			pww_rel_damage = yes
+			set_variable = { pww_rel_months@var:pww_rlx_b = 0 }
+		}
+	}
+}
+
+# Internal. Plain non-committal withdrawal without a switch: bond x 0.9 - 2.
+pww_rel_on_withdrawal = {
+	set_temp_variable = { pww_rlw_s = pww_in_seller }
+	set_temp_variable = { pww_rlx_b = pww_in_buyer }
+	if = {
+		limit = {
+			NOT = { check_variable = { pww_rlw_s = pww_rlx_b } }
+			var:pww_rlw_s = { exists = yes }
+			var:pww_rlx_b = { exists = yes }
+		}
+		set_temp_variable = { pww_rld_why = 4 }
+		set_temp_variable = { pww_rld_mul = 0.9 }
+		set_temp_variable = { pww_rld_sub = 2 }
+		var:pww_rlw_s = {
+			pww_rel_touch = yes
+			pww_rel_damage = yes
+			# a clean exit is not a grudge
+			set_variable = { pww_rel_hurt@var:pww_rlx_b = 0 }
+		}
+	}
+}
+
+# Internal. Full term served: +2 x (100 - bond) / 100.
+pww_rel_on_completed = {
+	set_temp_variable = { pww_rlo_s = pww_in_seller }
+	set_temp_variable = { pww_rlx_b = pww_in_buyer }
+	if = {
+		limit = {
+			NOT = { check_variable = { pww_rlo_s = pww_rlx_b } }
+			var:pww_rlo_s = { exists = yes }
+			var:pww_rlx_b = { exists = yes }
+		}
+		var:pww_rlo_s = {
+			pww_rel_touch = yes
+			set_temp_variable = { pww_rlo_g = 100 }
+			subtract_from_temp_variable = { pww_rlo_g = pww_rel_bond@var:pww_rlx_b }
+			multiply_temp_variable = { pww_rlo_g = 0.02 }
+			add_to_temp_variable = { pww_rlo_g = pww_rel_bond@var:pww_rlx_b }
+			clamp_temp_variable = { var = pww_rlo_g min = 0 max = 100 }
+			set_variable = { pww_rel_bond@var:pww_rlx_b = pww_rlo_g }
+		}
+	}
+}
+
+###############################################################################
+# Poaching. in pww_in_seller (new supplier), pww_in_buyer, pww_in_resource.
+###############################################################################
+pww_rel_poach_premium = {
+	pww_rel_init = yes
+	set_temp_variable = { pww_rel_poach_bond = 0 }
+	set_temp_variable = { pww_rel_poach_incumbent = 0 }
+	set_temp_variable = { pww_rel_poach_mult = 1 }
+	set_temp_variable = { pww_rlp_new = pww_in_seller }
+	set_temp_variable = { pww_rlp_b = pww_in_buyer }
+	set_temp_variable = { pww_rlp_r = pww_in_resource }
+	var:pww_rlp_b = {
+		if = {
+			limit = { exists = yes check_variable = { pww_ag_ids^num > 0 } }
+			for_each_loop = {
+				array = pww_ag_ids
+				value = pww_rlp_ag
+				if = {
+					limit = {
+						check_variable = { global.pww_ag_status^pww_rlp_ag = 1 }
+						check_variable = { global.pww_ag_kind^pww_rlp_ag = 0 }
+						check_variable = { global.pww_ag_res^pww_rlp_ag = pww_rlp_r }
+						check_variable = { global.pww_ag_buyer^pww_rlp_ag = pww_rlp_b }
+						NOT = { check_variable = { global.pww_ag_seller^pww_rlp_ag = pww_rlp_new } }
+					}
+					set_temp_variable = { pww_rlp_inc = global.pww_ag_seller^pww_rlp_ag }
+					var:pww_rlp_inc = {
+						set_temp_variable = { pww_rlp_bd = pww_rel_bond@var:pww_rlp_b }
+					}
+					if = {
+						limit = { check_variable = { pww_rlp_bd > pww_rel_poach_bond } }
+						set_temp_variable = { pww_rel_poach_bond = pww_rlp_bd }
+						set_temp_variable = { pww_rel_poach_incumbent = pww_rlp_inc }
+					}
+				}
+			}
+		}
+	}
+	set_temp_variable = { pww_rel_poach_mult = pww_rel_poach_bond }
+	multiply_temp_variable = { pww_rel_poach_mult = global.pww_rel_c_poach }
+	add_to_temp_variable = { pww_rel_poach_mult = 1 }
+}
+
+###############################################################################
+# Decay. Country (seller) scope, on its bucket day.
+###############################################################################
+pww_rel_country_tick = {
+	if = {
+		limit = { check_variable = { pww_rel_buyers^num > 0 } }
+		set_temp_variable = { pww_rlt_s = THIS }
+		clear_temp_array = pww_rlt_drop
+		for_each_loop = {
+			array = pww_rel_buyers
+			value = pww_rlx_b
+			if = {
+				limit = { var:pww_rlx_b = { exists = no } }
+				add_to_temp_array = { pww_rlt_drop = pww_rlx_b }
+			}
+			else = {
+				set_temp_variable = { pww_in_seller = pww_rlt_s }
+				set_temp_variable = { pww_in_buyer = pww_rlx_b }
+				pww_rel_baseline = yes
+				set_temp_variable = { pww_rlt_base = pww_rel_base_out }
+				set_variable = { pww_rel_base@var:pww_rlx_b = pww_rlt_base }
+				set_temp_variable = { pww_rlt_bd = pww_rel_bond@var:pww_rlx_b }
+				set_temp_variable = { pww_rlt_idle = global.num_days }
+				subtract_from_temp_variable = { pww_rlt_idle = pww_rel_last@var:pww_rlx_b }
+				if = {
+					limit = { has_war_with = var:pww_rlx_b }
+					multiply_temp_variable = { pww_rlt_bd = 0.5 }
+				}
+				else_if = {
+					limit = {
+						check_variable = { pww_rel_last@var:pww_rlx_b > 0 }
+						check_variable = { pww_rlt_idle < global.pww_rel_c_idle_days }
+					}
+					# trade is flowing: no decay
+				}
+				else_if = {
+					limit = { check_variable = { pww_rlt_bd > pww_rlt_base } }
+					set_temp_variable = { pww_rlt_d = pww_rlt_bd }
+					subtract_from_temp_variable = { pww_rlt_d = pww_rlt_base }
+					multiply_temp_variable = { pww_rlt_d = global.pww_rel_c_decay }
+					if = {
+						limit = { check_variable = { pww_rlt_d < global.pww_rel_c_decay_min } }
+						set_temp_variable = { pww_rlt_d = global.pww_rel_c_decay_min }
+					}
+					subtract_from_temp_variable = { pww_rlt_bd = pww_rlt_d }
+					if = {
+						limit = { check_variable = { pww_rlt_bd < pww_rlt_base } }
+						set_temp_variable = { pww_rlt_bd = pww_rlt_base }
+					}
+				}
+				else_if = {
+					limit = { check_variable = { pww_rlt_bd < pww_rlt_base } }
+					set_temp_variable = { pww_rlt_age = global.num_days }
+					subtract_from_temp_variable = { pww_rlt_age = pww_rel_hurt@var:pww_rlx_b }
+					if = {
+						limit = {
+							OR = {
+								check_variable = { pww_rel_hurt@var:pww_rlx_b = 0 }
+								check_variable = { pww_rlt_age > global.pww_rel_c_hurt_days }
+							}
+						}
+						add_to_temp_variable = { pww_rlt_bd = 1 }
+						if = {
+							limit = { check_variable = { pww_rlt_bd > pww_rlt_base } }
+							set_temp_variable = { pww_rlt_bd = pww_rlt_base }
+						}
+					}
+				}
+				clamp_temp_variable = { var = pww_rlt_bd min = 0 max = 100 }
+				set_variable = { pww_rel_bond@var:pww_rlx_b = pww_rlt_bd }
+				# Forget empty records (no bond, no baseline, no history).
+				if = {
+					limit = {
+						check_variable = { pww_rlt_bd < 0.01 }
+						check_variable = { pww_rlt_base = 0 }
+						check_variable = { pww_rel_months@var:pww_rlx_b = 0 }
+						check_variable = { pww_rel_hurt@var:pww_rlx_b = 0 }
+					}
+					add_to_temp_array = { pww_rlt_drop = pww_rlx_b }
+				}
+			}
+		}
+		for_each_loop = {
+			array = pww_rlt_drop
+			value = pww_rlt_x
+			remove_from_array = { array = pww_rel_buyers value = pww_rlt_x }
+		}
+	}
+}
+
+###############################################################################
+# Feeds. Any scope, once a day from the first country's on_daily.
+###############################################################################
+pww_rel_daily_sweep = {
+	# 1) Ledger queue (read only; seq cursor)
+	if = {
+		limit = { check_variable = { global.pww_lq_seq^num > 0 } }
+		for_each_loop = {
+			array = global.pww_lq_seq
+			value = pww_rlq_seq
+			index = pww_rlq_i
+			if = {
+				limit = { check_variable = { pww_rlq_seq > global.pww_rel_lq_seen } }
+				set_variable = { global.pww_rel_lq_seen = pww_rlq_seq }
+				if = {
+					limit = { check_variable = { global.pww_lq_kind^pww_rlq_i = 1 } }
+					set_temp_variable = { pww_rlq_ag = global.pww_lq_ag^pww_rlq_i }
+					set_temp_variable = { pww_rlq_st = global.pww_lq_status^pww_rlq_i }
+					set_temp_variable = { pww_rlq_ca = global.pww_lq_cause^pww_rlq_i }
+					set_temp_variable = { pww_in_seller = global.pww_ag_seller^pww_rlq_ag }
+					set_temp_variable = { pww_in_buyer = global.pww_ag_buyer^pww_rlq_ag }
+					if = {
+						limit = {
+							OR = {
+								check_variable = { pww_rlq_st = 5 }
+								check_variable = { pww_rlq_st = 6 }
+							}
+						}
+						pww_rel_on_default = yes
+					}
+					else_if = {
+						limit = {
+							check_variable = { pww_rlq_st = 3 }
+							check_variable = { pww_rlq_ca = 9 }
+						}
+						pww_rel_on_completed = yes
+					}
+					else_if = {
+						limit = {
+							check_variable = { pww_rlq_st = 4 }
+							check_variable = { pww_rlq_ca = 10 }
+							check_variable = { global.pww_ag_kind^pww_rlq_ag = 0 }
+						}
+						pww_rel_classify_exit = yes
+					}
+				}
+			}
+		}
+	}
+	# 2) Coercion suspension registry (append-only; index cursor)
+	if = {
+		limit = { check_variable = { global.pww_cs_ag^num > global.pww_rel_cs_seen } }
+		for_each_loop = {
+			array = global.pww_cs_ag
+			value = pww_rlc_ag
+			index = pww_rlc_i
+			if = {
+				limit = {
+					NOT = { check_variable = { pww_rlc_i < global.pww_rel_cs_seen } }
+					OR = {
+						check_variable = { global.pww_cs_kind^pww_rlc_i = 1 }
+						check_variable = { global.pww_cs_kind^pww_rlc_i = 3 }
+						check_variable = { global.pww_cs_kind^pww_rlc_i = 4 }
+						check_variable = { global.pww_cs_kind^pww_rlc_i = 5 }
+					}
+				}
+				set_temp_variable = { pww_in_seller = global.pww_ag_seller^pww_rlc_ag }
+				set_temp_variable = { pww_in_buyer = global.pww_ag_buyer^pww_rlc_ag }
+				pww_rel_on_cutoff = yes
+			}
+		}
+		set_variable = { global.pww_rel_cs_seen = global.pww_cs_ag^num }
+	}
+	# 3) Monthly honored scan
+	set_temp_variable = { pww_rlm_age = global.num_days }
+	subtract_from_temp_variable = { pww_rlm_age = global.pww_rel_last_scan }
+	if = {
+		limit = { check_variable = { pww_rlm_age > 29 } }
+		set_variable = { global.pww_rel_last_scan = global.num_days }
+		pww_rel_monthly_scan = yes
+	}
+}
+
+# Internal. Ledger agreement pww_rlq_ag ended by a non-committal withdrawal.
+# A switch when the buyer has another live supply of the same resource from a
+# different seller (or one created within 30 days) and the old pair had at
+# least pww_rel_c_long_months honored months.
+pww_rel_classify_exit = {
+	set_temp_variable = { pww_rle_sw = 0 }
+	set_temp_variable = { pww_rle_s = global.pww_ag_seller^pww_rlq_ag }
+	set_temp_variable = { pww_rle_b = global.pww_ag_buyer^pww_rlq_ag }
+	set_temp_variable = { pww_rle_r = global.pww_ag_res^pww_rlq_ag }
+	set_temp_variable = { pww_rle_m = 0 }
+	var:pww_rle_s = {
+		if = {
+			limit = { exists = yes }
+			set_temp_variable = { pww_rle_m = pww_rel_months@var:pww_rle_b }
+		}
+	}
+	var:pww_rle_b = {
+		if = {
+			limit = { exists = yes check_variable = { pww_ag_ids^num > 0 } }
+			for_each_loop = {
+				array = pww_ag_ids
+				value = pww_rle_ag
+				if = {
+					limit = {
+						OR = {
+							check_variable = { global.pww_ag_status^pww_rle_ag = 1 }
+							check_variable = { global.pww_ag_status^pww_rle_ag = 0 }
+							check_variable = { global.pww_ag_status^pww_rle_ag = 7 }
+						}
+						check_variable = { global.pww_ag_kind^pww_rle_ag = 0 }
+						check_variable = { global.pww_ag_res^pww_rle_ag = pww_rle_r }
+						check_variable = { global.pww_ag_buyer^pww_rle_ag = pww_rle_b }
+						NOT = { check_variable = { global.pww_ag_seller^pww_rle_ag = pww_rle_s } }
+					}
+					set_temp_variable = { pww_rle_sw = 1 }
+				}
+			}
+		}
+	}
+	if = {
+		limit = {
+			check_variable = { pww_rle_sw = 1 }
+			NOT = { check_variable = { pww_rle_m < global.pww_rel_c_long_months } }
+		}
+		pww_rel_on_switch_away = yes
+	}
+	else = {
+		pww_rel_on_withdrawal = yes
+	}
+}
+
+# Internal. Every active agreement counts one honored month for its pair.
+pww_rel_monthly_scan = {
+	if = {
+		limit = { check_variable = { global.pww_next_agreement_id > 0 } }
+		for_loop_effect = {
+			start = 0
+			end = global.pww_next_agreement_id
+			value = pww_rlm_i
+			if = {
+				limit = { check_variable = { global.pww_ag_status^pww_rlm_i = 1 } }
+				set_temp_variable = { pww_in_seller = global.pww_ag_seller^pww_rlm_i }
+				set_temp_variable = { pww_in_buyer = global.pww_ag_buyer^pww_rlm_i }
+				set_temp_variable = { pww_in_value = global.pww_ag_value^pww_rlm_i }
+				pww_rel_on_honored = yes
+			}
+		}
+	}
+}

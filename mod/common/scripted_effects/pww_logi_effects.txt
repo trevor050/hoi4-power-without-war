@@ -1,0 +1,382 @@
+###############################################################################
+# Power Without War: logistics (delivered cost of a resource flow)
+#
+# What it answers: "what does it cost, per resource unit, to get a flow from
+# this seller to this buyer?" in civilian-factory equivalents (vanilla market:
+# 1 unit = 0.125 civ, i.e. 8 units per factory). Consumed by Valuation v2.
+#
+# MODEL
+#   Land route (route 0): the two home areas are linked by a chain of at most
+#     global.pww_logi_c_land_hops mutual home-area neighbors (no link at war
+#     with either party) and the capitals are within
+#     global.pww_logi_c_land_range. Cost = land_base + land_per x distance
+#     + land_hop x (hops - 1). Near zero (about 1% of market next door).
+#   Sea route (route 1): otherwise, when both sides reach the sea (own coastal
+#     state, or a land link to a coastal neighbor: + landlocked_leg per
+#     landlocked side). Cost = (sea_base + sea_per x distance x detour)
+#     x convoy ratio + raid. Convoy ratio = resource convoys per unit / 0.1
+#     (every resource is 0.1 in vanilla and Road to 56, common/resources).
+#     Raid = raid_c x max(seller, buyer convoy_threat), convoy_threat 0..1.
+#   No route (route 2): missing/same-war parties, or a side that cannot reach
+#     the sea and no land route. Cost reported 0; treat as undeliverable.
+#   Same country: route 0, cost 0.
+#   Distance = capital-to-capital distance_to@var:<state> (straight line, map
+#     units of about 4.7 km: Berlin-Paris 186.55). Sea distance x detour
+#     (1.3) for coastlines. distance_to@PREV reads -1 (engine): always pass
+#     the other capital through a variable.
+#   Typical costs (share of a unit's 0.125 market value): GER->FRA 0.0009
+#     (0.7%), GER->POR overland 3 links 0.0017 (1.4%), GER->ENG by sea
+#     0.0068 (5%), GER->ARG 0.027 (21%), MAL->GER 0.025 (20%). Raid adds up
+#     to 0.03 (24%) at convoy_threat 1.
+#
+# NEIGHBOR TABLE (country scope, rebuilt at init and on the country's
+#   staggered bucket day, every 30 days; no state or region ids involved)
+#   array pww_logi_nb   countries whose home area borders this country's home
+#                       area AND vice versa (any_home_area_neighbor_country
+#                       both ways; a colonial border is not a land link).
+#   var pww_logi_nb_day num_days of the last rebuild.
+#   var pww_logi_coast  1 if the country owns a coastal state (core's
+#                       pww_coastal_states, else any_owned_state is_coastal).
+#
+# PUBLIC EFFECTS
+#   pww_logi_init = yes                  (any scope) idempotent. Sets global
+#                                        flag pww_logi_loaded and tunables,
+#                                        builds every neighbor table.
+#   pww_logi_delivered_cost = yes        (any scope)
+#       in : pww_in_seller, pww_in_buyer (countries), pww_in_resource (0..6)
+#       out: pww_logi_cost_per_unit      civ equivalents per resource unit
+#            pww_logi_route              0 land, 1 sea, 2 none
+#            pww_logi_dist               capital distance (map units)
+#            pww_logi_hops               land links used (-1 none)
+#            pww_logi_raid               raid share added (civ per unit)
+#            pww_logi_cost_share         cost / market value of a unit (0.125)
+#   pww_logi_on_daily = yes              (country) on_daily entry (lazy init
+#                                        after core, bucket-day refresh)
+#   pww_logi_refresh_nb = yes            (country) rebuild its neighbor table
+#   pww_logi_country_tick = yes          (country) on its bucket day
+#
+# TUNABLES (globals set in pww_logi_init; a balance patch may overwrite)
+#   pww_logi_c_land_hops 3     pww_logi_c_land_range 800 (map units)
+#   pww_logi_c_land_base 0.0005  pww_logi_c_land_per_k 0.002 (per 1000 units)
+#   pww_logi_c_land_hop 0.0002
+#   pww_logi_c_sea_base 0.004    pww_logi_c_sea_per_k 0.01 (per 1000 units)
+#   pww_logi_c_sea_detour 1.3    pww_logi_c_raid 0.03
+#   pww_logi_c_landlocked_leg 0.002
+#   pww_logi_convoy_<res>        0.1 (common/resources convoys per unit)
+#
+# DEBUG: global flag pww_logi_debug logs "PWW_LOGI ..." lines.
+# TEMPS: internal temps use pww_lgc_* / pww_lgn_*.
+###############################################################################
+
+pww_logi_init = {
+	if = {
+		limit = { NOT = { has_global_flag = pww_logi_loaded } }
+		set_global_flag = pww_logi_loaded
+		set_variable = { global.pww_logi_version = 1 }
+		set_variable = { global.pww_logi_c_land_hops = 3 }
+		set_variable = { global.pww_logi_c_land_range = 800 }
+		set_variable = { global.pww_logi_c_land_base = 0.0005 }
+		set_variable = { global.pww_logi_c_land_per_k = 0.002 }
+		set_variable = { global.pww_logi_c_land_hop = 0.0002 }
+		set_variable = { global.pww_logi_c_sea_base = 0.004 }
+		set_variable = { global.pww_logi_c_sea_per_k = 0.01 }
+		set_variable = { global.pww_logi_c_sea_detour = 1.3 }
+		set_variable = { global.pww_logi_c_raid = 0.03 }
+		set_variable = { global.pww_logi_c_landlocked_leg = 0.002 }
+		# common/resources/00_resources.txt: convoys per unit (vanilla and
+		# Road to 56 both 0.1 for every resource; R56 ships no override).
+		set_variable = { global.pww_logi_convoy_oil = 0.1 }
+		set_variable = { global.pww_logi_convoy_aluminium = 0.1 }
+		set_variable = { global.pww_logi_convoy_rubber = 0.1 }
+		set_variable = { global.pww_logi_convoy_tungsten = 0.1 }
+		set_variable = { global.pww_logi_convoy_steel = 0.1 }
+		set_variable = { global.pww_logi_convoy_chromium = 0.1 }
+		set_variable = { global.pww_logi_convoy_coal = 0.1 }
+		every_country = {
+			limit = { exists = yes }
+			pww_logi_refresh_nb = yes
+		}
+		if = {
+			limit = { has_global_flag = pww_logi_debug }
+			log = "[GetDateText] PWW_LOGI init done"
+		}
+	}
+}
+
+# Country scope. on_daily entry point (pww_logi_on_actions.txt).
+pww_logi_on_daily = {
+	if = {
+		limit = {
+			NOT = { has_global_flag = pww_logi_loaded }
+			has_global_flag = pww_initialized
+		}
+		pww_logi_init = yes
+	}
+	if = {
+		limit = {
+			has_global_flag = pww_logi_loaded
+			has_variable = pww_bucket
+			check_variable = { pww_bucket = global.pww_day_mod30 }
+			NOT = { check_variable = { pww_logi_tick_day = global.num_days } }
+		}
+		set_variable = { pww_logi_tick_day = global.num_days }
+		pww_logi_country_tick = yes
+	}
+}
+
+# Country scope. Called from the logistics on_daily on the country's bucket
+# day (core's pww_bucket / global.pww_day_mod30).
+pww_logi_country_tick = {
+	pww_logi_refresh_nb = yes
+}
+
+# Country scope. Mutual home-area neighbors.
+pww_logi_refresh_nb = {
+	clear_array = pww_logi_nb
+	set_variable = { pww_logi_nb_day = global.num_days }
+	set_variable = { pww_logi_coast = 0 }
+	if = {
+		limit = {
+			OR = {
+				check_variable = { pww_coastal_states^num > 0 }
+				any_owned_state = { is_coastal = yes }
+			}
+		}
+		set_variable = { pww_logi_coast = 1 }
+	}
+	set_country_flag = pww_logi_self
+	every_neighbor_country = {
+		set_country_flag = pww_logi_cand
+		set_temp_variable = { pww_lgn_c = THIS }
+		if = {
+			limit = {
+				exists = yes
+				any_home_area_neighbor_country = { has_country_flag = pww_logi_self }
+				PREV = { any_home_area_neighbor_country = { has_country_flag = pww_logi_cand } }
+			}
+			PREV = { add_to_array = { array = pww_logi_nb value = pww_lgn_c } }
+		}
+		clr_country_flag = pww_logi_cand
+	}
+	clr_country_flag = pww_logi_self
+}
+
+# Internal. Temps pww_lgc_s, pww_lgc_b set. Out pww_lgc_hops (-1 none).
+# Breadth-first over pww_logi_nb, up to global.pww_logi_c_land_hops (max 3).
+# A transit country at war with either party breaks the link.
+pww_logi_land_hops = {
+	set_temp_variable = { pww_lgc_hops = -1 }
+	var:pww_lgc_s = {
+		if = {
+			limit = { is_in_array = { array = pww_logi_nb value = pww_lgc_b } }
+			set_temp_variable = { pww_lgc_hops = 1 }
+		}
+	}
+	if = {
+		limit = {
+			check_variable = { pww_lgc_hops = -1 }
+			check_variable = { global.pww_logi_c_land_hops > 1 }
+		}
+		set_temp_variable = { pww_lgc_brk = 0 }
+		var:pww_lgc_s = {
+			for_each_loop = {
+				array = pww_logi_nb
+				value = pww_lgc_x
+				break = pww_lgc_brk
+				if = {
+					limit = {
+						var:pww_lgc_x = {
+							exists = yes
+							is_in_array = { array = pww_logi_nb value = pww_lgc_b }
+							NOT = { has_war_with = var:pww_lgc_s }
+							NOT = { has_war_with = var:pww_lgc_b }
+						}
+					}
+					set_temp_variable = { pww_lgc_hops = 2 }
+					set_temp_variable = { pww_lgc_brk = 1 }
+				}
+			}
+		}
+	}
+	if = {
+		limit = {
+			check_variable = { pww_lgc_hops = -1 }
+			check_variable = { global.pww_logi_c_land_hops > 2 }
+		}
+		set_temp_variable = { pww_lgc_brk = 0 }
+		var:pww_lgc_s = {
+			for_each_loop = {
+				array = pww_logi_nb
+				value = pww_lgc_x
+				break = pww_lgc_brk
+				if = {
+					limit = {
+						var:pww_lgc_x = {
+							exists = yes
+							NOT = { has_war_with = var:pww_lgc_s }
+							NOT = { has_war_with = var:pww_lgc_b }
+						}
+					}
+					var:pww_lgc_x = {
+						for_each_loop = {
+							array = pww_logi_nb
+							value = pww_lgc_y
+							break = pww_lgc_brk
+							if = {
+								limit = {
+									var:pww_lgc_y = {
+										exists = yes
+										is_in_array = { array = pww_logi_nb value = pww_lgc_b }
+										NOT = { has_war_with = var:pww_lgc_s }
+										NOT = { has_war_with = var:pww_lgc_b }
+									}
+								}
+								set_temp_variable = { pww_lgc_hops = 3 }
+								set_temp_variable = { pww_lgc_brk = 1 }
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+# Internal. Country scope. Out pww_lgc_reach: 1 own coast, 2 via a coastal
+# mutual neighbor not at war with it (landlocked leg), 0 none.
+pww_logi_sea_reach = {
+	set_temp_variable = { pww_lgc_reach = 0 }
+	if = {
+		limit = { check_variable = { pww_logi_coast = 1 } }
+		set_temp_variable = { pww_lgc_reach = 1 }
+	}
+	else = {
+		set_temp_variable = { pww_lgc_self = THIS }
+		for_each_loop = {
+			array = pww_logi_nb
+			value = pww_lgc_z
+			if = {
+				limit = {
+					check_variable = { pww_lgc_reach = 0 }
+					var:pww_lgc_z = {
+						exists = yes
+						check_variable = { pww_logi_coast = 1 }
+						NOT = { has_war_with = var:pww_lgc_self }
+					}
+				}
+				set_temp_variable = { pww_lgc_reach = 2 }
+			}
+		}
+	}
+}
+
+pww_logi_delivered_cost = {
+	pww_logi_init = yes
+	set_temp_variable = { pww_logi_cost_per_unit = 0 }
+	set_temp_variable = { pww_logi_route = 2 }
+	set_temp_variable = { pww_logi_dist = 0 }
+	set_temp_variable = { pww_logi_hops = -1 }
+	set_temp_variable = { pww_logi_raid = 0 }
+	set_temp_variable = { pww_logi_cost_share = 0 }
+	set_temp_variable = { pww_lgc_s = pww_in_seller }
+	set_temp_variable = { pww_lgc_b = pww_in_buyer }
+	set_temp_variable = { pww_lgc_r = pww_in_resource }
+	clamp_temp_variable = { var = pww_lgc_r min = 0 max = 6 }
+
+	if = {
+		limit = { check_variable = { pww_lgc_s = pww_lgc_b } }
+		set_temp_variable = { pww_logi_route = 0 }
+		set_temp_variable = { pww_logi_hops = 0 }
+	}
+	else_if = {
+		limit = {
+			var:pww_lgc_s = { exists = yes }
+			var:pww_lgc_b = { exists = yes }
+			var:pww_lgc_s = { NOT = { has_war_with = var:pww_lgc_b } }
+		}
+		# Neighbor tables may be missing for a country born after init.
+		var:pww_lgc_s = { if = { limit = { NOT = { has_variable = pww_logi_nb_day } } pww_logi_refresh_nb = yes } }
+		var:pww_lgc_b = { if = { limit = { NOT = { has_variable = pww_logi_nb_day } } pww_logi_refresh_nb = yes } }
+
+		# Capital distance (state scope dynamic variable distance_to@<state>).
+		var:pww_lgc_b = { set_temp_variable = { pww_lgc_bcap = capital } }
+		var:pww_lgc_s = { capital_scope = { set_temp_variable = { pww_logi_dist = distance_to@var:pww_lgc_bcap } } }
+		# Rates are per 1000 map units: literals with 6 decimals misparse
+		# (0.000008 behaved as 0.00008 in game).
+		set_temp_variable = { pww_lgc_dk = pww_logi_dist }
+		divide_temp_variable = { pww_lgc_dk = 1000 }
+
+		pww_logi_land_hops = yes
+		if = {
+			limit = {
+				check_variable = { pww_lgc_hops > 0 }
+				check_variable = { pww_logi_dist < global.pww_logi_c_land_range }
+			}
+			set_temp_variable = { pww_logi_route = 0 }
+			set_temp_variable = { pww_logi_hops = pww_lgc_hops }
+			set_temp_variable = { pww_lgc_c = global.pww_logi_c_land_per_k }
+			multiply_temp_variable = { pww_lgc_c = pww_lgc_dk }
+			add_to_temp_variable = { pww_lgc_c = global.pww_logi_c_land_base }
+			set_temp_variable = { pww_lgc_h = pww_lgc_hops }
+			subtract_from_temp_variable = { pww_lgc_h = 1 }
+			multiply_temp_variable = { pww_lgc_h = global.pww_logi_c_land_hop }
+			add_to_temp_variable = { pww_lgc_c = pww_lgc_h }
+			set_temp_variable = { pww_logi_cost_per_unit = pww_lgc_c }
+		}
+		else = {
+			var:pww_lgc_s = { pww_logi_sea_reach = yes }
+			set_temp_variable = { pww_lgc_rs = pww_lgc_reach }
+			var:pww_lgc_b = { pww_logi_sea_reach = yes }
+			set_temp_variable = { pww_lgc_rb = pww_lgc_reach }
+			if = {
+				limit = {
+					check_variable = { pww_lgc_rs > 0 }
+					check_variable = { pww_lgc_rb > 0 }
+				}
+				set_temp_variable = { pww_logi_route = 1 }
+				# convoy ratio for the resource
+				set_temp_variable = { pww_lgc_cv = global.pww_logi_convoy_oil }
+				if = { limit = { check_variable = { pww_lgc_r = 1 } } set_temp_variable = { pww_lgc_cv = global.pww_logi_convoy_aluminium } }
+				if = { limit = { check_variable = { pww_lgc_r = 2 } } set_temp_variable = { pww_lgc_cv = global.pww_logi_convoy_rubber } }
+				if = { limit = { check_variable = { pww_lgc_r = 3 } } set_temp_variable = { pww_lgc_cv = global.pww_logi_convoy_tungsten } }
+				if = { limit = { check_variable = { pww_lgc_r = 4 } } set_temp_variable = { pww_lgc_cv = global.pww_logi_convoy_steel } }
+				if = { limit = { check_variable = { pww_lgc_r = 5 } } set_temp_variable = { pww_lgc_cv = global.pww_logi_convoy_chromium } }
+				if = { limit = { check_variable = { pww_lgc_r = 6 } } set_temp_variable = { pww_lgc_cv = global.pww_logi_convoy_coal } }
+				divide_temp_variable = { pww_lgc_cv = 0.1 }
+
+				set_temp_variable = { pww_lgc_c = global.pww_logi_c_sea_per_k }
+				multiply_temp_variable = { pww_lgc_c = pww_lgc_dk }
+				multiply_temp_variable = { pww_lgc_c = global.pww_logi_c_sea_detour }
+				add_to_temp_variable = { pww_lgc_c = global.pww_logi_c_sea_base }
+				multiply_temp_variable = { pww_lgc_c = pww_lgc_cv }
+				if = {
+					limit = { check_variable = { pww_lgc_rs = 2 } }
+					add_to_temp_variable = { pww_lgc_c = global.pww_logi_c_landlocked_leg }
+				}
+				if = {
+					limit = { check_variable = { pww_lgc_rb = 2 } }
+					add_to_temp_variable = { pww_lgc_c = global.pww_logi_c_landlocked_leg }
+				}
+				# Raiding risk: convoy_threat (0..1) of either party.
+				var:pww_lgc_s = { set_temp_variable = { pww_lgc_t1 = convoy_threat } }
+				var:pww_lgc_b = { set_temp_variable = { pww_lgc_t2 = convoy_threat } }
+				if = {
+					limit = { check_variable = { pww_lgc_t2 > pww_lgc_t1 } }
+					set_temp_variable = { pww_lgc_t1 = pww_lgc_t2 }
+				}
+				clamp_temp_variable = { var = pww_lgc_t1 min = 0 max = 1 }
+				set_temp_variable = { pww_logi_raid = pww_lgc_t1 }
+				multiply_temp_variable = { pww_logi_raid = global.pww_logi_c_raid }
+				multiply_temp_variable = { pww_logi_raid = pww_lgc_cv }
+				add_to_temp_variable = { pww_lgc_c = pww_logi_raid }
+				set_temp_variable = { pww_logi_cost_per_unit = pww_lgc_c }
+			}
+		}
+	}
+	set_temp_variable = { pww_logi_cost_share = pww_logi_cost_per_unit }
+	divide_temp_variable = { pww_logi_cost_share = 0.125 }
+	if = {
+		limit = { has_global_flag = pww_logi_debug }
+		log = "[GetDateText] PWW_LOGI cost [?pww_lgc_s.GetTag]->[?pww_lgc_b.GetTag] res=[?pww_lgc_r|0] route=[?pww_logi_route|0] dist=[?pww_logi_dist|0] hops=[?pww_logi_hops|0] raid=[?pww_logi_raid|4] cost=[?pww_logi_cost_per_unit|4] share=[?pww_logi_cost_share|3]"
+	}
+}

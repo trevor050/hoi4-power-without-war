@@ -1,0 +1,157 @@
+# Delivered cost scenario (test mod). Driven from GER on_daily, day 3.
+# Vanilla and Road to 56 (tags only; no state or region ids).
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = GER }
+				add_to_variable = { global.pww_lgt_day = 1 }
+				if = {
+					limit = { check_variable = { global.pww_lgt_day = 3 } }
+					set_global_flag = pww_logi_debug
+					if = {
+						limit = { has_global_flag = pww_logi_loaded }
+						log = "PWW_RESULT logi_cost.init PASS loaded; GER neighbors=[?GER.pww_logi_nb^num] FRA=[?FRA.pww_logi_nb^num] ENG=[?ENG.pww_logi_nb^num]"
+					}
+					else = {
+						log = "PWW_RESULT logi_cost.init FAIL logistics not initialized"
+					}
+					GER = { for_each_scope_loop = { array = pww_logi_nb log = "PWW_RESULT logi_cost.nb INFO GER-[THIS.GetTag]" } }
+					ENG = { for_each_scope_loop = { array = pww_logi_nb log = "PWW_RESULT logi_cost.nb INFO ENG-[THIS.GetTag]" } }
+
+					# GER -> FRA (tungsten): land, next door
+					GER = { set_temp_variable = { pww_lgt_s = THIS } }
+					FRA = { set_temp_variable = { pww_lgt_b = THIS } }
+					set_temp_variable = { pww_lgt_r = 3 }
+					pww_lgtest_pair = yes
+					set_temp_variable = { pww_lgt_c_land = pww_logi_cost_per_unit }
+					if = {
+						limit = {
+							check_variable = { pww_logi_route = 0 }
+							check_variable = { pww_logi_cost_per_unit > 0 }
+							check_variable = { pww_logi_cost_per_unit < 0.003 }
+						}
+						log = "PWW_RESULT logi_cost.land_neighbor PASS GER->FRA overland [?pww_logi_cost_per_unit|4] ([?pww_logi_cost_share|3] of market)"
+					}
+					else = {
+						log = "PWW_RESULT logi_cost.land_neighbor FAIL GER->FRA route=[?pww_logi_route|0] cost=[?pww_logi_cost_per_unit|4]"
+					}
+
+					# GER -> POR: land through a chain (FRA, SPR)
+					POR = { set_temp_variable = { pww_lgt_b = THIS } }
+					pww_lgtest_pair = yes
+					if = {
+						limit = {
+							check_variable = { pww_logi_route = 0 }
+							check_variable = { pww_logi_hops > 1 }
+							check_variable = { pww_logi_cost_per_unit > pww_lgt_c_land }
+						}
+						log = "PWW_RESULT logi_cost.land_chain PASS GER->POR overland hops=[?pww_logi_hops|0] cost=[?pww_logi_cost_per_unit|4]"
+					}
+					else = {
+						log = "PWW_RESULT logi_cost.land_chain FAIL GER->POR route=[?pww_logi_route|0] hops=[?pww_logi_hops|0] cost=[?pww_logi_cost_per_unit|4]"
+					}
+
+					# GER -> ENG: short sea
+					ENG = { set_temp_variable = { pww_lgt_b = THIS } }
+					pww_lgtest_pair = yes
+					set_temp_variable = { pww_lgt_c_near = pww_logi_cost_per_unit }
+					set_temp_variable = { pww_lgt_c_near3 = pww_logi_cost_per_unit }
+					multiply_temp_variable = { pww_lgt_c_near3 = 3 }
+					if = {
+						limit = {
+							check_variable = { pww_logi_route = 1 }
+							check_variable = { pww_logi_cost_per_unit > pww_lgt_c_land }
+						}
+						log = "PWW_RESULT logi_cost.sea_near PASS GER->ENG by sea [?pww_logi_cost_per_unit|4] ([?pww_logi_cost_share|3])"
+					}
+					else = {
+						log = "PWW_RESULT logi_cost.sea_near FAIL GER->ENG route=[?pww_logi_route|0] cost=[?pww_logi_cost_per_unit|4]"
+					}
+
+					# GER -> ARG: ocean crossing
+					ARG = { set_temp_variable = { pww_lgt_b = THIS } }
+					pww_lgtest_pair = yes
+					if = {
+						limit = {
+							check_variable = { pww_logi_route = 1 }
+							check_variable = { pww_logi_cost_per_unit > pww_lgt_c_near }
+							check_variable = { pww_logi_cost_per_unit > 0.01 }
+							check_variable = { pww_logi_cost_per_unit < 0.06 }
+						}
+						log = "PWW_RESULT logi_cost.sea_far PASS GER->ARG by sea [?pww_logi_cost_per_unit|4] ([?pww_logi_cost_share|3])"
+					}
+					else = {
+						log = "PWW_RESULT logi_cost.sea_far FAIL GER->ARG route=[?pww_logi_route|0] cost=[?pww_logi_cost_per_unit|4]"
+					}
+
+					# MAL (or AST) -> GER: far sea, rubber
+					if = {
+						limit = { country_exists = MAL }
+						MAL = { set_temp_variable = { pww_lgt_s = THIS } }
+					}
+					else = {
+						AST = { set_temp_variable = { pww_lgt_s = THIS } }
+					}
+					GER = { set_temp_variable = { pww_lgt_b = THIS } }
+					set_temp_variable = { pww_lgt_r = 2 }
+					pww_lgtest_pair = yes
+					if = {
+						limit = {
+							check_variable = { pww_logi_route = 1 }
+							check_variable = { pww_logi_cost_per_unit > pww_lgt_c_near3 }
+							check_variable = { pww_logi_cost_per_unit > 0.015 }
+						}
+						log = "PWW_RESULT logi_cost.sea_distant PASS [?pww_lgt_s.GetTag]->GER rubber [?pww_logi_cost_per_unit|4] ([?pww_logi_cost_share|3])"
+					}
+					else = {
+						log = "PWW_RESULT logi_cost.sea_distant FAIL [?pww_lgt_s.GetTag]->GER route=[?pww_logi_route|0] cost=[?pww_logi_cost_per_unit|4]"
+					}
+
+					# SWI -> ARG: landlocked seller reaches the sea through a neighbor
+					SWI = { set_temp_variable = { pww_lgt_s = THIS } }
+					ARG = { set_temp_variable = { pww_lgt_b = THIS } }
+					set_temp_variable = { pww_lgt_r = 4 }
+					pww_lgtest_pair = yes
+					if = {
+						limit = { check_variable = { pww_logi_route = 1 } }
+						log = "PWW_RESULT logi_cost.landlocked PASS SWI->ARG by sea via a coastal neighbor [?pww_logi_cost_per_unit|4]"
+					}
+					else = {
+						log = "PWW_RESULT logi_cost.landlocked FAIL SWI->ARG route=[?pww_logi_route|0]"
+					}
+
+					# Same country
+					GER = { set_temp_variable = { pww_lgt_s = THIS } set_temp_variable = { pww_lgt_b = THIS } }
+					pww_lgtest_pair = yes
+					if = {
+						limit = {
+							check_variable = { pww_logi_route = 0 }
+							check_variable = { pww_logi_cost_per_unit = 0 }
+						}
+						log = "PWW_RESULT logi_cost.self PASS"
+					}
+					else = {
+						log = "PWW_RESULT logi_cost.self FAIL route=[?pww_logi_route|0] cost=[?pww_logi_cost_per_unit|4]"
+					}
+
+					# USA -> MEX overland; SOV -> JAP by sea (info)
+					USA = { set_temp_variable = { pww_lgt_s = THIS } }
+					MEX = { set_temp_variable = { pww_lgt_b = THIS } }
+					pww_lgtest_pair = yes
+					if = {
+						limit = { check_variable = { pww_logi_route = 0 } }
+						log = "PWW_RESULT logi_cost.americas PASS USA->MEX overland [?pww_logi_cost_per_unit|4]"
+					}
+					else = {
+						log = "PWW_RESULT logi_cost.americas FAIL USA->MEX route=[?pww_logi_route|0]"
+					}
+					SOV = { set_temp_variable = { pww_lgt_s = THIS } }
+					JAP = { set_temp_variable = { pww_lgt_b = THIS } }
+					pww_lgtest_pair = yes
+					log = "PWW_DONE logi_cost"
+				}
+			}
+		}
+	}
+}

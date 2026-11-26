@@ -1,0 +1,72 @@
+# Logistics engine probe (not part of the suite). Driven from GER on_daily.
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = GER }
+				add_to_variable = { global.pww_lgp_day = 1 }
+				if = {
+					limit = { check_variable = { global.pww_lgp_day = 2 } }
+					# distance forms
+					FRA = { capital_scope = { GER = { capital_scope = { set_temp_variable = { pww_lgp_d1 = distance_to@PREV } } } } }
+					log = "PWW_RESULT logi_probe.d1 INFO GER-FRA distance_to@PREV=[?pww_lgp_d1|2]"
+					FRA = { set_temp_variable = { pww_lgp_fcap = capital } }
+					log = "PWW_RESULT logi_probe.cap INFO FRA capital var=[?pww_lgp_fcap] GER cap=[?GER.capital]"
+					GER = { capital_scope = { set_temp_variable = { pww_lgp_d3 = distance_to@var:pww_lgp_fcap } } }
+					log = "PWW_RESULT logi_probe.d3 INFO GER-FRA distance_to@var=[?pww_lgp_d3|2]"
+					GER = { capital_scope = { meta_effect = { text = { set_temp_variable = { pww_lgp_d2 = distance_to@[CAP] } } CAP = "[?pww_lgp_fcap]" } } }
+					log = "PWW_RESULT logi_probe.d2 INFO GER-FRA distance_to@id=[?pww_lgp_d2|2]"
+					ARG = { capital_scope = { GER = { capital_scope = { set_temp_variable = { pww_lgp_d4 = distance_to@PREV } } } } }
+					MAL = { capital_scope = { GER = { capital_scope = { set_temp_variable = { pww_lgp_d5 = distance_to@PREV } } } } }
+					ENG = { capital_scope = { FRA = { capital_scope = { set_temp_variable = { pww_lgp_d6 = distance_to@PREV } } } } }
+					USA = { capital_scope = { MEX = { capital_scope = { set_temp_variable = { pww_lgp_d7 = distance_to@PREV } } } } }
+					SOV = { capital_scope = { CHI = { capital_scope = { set_temp_variable = { pww_lgp_d8 = distance_to@PREV } } } } }
+					log = "PWW_RESULT logi_probe.dist INFO GER-ARG=[?pww_lgp_d4|0] MAL-GER=[?pww_lgp_d5|0] ENG-FRA=[?pww_lgp_d6|0] USA-MEX=[?pww_lgp_d7|0] SOV-CHI=[?pww_lgp_d8|0]"
+					# trigger form
+					if = {
+						limit = { FRA = { capital_scope = { GER = { capital_scope = { distance_to = { target = PREV value < 1500 } } } } } }
+						log = "PWW_RESULT logi_probe.dtrig INFO GER-FRA < 1500 true"
+					}
+					# convoy threat
+					set_temp_variable = { pww_lgp_ct1 = GER.convoy_threat }
+					set_temp_variable = { pww_lgp_ct2 = ENG.convoy_threat }
+					log = "PWW_RESULT logi_probe.ct INFO GER=[?pww_lgp_ct1|3] ENG=[?pww_lgp_ct2|3]"
+					# neighbors array
+					log = "PWW_RESULT logi_probe.nb INFO GER neighbors=[?GER.neighbors^num] owned=[?GER.neighbors_owned^num]"
+					GER = {
+						for_each_scope_loop = {
+							array = neighbors
+							log = "PWW_RESULT logi_probe.nb_each INFO GER nb [THIS.GetTag]"
+						}
+					}
+					ENG = {
+						for_each_scope_loop = {
+							array = neighbors
+							log = "PWW_RESULT logi_probe.nb_each INFO ENG nb [THIS.GetTag]"
+						}
+					}
+					# home area neighbors
+					if = { limit = { GER = { any_home_area_neighbor_country = { tag = FRA } } } log = "PWW_RESULT logi_probe.ha INFO GER-FRA yes" }
+					if = { limit = { FRA = { any_home_area_neighbor_country = { tag = GER } } } log = "PWW_RESULT logi_probe.ha INFO FRA-GER yes" }
+					if = { limit = { ENG = { any_home_area_neighbor_country = { tag = FRA } } } log = "PWW_RESULT logi_probe.ha INFO ENG-FRA yes" }
+					if = { limit = { FRA = { any_home_area_neighbor_country = { tag = ENG } } } log = "PWW_RESULT logi_probe.ha INFO FRA-ENG yes" }
+					if = { limit = { FRA = { any_home_area_neighbor_country = { tag = SPR } } } log = "PWW_RESULT logi_probe.ha INFO FRA-SPR yes" }
+					if = { limit = { FRA = { any_home_area_neighbor_country = { tag = ITA } } } log = "PWW_RESULT logi_probe.ha INFO FRA-ITA yes" }
+					if = { limit = { FRA = { any_home_area_neighbor_country = { tag = SIA } } } log = "PWW_RESULT logi_probe.ha INFO FRA-SIA yes" }
+					if = { limit = { USA = { any_home_area_neighbor_country = { tag = MEX } } } log = "PWW_RESULT logi_probe.ha INFO USA-MEX yes" }
+					if = { limit = { USA = { any_home_area_neighbor_country = { tag = CAN } } } log = "PWW_RESULT logi_probe.ha INFO USA-CAN yes" }
+					if = { limit = { SOV = { any_home_area_neighbor_country = { tag = JAP } } } log = "PWW_RESULT logi_probe.ha INFO SOV-JAP yes" }
+					if = { limit = { JAP = { any_home_area_neighbor_country = { tag = SOV } } } log = "PWW_RESULT logi_probe.ha INFO JAP-SOV yes" }
+					if = { limit = { SOV = { any_home_area_neighbor_country = { tag = MAN } } } log = "PWW_RESULT logi_probe.ha INFO SOV-MAN yes" }
+					if = { limit = { DEN = { any_home_area_neighbor_country = { tag = SWE } } } log = "PWW_RESULT logi_probe.ha INFO DEN-SWE yes" }
+					if = { limit = { ITA = { any_home_area_neighbor_country = { tag = ETH } } } log = "PWW_RESULT logi_probe.ha INFO ITA-ETH yes" }
+					if = { limit = { MAL = { any_home_area_neighbor_country = { tag = SIA } } } log = "PWW_RESULT logi_probe.ha INFO MAL-SIA yes" }
+					if = { limit = { GER = { is_on_same_continent_as = ENG } } log = "PWW_RESULT logi_probe.cont INFO GER-ENG same continent" }
+					if = { limit = { GER = { is_on_same_continent_as = MAL } } log = "PWW_RESULT logi_probe.cont INFO GER-MAL same continent" }
+					if = { limit = { MAL = { exists = yes } } log = "PWW_RESULT logi_probe.mal INFO MAL exists owner of capital [MAL.Capital.GetName]" }
+					log = "PWW_DONE logi_probe"
+				}
+			}
+		}
+	}
+}

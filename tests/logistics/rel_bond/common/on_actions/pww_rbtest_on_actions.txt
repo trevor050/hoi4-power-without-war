@@ -1,0 +1,315 @@
+# Trade relationship scenario (test mod). Driven from GER on_daily.
+# Synthetic months (day 3), then the real feeds: a ledger agreement counted
+# by the monthly scan (day 3..6) and a ledger default seen in the queue (day 8).
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = GER }
+				add_to_variable = { global.pww_rbt_day = 1 }
+
+				if = {
+					limit = { check_variable = { global.pww_rbt_day = 3 } }
+					set_global_flag = pww_rel_debug
+					if = {
+						limit = { has_global_flag = pww_rel_loaded }
+						log = "PWW_RESULT rel_bond.init PASS loaded"
+					}
+					else = {
+						log = "PWW_RESULT rel_bond.init FAIL not initialized"
+					}
+
+					# Seeding: an overlord and its subject start ahead; strangers at 0.
+					set_temp_variable = { pww_rbt_sub = 0 }
+					ENG = {
+						random_subject_country = {
+							set_temp_variable = { pww_rbt_sub = THIS }
+						}
+						set_temp_variable = { pww_rbt_s = THIS }
+					}
+					set_temp_variable = { pww_rbt_b = pww_rbt_sub }
+					pww_rbtest_get = yes
+					set_temp_variable = { pww_rbt_seed = pww_rel_out }
+					GER = { set_temp_variable = { pww_rbt_s = THIS } }
+					ARG = { set_temp_variable = { pww_rbt_b = THIS } }
+					pww_rbtest_get = yes
+					if = {
+						limit = {
+							NOT = { check_variable = { pww_rbt_sub = 0 } }
+							check_variable = { pww_rbt_seed > 19 }
+							check_variable = { pww_rel_out < 1 }
+							check_variable = { pww_rel_band = 0 }
+						}
+						log = "PWW_RESULT rel_bond.seed PASS ENG->[?pww_rbt_sub.GetTag] [?pww_rbt_seed|1], GER->ARG [?pww_rel_out|1] (strangers); ENG records=[?ENG.pww_rel_buyers^num]"
+					}
+					else = {
+						log = "PWW_RESULT rel_bond.seed FAIL sub=[?pww_rbt_sub.GetTag] seed=[?pww_rbt_seed|1] GER->ARG=[?pww_rel_out|1] band=[?pww_rel_band|0]"
+					}
+
+					# Honored months: SWE -> ITA, a 1.5-civ deal.
+					SWE = { set_temp_variable = { pww_rbt_s = THIS } }
+					ITA = { set_temp_variable = { pww_rbt_b = THIS } }
+					pww_rbtest_get = yes
+					set_temp_variable = { pww_rbt_b0 = pww_rel_out }
+					set_temp_variable = { pww_rbt_v = 1.5 }
+					set_temp_variable = { pww_rbt_n = 12 }
+					pww_rbtest_months = yes
+					pww_rbtest_get = yes
+					set_temp_variable = { pww_rbt_y1 = pww_rel_out }
+					set_temp_variable = { pww_rbt_band1 = pww_rel_band }
+					set_temp_variable = { pww_rbt_n = 12 }
+					pww_rbtest_months = yes
+					pww_rbtest_get = yes
+					set_temp_variable = { pww_rbt_y2 = pww_rel_out }
+					set_temp_variable = { pww_rbt_band2 = pww_rel_band }
+					set_temp_variable = { pww_rbt_n = 36 }
+					pww_rbtest_months = yes
+					pww_rbtest_get = yes
+					set_temp_variable = { pww_rbt_y5 = pww_rel_out }
+					set_temp_variable = { pww_rbt_band5 = pww_rel_band }
+					set_temp_variable = { pww_rbt_m5 = pww_rel_months_out }
+					set_temp_variable = { pww_rbt_g1 = pww_rbt_y1 }
+					subtract_from_temp_variable = { pww_rbt_g1 = pww_rbt_b0 }
+					set_temp_variable = { pww_rbt_g2 = pww_rbt_y2 }
+					subtract_from_temp_variable = { pww_rbt_g2 = pww_rbt_y1 }
+					if = {
+						limit = {
+							check_variable = { pww_rbt_y1 > 18 }
+							check_variable = { pww_rbt_y1 < 32 }
+							check_variable = { pww_rbt_band1 = 1 }
+							check_variable = { pww_rbt_band2 = 2 }
+							check_variable = { pww_rbt_y5 > 65 }
+							check_variable = { pww_rbt_band5 = 3 }
+							check_variable = { pww_rbt_g2 < pww_rbt_g1 }
+							check_variable = { pww_rbt_m5 = 60 }
+						}
+						log = "PWW_RESULT rel_bond.honored PASS SWE->ITA 1y [?pww_rbt_y1|1] 2y [?pww_rbt_y2|1] 5y [?pww_rbt_y5|1] (bands [?pww_rbt_band1|0]/[?pww_rbt_band2|0]/[?pww_rbt_band5|0], months [?pww_rbt_m5|0])"
+					}
+					else = {
+						log = "PWW_RESULT rel_bond.honored FAIL 1y [?pww_rbt_y1|1] 2y [?pww_rbt_y2|1] 5y [?pww_rbt_y5|1] bands [?pww_rbt_band1|0]/[?pww_rbt_band2|0]/[?pww_rbt_band5|0] months [?pww_rbt_m5|0] g1 [?pww_rbt_g1|2] g2 [?pww_rbt_g2|2]"
+					}
+
+					# Monthly cap: extra deals in the same month add at most the cap.
+					set_temp_variable = { pww_in_seller = pww_rbt_s }
+					set_temp_variable = { pww_in_buyer = pww_rbt_b }
+					set_temp_variable = { pww_in_value = 4 }
+					pww_rel_on_honored = yes
+					pww_rel_on_honored = yes
+					pww_rel_on_honored = yes
+					pww_rbtest_get = yes
+					set_temp_variable = { pww_rbt_cap = pww_rel_out }
+					subtract_from_temp_variable = { pww_rbt_cap = pww_rbt_y5 }
+					if = {
+						limit = { check_variable = { pww_rbt_cap < 5.01 } }
+						log = "PWW_RESULT rel_bond.month_cap PASS +[?pww_rbt_cap|2] from three extra deals in one month"
+					}
+					else = {
+						log = "PWW_RESULT rel_bond.month_cap FAIL +[?pww_rbt_cap|2]"
+					}
+
+					# Decay: 12 idle months drift toward the baseline, not below it.
+					var:pww_rbt_s = { set_variable = { pww_rel_last@var:pww_rbt_b = 0 } }
+					pww_rbtest_get = yes
+					set_temp_variable = { pww_rbt_d0 = pww_rel_out }
+					set_temp_variable = { pww_in_seller = pww_rbt_s }
+					set_temp_variable = { pww_in_buyer = pww_rbt_b }
+					pww_rel_baseline = yes
+					set_temp_variable = { pww_rbt_base = pww_rel_base_out }
+					set_temp_variable = { pww_rbt_n = 12 }
+					pww_rbtest_decay = yes
+					pww_rbtest_get = yes
+					set_temp_variable = { pww_rbt_d1 = pww_rel_out }
+					if = {
+						limit = {
+							check_variable = { pww_rbt_d1 < pww_rbt_d0 }
+							check_variable = { pww_rbt_d1 > pww_rbt_base }
+						}
+						log = "PWW_RESULT rel_bond.decay PASS 12 idle months [?pww_rbt_d0|1] -> [?pww_rbt_d1|1] (baseline [?pww_rbt_base|1])"
+					}
+					else = {
+						log = "PWW_RESULT rel_bond.decay FAIL [?pww_rbt_d0|1] -> [?pww_rbt_d1|1] base [?pww_rbt_base|1]"
+					}
+					set_temp_variable = { pww_rbt_n = 240 }
+					pww_rbtest_decay = yes
+					pww_rbtest_get = yes
+					set_temp_variable = { pww_rbt_floor = pww_rbt_base }
+					add_to_temp_variable = { pww_rbt_floor = 0.01 }
+					if = {
+						limit = {
+							check_variable = { pww_rel_out < pww_rbt_floor }
+							NOT = { check_variable = { pww_rel_out < pww_rbt_base } }
+						}
+						log = "PWW_RESULT rel_bond.decay_floor PASS settles at baseline [?pww_rel_out|2]"
+					}
+					else = {
+						log = "PWW_RESULT rel_bond.decay_floor FAIL [?pww_rel_out|2] base [?pww_rbt_base|2]"
+					}
+
+					# Switch away: rebuild 5 years, then ITA drops SWE.
+					set_temp_variable = { pww_rbt_n = 60 }
+					pww_rbtest_months = yes
+					pww_rbtest_get = yes
+					set_temp_variable = { pww_rbt_w0 = pww_rel_out }
+					set_temp_variable = { pww_in_seller = pww_rbt_s }
+					set_temp_variable = { pww_in_buyer = pww_rbt_b }
+					pww_rel_on_switch_away = yes
+					pww_rbtest_get = yes
+					set_temp_variable = { pww_rbt_w_exp = pww_rbt_w0 }
+					multiply_temp_variable = { pww_rbt_w_exp = 0.7 }
+					subtract_from_temp_variable = { pww_rbt_w_exp = 4.9 }
+					if = {
+						limit = {
+							check_variable = { pww_rel_out < pww_rbt_w_exp }
+							check_variable = { pww_rel_months_out = 0 }
+						}
+						log = "PWW_RESULT rel_bond.switch PASS [?pww_rbt_w0|1] -> [?pww_rel_out|1] band [?pww_rel_band|0]"
+					}
+					else = {
+						log = "PWW_RESULT rel_bond.switch FAIL [?pww_rbt_w0|1] -> [?pww_rel_out|1] months [?pww_rel_months_out|0]"
+					}
+
+					# Default: NOR -> ITA one year, then a default sours it both ways.
+					NOR = { set_temp_variable = { pww_rbt_s = THIS } }
+					set_temp_variable = { pww_rbt_n = 12 }
+					pww_rbtest_months = yes
+					pww_rbtest_get = yes
+					set_temp_variable = { pww_rbt_f0 = pww_rel_out }
+					set_temp_variable = { pww_in_seller = pww_rbt_s }
+					set_temp_variable = { pww_in_buyer = pww_rbt_b }
+					pww_rel_on_default = yes
+					pww_rbtest_get = yes
+					set_temp_variable = { pww_rbt_f1 = pww_rel_out }
+					set_temp_variable = { pww_rbt_fb = pww_rel_band }
+					if = {
+						limit = {
+							check_variable = { pww_rbt_f1 < 5 }
+							check_variable = { pww_rbt_fb = 4 }
+							ITA = { is_in_array = { array = pww_rel_buyers value = pww_rbt_s } }
+						}
+						log = "PWW_RESULT rel_bond.default PASS NOR->ITA [?pww_rbt_f0|1] -> [?pww_rbt_f1|1] (soured); reverse pair recorded"
+					}
+					else = {
+						log = "PWW_RESULT rel_bond.default FAIL [?pww_rbt_f0|1] -> [?pww_rbt_f1|1] band [?pww_rbt_fb|0]"
+					}
+					# A soured bond does not recover toward its baseline for a year.
+					set_temp_variable = { pww_rbt_n = 3 }
+					pww_rbtest_decay = yes
+					pww_rbtest_get = yes
+					if = {
+						limit = { NOT = { check_variable = { pww_rel_out > pww_rbt_f1 } } }
+						log = "PWW_RESULT rel_bond.grudge PASS no recovery within a year ([?pww_rel_out|1])"
+					}
+					else = {
+						log = "PWW_RESULT rel_bond.grudge FAIL recovered to [?pww_rel_out|1]"
+					}
+
+					# Cutoff: DEN -> ITA one year, then cut off.
+					DEN = { set_temp_variable = { pww_rbt_s = THIS } }
+					set_temp_variable = { pww_rbt_n = 12 }
+					pww_rbtest_months = yes
+					pww_rbtest_get = yes
+					set_temp_variable = { pww_rbt_c0 = pww_rel_out }
+					set_temp_variable = { pww_in_seller = pww_rbt_s }
+					set_temp_variable = { pww_in_buyer = pww_rbt_b }
+					pww_rel_on_cutoff = yes
+					pww_rbtest_get = yes
+					set_temp_variable = { pww_rbt_c_exp = pww_rbt_c0 }
+					multiply_temp_variable = { pww_rbt_c_exp = 0.6 }
+					subtract_from_temp_variable = { pww_rbt_c_exp = 7.9 }
+					if = {
+						limit = { check_variable = { pww_rel_out < pww_rbt_c_exp } }
+						log = "PWW_RESULT rel_bond.cutoff PASS DEN->ITA [?pww_rbt_c0|1] -> [?pww_rel_out|1]"
+					}
+					else = {
+						log = "PWW_RESULT rel_bond.cutoff FAIL [?pww_rbt_c0|1] -> [?pww_rel_out|1]"
+					}
+
+					# Real feed: POR sells GER 4 tungsten (ledger), monthly scan forced.
+					POR = { set_temp_variable = { pww_l_seller = THIS } }
+					GER = { set_temp_variable = { pww_l_buyer = THIS } }
+					set_temp_variable = { pww_l_kind = 0 }
+					set_temp_variable = { pww_l_res = 3 }
+					set_temp_variable = { pww_l_amount = 4 }
+					set_temp_variable = { pww_l_state = 0 }
+					set_temp_variable = { pww_l_committal = 1 }
+					set_temp_variable = { pww_l_term_days = 365 }
+					set_temp_variable = { pww_l_civ = 1 }
+					set_temp_variable = { pww_l_pp = 0 }
+					set_temp_variable = { pww_l_ideo = 0 }
+					set_temp_variable = { pww_l_cond = 0 }
+					set_temp_variable = { pww_l_reserve_days = 0 }
+					set_temp_variable = { pww_l_revert_days = 0 }
+					set_temp_variable = { pww_l_convoys = 0 }
+					set_temp_variable = { pww_l_activate = 1 }
+					pww_ledger_create_agreement = yes
+					set_variable = { global.pww_rbt_ag = pww_l_new_id }
+					if = {
+						limit = { check_variable = { pww_l_result = 1 } }
+						log = "PWW_RESULT rel_bond.ledger_setup PASS ag=[?pww_l_new_id|0]"
+					}
+					else = {
+						log = "PWW_RESULT rel_bond.ledger_setup FAIL fail=[?pww_l_fail|0]"
+					}
+					set_variable = { global.pww_rel_last_scan = global.num_days }
+					subtract_from_variable = { global.pww_rel_last_scan = 40 }
+				}
+
+				if = {
+					limit = { check_variable = { global.pww_rbt_day = 6 } }
+					POR = { set_temp_variable = { pww_rbt_s = THIS } }
+					GER = { set_temp_variable = { pww_rbt_b = THIS } }
+					pww_rbtest_get = yes
+					set_variable = { global.pww_rbt_l1 = pww_rel_out }
+					if = {
+						limit = {
+							check_variable = { pww_rel_out > 1 }
+							check_variable = { pww_rel_months_out = 1 }
+						}
+						log = "PWW_RESULT rel_bond.scan PASS monthly scan honored POR->GER: [?pww_rel_out|2]"
+					}
+					else = {
+						log = "PWW_RESULT rel_bond.scan FAIL POR->GER [?pww_rel_out|2] months [?pww_rel_months_out|0]"
+					}
+					# Poaching premium: SWE would replace POR as GER's tungsten supplier.
+					SWE = { set_temp_variable = { pww_in_seller = THIS } }
+					GER = { set_temp_variable = { pww_in_buyer = THIS } }
+					set_temp_variable = { pww_in_resource = 3 }
+					pww_rel_poach_premium = yes
+					POR = { set_temp_variable = { pww_rbt_por = THIS } }
+					if = {
+						limit = {
+							check_variable = { pww_rel_poach_mult > 1 }
+							check_variable = { pww_rel_poach_incumbent = pww_rbt_por }
+						}
+						log = "PWW_RESULT rel_bond.poach PASS incumbent POR bond [?pww_rel_poach_bond|2] mult [?pww_rel_poach_mult|3]"
+					}
+					else = {
+						log = "PWW_RESULT rel_bond.poach FAIL bond [?pww_rel_poach_bond|2] mult [?pww_rel_poach_mult|3] inc [?pww_rel_poach_incumbent.GetTag]"
+					}
+					# Real feed: GER defaults through the ledger.
+					set_temp_variable = { pww_l_ag = global.pww_rbt_ag }
+					GER = { set_temp_variable = { pww_l_by = THIS } }
+					pww_ledger_default = yes
+				}
+
+				if = {
+					limit = { check_variable = { global.pww_rbt_day = 8 } }
+					POR = { set_temp_variable = { pww_rbt_s = THIS } }
+					GER = { set_temp_variable = { pww_rbt_b = THIS } }
+					pww_rbtest_get = yes
+					if = {
+						limit = {
+							check_variable = { pww_rel_out < global.pww_rbt_l1 }
+							check_variable = { pww_rel_band = 4 }
+						}
+						log = "PWW_RESULT rel_bond.ledger_default PASS queue poll: POR->GER [?global.pww_rbt_l1|2] -> [?pww_rel_out|2] (soured)"
+					}
+					else = {
+						log = "PWW_RESULT rel_bond.ledger_default FAIL POR->GER [?global.pww_rbt_l1|2] -> [?pww_rel_out|2] band [?pww_rel_band|0] status=[?global.pww_ag_status^global.pww_rbt_ag|0]"
+					}
+					log = "PWW_DONE rel_bond"
+				}
+			}
+		}
+	}
+}

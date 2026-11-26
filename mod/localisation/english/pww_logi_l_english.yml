@@ -1,0 +1,8 @@
+﻿l_english:
+ pww_logi_route_0: "overland"
+ pww_logi_route_1: "by sea"
+ pww_logi_route_2: "no route"
+ pww_logi_route_0_desc: "Rail and road across shared borders. Shipping costs next to nothing."
+ pww_logi_route_1_desc: "Convoys carry it. Longer voyages and raiders raise the cost."
+ pww_logi_route_2_desc: "No safe way to deliver it right now."
+ pww_logi_cost_label: "Delivery cost"

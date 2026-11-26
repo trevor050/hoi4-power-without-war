@@ -1,0 +1,12 @@
+﻿l_english:
+ pww_rel_band_0: "strangers"
+ pww_rel_band_1: "occasional partners"
+ pww_rel_band_2: "trusted suppliers"
+ pww_rel_band_3: "old partners"
+ pww_rel_band_4: "soured"
+ pww_rel_band_0_desc: "No trading history to speak of."
+ pww_rel_band_1_desc: "They have traded before, now and then."
+ pww_rel_band_2_desc: "Years of deliveries kept. A fixed contract is on the table."
+ pww_rel_band_3_desc: "A long, steady relationship. Poaching this buyer is expensive."
+ pww_rel_band_4_desc: "A recent default, cutoff or walkout still stings."
+ pww_rel_bond_label: "Trade bond"
