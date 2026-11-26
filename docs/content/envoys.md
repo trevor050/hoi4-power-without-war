@@ -25,16 +25,16 @@ Tone: diplomatic cable from your legation or trade delegation. Terse, dry, obser
 |---|---|
 | `pww_envoy_patience_high_1` | `The mood warmed noticeably when we tabled the revised terms. They want this signed.` |
 | `pww_envoy_patience_high_2` | `Their delegation asked for an extra afternoon to draft annexes. We have their ear.` |
-| `pww_envoy_patience_high_3` | `[FROM.GetCapitalName] sent back fresh instructions overnight. That sweetener landed where it mattered.` |
+| `pww_envoy_patience_high_3` | `[FROM.GetCapitalName] sent back fresh instructions overnight. That offer landed where it mattered.` |
 | `pww_envoy_patience_high_4` | `For the first time this week, their finance men stopped objecting and started penciling schedules.` |
-| `pww_envoy_patience_high_5` | `We have room to press on secondary terms, provided we keep the core sweetener intact.` |
+| `pww_envoy_patience_high_5` | `We have room to press on secondary terms, provided we keep the core terms intact.` |
 
 ### C. Red Line Hit (non-negotiable touched; patience spent)
 | Loc Key | Text |
 |---|---|
 | `pww_envoy_redline_1` | `Mention of that clause froze the table. Take it out or the talks end here.` |
 | `pww_envoy_redline_2` | `Their envoy laid down his pen: his government cannot sign that wording and remain in office.` |
-| `pww_envoy_redline_3` | `We struck a fixed boundary in [FROM.GetCapitalName]. No sweetener will buy that concession.` |
+| `pww_envoy_redline_3` | `We struck a fixed boundary in [FROM.GetCapitalName]. No price will buy that concession.` |
 | `pww_envoy_redline_4` | `They did not haggle over the clause; they crossed it out without comment.` |
 | `pww_envoy_redline_5` | `Our legation confirms that point is non-negotiable. Asking again will only burn our remaining time.` |
 | `pww_envoy_redline_6` | `The [FROM.GetAdjective] cabinet drew a hard line before the talks even opened. Drop that demand.` |
@@ -89,7 +89,26 @@ Tone: diplomatic cable from your legation or trade delegation. Terse, dry, obser
 | `pww_envoy_stall_3` | `We tabled an equivalent offer and received the exact same refusal. Something real has to change.` |
 | `pww_envoy_stall_4` | `They are buying weeks, not bargaining. Waiting on a third power's reply is the obvious guess.` |
 | `pww_envoy_stall_5` | `Their counter-draft changed three adjectives and nothing else. They expect us to lose interest.` |
-| `pww_envoy_stall_6` | `The legation reports no serious intent to close unless we either sweeten the pot or turn up the heat.` |
+| `pww_envoy_stall_6` | `The legation reports no serious intent to close unless we either improve the terms or turn up the heat.` |
+
+### I. Trade Talks: Price Too Low (the main obstacle is the price)
+| Loc Key | Text |
+|---|---|
+| `pww_envoy_price_low_1` | `Their trade ministry ran the numbers twice. Our price is below what the market pays them, and they will not sell at a loss.` |
+| `pww_envoy_price_low_2` | `[FROM.GetCapitalName] calls our figure an insult to their mines. Come up to the going rate.` |
+| `pww_envoy_price_low_3` | `They like the deal, not the price. Raise what we pay and the signature follows.` |
+| `pww_envoy_price_low_4` | `Their negotiator tapped the market sheet and said nothing. We are asking too much for too little.` |
+| `pww_envoy_price_low_5` | `Buyers elsewhere pay more for the same output. Until we match them, the answer stays no.` |
+| `pww_envoy_price_low_6` | `The legation reports no objection to the terms, only to the sum. Pay closer to market.` |
+
+### J. Trade Talks: Wants Hinted (items the trade talks table can carry)
+| Loc Key | Text |
+|---|---|
+| `pww_envoy_want_transport` | `Their quartermaster asked twice about [ROOT.GetAdjective] lorries. Trucks would carry this deal further than coin.` |
+| `pww_envoy_want_trial` | `They will not bind themselves for long to a partner they have not tried. A six-month trial would put them at ease.` |
+| `pww_envoy_want_lack` | `Their ministry kept asking what we could spare of the materials they lack. Fill one of their shortfalls and the room warms.` |
+| `pww_envoy_want_modest` | `They will not hand one buyer the bulk of their output. Ask for a smaller share and they will listen.` |
+| `pww_envoy_want_goodwill` | `Their minister needs something to show the cabinet. A political payment would cover him at home.` |
 
 ---
 

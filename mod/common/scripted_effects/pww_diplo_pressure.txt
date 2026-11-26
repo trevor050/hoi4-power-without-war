@@ -898,6 +898,7 @@ pww_diplo_embargo_sweep = {
 # Settlements. Victim scope. Ledger queue poll registers nationalizations.
 ###############################################################################
 pww_diplo_ledger_queue_poll = {
+	clear_temp_array = pww_dlq_ended
 	for_each_loop = {
 		array = global.pww_lq_seq
 		value = pww_dlq_s
@@ -921,8 +922,23 @@ pww_diplo_ledger_queue_poll = {
 					set_country_flag = pww_dset_open
 				}
 			}
+			# A trade-talks bundle ends together (pww_diplo_bundle.txt).
+			if = {
+				limit = {
+					check_variable = { global.pww_lq_kind^pww_dlq_i = 1 }
+					check_variable = { global.pww_lq_status^pww_dlq_i > 3 }
+					check_variable = { global.pww_lq_status^pww_dlq_i < 7 }
+					check_variable = { global.pww_dlk_ag^num > 0 }
+				}
+				add_to_temp_array = { pww_dlq_ended = global.pww_lq_ag^pww_dlq_i }
+			}
 			set_variable = { global.pww_dq_ledger_seen = pww_dlq_s }
 		}
+	}
+	for_each_loop = {
+		array = pww_dlq_ended
+		value = pww_dlk_in
+		pww_diplo_bundle_sibling_end = yes
 	}
 }
 

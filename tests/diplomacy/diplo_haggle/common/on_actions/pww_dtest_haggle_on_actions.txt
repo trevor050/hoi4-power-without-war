@@ -1,7 +1,8 @@
-# Diplomacy test: haggling balance. Run with --tag GER (GER is the human
-# player drafting Propose Agreement terms to AI minors). Each case evaluates
-# a draft with the same code the target's ai_acceptance reads and logs the
-# values, then one PASS/FAIL row:
+# Diplomacy test: haggling balance of trade-talks bundles. Run with --tag GER
+# (GER is the human player tabling Propose Trade Deal bundles to AI minors:
+# a resource against whole civilian factories). Each case evaluates a bundle
+# with the same code the target's ai_acceptance reads and logs the values,
+# then one PASS/FAIL row:
 #   A below_market   GER buys POR tungsten 30% below market, POR not
 #                    desperate: refused even at the most lenient seeded
 #                    reserve, and the refusal carries an envoy reason line.
@@ -9,12 +10,22 @@
 #                    for some seeded reserves but not most (first answer is
 #                    usually a counter); good relations clear more often;
 #                    an above-market draft clears for most reserves.
-#   C desperate      GER sells steel to POR above market: refused while POR
-#                    is comfortable, accepted while POR is desperate for steel.
+#   C desperate      GER sells 16 steel to POR above market (3 factories):
+#                    refused while POR is comfortable, accepted while POR is
+#                    desperate for steel.
 #   D dislike        at market with a lenient reserve: accepted at POR's own
 #                    relations, refused once POR dislikes GER (snub -80),
 #                    accepted again when GER pays above market.
 #   E partners       INFO: natural at-market verdicts with five other minors.
+#   F bundle_sign    GER buys steel and tungsten from SWE for civilian
+#                    factories, political power and a rifle shipment: two
+#                    linked ledger agreements (payments and three rifle
+#                    tranches on the main one, steel), and ending the main
+#                    one ends its sibling.
+#   G market_line    the market verdict the screen shows agrees with the
+#                    numbers the evaluation uses (below / at / above).
+#   H lease_mines    Lease Mines opens on a lease of one of POR's producing
+#                    states, paid for, under a fixed contract.
 # Day 32 so core has computed every country's desperation once.
 on_actions = {
 	on_daily = {
@@ -113,7 +124,11 @@ on_actions = {
 					set_temp_variable = { pww_dtest_hg_res = 4 }
 					set_temp_variable = { pww_dtest_hg_dir = 1 }
 					set_temp_variable = { pww_dtest_hg_price = 2 }
+					# A small sale (16 steel, 3 factories): Portugal must have the
+					# factories free to pay, or the bundle is unworkable.
+					set_temp_variable = { pww_dtest_hg_units = 16 }
 					pww_dtest_hg_draft = yes
+					set_temp_variable = { pww_dtest_hg_units = 0 }
 					set_temp_variable = { pww_dtest_hg_rsv = 14 }
 					pww_dtest_hg_set_reserve = yes
 					set_temp_variable = { pww_dtest_hg_tag = 3 }
@@ -157,8 +172,8 @@ on_actions = {
 					pww_dtest_hg_log = yes
 					set_temp_variable = { pww_dtest_hg_d_dis = pww_do_ok }
 					set_temp_variable = { pww_dtest_hg_d_rel1 = pww_do_e_rel }
-					set_variable = { pww_do_price = 2 }
-					pww_diplo_offer_changed = yes
+					set_temp_variable = { pww_dtest_hg_price = 2 }
+					pww_dtest_hg_draft = yes
 					set_temp_variable = { pww_dtest_hg_tag = 42 }
 					pww_dtest_hg_log = yes
 					set_temp_variable = { pww_dtest_hg_d_high = pww_do_ok }
@@ -202,6 +217,69 @@ on_actions = {
 					set_temp_variable = { pww_dtest_hg_tag = 50 }
 					pww_dtest_hg_draft = yes
 					pww_dtest_hg_log = yes
+
+					# --- G: market verdict follows the evaluated numbers ------
+					POR = { set_temp_variable = { pww_dtest_hg_tgt = THIS } }
+					set_temp_variable = { pww_dtest_hg_res = 3 }
+					set_temp_variable = { pww_dtest_hg_dir = 0 }
+					set_temp_variable = { pww_dtest_hg_price = 0 }
+					pww_dtest_hg_draft = yes
+					set_temp_variable = { pww_dtest_hg_g0 = pww_do_mk }
+					set_temp_variable = { pww_dtest_hg_g0t = pww_do_e_terms }
+					set_temp_variable = { pww_dtest_hg_price = 2 }
+					pww_dtest_hg_draft = yes
+					set_temp_variable = { pww_dtest_hg_g2 = pww_do_mk }
+					set_temp_variable = { pww_dtest_hg_g2t = pww_do_e_terms }
+					# At market by construction: civilian factories equal to the
+					# goods' market value (a multiple of 8 units).
+					set_temp_variable = { pww_dba_n = 4 }
+					set_variable = { pww_dob_a^4 = 16 }
+					set_variable = { pww_dob_a^0 = 2 }
+					pww_diplo_offer_changed = yes
+					set_temp_variable = { pww_dtest_hg_g1 = pww_do_mk }
+					set_temp_variable = { pww_dtest_hg_g1v = pww_do_mk_v1 }
+					set_temp_variable = { pww_dtest_hg_g1m = pww_do_mk_m0 }
+					if = {
+						limit = {
+							check_variable = { pww_dtest_hg_g0 = -1 }
+							check_variable = { pww_dtest_hg_g0t < 0 }
+							check_variable = { pww_dtest_hg_g2 = 1 }
+							check_variable = { pww_dtest_hg_g2t > 0 }
+							check_variable = { pww_dtest_hg_g1 = 0 }
+							check_variable = { pww_dtest_hg_g1v = 2 }
+							check_variable = { pww_dtest_hg_g1m = 2 }
+						}
+						log = "PWW_RESULT diplo_haggle.G_market_line PASS below market shows below (terms [?pww_dtest_hg_g0t|0]), above shows above (terms [?pww_dtest_hg_g2t|0]), 16 tungsten for 2 factories shows at market (2.0 against 2.0)"
+					}
+					else = {
+						log = "PWW_RESULT diplo_haggle.G_market_line FAIL below=[?pww_dtest_hg_g0|0] (terms [?pww_dtest_hg_g0t|0]) above=[?pww_dtest_hg_g2|0] (terms [?pww_dtest_hg_g2t|0]) exact=[?pww_dtest_hg_g1|0] v1=[?pww_dtest_hg_g1v|2] m0=[?pww_dtest_hg_g1m|2]"
+					}
+
+					# --- F: a bundle reaches the ledger as linked agreements --
+					pww_dtest_hg_bundle_sign = yes
+
+					# --- H: Lease Mines opens on a mine lease ------------------
+					POR = { set_temp_variable = { pww_dtest_hg_por = THIS } }
+					set_temp_variable = { pww_dk_target = pww_dtest_hg_por }
+					set_temp_variable = { pww_dk_act = 1 }
+					pww_diplo_offer_begin = yes
+					set_temp_variable = { pww_dtest_hg_hk = pww_dob_k^4 }
+					set_temp_variable = { pww_dtest_hg_hx = pww_dob_x^4 }
+					set_temp_variable = { pww_dtest_hg_hs = pww_dob_s^4 }
+					log = "PWW_RESULT diplo_haggle.H_values INFO act=[?pww_do_act|0] they_give kind=[?pww_dtest_hg_hk|0] res=[?pww_dtest_hg_hx|0] state=[?pww_dtest_hg_hs.GetName] units=[?pww_dbu_4|0] we_give kind=[?pww_dob_k^0|0] amount=[?pww_dob_a^0|2] bind=[?pww_do_bind|0] valid=[?pww_do_valid|0] gap=[?pww_do_gap|2]"
+					if = {
+						limit = {
+							check_variable = { pww_dtest_hg_hk = 6 }
+							check_variable = { pww_do_bind = 1 }
+							check_variable = { pww_do_valid = 0 }
+							check_variable = { pww_do_n0 > 0 }
+							check_variable = { pww_dbu_4 > 0 }
+						}
+						log = "PWW_RESULT diplo_haggle.H_lease_mines PASS Lease Mines opens with a lease of [?pww_dtest_hg_hs.GetName] ([?pww_dbu_4|0] a day) against a payment, fixed contract"
+					}
+					else = {
+						log = "PWW_RESULT diplo_haggle.H_lease_mines FAIL see H_values"
+					}
 					log = "PWW_DONE diplo_haggle"
 				}
 			}

@@ -5,326 +5,1212 @@ guiTypes = {
 	containerWindowType = {
 		name = "pww_diplo_send_offer"
 		position = { x = 0 y = 0 }
-		size = { width = 584 height = 454 }
+		size = { width = 584 height = 486 }
 		moveable = no
 		orientation = center
 		clipping = no
 
 		instantTextBoxType = {
-			name = "pww_so_title"
-			position = { x = 77 y = 8 }
+			name = "pww_so_us"
+			position = { x = 40 y = 2 }
 			font = "hoi_18mbs"
-			text = "[pww_diplo_sl_o_title]"
-			maxWidth = 282
-			maxHeight = 22
+			text = "pww_dt_us_0"
+			maxWidth = 220
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_so_us_sub"
+			position = { x = 40 y = 22 }
+			font = "hoi_16mbs"
+			text = "pww_dt_you"
+			maxWidth = 220
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_so_and"
+			position = { x = 262 y = 10 }
+			font = "hoi_16mbs"
+			text = "pww_dt_and"
+			maxWidth = 60
+			maxHeight = 18
+			format = centre
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_so_them"
+			position = { x = 324 y = 2 }
+			font = "hoi_18mbs"
+			text = "pww_dt_them_0"
+			maxWidth = 220
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_so_them_sub"
+			position = { x = 324 y = 22 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_top_0]"
+			maxWidth = 220
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+		}
+		iconType = {
+			name = "pww_so_div0"
+			position = { x = 40 y = 36 }
+			spriteType = "GFX_divider"
+			scale = 0.981
+		}
+		instantTextBoxType = {
+			name = "pww_so_h0"
+			position = { x = 40 y = 46 }
+			font = "hoi_16mbs"
+			text = "pww_dt_h_give"
+			maxWidth = 244
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_so_h1"
+			position = { x = 300 y = 46 }
+			font = "hoi_16mbs"
+			text = "pww_dt_h_get"
+			maxWidth = 244
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_so_i0_nm"
+			position = { x = 40 y = 67 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_nm_0]"
+			maxWidth = 152
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_so_i0_nmw"
+			position = { x = 40 y = 67 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_nm_0]"
+			maxWidth = 224
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_i0_mi"
+			position = { x = 194 y = 68 }
+			quadTextureSprite = "GFX_pww_diplo_prev"
+		}
+		instantTextBoxType = {
+			name = "pww_so_i0_am"
+			position = { x = 210 y = 67 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_am_0]"
+			maxWidth = 38
+			maxHeight = 18
+			format = centre
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_i0_pl"
+			position = { x = 248 y = 68 }
+			quadTextureSprite = "GFX_pww_diplo_next"
+		}
+		buttonType = {
+			name = "pww_so_i0_x"
+			position = { x = 268 y = 68 }
+			quadTextureSprite = "GFX_closebutton_16"
+			pdx_tooltip = "pww_dt_tt_remove"
+		}
+		instantTextBoxType = {
+			name = "pww_so_i0_hi"
+			position = { x = 40 y = 86 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_his_0]"
+			maxWidth = 244
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_i0_lmi"
+			position = { x = 40 y = 87 }
+			quadTextureSprite = "GFX_pww_diplo_prev"
+		}
+		instantTextBoxType = {
+			name = "pww_so_i0_lst"
+			position = { x = 58 y = 86 }
+			font = "hoi_16mbs"
+			text = "pww_dt_state_0"
+			maxWidth = 190
+			maxHeight = 18
+			format = centre
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_i0_lpl"
+			position = { x = 248 y = 87 }
+			quadTextureSprite = "GFX_pww_diplo_next"
+		}
+		instantTextBoxType = {
+			name = "pww_so_i1_nm"
+			position = { x = 40 y = 107 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_nm_1]"
+			maxWidth = 152
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_so_i1_nmw"
+			position = { x = 40 y = 107 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_nm_1]"
+			maxWidth = 224
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_i1_mi"
+			position = { x = 194 y = 108 }
+			quadTextureSprite = "GFX_pww_diplo_prev"
+		}
+		instantTextBoxType = {
+			name = "pww_so_i1_am"
+			position = { x = 210 y = 107 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_am_1]"
+			maxWidth = 38
+			maxHeight = 18
+			format = centre
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_i1_pl"
+			position = { x = 248 y = 108 }
+			quadTextureSprite = "GFX_pww_diplo_next"
+		}
+		buttonType = {
+			name = "pww_so_i1_x"
+			position = { x = 268 y = 108 }
+			quadTextureSprite = "GFX_closebutton_16"
+			pdx_tooltip = "pww_dt_tt_remove"
+		}
+		instantTextBoxType = {
+			name = "pww_so_i1_hi"
+			position = { x = 40 y = 126 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_his_1]"
+			maxWidth = 244
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_i1_lmi"
+			position = { x = 40 y = 127 }
+			quadTextureSprite = "GFX_pww_diplo_prev"
+		}
+		instantTextBoxType = {
+			name = "pww_so_i1_lst"
+			position = { x = 58 y = 126 }
+			font = "hoi_16mbs"
+			text = "pww_dt_state_1"
+			maxWidth = 190
+			maxHeight = 18
+			format = centre
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_i1_lpl"
+			position = { x = 248 y = 127 }
+			quadTextureSprite = "GFX_pww_diplo_next"
+		}
+		instantTextBoxType = {
+			name = "pww_so_i2_nm"
+			position = { x = 40 y = 147 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_nm_2]"
+			maxWidth = 152
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_so_i2_nmw"
+			position = { x = 40 y = 147 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_nm_2]"
+			maxWidth = 224
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_i2_mi"
+			position = { x = 194 y = 148 }
+			quadTextureSprite = "GFX_pww_diplo_prev"
+		}
+		instantTextBoxType = {
+			name = "pww_so_i2_am"
+			position = { x = 210 y = 147 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_am_2]"
+			maxWidth = 38
+			maxHeight = 18
+			format = centre
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_i2_pl"
+			position = { x = 248 y = 148 }
+			quadTextureSprite = "GFX_pww_diplo_next"
+		}
+		buttonType = {
+			name = "pww_so_i2_x"
+			position = { x = 268 y = 148 }
+			quadTextureSprite = "GFX_closebutton_16"
+			pdx_tooltip = "pww_dt_tt_remove"
+		}
+		instantTextBoxType = {
+			name = "pww_so_i2_hi"
+			position = { x = 40 y = 166 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_his_2]"
+			maxWidth = 244
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_i2_lmi"
+			position = { x = 40 y = 167 }
+			quadTextureSprite = "GFX_pww_diplo_prev"
+		}
+		instantTextBoxType = {
+			name = "pww_so_i2_lst"
+			position = { x = 58 y = 166 }
+			font = "hoi_16mbs"
+			text = "pww_dt_state_2"
+			maxWidth = 190
+			maxHeight = 18
+			format = centre
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_i2_lpl"
+			position = { x = 248 y = 167 }
+			quadTextureSprite = "GFX_pww_diplo_next"
+		}
+		instantTextBoxType = {
+			name = "pww_so_i3_nm"
+			position = { x = 40 y = 187 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_nm_3]"
+			maxWidth = 152
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_so_i3_nmw"
+			position = { x = 40 y = 187 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_nm_3]"
+			maxWidth = 224
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_i3_mi"
+			position = { x = 194 y = 188 }
+			quadTextureSprite = "GFX_pww_diplo_prev"
+		}
+		instantTextBoxType = {
+			name = "pww_so_i3_am"
+			position = { x = 210 y = 187 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_am_3]"
+			maxWidth = 38
+			maxHeight = 18
+			format = centre
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_i3_pl"
+			position = { x = 248 y = 188 }
+			quadTextureSprite = "GFX_pww_diplo_next"
+		}
+		buttonType = {
+			name = "pww_so_i3_x"
+			position = { x = 268 y = 188 }
+			quadTextureSprite = "GFX_closebutton_16"
+			pdx_tooltip = "pww_dt_tt_remove"
+		}
+		instantTextBoxType = {
+			name = "pww_so_i3_hi"
+			position = { x = 40 y = 206 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_his_3]"
+			maxWidth = 244
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_i3_lmi"
+			position = { x = 40 y = 207 }
+			quadTextureSprite = "GFX_pww_diplo_prev"
+		}
+		instantTextBoxType = {
+			name = "pww_so_i3_lst"
+			position = { x = 58 y = 206 }
+			font = "hoi_16mbs"
+			text = "pww_dt_state_3"
+			maxWidth = 190
+			maxHeight = 18
+			format = centre
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_i3_lpl"
+			position = { x = 248 y = 207 }
+			quadTextureSprite = "GFX_pww_diplo_next"
+		}
+		instantTextBoxType = {
+			name = "pww_so_i4_nm"
+			position = { x = 300 y = 67 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_nm_4]"
+			maxWidth = 152
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_so_i4_nmw"
+			position = { x = 300 y = 67 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_nm_4]"
+			maxWidth = 224
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_i4_mi"
+			position = { x = 454 y = 68 }
+			quadTextureSprite = "GFX_pww_diplo_prev"
+		}
+		instantTextBoxType = {
+			name = "pww_so_i4_am"
+			position = { x = 470 y = 67 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_am_4]"
+			maxWidth = 38
+			maxHeight = 18
+			format = centre
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_i4_pl"
+			position = { x = 508 y = 68 }
+			quadTextureSprite = "GFX_pww_diplo_next"
+		}
+		buttonType = {
+			name = "pww_so_i4_x"
+			position = { x = 528 y = 68 }
+			quadTextureSprite = "GFX_closebutton_16"
+			pdx_tooltip = "pww_dt_tt_remove"
+		}
+		instantTextBoxType = {
+			name = "pww_so_i4_hi"
+			position = { x = 300 y = 86 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_his_4]"
+			maxWidth = 244
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_i4_lmi"
+			position = { x = 300 y = 87 }
+			quadTextureSprite = "GFX_pww_diplo_prev"
+		}
+		instantTextBoxType = {
+			name = "pww_so_i4_lst"
+			position = { x = 318 y = 86 }
+			font = "hoi_16mbs"
+			text = "pww_dt_state_4"
+			maxWidth = 190
+			maxHeight = 18
+			format = centre
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_i4_lpl"
+			position = { x = 508 y = 87 }
+			quadTextureSprite = "GFX_pww_diplo_next"
+		}
+		instantTextBoxType = {
+			name = "pww_so_i5_nm"
+			position = { x = 300 y = 107 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_nm_5]"
+			maxWidth = 152
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_so_i5_nmw"
+			position = { x = 300 y = 107 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_nm_5]"
+			maxWidth = 224
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_i5_mi"
+			position = { x = 454 y = 108 }
+			quadTextureSprite = "GFX_pww_diplo_prev"
+		}
+		instantTextBoxType = {
+			name = "pww_so_i5_am"
+			position = { x = 470 y = 107 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_am_5]"
+			maxWidth = 38
+			maxHeight = 18
+			format = centre
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_i5_pl"
+			position = { x = 508 y = 108 }
+			quadTextureSprite = "GFX_pww_diplo_next"
+		}
+		buttonType = {
+			name = "pww_so_i5_x"
+			position = { x = 528 y = 108 }
+			quadTextureSprite = "GFX_closebutton_16"
+			pdx_tooltip = "pww_dt_tt_remove"
+		}
+		instantTextBoxType = {
+			name = "pww_so_i5_hi"
+			position = { x = 300 y = 126 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_his_5]"
+			maxWidth = 244
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_i5_lmi"
+			position = { x = 300 y = 127 }
+			quadTextureSprite = "GFX_pww_diplo_prev"
+		}
+		instantTextBoxType = {
+			name = "pww_so_i5_lst"
+			position = { x = 318 y = 126 }
+			font = "hoi_16mbs"
+			text = "pww_dt_state_5"
+			maxWidth = 190
+			maxHeight = 18
+			format = centre
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_i5_lpl"
+			position = { x = 508 y = 127 }
+			quadTextureSprite = "GFX_pww_diplo_next"
+		}
+		instantTextBoxType = {
+			name = "pww_so_i6_nm"
+			position = { x = 300 y = 147 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_nm_6]"
+			maxWidth = 152
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_so_i6_nmw"
+			position = { x = 300 y = 147 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_nm_6]"
+			maxWidth = 224
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_i6_mi"
+			position = { x = 454 y = 148 }
+			quadTextureSprite = "GFX_pww_diplo_prev"
+		}
+		instantTextBoxType = {
+			name = "pww_so_i6_am"
+			position = { x = 470 y = 147 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_am_6]"
+			maxWidth = 38
+			maxHeight = 18
+			format = centre
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_i6_pl"
+			position = { x = 508 y = 148 }
+			quadTextureSprite = "GFX_pww_diplo_next"
+		}
+		buttonType = {
+			name = "pww_so_i6_x"
+			position = { x = 528 y = 148 }
+			quadTextureSprite = "GFX_closebutton_16"
+			pdx_tooltip = "pww_dt_tt_remove"
+		}
+		instantTextBoxType = {
+			name = "pww_so_i6_hi"
+			position = { x = 300 y = 166 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_his_6]"
+			maxWidth = 244
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_i6_lmi"
+			position = { x = 300 y = 167 }
+			quadTextureSprite = "GFX_pww_diplo_prev"
+		}
+		instantTextBoxType = {
+			name = "pww_so_i6_lst"
+			position = { x = 318 y = 166 }
+			font = "hoi_16mbs"
+			text = "pww_dt_state_6"
+			maxWidth = 190
+			maxHeight = 18
+			format = centre
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_i6_lpl"
+			position = { x = 508 y = 167 }
+			quadTextureSprite = "GFX_pww_diplo_next"
+		}
+		instantTextBoxType = {
+			name = "pww_so_i7_nm"
+			position = { x = 300 y = 187 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_nm_7]"
+			maxWidth = 152
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_so_i7_nmw"
+			position = { x = 300 y = 187 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_nm_7]"
+			maxWidth = 224
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_i7_mi"
+			position = { x = 454 y = 188 }
+			quadTextureSprite = "GFX_pww_diplo_prev"
+		}
+		instantTextBoxType = {
+			name = "pww_so_i7_am"
+			position = { x = 470 y = 187 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_am_7]"
+			maxWidth = 38
+			maxHeight = 18
+			format = centre
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_i7_pl"
+			position = { x = 508 y = 188 }
+			quadTextureSprite = "GFX_pww_diplo_next"
+		}
+		buttonType = {
+			name = "pww_so_i7_x"
+			position = { x = 528 y = 188 }
+			quadTextureSprite = "GFX_closebutton_16"
+			pdx_tooltip = "pww_dt_tt_remove"
+		}
+		instantTextBoxType = {
+			name = "pww_so_i7_hi"
+			position = { x = 300 y = 206 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_his_7]"
+			maxWidth = 244
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_i7_lmi"
+			position = { x = 300 y = 207 }
+			quadTextureSprite = "GFX_pww_diplo_prev"
+		}
+		instantTextBoxType = {
+			name = "pww_so_i7_lst"
+			position = { x = 318 y = 206 }
+			font = "hoi_16mbs"
+			text = "pww_dt_state_7"
+			maxWidth = 190
+			maxHeight = 18
+			format = centre
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_i7_lpl"
+			position = { x = 508 y = 207 }
+			quadTextureSprite = "GFX_pww_diplo_next"
+		}
+		buttonType = {
+			name = "pww_so_add0_0"
+			position = { x = 40 y = 68 }
+			quadTextureSprite = "GFX_pww_dt_add"
+			size = { x = 244 y = 22 }
+			buttonText = "pww_dt_add_0"
+			buttonFont = "hoi_16mbs"
+		}
+		buttonType = {
+			name = "pww_so_add0_1"
+			position = { x = 40 y = 108 }
+			quadTextureSprite = "GFX_pww_dt_add"
+			size = { x = 244 y = 22 }
+			buttonText = "pww_dt_add_0"
+			buttonFont = "hoi_16mbs"
+		}
+		buttonType = {
+			name = "pww_so_add0_2"
+			position = { x = 40 y = 148 }
+			quadTextureSprite = "GFX_pww_dt_add"
+			size = { x = 244 y = 22 }
+			buttonText = "pww_dt_add_0"
+			buttonFont = "hoi_16mbs"
+		}
+		buttonType = {
+			name = "pww_so_add0_3"
+			position = { x = 40 y = 188 }
+			quadTextureSprite = "GFX_pww_dt_add"
+			size = { x = 244 y = 22 }
+			buttonText = "pww_dt_add_0"
+			buttonFont = "hoi_16mbs"
+		}
+		buttonType = {
+			name = "pww_so_add1_0"
+			position = { x = 300 y = 68 }
+			quadTextureSprite = "GFX_pww_dt_add"
+			size = { x = 244 y = 22 }
+			buttonText = "pww_dt_add_1"
+			buttonFont = "hoi_16mbs"
+		}
+		buttonType = {
+			name = "pww_so_add1_1"
+			position = { x = 300 y = 108 }
+			quadTextureSprite = "GFX_pww_dt_add"
+			size = { x = 244 y = 22 }
+			buttonText = "pww_dt_add_1"
+			buttonFont = "hoi_16mbs"
+		}
+		buttonType = {
+			name = "pww_so_add1_2"
+			position = { x = 300 y = 148 }
+			quadTextureSprite = "GFX_pww_dt_add"
+			size = { x = 244 y = 22 }
+			buttonText = "pww_dt_add_1"
+			buttonFont = "hoi_16mbs"
+		}
+		buttonType = {
+			name = "pww_so_add1_3"
+			position = { x = 300 y = 188 }
+			quadTextureSprite = "GFX_pww_dt_add"
+			size = { x = 244 y = 22 }
+			buttonText = "pww_dt_add_1"
+			buttonFont = "hoi_16mbs"
+		}
+		instantTextBoxType = {
+			name = "pww_so_len_l"
+			position = { x = 40 y = 235 }
+			font = "hoi_16mbs"
+			text = "pww_dt_len"
+			maxWidth = 60
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_len0_on"
+			position = { x = 102 y = 232 }
+			quadTextureSprite = "GFX_pww_dt_seg_on"
+			size = { x = 106 y = 22 }
+			buttonText = "pww_dt_len_on_0"
+			buttonFont = "hoi_16mbs"
+		}
+		buttonType = {
+			name = "pww_so_len0_off"
+			position = { x = 102 y = 232 }
+			quadTextureSprite = "GFX_pww_dt_seg"
+			size = { x = 106 y = 22 }
+			buttonText = "pww_dt_len_0"
+			buttonFont = "hoi_16mbs"
+		}
+		buttonType = {
+			name = "pww_so_len1_on"
+			position = { x = 212 y = 232 }
+			quadTextureSprite = "GFX_pww_dt_seg_on"
+			size = { x = 106 y = 22 }
+			buttonText = "pww_dt_len_on_1"
+			buttonFont = "hoi_16mbs"
+		}
+		buttonType = {
+			name = "pww_so_len1_off"
+			position = { x = 212 y = 232 }
+			quadTextureSprite = "GFX_pww_dt_seg"
+			size = { x = 106 y = 22 }
+			buttonText = "pww_dt_len_1"
+			buttonFont = "hoi_16mbs"
+		}
+		buttonType = {
+			name = "pww_so_len2_on"
+			position = { x = 322 y = 232 }
+			quadTextureSprite = "GFX_pww_dt_seg_on"
+			size = { x = 106 y = 22 }
+			buttonText = "pww_dt_len_on_2"
+			buttonFont = "hoi_16mbs"
+		}
+		buttonType = {
+			name = "pww_so_len2_off"
+			position = { x = 322 y = 232 }
+			quadTextureSprite = "GFX_pww_dt_seg"
+			size = { x = 106 y = 22 }
+			buttonText = "pww_dt_len_2"
+			buttonFont = "hoi_16mbs"
+		}
+		buttonType = {
+			name = "pww_so_len3_on"
+			position = { x = 432 y = 232 }
+			quadTextureSprite = "GFX_pww_dt_seg_on"
+			size = { x = 106 y = 22 }
+			buttonText = "pww_dt_len_on_3"
+			buttonFont = "hoi_16mbs"
+		}
+		buttonType = {
+			name = "pww_so_len3_off"
+			position = { x = 432 y = 232 }
+			quadTextureSprite = "GFX_pww_dt_seg"
+			size = { x = 106 y = 22 }
+			buttonText = "pww_dt_len_3"
+			buttonFont = "hoi_16mbs"
+		}
+		instantTextBoxType = {
+			name = "pww_so_bind_l"
+			position = { x = 40 y = 261 }
+			font = "hoi_16mbs"
+			text = "pww_dt_bind"
+			maxWidth = 60
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_bind0_on"
+			position = { x = 102 y = 258 }
+			quadTextureSprite = "GFX_pww_dt_seg_on"
+			size = { x = 219 y = 22 }
+			buttonText = "pww_dt_bind_on_0"
+			buttonFont = "hoi_16mbs"
+		}
+		buttonType = {
+			name = "pww_so_bind0_off"
+			position = { x = 102 y = 258 }
+			quadTextureSprite = "GFX_pww_dt_seg"
+			size = { x = 219 y = 22 }
+			buttonText = "pww_dt_bind_0"
+			buttonFont = "hoi_16mbs"
+			pdx_tooltip = "pww_dt_tt_fixed"
+		}
+		buttonType = {
+			name = "pww_so_bind1_on"
+			position = { x = 325 y = 258 }
+			quadTextureSprite = "GFX_pww_dt_seg_on"
+			size = { x = 219 y = 22 }
+			buttonText = "pww_dt_bind_on_1"
+			buttonFont = "hoi_16mbs"
+		}
+		buttonType = {
+			name = "pww_so_bind1_off"
+			position = { x = 325 y = 258 }
+			quadTextureSprite = "GFX_pww_dt_seg"
+			size = { x = 219 y = 22 }
+			buttonText = "pww_dt_bind_1"
+			buttonFont = "hoi_16mbs"
+		}
+		instantTextBoxType = {
+			name = "pww_so_note"
+			position = { x = 40 y = 282 }
+			font = "hoi_16mbs"
+			text = "pww_dt_note_once"
+			maxWidth = 504
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_mbg6"
+			position = { x = 40 y = 46 }
+			quadTextureSprite = "GFX_pww_dt_menu"
+			size = { x = 504 y = 174 }
+		}
+		buttonType = {
+			name = "pww_so_mbg7"
+			position = { x = 40 y = 46 }
+			quadTextureSprite = "GFX_pww_dt_menu"
+			size = { x = 504 y = 222 }
+		}
+		buttonType = {
+			name = "pww_so_mbg8"
+			position = { x = 40 y = 46 }
+			quadTextureSprite = "GFX_pww_dt_menu"
+			size = { x = 504 y = 244 }
+		}
+		instantTextBoxType = {
+			name = "pww_so_mtitle"
+			position = { x = 52 y = 55 }
+			font = "hoi_18mbs"
+			text = "[pww_dt_sl_mtitle]"
+			maxWidth = 300
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_mclose"
+			position = { x = 518 y = 56 }
+			quadTextureSprite = "GFX_closebutton_16"
+		}
+		buttonType = {
+			name = "pww_so_m0"
+			position = { x = 48 y = 80 }
+			quadTextureSprite = "GFX_pww_dt_menurow"
+			size = { x = 488 y = 20 }
+		}
+		instantTextBoxType = {
+			name = "pww_so_m0_l"
+			position = { x = 56 y = 81 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_ml_0]"
+			maxWidth = 210
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_so_m0_h"
+			position = { x = 266 y = 81 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_mh_0]"
+			maxWidth = 262
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_m1"
+			position = { x = 48 y = 102 }
+			quadTextureSprite = "GFX_pww_dt_menurow"
+			size = { x = 488 y = 20 }
+		}
+		instantTextBoxType = {
+			name = "pww_so_m1_l"
+			position = { x = 56 y = 103 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_ml_1]"
+			maxWidth = 210
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_so_m1_h"
+			position = { x = 266 y = 103 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_mh_1]"
+			maxWidth = 262
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_m2"
+			position = { x = 48 y = 124 }
+			quadTextureSprite = "GFX_pww_dt_menurow"
+			size = { x = 488 y = 20 }
+		}
+		instantTextBoxType = {
+			name = "pww_so_m2_l"
+			position = { x = 56 y = 125 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_ml_2]"
+			maxWidth = 210
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_so_m2_h"
+			position = { x = 266 y = 125 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_mh_2]"
+			maxWidth = 262
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_m3"
+			position = { x = 48 y = 146 }
+			quadTextureSprite = "GFX_pww_dt_menurow"
+			size = { x = 488 y = 20 }
+		}
+		instantTextBoxType = {
+			name = "pww_so_m3_l"
+			position = { x = 56 y = 147 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_ml_3]"
+			maxWidth = 210
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_so_m3_h"
+			position = { x = 266 y = 147 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_mh_3]"
+			maxWidth = 262
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_m4"
+			position = { x = 48 y = 168 }
+			quadTextureSprite = "GFX_pww_dt_menurow"
+			size = { x = 488 y = 20 }
+		}
+		instantTextBoxType = {
+			name = "pww_so_m4_l"
+			position = { x = 56 y = 169 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_ml_4]"
+			maxWidth = 210
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_so_m4_h"
+			position = { x = 266 y = 169 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_mh_4]"
+			maxWidth = 262
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_m5"
+			position = { x = 48 y = 190 }
+			quadTextureSprite = "GFX_pww_dt_menurow"
+			size = { x = 488 y = 20 }
+		}
+		instantTextBoxType = {
+			name = "pww_so_m5_l"
+			position = { x = 56 y = 191 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_ml_5]"
+			maxWidth = 210
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_so_m5_h"
+			position = { x = 266 y = 191 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_mh_5]"
+			maxWidth = 262
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_m6"
+			position = { x = 48 y = 212 }
+			quadTextureSprite = "GFX_pww_dt_menurow"
+			size = { x = 488 y = 20 }
+		}
+		instantTextBoxType = {
+			name = "pww_so_m6_l"
+			position = { x = 56 y = 213 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_ml_6]"
+			maxWidth = 210
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_so_m6_h"
+			position = { x = 266 y = 213 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_mh_6]"
+			maxWidth = 262
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_m7"
+			position = { x = 48 y = 234 }
+			quadTextureSprite = "GFX_pww_dt_menurow"
+			size = { x = 488 y = 20 }
+		}
+		instantTextBoxType = {
+			name = "pww_so_m7_l"
+			position = { x = 56 y = 235 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_ml_7]"
+			maxWidth = 210
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_so_m7_h"
+			position = { x = 266 y = 235 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_mh_7]"
+			maxWidth = 262
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+		}
+		buttonType = {
+			name = "pww_so_mback7"
+			position = { x = 48 y = 238 }
+			quadTextureSprite = "GFX_pww_dt_menurow"
+			size = { x = 120 y = 20 }
+			buttonText = "pww_dt_back"
+			buttonFont = "hoi_16mbs"
+		}
+		buttonType = {
+			name = "pww_so_mback8"
+			position = { x = 48 y = 260 }
+			quadTextureSprite = "GFX_pww_dt_menurow"
+			size = { x = 120 y = 20 }
+			buttonText = "pww_dt_back"
+			buttonFont = "hoi_16mbs"
+		}
+		iconType = {
+			name = "pww_so_div1"
+			position = { x = 40 y = 306 }
+			spriteType = "GFX_divider"
+			scale = 0.981
+		}
+		instantTextBoxType = {
+			name = "pww_so_sum"
+			position = { x = 40 y = 314 }
+			font = "hoi_16mbs"
+			text = "pww_dt_summary_0"
+			maxWidth = 504
+			maxHeight = 52
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_so_mkt"
+			position = { x = 40 y = 366 }
+			font = "hoi_16mbs"
+			text = "pww_dt_market_0"
+			maxWidth = 504
+			maxHeight = 34
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_so_inv"
+			position = { x = 40 y = 366 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_invalid]"
+			maxWidth = 504
+			maxHeight = 34
+			format = left
+			fixedsize = yes
+		}
+		iconType = {
+			name = "pww_so_div2"
+			position = { x = 40 y = 400 }
+			spriteType = "GFX_divider"
+			scale = 0.981
+		}
+		instantTextBoxType = {
+			name = "pww_so_envoy"
+			position = { x = 40 y = 408 }
+			font = "hoi_16mbs"
+			text = "pww_dt_envoy"
+			maxWidth = 504
+			maxHeight = 36
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_so_chips"
+			position = { x = 40 y = 446 }
+			font = "hoi_16mbs"
+			text = "pww_dt_chips"
+			maxWidth = 504
+			maxHeight = 18
 			format = left
 			fixedsize = yes
 		}
 		instantTextBoxType = {
 			name = "pww_so_round"
-			position = { x = 365 y = 10 }
+			position = { x = 200 y = 468 }
 			font = "hoi_16mbs"
-			text = "[pww_diplo_sl_o_round]"
-			maxWidth = 144
-			maxHeight = 22
-			format = right
-			fixedsize = yes
-		}
-		instantTextBoxType = {
-			name = "pww_so_deal_label"
-			position = { x = 77 y = 43 }
-			font = "hoi_16mbs"
-			text = "pww_diplo_lbl_deal"
-			maxWidth = 118
-			maxHeight = 22
-			format = left
-			fixedsize = yes
-		}
-		buttonType = {
-			name = "pww_so_deal_prev"
-			position = { x = 204 y = 44 }
-			quadTextureSprite = "GFX_pww_diplo_prev"
-		}
-		instantTextBoxType = {
-			name = "pww_so_deal_value"
-			position = { x = 224 y = 43 }
-			font = "hoi_16mbs"
-			text = "[pww_diplo_sl_o_deal]"
-			maxWidth = 265
-			maxHeight = 22
-			format = centre
-			fixedsize = yes
-		}
-		buttonType = {
-			name = "pww_so_deal_next"
-			position = { x = 493 y = 44 }
-			quadTextureSprite = "GFX_pww_diplo_next"
-		}
-		instantTextBoxType = {
-			name = "pww_so_res_label"
-			position = { x = 77 y = 69 }
-			font = "hoi_16mbs"
-			text = "pww_diplo_lbl_res"
-			maxWidth = 118
-			maxHeight = 22
-			format = left
-			fixedsize = yes
-		}
-		buttonType = {
-			name = "pww_so_res_prev"
-			position = { x = 204 y = 70 }
-			quadTextureSprite = "GFX_pww_diplo_prev"
-		}
-		instantTextBoxType = {
-			name = "pww_so_res_value"
-			position = { x = 224 y = 69 }
-			font = "hoi_16mbs"
-			text = "[pww_diplo_sl_o_res]"
-			maxWidth = 265
-			maxHeight = 22
-			format = centre
-			fixedsize = yes
-		}
-		buttonType = {
-			name = "pww_so_res_next"
-			position = { x = 493 y = 70 }
-			quadTextureSprite = "GFX_pww_diplo_next"
-		}
-		instantTextBoxType = {
-			name = "pww_so_qty_label"
-			position = { x = 77 y = 95 }
-			font = "hoi_16mbs"
-			text = "[pww_diplo_sl_o_l3]"
-			maxWidth = 118
-			maxHeight = 22
-			format = left
-			fixedsize = yes
-		}
-		buttonType = {
-			name = "pww_so_qty_prev"
-			position = { x = 204 y = 96 }
-			quadTextureSprite = "GFX_pww_diplo_prev"
-		}
-		instantTextBoxType = {
-			name = "pww_so_qty_value"
-			position = { x = 224 y = 95 }
-			font = "hoi_16mbs"
-			text = "[pww_diplo_sl_o_v3]"
-			maxWidth = 265
-			maxHeight = 22
-			format = centre
-			fixedsize = yes
-		}
-		buttonType = {
-			name = "pww_so_qty_next"
-			position = { x = 493 y = 96 }
-			quadTextureSprite = "GFX_pww_diplo_next"
-		}
-		instantTextBoxType = {
-			name = "pww_so_dur_label"
-			position = { x = 77 y = 121 }
-			font = "hoi_16mbs"
-			text = "pww_diplo_lbl_dur"
-			maxWidth = 118
-			maxHeight = 22
-			format = left
-			fixedsize = yes
-		}
-		buttonType = {
-			name = "pww_so_dur_prev"
-			position = { x = 204 y = 122 }
-			quadTextureSprite = "GFX_pww_diplo_prev"
-		}
-		instantTextBoxType = {
-			name = "pww_so_dur_value"
-			position = { x = 224 y = 121 }
-			font = "hoi_16mbs"
-			text = "[pww_diplo_sl_o_dur]"
-			maxWidth = 265
-			maxHeight = 22
-			format = centre
-			fixedsize = yes
-		}
-		buttonType = {
-			name = "pww_so_dur_next"
-			position = { x = 493 y = 122 }
-			quadTextureSprite = "GFX_pww_diplo_next"
-		}
-		instantTextBoxType = {
-			name = "pww_so_pay_label"
-			position = { x = 77 y = 147 }
-			font = "hoi_16mbs"
-			text = "pww_diplo_lbl_pay"
-			maxWidth = 118
-			maxHeight = 22
-			format = left
-			fixedsize = yes
-		}
-		buttonType = {
-			name = "pww_so_pay_prev"
-			position = { x = 204 y = 148 }
-			quadTextureSprite = "GFX_pww_diplo_prev"
-		}
-		instantTextBoxType = {
-			name = "pww_so_pay_value"
-			position = { x = 224 y = 147 }
-			font = "hoi_16mbs"
-			text = "[pww_diplo_sl_o_pay]"
-			maxWidth = 265
-			maxHeight = 22
-			format = centre
-			fixedsize = yes
-		}
-		buttonType = {
-			name = "pww_so_pay_next"
-			position = { x = 493 y = 148 }
-			quadTextureSprite = "GFX_pww_diplo_next"
-		}
-		instantTextBoxType = {
-			name = "pww_so_price_label"
-			position = { x = 77 y = 173 }
-			font = "hoi_16mbs"
-			text = "pww_diplo_lbl_price"
-			maxWidth = 118
-			maxHeight = 22
-			format = left
-			fixedsize = yes
-		}
-		buttonType = {
-			name = "pww_so_price_prev"
-			position = { x = 204 y = 174 }
-			quadTextureSprite = "GFX_pww_diplo_prev"
-		}
-		instantTextBoxType = {
-			name = "pww_so_price_value"
-			position = { x = 224 y = 173 }
-			font = "hoi_16mbs"
-			text = "[pww_diplo_sl_o_price]"
-			maxWidth = 265
-			maxHeight = 22
-			format = centre
-			fixedsize = yes
-		}
-		buttonType = {
-			name = "pww_so_price_next"
-			position = { x = 493 y = 174 }
-			quadTextureSprite = "GFX_pww_diplo_next"
-		}
-		instantTextBoxType = {
-			name = "pww_so_sweet_label"
-			position = { x = 77 y = 199 }
-			font = "hoi_16mbs"
-			text = "pww_diplo_lbl_sweet"
-			maxWidth = 118
-			maxHeight = 22
-			format = left
-			fixedsize = yes
-		}
-		buttonType = {
-			name = "pww_so_sweet_prev"
-			position = { x = 204 y = 200 }
-			quadTextureSprite = "GFX_pww_diplo_prev"
-		}
-		instantTextBoxType = {
-			name = "pww_so_sweet_value"
-			position = { x = 224 y = 199 }
-			font = "hoi_16mbs"
-			text = "[pww_diplo_sl_o_sweet]"
-			maxWidth = 265
-			maxHeight = 22
-			format = centre
-			fixedsize = yes
-			pdx_tooltip = "pww_diplo_tt_sweet"
-		}
-		buttonType = {
-			name = "pww_so_sweet_next"
-			position = { x = 493 y = 200 }
-			quadTextureSprite = "GFX_pww_diplo_next"
-		}
-		instantTextBoxType = {
-			name = "pww_so_fig_label"
-			position = { x = 77 y = 225 }
-			font = "hoi_16mbs"
-			text = "pww_diplo_lbl_fig"
-			maxWidth = 118
-			maxHeight = 22
-			format = left
-			fixedsize = yes
-		}
-		buttonType = {
-			name = "pww_so_fig_prev"
-			position = { x = 204 y = 226 }
-			quadTextureSprite = "GFX_pww_diplo_prev"
-		}
-		instantTextBoxType = {
-			name = "pww_so_fig_value"
-			position = { x = 224 y = 225 }
-			font = "hoi_16mbs"
-			text = "[pww_diplo_sl_o_fig]"
-			maxWidth = 265
-			maxHeight = 22
-			format = centre
-			fixedsize = yes
-			pdx_tooltip = "pww_diplo_tt_fig"
-		}
-		buttonType = {
-			name = "pww_so_fig_next"
-			position = { x = 493 y = 226 }
-			quadTextureSprite = "GFX_pww_diplo_next"
-		}
-		iconType = {
-			name = "pww_so_div"
-			position = { x = 77 y = 252 }
-			spriteType = "GFX_divider"
-			scale = 0.840
-		}
-		instantTextBoxType = {
-			name = "pww_so_bands"
-			position = { x = 77 y = 264 }
-			font = "hoi_16mbs"
-			text = "[pww_diplo_sl_o_bands]"
-			maxWidth = 432
-			maxHeight = 22
-			format = centre
-			fixedsize = yes
-		}
-		instantTextBoxType = {
-			name = "pww_so_invalid"
-			position = { x = 77 y = 286 }
-			font = "hoi_16mbs"
-			text = "[pww_diplo_sl_o_invalid]"
-			maxWidth = 432
-			maxHeight = 22
-			format = centre
-			fixedsize = yes
-		}
-		instantTextBoxType = {
-			name = "pww_so_envoy"
-			position = { x = 77 y = 308 }
-			font = "hoi_16mbs"
-			text = "[pww_diplo_sl_o_line]"
-			maxWidth = 432
-			maxHeight = 58
-			format = centre
-			fixedsize = yes
-		}
-		instantTextBoxType = {
-			name = "pww_so_redline"
-			position = { x = 77 y = 368 }
-			font = "hoi_16mbs"
-			text = "[pww_diplo_sl_o_rl]"
-			maxWidth = 432
-			maxHeight = 36
-			format = centre
-			fixedsize = yes
-		}
-		instantTextBoxType = {
-			name = "pww_so_want"
-			position = { x = 77 y = 406 }
-			font = "hoi_16mbs"
-			text = "[pww_diplo_sl_o_want]"
-			maxWidth = 432
-			maxHeight = 36
+			text = "[pww_dt_sl_round]"
+			maxWidth = 184
+			maxHeight = 18
 			format = centre
 			fixedsize = yes
 		}
@@ -1060,275 +1946,607 @@ guiTypes = {
 	containerWindowType = {
 		name = "pww_diplo_recv_offer"
 		position = { x = 0 y = 0 }
-		size = { width = 584 height = 452 }
+		size = { width = 584 height = 470 }
 		moveable = no
 		orientation = center
 		clipping = no
 
 		instantTextBoxType = {
-			name = "pww_ro_title"
-			position = { x = 77 y = 8 }
+			name = "pww_ro_us"
+			position = { x = 40 y = 2 }
 			font = "hoi_18mbs"
-			text = "[pww_diplo_sl_r_title]"
-			maxWidth = 432
-			maxHeight = 22
-			format = centre
-			fixedsize = yes
-		}
-		instantTextBoxType = {
-			name = "pww_ro_deal_label"
-			position = { x = 77 y = 43 }
-			font = "hoi_16mbs"
-			text = "pww_diplo_lbl_deal"
-			maxWidth = 118
-			maxHeight = 22
+			text = "pww_dt_us_1"
+			maxWidth = 220
+			maxHeight = 18
 			format = left
 			fixedsize = yes
 		}
 		instantTextBoxType = {
-			name = "pww_ro_deal_value"
-			position = { x = 224 y = 43 }
+			name = "pww_ro_us_sub"
+			position = { x = 40 y = 22 }
 			font = "hoi_16mbs"
-			text = "[pww_diplo_sl_r_deal]"
-			maxWidth = 285
-			maxHeight = 22
-			format = centre
-			fixedsize = yes
-		}
-		instantTextBoxType = {
-			name = "pww_ro_res_label"
-			position = { x = 77 y = 69 }
-			font = "hoi_16mbs"
-			text = "pww_diplo_lbl_res"
-			maxWidth = 118
-			maxHeight = 22
+			text = "pww_dt_you"
+			maxWidth = 220
+			maxHeight = 18
 			format = left
 			fixedsize = yes
 		}
 		instantTextBoxType = {
-			name = "pww_ro_res_value"
-			position = { x = 224 y = 69 }
+			name = "pww_ro_and"
+			position = { x = 262 y = 10 }
 			font = "hoi_16mbs"
-			text = "[pww_diplo_sl_r_res]"
-			maxWidth = 285
-			maxHeight = 22
+			text = "pww_dt_and"
+			maxWidth = 60
+			maxHeight = 18
 			format = centre
 			fixedsize = yes
 		}
 		instantTextBoxType = {
-			name = "pww_ro_qty_label"
-			position = { x = 77 y = 95 }
+			name = "pww_ro_them"
+			position = { x = 324 y = 2 }
+			font = "hoi_18mbs"
+			text = "pww_dt_them_1"
+			maxWidth = 220
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ro_them_sub"
+			position = { x = 324 y = 22 }
 			font = "hoi_16mbs"
-			text = "[pww_diplo_sl_r_l3]"
-			maxWidth = 118
-			maxHeight = 22
+			text = "[pww_dt_sl_top_1]"
+			maxWidth = 220
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+		}
+		iconType = {
+			name = "pww_ro_div0"
+			position = { x = 40 y = 36 }
+			spriteType = "GFX_divider"
+			scale = 0.981
+		}
+		instantTextBoxType = {
+			name = "pww_ro_h0"
+			position = { x = 40 y = 46 }
+			font = "hoi_16mbs"
+			text = "pww_dt_h_give"
+			maxWidth = 244
+			maxHeight = 18
 			format = left
 			fixedsize = yes
 		}
 		instantTextBoxType = {
-			name = "pww_ro_qty_value"
-			position = { x = 224 y = 95 }
+			name = "pww_ro_h1"
+			position = { x = 300 y = 46 }
 			font = "hoi_16mbs"
-			text = "[pww_diplo_sl_r_v3]"
-			maxWidth = 285
-			maxHeight = 22
-			format = centre
-			fixedsize = yes
-		}
-		instantTextBoxType = {
-			name = "pww_ro_dur_label"
-			position = { x = 77 y = 121 }
-			font = "hoi_16mbs"
-			text = "pww_diplo_lbl_dur"
-			maxWidth = 118
-			maxHeight = 22
+			text = "pww_dt_h_get"
+			maxWidth = 244
+			maxHeight = 18
 			format = left
 			fixedsize = yes
 		}
 		instantTextBoxType = {
-			name = "pww_ro_dur_value"
-			position = { x = 224 y = 121 }
+			name = "pww_ro_i0_nm"
+			position = { x = 300 y = 67 }
 			font = "hoi_16mbs"
-			text = "[pww_diplo_sl_r_dur]"
-			maxWidth = 285
-			maxHeight = 22
-			format = centre
-			fixedsize = yes
-		}
-		instantTextBoxType = {
-			name = "pww_ro_pay_label"
-			position = { x = 77 y = 147 }
-			font = "hoi_16mbs"
-			text = "pww_diplo_lbl_pay"
-			maxWidth = 118
-			maxHeight = 22
+			text = "[pww_dt_sl_nm_0]"
+			maxWidth = 172
+			maxHeight = 18
 			format = left
 			fixedsize = yes
 		}
 		instantTextBoxType = {
-			name = "pww_ro_pay_value"
-			position = { x = 224 y = 147 }
+			name = "pww_ro_i0_am"
+			position = { x = 474 y = 67 }
 			font = "hoi_16mbs"
-			text = "[pww_diplo_sl_r_pay]"
-			maxWidth = 285
-			maxHeight = 22
-			format = centre
+			text = "[pww_dt_sl_am_0]"
+			maxWidth = 70
+			maxHeight = 18
+			format = right
 			fixedsize = yes
 		}
 		instantTextBoxType = {
-			name = "pww_ro_price_label"
-			position = { x = 77 y = 173 }
+			name = "pww_ro_i0_nmw"
+			position = { x = 300 y = 67 }
 			font = "hoi_16mbs"
-			text = "pww_diplo_lbl_price"
-			maxWidth = 118
-			maxHeight = 22
+			text = "[pww_dt_sl_nm_0]"
+			maxWidth = 244
+			maxHeight = 18
 			format = left
 			fixedsize = yes
 		}
 		instantTextBoxType = {
-			name = "pww_ro_price_value"
-			position = { x = 224 y = 173 }
+			name = "pww_ro_i0_hi"
+			position = { x = 300 y = 86 }
 			font = "hoi_16mbs"
-			text = "[pww_diplo_sl_r_price]"
-			maxWidth = 285
-			maxHeight = 22
-			format = centre
-			fixedsize = yes
-		}
-		instantTextBoxType = {
-			name = "pww_ro_sweet_label"
-			position = { x = 77 y = 199 }
-			font = "hoi_16mbs"
-			text = "pww_diplo_lbl_sweet"
-			maxWidth = 118
-			maxHeight = 22
+			text = "[pww_dt_sl_hir_0]"
+			maxWidth = 244
+			maxHeight = 18
 			format = left
 			fixedsize = yes
 		}
 		instantTextBoxType = {
-			name = "pww_ro_sweet_value"
-			position = { x = 224 y = 199 }
+			name = "pww_ro_i0_lst"
+			position = { x = 300 y = 86 }
 			font = "hoi_16mbs"
-			text = "[pww_diplo_sl_r_sweet]"
-			maxWidth = 285
-			maxHeight = 22
-			format = centre
-			fixedsize = yes
-		}
-		instantTextBoxType = {
-			name = "pww_ro_fig_label"
-			position = { x = 77 y = 225 }
-			font = "hoi_16mbs"
-			text = "pww_diplo_lbl_fig"
-			maxWidth = 118
-			maxHeight = 22
+			text = "pww_dt_state_0"
+			maxWidth = 244
+			maxHeight = 18
 			format = left
 			fixedsize = yes
 		}
 		instantTextBoxType = {
-			name = "pww_ro_fig_value"
-			position = { x = 224 y = 225 }
+			name = "pww_ro_i1_nm"
+			position = { x = 300 y = 107 }
 			font = "hoi_16mbs"
-			text = "[pww_diplo_sl_r_fig]"
-			maxWidth = 285
-			maxHeight = 22
+			text = "[pww_dt_sl_nm_1]"
+			maxWidth = 172
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ro_i1_am"
+			position = { x = 474 y = 107 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_am_1]"
+			maxWidth = 70
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ro_i1_nmw"
+			position = { x = 300 y = 107 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_nm_1]"
+			maxWidth = 244
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ro_i1_hi"
+			position = { x = 300 y = 126 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_hir_1]"
+			maxWidth = 244
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ro_i1_lst"
+			position = { x = 300 y = 126 }
+			font = "hoi_16mbs"
+			text = "pww_dt_state_1"
+			maxWidth = 244
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ro_i2_nm"
+			position = { x = 300 y = 147 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_nm_2]"
+			maxWidth = 172
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ro_i2_am"
+			position = { x = 474 y = 147 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_am_2]"
+			maxWidth = 70
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ro_i2_nmw"
+			position = { x = 300 y = 147 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_nm_2]"
+			maxWidth = 244
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ro_i2_hi"
+			position = { x = 300 y = 166 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_hir_2]"
+			maxWidth = 244
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ro_i2_lst"
+			position = { x = 300 y = 166 }
+			font = "hoi_16mbs"
+			text = "pww_dt_state_2"
+			maxWidth = 244
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ro_i3_nm"
+			position = { x = 300 y = 187 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_nm_3]"
+			maxWidth = 172
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ro_i3_am"
+			position = { x = 474 y = 187 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_am_3]"
+			maxWidth = 70
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ro_i3_nmw"
+			position = { x = 300 y = 187 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_nm_3]"
+			maxWidth = 244
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ro_i3_hi"
+			position = { x = 300 y = 206 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_hir_3]"
+			maxWidth = 244
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ro_i3_lst"
+			position = { x = 300 y = 206 }
+			font = "hoi_16mbs"
+			text = "pww_dt_state_3"
+			maxWidth = 244
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ro_i4_nm"
+			position = { x = 40 y = 67 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_nm_4]"
+			maxWidth = 172
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ro_i4_am"
+			position = { x = 214 y = 67 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_am_4]"
+			maxWidth = 70
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ro_i4_nmw"
+			position = { x = 40 y = 67 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_nm_4]"
+			maxWidth = 244
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ro_i4_hi"
+			position = { x = 40 y = 86 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_hir_4]"
+			maxWidth = 244
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ro_i4_lst"
+			position = { x = 40 y = 86 }
+			font = "hoi_16mbs"
+			text = "pww_dt_state_4"
+			maxWidth = 244
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ro_i5_nm"
+			position = { x = 40 y = 107 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_nm_5]"
+			maxWidth = 172
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ro_i5_am"
+			position = { x = 214 y = 107 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_am_5]"
+			maxWidth = 70
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ro_i5_nmw"
+			position = { x = 40 y = 107 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_nm_5]"
+			maxWidth = 244
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ro_i5_hi"
+			position = { x = 40 y = 126 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_hir_5]"
+			maxWidth = 244
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ro_i5_lst"
+			position = { x = 40 y = 126 }
+			font = "hoi_16mbs"
+			text = "pww_dt_state_5"
+			maxWidth = 244
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ro_i6_nm"
+			position = { x = 40 y = 147 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_nm_6]"
+			maxWidth = 172
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ro_i6_am"
+			position = { x = 214 y = 147 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_am_6]"
+			maxWidth = 70
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ro_i6_nmw"
+			position = { x = 40 y = 147 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_nm_6]"
+			maxWidth = 244
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ro_i6_hi"
+			position = { x = 40 y = 166 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_hir_6]"
+			maxWidth = 244
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ro_i6_lst"
+			position = { x = 40 y = 166 }
+			font = "hoi_16mbs"
+			text = "pww_dt_state_6"
+			maxWidth = 244
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ro_i7_nm"
+			position = { x = 40 y = 187 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_nm_7]"
+			maxWidth = 172
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ro_i7_am"
+			position = { x = 214 y = 187 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_am_7]"
+			maxWidth = 70
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ro_i7_nmw"
+			position = { x = 40 y = 187 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_nm_7]"
+			maxWidth = 244
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ro_i7_hi"
+			position = { x = 40 y = 206 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_hir_7]"
+			maxWidth = 244
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ro_i7_lst"
+			position = { x = 40 y = 206 }
+			font = "hoi_16mbs"
+			text = "pww_dt_state_7"
+			maxWidth = 244
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ro_terms"
+			position = { x = 40 y = 234 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_rterms]"
+			maxWidth = 504
+			maxHeight = 18
 			format = centre
 			fixedsize = yes
 		}
 		iconType = {
-			name = "pww_ro_div"
-			position = { x = 77 y = 252 }
+			name = "pww_ro_div1"
+			position = { x = 40 y = 258 }
 			spriteType = "GFX_divider"
-			scale = 0.840
+			scale = 0.981
 		}
 		instantTextBoxType = {
-			name = "pww_ro_bands"
-			position = { x = 77 y = 264 }
+			name = "pww_ro_sum"
+			position = { x = 40 y = 266 }
 			font = "hoi_16mbs"
-			text = "[pww_diplo_sl_r_bands]"
-			maxWidth = 432
-			maxHeight = 22
-			format = centre
+			text = "pww_dt_summary_1"
+			maxWidth = 504
+			maxHeight = 52
+			format = left
 			fixedsize = yes
 		}
 		instantTextBoxType = {
-			name = "pww_ro_line"
-			position = { x = 77 y = 286 }
+			name = "pww_ro_mkt"
+			position = { x = 40 y = 318 }
 			font = "hoi_16mbs"
-			text = "[pww_diplo_sl_r_line]"
-			maxWidth = 432
-			maxHeight = 40
-			format = centre
+			text = "pww_dt_market_1"
+			maxWidth = 504
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+		}
+		iconType = {
+			name = "pww_ro_div2"
+			position = { x = 40 y = 340 }
+			spriteType = "GFX_divider"
+			scale = 0.981
+		}
+		instantTextBoxType = {
+			name = "pww_ro_line"
+			position = { x = 40 y = 350 }
+			font = "hoi_16mbs"
+			text = "[pww_dt_sl_rline]"
+			maxWidth = 504
+			maxHeight = 36
+			format = left
 			fixedsize = yes
 		}
 		buttonType = {
 			name = "pww_ro_c1_off"
-			position = { x = 77 y = 334 }
+			position = { x = 40 y = 390 }
 			quadTextureSprite = "GFX_pww_diplo_box_off"
 		}
 		buttonType = {
 			name = "pww_ro_c1_on"
-			position = { x = 77 y = 334 }
+			position = { x = 40 y = 390 }
 			quadTextureSprite = "GFX_pww_diplo_box_on"
 		}
 		instantTextBoxType = {
-			name = "pww_ro_c1_label"
-			position = { x = 101 y = 333 }
+			name = "pww_ro_c1_l"
+			position = { x = 62 y = 389 }
 			font = "hoi_16mbs"
-			text = "pww_diplo_lbl_counter_price"
-			maxWidth = 408
-			maxHeight = 22
+			text = "pww_dt_counter_1"
+			maxWidth = 482
+			maxHeight = 18
 			format = left
 			fixedsize = yes
 		}
 		buttonType = {
 			name = "pww_ro_c2_off"
-			position = { x = 77 y = 358 }
+			position = { x = 40 y = 412 }
 			quadTextureSprite = "GFX_pww_diplo_box_off"
 		}
 		buttonType = {
 			name = "pww_ro_c2_on"
-			position = { x = 77 y = 358 }
+			position = { x = 40 y = 412 }
 			quadTextureSprite = "GFX_pww_diplo_box_on"
 		}
 		instantTextBoxType = {
-			name = "pww_ro_c2_label"
-			position = { x = 101 y = 357 }
+			name = "pww_ro_c2_l"
+			position = { x = 62 y = 411 }
 			font = "hoi_16mbs"
-			text = "pww_diplo_lbl_counter_amount"
-			maxWidth = 408
-			maxHeight = 22
+			text = "pww_dt_counter_2"
+			maxWidth = 482
+			maxHeight = 18
 			format = left
 			fixedsize = yes
 		}
 		buttonType = {
 			name = "pww_ro_c3_off"
-			position = { x = 77 y = 382 }
+			position = { x = 40 y = 434 }
 			quadTextureSprite = "GFX_pww_diplo_box_off"
 		}
 		buttonType = {
 			name = "pww_ro_c3_on"
-			position = { x = 77 y = 382 }
+			position = { x = 40 y = 434 }
 			quadTextureSprite = "GFX_pww_diplo_box_on"
 		}
 		instantTextBoxType = {
-			name = "pww_ro_c3_label"
-			position = { x = 101 y = 381 }
+			name = "pww_ro_c3_l"
+			position = { x = 62 y = 433 }
 			font = "hoi_16mbs"
-			text = "pww_diplo_lbl_counter_term"
-			maxWidth = 408
-			maxHeight = 22
+			text = "pww_dt_counter_3"
+			maxWidth = 482
+			maxHeight = 18
 			format = left
 			fixedsize = yes
 		}
 		instantTextBoxType = {
 			name = "pww_ro_hint"
-			position = { x = 77 y = 404 }
+			position = { x = 40 y = 456 }
 			font = "hoi_16mbs"
-			text = "pww_diplo_gui_counter_hint"
-			maxWidth = 432
-			maxHeight = 36
-			format = centre
+			text = "pww_dt_counter_hint"
+			maxWidth = 504
+			maxHeight = 18
+			format = left
 			fixedsize = yes
 		}
 	}

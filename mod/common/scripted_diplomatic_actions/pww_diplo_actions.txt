@@ -66,8 +66,9 @@ scripted_diplomatic_actions = {
 							limit = { check_variable = { pww_diplo_ai_offer_to = pww_dk_target } }
 							set_variable = { pww_do_res = pww_diplo_ai_offer_res }
 						}
-						pww_diplo_ai_build_draft = yes
+						pww_diplo_ai_build_bundle = yes
 						pww_diplo_refresh_display = yes
+						pww_diplo_bundle_mirror = yes
 					}
 				}
 			}
@@ -132,7 +133,7 @@ scripted_diplomatic_actions = {
 			else = {
 				ROOT = {
 					clr_country_flag = pww_diplo_pending
-					pww_diplo_eval_offer = yes
+					pww_diplo_eval_bundle = yes
 					pww_diplo_talk_reply = yes
 				}
 			}
@@ -141,7 +142,6 @@ scripted_diplomatic_actions = {
 		receive_scripted_gui = pww_diplo_recv_offer_gui
 		reset_receive_effect = {
 			ROOT = {
-				pww_diplo_eval_offer = yes
 				pww_diplo_mirror_for_receiver = yes
 			}
 		}
@@ -172,13 +172,6 @@ scripted_diplomatic_actions = {
 				base = 0
 				modifier = {
 					set_temp_variable = { pww_dacc = ROOT.pww_do_e_want }
-					add = var:pww_dacc
-				}
-			}
-			pww_diplo_acc_sweeteners = {
-				base = 0
-				modifier = {
-					set_temp_variable = { pww_dacc = ROOT.pww_do_e_sweet }
 					add = var:pww_dacc
 				}
 			}
@@ -283,18 +276,31 @@ scripted_diplomatic_actions = {
 			set_temp_variable = { pww_dk_target = THIS }
 			set_temp_variable = { pww_dk_act = 1 }
 			ROOT = {
-				pww_diplo_offer_begin = yes
 				if = {
 					limit = {
 						is_ai = yes
-						check_variable = { pww_dob_keep = 0 }
+						has_country_flag = pww_diplo_ai_resend
+						check_variable = { pww_do_target = pww_dk_target }
+						check_variable = { pww_do_act = 1 }
 					}
+					clr_country_flag = pww_diplo_ai_resend
+					pww_diplo_offer_changed = yes
+				}
+				else = {
+					pww_diplo_offer_begin = yes
 					if = {
-						limit = { check_variable = { pww_diplo_ai_lease_to = pww_dk_target } }
-						set_variable = { pww_do_res = pww_diplo_ai_lease_res }
+						limit = {
+							is_ai = yes
+							check_variable = { pww_dob_keep = 0 }
+						}
+						if = {
+							limit = { check_variable = { pww_diplo_ai_lease_to = pww_dk_target } }
+							set_variable = { pww_do_res = pww_diplo_ai_lease_res }
+						}
+						pww_diplo_ai_build_bundle = yes
+						pww_diplo_refresh_display = yes
+						pww_diplo_bundle_mirror = yes
 					}
-					pww_diplo_ai_build_draft = yes
-					pww_diplo_refresh_display = yes
 				}
 			}
 		}
@@ -357,7 +363,7 @@ scripted_diplomatic_actions = {
 			else = {
 				ROOT = {
 					clr_country_flag = pww_diplo_pending
-					pww_diplo_eval_offer = yes
+					pww_diplo_eval_bundle = yes
 					pww_diplo_talk_reply = yes
 				}
 			}
@@ -366,7 +372,6 @@ scripted_diplomatic_actions = {
 		receive_scripted_gui = pww_diplo_recv_offer_gui
 		reset_receive_effect = {
 			ROOT = {
-				pww_diplo_eval_offer = yes
 				pww_diplo_mirror_for_receiver = yes
 			}
 		}
@@ -397,13 +402,6 @@ scripted_diplomatic_actions = {
 				base = 0
 				modifier = {
 					set_temp_variable = { pww_dacc = ROOT.pww_do_e_need }
-					add = var:pww_dacc
-				}
-			}
-			pww_diplo_acc_sweeteners = {
-				base = 0
-				modifier = {
-					set_temp_variable = { pww_dacc = ROOT.pww_do_e_sweet }
 					add = var:pww_dacc
 				}
 			}

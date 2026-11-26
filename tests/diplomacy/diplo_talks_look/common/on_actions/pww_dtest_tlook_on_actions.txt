@@ -1,0 +1,34 @@
+# Trade talks look (manual screenshots). Run with
+#   --tag ITA --size 1920x1080 --leave-running --test tests/diplomacy/diplo_talks_look
+# Italy starts short of several resources (production lines outrun its
+# mines), so the shortfall hints have something to say. Day 1 gives the
+# player political power for the action costs and logs its balances; then
+# open a neighbour's diplomacy view and Propose Trade Deal by hand (or with
+# tests/ui clicks).
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { is_ai = no }
+				add_to_variable = { global.pww_dtest_tl_day = 1 }
+				if = {
+					limit = { check_variable = { global.pww_dtest_tl_day = 1 } }
+					set_global_flag = pww_diplo_debug
+					add_political_power = 200
+				}
+				if = {
+					limit = { check_variable = { global.pww_dtest_tl_day = 3 } }
+					set_temp_variable = { pww_dtest_tl_0 = resource@oil }
+					set_temp_variable = { pww_dtest_tl_1 = resource@aluminium }
+					set_temp_variable = { pww_dtest_tl_2 = resource@rubber }
+					set_temp_variable = { pww_dtest_tl_3 = resource@tungsten }
+					set_temp_variable = { pww_dtest_tl_4 = resource@steel }
+					set_temp_variable = { pww_dtest_tl_5 = resource@chromium }
+					set_temp_variable = { pww_dtest_tl_6 = resource@coal }
+					log = "PWW_RESULT diplo_talks_look.balances INFO [THIS.GetTag] oil=[?pww_dtest_tl_0|0] aluminium=[?pww_dtest_tl_1|0] rubber=[?pww_dtest_tl_2|0] tungsten=[?pww_dtest_tl_3|0] steel=[?pww_dtest_tl_4|0] chromium=[?pww_dtest_tl_5|0] coal=[?pww_dtest_tl_6|0]"
+					log = "PWW_DONE diplo_talks_look"
+				}
+			}
+		}
+	}
+}

@@ -1,26 +1,86 @@
-# Diplomacy test helpers: human-side drafts (GER is the player) scored by the
-# same evaluation the target's ai_acceptance reads (pww_do_e_* on the sender;
-# the engine sums exactly those parts and accepts above zero).
+# Diplomacy test helpers: human-side trade-talks bundles (GER is the player)
+# scored by the same evaluation the target's ai_acceptance reads (pww_do_e_*
+# on the sender; the engine sums exactly those parts and accepts above zero).
 #
 # Test hooks: the hidden reserve and the frozen relations of a talk are
 # overwritten (global.pww_dt_reserve / pww_dt_rel) where a case needs a
 # controlled value; every other part comes from the live game.
 
-# GER scope. in: pww_dtest_hg_tgt (country), pww_dtest_hg_res, pww_dtest_hg_dir,
-# pww_dtest_hg_price, pww_dtest_hg_pay. Opens (or resumes) talks and
-# evaluates a Fair one-year agreement.
+# GER scope. in: pww_dtest_hg_tgt (country), pww_dtest_hg_res, pww_dtest_hg_dir
+# (0 we buy, 1 we sell), pww_dtest_hg_price (0 30% below market, 1 at market,
+# 2 35% above), optional pww_dtest_hg_units. Opens (or resumes) talks and
+# tables a one-year fixed bundle: 30% of the seller's output of the resource
+# (or the given units) against whole civilian
+# factories worth price x market (rounded down below market, up above it,
+# to the nearest at market; at least 1). The evaluation sees the real count.
 pww_dtest_hg_draft = {
 	set_temp_variable = { pww_dk_target = pww_dtest_hg_tgt }
 	set_temp_variable = { pww_dk_act = 0 }
 	pww_diplo_offer_begin = yes
-	set_variable = { pww_do_dir = pww_dtest_hg_dir }
-	set_variable = { pww_do_res = pww_dtest_hg_res }
-	set_variable = { pww_do_amt = 1 }
-	set_variable = { pww_do_dur = 2 }
-	set_variable = { pww_do_pay = pww_dtest_hg_pay }
-	set_variable = { pww_do_price = pww_dtest_hg_price }
-	set_variable = { pww_do_sweet = 0 }
-	set_variable = { pww_do_fig = 0 }
+	pww_diplo_bundle_clear = yes
+	set_variable = { pww_do_len = 1 }
+	set_variable = { pww_do_bind = 1 }
+	set_temp_variable = { pww_dg_res = pww_dtest_hg_res }
+	set_temp_variable = { pww_dba_x = pww_dtest_hg_res }
+	set_temp_variable = { pww_dba_kind = 3 }
+	if = {
+		limit = { check_variable = { pww_dtest_hg_dir = 0 } }
+		var:pww_dtest_hg_tgt = { pww_diplo_read_res = yes }
+		set_temp_variable = { pww_dba_side = 1 }
+	}
+	else = {
+		pww_diplo_read_res = yes
+		set_temp_variable = { pww_dba_side = 0 }
+	}
+	set_temp_variable = { pww_dtest_hg_u = pww_dg_prod }
+	multiply_temp_variable = { pww_dtest_hg_u = 0.3 }
+	round_temp_variable = pww_dtest_hg_u
+	# Optional fixed quantity (pww_dtest_hg_units > 0)
+	if = {
+		limit = { check_variable = { pww_dtest_hg_units > 0 } }
+		set_temp_variable = { pww_dtest_hg_u = pww_dtest_hg_units }
+	}
+	if = {
+		limit = { check_variable = { pww_dtest_hg_u < 1 } }
+		set_temp_variable = { pww_dtest_hg_u = 1 }
+	}
+	pww_diplo_bundle_add = yes
+	set_variable = { pww_dob_a^pww_dba_new = pww_dtest_hg_u }
+	# Payment
+	set_temp_variable = { pww_dtest_hg_pf = 1 }
+	if = {
+		limit = { check_variable = { pww_dtest_hg_price = 0 } }
+		set_temp_variable = { pww_dtest_hg_pf = 0.7 }
+	}
+	else_if = {
+		limit = { check_variable = { pww_dtest_hg_price = 2 } }
+		set_temp_variable = { pww_dtest_hg_pf = 1.35 }
+	}
+	set_temp_variable = { pww_dtest_hg_civ = pww_dtest_hg_u }
+	divide_temp_variable = { pww_dtest_hg_civ = 8 }
+	multiply_temp_variable = { pww_dtest_hg_civ = pww_dtest_hg_pf }
+	if = {
+		limit = { check_variable = { pww_dtest_hg_price = 0 } }
+		subtract_from_temp_variable = { pww_dtest_hg_civ = 0.499 }
+	}
+	else_if = {
+		limit = { check_variable = { pww_dtest_hg_price = 2 } }
+		add_to_temp_variable = { pww_dtest_hg_civ = 0.499 }
+	}
+	round_temp_variable = pww_dtest_hg_civ
+	if = {
+		limit = { check_variable = { pww_dtest_hg_civ < 1 } }
+		set_temp_variable = { pww_dtest_hg_civ = 1 }
+	}
+	set_temp_variable = { pww_dba_side = 1 }
+	if = {
+		limit = { check_variable = { pww_dtest_hg_dir = 0 } }
+		set_temp_variable = { pww_dba_side = 0 }
+	}
+	set_temp_variable = { pww_dba_kind = 1 }
+	set_temp_variable = { pww_dba_x = 0 }
+	pww_diplo_bundle_add = yes
+	set_variable = { pww_dob_a^pww_dba_new = pww_dtest_hg_civ }
 	pww_diplo_offer_changed = yes
 }
 
@@ -38,7 +98,7 @@ pww_dtest_hg_set_rel = {
 	pww_diplo_offer_changed = yes
 }
 
-# GER scope. Logs the current draft's values and every acceptance part.
+# GER scope. Logs the current bundle's values and every acceptance part.
 # in: pww_dtest_hg_tag (log label number, see the on_actions file)
 pww_dtest_hg_log = {
 	set_temp_variable = { pww_dtest_hg_t = pww_do_talk }
@@ -47,7 +107,7 @@ pww_dtest_hg_log = {
 	set_temp_variable = { pww_dtest_hg_sd = pww_dg_desp }
 	var:pww_do_buyer = { pww_diplo_read_res = yes }
 	set_temp_variable = { pww_dtest_hg_bd = pww_dg_desp }
-	log = "PWW_RESULT diplo_haggle.values INFO case=[?pww_dtest_hg_tag|0] GER->[?pww_do_target.GetTag] dir=[?pww_do_dir|0] res=[?pww_do_res|0] pay=[?pww_do_pay|0] price=[?pww_do_price|0] units=[?pww_do_units|1] vres=[?pww_do_vres|2] vpay=[?pww_do_vpay|2] civ=[?pww_do_civ|0] seller_desp=[?pww_dtest_hg_sd|0] buyer_desp=[?pww_dtest_hg_bd|0] | total=[?pww_do_e_total|0] terms=[?pww_do_e_terms|0] need=[?pww_do_e_need|0] want=[?pww_do_e_want|0] sweet=[?pww_do_e_sweet|0] red=[?pww_do_e_red|0] trust=[?pww_do_e_trust|0] rel=[?pww_do_e_rel|0] patron=[?pww_do_e_patron|0] reserve=[?pww_do_e_reserve|0] repeat=[?pww_do_e_repeat|0] invalid=[?pww_do_e_invalid|0] accepts=[?pww_do_ok|0] | talk=[?pww_dtest_hg_t|0] hidden_reserve=[?global.pww_dt_reserve^pww_dtest_hg_t|0] hidden_want=[?global.pww_dt_want^pww_dtest_hg_t|0] redline=[?global.pww_dt_redline^pww_dtest_hg_t|0]"
+	log = "PWW_RESULT diplo_haggle.values INFO case=[?pww_dtest_hg_tag|0] GER->[?pww_do_target.GetTag] dir=[?pww_do_dir|0] res=[?pww_do_res|0] we_give=[?pww_dob_k^0|0]x[?pww_dob_a^0|2] they_give=[?pww_dob_k^4|0]x[?pww_dob_a^4|2] market_get=[?pww_do_mk_v1|2] market_give=[?pww_do_mk_m0|2] verdict=[?pww_do_mk|0] seller_desp=[?pww_dtest_hg_sd|0] buyer_desp=[?pww_dtest_hg_bd|0] | total=[?pww_do_e_total|0] terms=[?pww_do_e_terms|0] need=[?pww_do_e_need|0] want=[?pww_do_e_want|0] red=[?pww_do_e_red|0] trust=[?pww_do_e_trust|0] rel=[?pww_do_e_rel|0] patron=[?pww_do_e_patron|0] reserve=[?pww_do_e_reserve|0] repeat=[?pww_do_e_repeat|0] invalid=[?pww_do_valid|0] accepts=[?pww_do_ok|0] | talk=[?pww_dtest_hg_t|0] hidden_reserve=[?global.pww_dt_reserve^pww_dtest_hg_t|0] hidden_want=[?global.pww_dt_want^pww_dtest_hg_t|0] redline=[?global.pww_dt_redline^pww_dtest_hg_t|0]"
 }
 
 # GER scope, after a draft. Counts how many of the 24 possible seeded
@@ -62,7 +122,7 @@ pww_dtest_hg_sweep = {
 		end = 26
 		value = pww_dtest_hg_r
 		set_variable = { global.pww_dt_reserve^pww_dtest_hg_t = pww_dtest_hg_r }
-		pww_diplo_eval_offer = yes
+		pww_diplo_eval_bundle = yes
 		if = {
 			limit = { check_variable = { pww_do_ok = 1 } }
 			add_to_temp_variable = { pww_dtest_hg_n = 1 }
@@ -78,4 +138,103 @@ pww_dtest_hg_close_talk = {
 	set_temp_variable = { pww_dtc_t = pww_do_talk }
 	set_temp_variable = { pww_dtc_status = 4 }
 	pww_diplo_talk_close = yes
+}
+
+# GER scope. Case F: sign a five-item bundle with Sweden and check the ledger.
+pww_dtest_hg_bundle_sign = {
+	SWE = { set_temp_variable = { pww_dtest_hg_swe = THIS } }
+	set_temp_variable = { pww_dk_target = pww_dtest_hg_swe }
+	set_temp_variable = { pww_dk_act = 0 }
+	pww_diplo_offer_begin = yes
+	pww_diplo_bundle_clear = yes
+	set_variable = { pww_do_len = 1 }
+	set_variable = { pww_do_bind = 1 }
+	set_temp_variable = { pww_dba_side = 1 }
+	set_temp_variable = { pww_dba_kind = 3 }
+	set_temp_variable = { pww_dba_x = 4 }
+	pww_diplo_bundle_add = yes
+	set_variable = { pww_dob_a^pww_dba_new = 20 }
+	set_temp_variable = { pww_dba_x = 3 }
+	pww_diplo_bundle_add = yes
+	set_variable = { pww_dob_a^pww_dba_new = 5 }
+	set_temp_variable = { pww_dba_side = 0 }
+	set_temp_variable = { pww_dba_kind = 1 }
+	set_temp_variable = { pww_dba_x = 0 }
+	pww_diplo_bundle_add = yes
+	set_variable = { pww_dob_a^pww_dba_new = 2 }
+	set_temp_variable = { pww_dba_kind = 2 }
+	pww_diplo_bundle_add = yes
+	set_variable = { pww_dob_a^pww_dba_new = 0.1 }
+	set_temp_variable = { pww_dba_kind = 4 }
+	pww_diplo_bundle_add = yes
+	set_variable = { pww_dob_a^pww_dba_new = 750 }
+	pww_diplo_offer_changed = yes
+	set_temp_variable = { pww_dtest_hg_fn0 = pww_do_n0 }
+	set_temp_variable = { pww_dtest_hg_fn1 = pww_do_n1 }
+	set_temp_variable = { pww_dtest_hg_fv = pww_do_valid }
+	set_temp_variable = { pww_dtest_hg_ag0 = global.pww_next_agreement_id }
+	pww_diplo_sign_bundle = yes
+	set_temp_variable = { pww_dtest_hg_main = pww_dsd_ag }
+	set_temp_variable = { pww_dtest_hg_ok = pww_dsd_ok }
+	set_temp_variable = { pww_dtest_hg_sib = pww_dtest_hg_main }
+	add_to_temp_variable = { pww_dtest_hg_sib = 1 }
+	# Tranches on the main agreement
+	set_temp_variable = { pww_dtest_hg_tr = 0 }
+	for_each_loop = {
+		array = global.pww_lt_ag
+		value = pww_dtest_hg_ta
+		if = {
+			limit = { check_variable = { pww_dtest_hg_ta = pww_dtest_hg_main } }
+			add_to_temp_variable = { pww_dtest_hg_tr = 1 }
+		}
+	}
+	set_temp_variable = { pww_dtest_hg_linked = 0 }
+	if = {
+		limit = {
+			is_in_array = { array = global.pww_dlk_ag value = pww_dtest_hg_main }
+			is_in_array = { array = global.pww_dlk_ag value = pww_dtest_hg_sib }
+		}
+		set_temp_variable = { pww_dtest_hg_linked = 1 }
+	}
+	log = "PWW_RESULT diplo_haggle.F_values INFO n0=[?pww_dtest_hg_fn0|0] n1=[?pww_dtest_hg_fn1|0] valid=[?pww_dtest_hg_fv|0] ok=[?pww_dtest_hg_ok|0] main=[?pww_dtest_hg_main|0] first_new=[?pww_dtest_hg_ag0|0] main_res=[?global.pww_ag_res^pww_dtest_hg_main|0] main_amount=[?global.pww_ag_amount^pww_dtest_hg_main|0] main_civ=[?global.pww_ag_civ^pww_dtest_hg_main|0] main_pp=[?global.pww_ag_pp^pww_dtest_hg_main|2] main_status=[?global.pww_ag_status^pww_dtest_hg_main|0] main_committal=[?global.pww_ag_committal^pww_dtest_hg_main|0] sib_res=[?global.pww_ag_res^pww_dtest_hg_sib|0] sib_amount=[?global.pww_ag_amount^pww_dtest_hg_sib|0] sib_civ=[?global.pww_ag_civ^pww_dtest_hg_sib|0] sib_status=[?global.pww_ag_status^pww_dtest_hg_sib|0] tranches=[?pww_dtest_hg_tr|0] linked=[?pww_dtest_hg_linked|0]"
+	if = {
+		limit = {
+			check_variable = { pww_dtest_hg_ok = 1 }
+			check_variable = { pww_dtest_hg_main = pww_dtest_hg_ag0 }
+			check_variable = { global.pww_ag_seller^pww_dtest_hg_main = pww_dtest_hg_swe }
+			check_variable = { global.pww_ag_buyer^pww_dtest_hg_main = GER }
+			check_variable = { global.pww_ag_res^pww_dtest_hg_main = 4 }
+			check_variable = { global.pww_ag_amount^pww_dtest_hg_main = 20 }
+			check_variable = { global.pww_ag_civ^pww_dtest_hg_main = 2 }
+			check_variable = { global.pww_ag_pp^pww_dtest_hg_main > 0.09 }
+			check_variable = { global.pww_ag_status^pww_dtest_hg_main = 1 }
+			check_variable = { global.pww_ag_committal^pww_dtest_hg_main = 1 }
+			check_variable = { global.pww_ag_res^pww_dtest_hg_sib = 3 }
+			check_variable = { global.pww_ag_amount^pww_dtest_hg_sib = 5 }
+			check_variable = { global.pww_ag_civ^pww_dtest_hg_sib = 0 }
+			check_variable = { global.pww_ag_status^pww_dtest_hg_sib = 1 }
+			check_variable = { pww_dtest_hg_tr = 3 }
+			check_variable = { pww_dtest_hg_linked = 1 }
+		}
+		log = "PWW_RESULT diplo_haggle.F_bundle_sign PASS steel (main: 2 factories, 0.10 political power, 3 rifle tranches) and tungsten agreements active and linked"
+	}
+	else = {
+		log = "PWW_RESULT diplo_haggle.F_bundle_sign FAIL see F_values"
+	}
+	# Ending the main agreement ends its sibling (the ledger poll's rule).
+	set_temp_variable = { pww_l_ag = pww_dtest_hg_main }
+	set_temp_variable = { pww_l_cause = 0 }
+	pww_ledger_terminate = yes
+	set_temp_variable = { pww_dlk_in = pww_dtest_hg_main }
+	pww_diplo_bundle_sibling_end = yes
+	if = {
+		limit = {
+			check_variable = { global.pww_ag_status^pww_dtest_hg_main = 4 }
+			check_variable = { global.pww_ag_status^pww_dtest_hg_sib = 4 }
+		}
+		log = "PWW_RESULT diplo_haggle.F_linked_end PASS terminating the main agreement terminated the linked tungsten agreement"
+	}
+	else = {
+		log = "PWW_RESULT diplo_haggle.F_linked_end FAIL main status=[?global.pww_ag_status^pww_dtest_hg_main|0] sibling status=[?global.pww_ag_status^pww_dtest_hg_sib|0]"
+	}
 }

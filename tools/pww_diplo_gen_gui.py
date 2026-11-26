@@ -3,6 +3,8 @@ Generate the diplomacy lane's GUI layout, scripted GUI blocks and scripted
 localisation. Output files carry a header saying they are generated; they are
 also fine to edit by hand afterwards."""
 import os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import pww_diplo_gen_talks as talks
 
 # --layout-only: write the .gui, .gfx and scripted GUI files only; the scripted
 # localisation file is left as it is on disk (another lane may own edits).
@@ -13,6 +15,7 @@ GUI_OUT = os.path.join(REPO, "interface", "pww_diplo.gui")
 GFX_OUT = os.path.join(REPO, "interface", "pww_diplo_sprites.gfx")
 SG_OUT = os.path.join(REPO, "common", "scripted_guis", "pww_diplo_guis.txt")
 SL_OUT = os.path.join(REPO, "common", "scripted_localisation", "pww_diplo_scripted_loc.txt")
+FX_OUT = os.path.join(REPO, "common", "scripted_effects", "pww_diplo_bundle_gen.txt")
 
 # Layout grid (UI lane, 2026-11-25). The vanilla frame these windows sit in
 # (popupwindow.gui: send_/diplomacy_scripted_popup_window) is 584 wide with
@@ -125,67 +128,8 @@ def divider(name, y):
     return icon(name, LX, y, "GFX_divider", scale=f"{CW / 514:.3f}")
 
 
-# ---------------------------------------------------------------- send offer
-G = "pww_diplo_send_offer_gui"
-P = "pww_so"
-y0 = 40
-b = tb(f"{P}_title", LX, 8, "[pww_diplo_sl_o_title]", w=CW - 150, font="hoi_18mbs", fmt="left")
-b += tb(f"{P}_round", GR - 144, 10, "[pww_diplo_sl_o_round]", w=144, fmt="right")
-rows = [
-    ("deal", "pww_diplo_lbl_deal", "[pww_diplo_sl_o_deal]",
-     wrap("pww_do_dir", 0, 1, 1), wrap("pww_do_dir", 0, 1, -1),
-     "\t\t\t\tROOT = { check_variable = { pww_do_act = 0 } }\n"),
-    ("res", "pww_diplo_lbl_res", "[pww_diplo_sl_o_res]",
-     wrap("pww_do_res", 0, 6, 1), wrap("pww_do_res", 0, 6, -1), None),
-    ("qty", "[pww_diplo_sl_o_l3]", "[pww_diplo_sl_o_v3]",
-     "\t\t\t\tROOT = {\n\t\t\t\t\tif = {\n\t\t\t\t\t\tlimit = { check_variable = { pww_do_act = 1 } }\n"
-     "\t\t\t\t\t\tadd_to_variable = { pww_do_slot = 1 }\n\t\t\t\t\t}\n\t\t\t\t\telse = {\n"
-     "\t\t\t\t\t\tadd_to_variable = { pww_do_amt = 1 }\n"
-     "\t\t\t\t\t\tif = { limit = { check_variable = { pww_do_amt > 3 } } set_variable = { pww_do_amt = 0 } }\n"
-     "\t\t\t\t\t}\n\t\t\t\t\tpww_diplo_offer_changed = yes\n\t\t\t\t}\n",
-     "\t\t\t\tROOT = {\n\t\t\t\t\tif = {\n\t\t\t\t\t\tlimit = { check_variable = { pww_do_act = 1 } }\n"
-     "\t\t\t\t\t\tsubtract_from_variable = { pww_do_slot = 1 }\n"
-     "\t\t\t\t\t\tif = {\n\t\t\t\t\t\t\tlimit = { check_variable = { pww_do_slot < 0 } }\n"
-     "\t\t\t\t\t\t\tset_variable = { pww_do_slot = pww_do_nstates }\n"
-     "\t\t\t\t\t\t\tsubtract_from_variable = { pww_do_slot = 1 }\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t\t\t\telse = {\n"
-     "\t\t\t\t\t\tsubtract_from_variable = { pww_do_amt = 1 }\n"
-     "\t\t\t\t\t\tif = { limit = { check_variable = { pww_do_amt < 0 } } set_variable = { pww_do_amt = 3 } }\n"
-     "\t\t\t\t\t}\n\t\t\t\t\tpww_diplo_offer_changed = yes\n\t\t\t\t}\n", None),
-    ("dur", "pww_diplo_lbl_dur", "[pww_diplo_sl_o_dur]",
-     "\t\t\t\tROOT = {\n\t\t\t\t\tadd_to_variable = { pww_do_dur = 1 }\n"
-     "\t\t\t\t\tif = { limit = { check_variable = { pww_do_dur > 4 } } set_variable = { pww_do_dur = 0 } }\n"
-     "\t\t\t\t\tif = { limit = { check_variable = { pww_do_act = 1 } check_variable = { pww_do_dur < 1 } } set_variable = { pww_do_dur = 1 } }\n"
-     "\t\t\t\t\tpww_diplo_offer_changed = yes\n\t\t\t\t}\n",
-     "\t\t\t\tROOT = {\n\t\t\t\t\tsubtract_from_variable = { pww_do_dur = 1 }\n"
-     "\t\t\t\t\tif = { limit = { check_variable = { pww_do_dur < 0 } } set_variable = { pww_do_dur = 4 } }\n"
-     "\t\t\t\t\tif = { limit = { check_variable = { pww_do_act = 1 } check_variable = { pww_do_dur < 1 } } set_variable = { pww_do_dur = 4 } }\n"
-     "\t\t\t\t\tpww_diplo_offer_changed = yes\n\t\t\t\t}\n", None),
-    ("pay", "pww_diplo_lbl_pay", "[pww_diplo_sl_o_pay]",
-     wrap("pww_do_pay", 0, 4, 1), wrap("pww_do_pay", 0, 4, -1), None),
-    ("price", "pww_diplo_lbl_price", "[pww_diplo_sl_o_price]",
-     wrap("pww_do_price", 0, 2, 1), wrap("pww_do_price", 0, 2, -1), None),
-    ("sweet", "pww_diplo_lbl_sweet", "[pww_diplo_sl_o_sweet]",
-     wrap("pww_do_sweet", 0, 3, 1), wrap("pww_do_sweet", 0, 3, -1), None),
-    ("fig", "pww_diplo_lbl_fig", "[pww_diplo_sl_o_fig]",
-     wrap("pww_do_fig", 0, 6, 1), wrap("pww_do_fig", 0, 6, -1), None),
-]
-for i, (k, lab, val, nx, pv, vis) in enumerate(rows):
-    b += cycle_row(G, P, k, y0 + i * ROW_H, lab, val, nx, pv, vis,
-                   tooltip="pww_diplo_tt_fig" if k == "fig" else ("pww_diplo_tt_sweet" if k == "sweet" else None))
-y = y0 + len(rows) * ROW_H + 4
-b += divider(f"{P}_div", y)
-y += 12
-b += tb(f"{P}_bands", LX, y, "[pww_diplo_sl_o_bands]")
-y += 22
-b += tb(f"{P}_invalid", LX, y, "[pww_diplo_sl_o_invalid]")
-y += 22
-b += tb(f"{P}_envoy", LX, y, "[pww_diplo_sl_o_line]", h=58)
-y += 60
-b += tb(f"{P}_redline", LX, y, "[pww_diplo_sl_o_rl]", h=36)
-y += 38
-b += tb(f"{P}_want", LX, y, "[pww_diplo_sl_o_want]", h=36)
-y += 40
-gui.append(window("pww_diplo_send_offer", y, b))
+# ------------------------------------------------- send offer (trade talks)
+gui.append(talks.build_send(effects, triggers))
 
 # --------------------------------------------------------------- send demand
 G = "pww_diplo_send_demand_gui"
@@ -344,37 +288,8 @@ b += tb(f"{P}_desc", LX, y, "pww_auction_bid_once", h=40)
 y += 44
 gui.append(window("pww_diplo_send_bid", y, b))
 
-# ------------------------------------------------------------- receive offer
-G = "pww_diplo_recv_offer_gui"
-P = "pww_ro"
-b = tb(f"{P}_title", LX, 8, "[pww_diplo_sl_r_title]", font="hoi_18mbs")
-y0 = 40
-rows = [("deal", "pww_diplo_lbl_deal", "[pww_diplo_sl_r_deal]"),
-        ("res", "pww_diplo_lbl_res", "[pww_diplo_sl_r_res]"),
-        ("qty", "[pww_diplo_sl_r_l3]", "[pww_diplo_sl_r_v3]"),
-        ("dur", "pww_diplo_lbl_dur", "[pww_diplo_sl_r_dur]"),
-        ("pay", "pww_diplo_lbl_pay", "[pww_diplo_sl_r_pay]"),
-        ("price", "pww_diplo_lbl_price", "[pww_diplo_sl_r_price]"),
-        ("sweet", "pww_diplo_lbl_sweet", "[pww_diplo_sl_r_sweet]"),
-        ("fig", "pww_diplo_lbl_fig", "[pww_diplo_sl_r_fig]")]
-for i, (k, lab, val) in enumerate(rows):
-    b += ro_row(P, k, y0 + i * ROW_H, lab, val)
-y = y0 + len(rows) * ROW_H + 4
-b += divider(f"{P}_div", y)
-y += 12
-b += tb(f"{P}_bands", LX, y, "[pww_diplo_sl_r_bands]")
-y += 22
-b += tb(f"{P}_line", LX, y, "[pww_diplo_sl_r_line]", h=40)
-y += 44
-b += checkbox(G, P, "c1", y, "pww_diplo_lbl_counter_price", "pww_dr_counter", 1)
-y += 24
-b += checkbox(G, P, "c2", y, "pww_diplo_lbl_counter_amount", "pww_dr_counter", 2)
-y += 24
-b += checkbox(G, P, "c3", y, "pww_diplo_lbl_counter_term", "pww_dr_counter", 3)
-y += 26
-b += tb(f"{P}_hint", LX, y, "pww_diplo_gui_counter_hint", h=36)
-y += 40
-gui.append(window("pww_diplo_recv_offer", y, b))
+# ---------------------------------------------- receive offer (trade talks)
+gui.append(talks.build_recv(effects, triggers))
 
 # ------------------------------------------------------------ receive demand
 G = "pww_diplo_recv_demand_gui"
@@ -446,8 +361,10 @@ spriteTypes = {
 		texturefile = "gfx/interface/checkbox_small_ticked.dds"
 		effectFile = "gfx/FX/buttonstate.lua"
 	}
-}
-""")
+""" + talks.SPRITES + "}\n")
+
+with open(FX_OUT, "w", encoding="utf-8", newline="\n") as f:
+    f.write(talks.mirror_effects())
 
 windows = {
     "pww_diplo_send_offer_gui": "pww_diplo_send_offer",
@@ -553,10 +470,15 @@ for i in range(1, 6):
     LINES[20 + i] = f"pww_envoy_patience_high_{i}"
 for i in range(1, 8):
     LINES[30 + i] = f"pww_envoy_redline_{i}"
-for i, k in enumerate(["pww_envoy_want_clearing", "pww_envoy_want_cic", "pww_envoy_want_coal", "pww_envoy_want_arms",
-                       "pww_envoy_want_tech", "pww_envoy_want_timed", "pww_envoy_want_fig_leaf", "pww_envoy_want_split",
-                       "pww_envoy_rival_6"]):
+# Trade talks wants (pww_diplo_bundle.txt): 0 arms, 1 civilian factories,
+# 2 coal, 3 transport, 4 licence, 5 six-month trial, 6 a resource they lack,
+# 7 modest share, 8 political power.
+for i, k in enumerate(["pww_envoy_want_arms", "pww_envoy_want_cic", "pww_envoy_want_coal", "pww_envoy_want_transport",
+                       "pww_envoy_want_tech", "pww_envoy_want_trial", "pww_envoy_want_lack", "pww_envoy_want_modest",
+                       "pww_envoy_want_goodwill"]):
     LINES[40 + i] = k
+for i in range(1, 7):
+    LINES[100 + i] = f"pww_envoy_price_low_{i}"
 for i in range(1, 7):
     LINES[50 + i] = f"pww_envoy_rel_doubt_{i}"
 for i in range(1, 6):
@@ -654,5 +576,5 @@ if LAYOUT_ONLY:
     print("layout only: scripted localisation not written")
     sys.exit(0)
 with open(SL_OUT, "w", encoding="utf-8", newline="\n") as f:
-    f.write("".join(sl))
+    f.write("".join(sl) + "# Trade talks (tools/pww_diplo_gen_talks.py)\n" + "".join(talks.SL))
 print("ok", len(gui), "windows")

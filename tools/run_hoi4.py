@@ -255,6 +255,9 @@ def write_settings(userdir: Path, width: int, height: int, autosave: str = "NEVE
     text = re.sub(r"size=\{\s*x=\d+\s*y=\d+\s*\}", f"size={{ x={width} y={height} }}", text)
     text = re.sub(r"fullScreen=\w+", "fullScreen=no", text)
     text = re.sub(r"borderless=\w+", "borderless=no", text)
+    # The real cursor may sit outside the test window: without this the camera
+    # edge-scrolls on its own and posted map clicks (tests/ui) miss.
+    text = re.sub(r"corner_scrolling=\w+", "corner_scrolling=no", text)
     for key in ("master_volume", "music_volume", "sound_fx_volume", "ambient_volume", "voice_volume"):
         text = re.sub(rf"{key}=[\d.]+", f"{key}=0.000000", text)
     text = re.sub(r'(?m)^autosave="\w+"\s*$', "", text)

@@ -1,6 +1,8 @@
 """Diplomacy lane generator: python tools/pww_diplo_gen_loc.py
 Build the diplomacy lane's localisation from docs/content plus lane UI text."""
-import re, os
+import re, os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import pww_diplo_gen_talks as talks
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT_MAIN = os.path.join(REPO, "mod", "localisation", "english", "pww_diplo_l_english.yml")
@@ -100,7 +102,7 @@ ui = {
     "pww_diplo_offer_accept_title": "Terms Signed",
     "pww_diplo_offer_accept_desc": "[THIS.GetName] has signed. The agreement is entered in our ledger.",
     "pww_diplo_offer_reject_title": "Terms Refused",
-    "pww_diplo_offer_reject_desc": "[THIS.GetName] declined this draft.\n\n[pww_diplo_sl_o_line]\n\n[pww_diplo_sl_o_rl]\n[pww_diplo_sl_o_want]",
+    "pww_diplo_offer_reject_desc": "[THIS.GetName] declined this draft.\n\n[pww_diplo_sl_o_line]\n\n[pww_dt_chips]",
     "pww_diplo_demand_accept_title": "Demand Accepted",
     "pww_diplo_demand_accept_desc": "[THIS.GetName] has acceded to our demand.",
     "pww_diplo_demand_reject_title": "Demand Refused",
@@ -291,6 +293,12 @@ for k, (t, d) in ACTIONS.items():
     ui[K] = t
     ui[K + "_TITLE"] = t
     ui[K + "_ACTION_DESC"] = d
+
+# Trade talks screen text (generated with its layout)
+for k, v in talks.L.items():
+    if k in ui:
+        raise SystemExit("duplicate " + k)
+    ui[k] = v
 
 for k, v in ui.items():
     if k in main:

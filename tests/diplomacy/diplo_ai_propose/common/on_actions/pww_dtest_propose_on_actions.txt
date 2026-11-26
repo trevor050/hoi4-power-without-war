@@ -1,4 +1,4 @@
-# Diplomacy test: AI to AI Propose Agreement through the real scripted
+# Diplomacy test: AI to AI Propose Trade Deal (a trade-talks bundle) through the real scripted
 # diplomatic action (ai_desire -> send GUI reset -> ai_acceptance ->
 # complete/reject effects). GER (AI) needs tungsten; POR (AI) produces it.
 # Run with a non-participating player tag: --tag SWI.
@@ -32,7 +32,7 @@ on_actions = {
 						set_country_flag = { flag = pww_diplo_ai_offer days = 30 value = 1 }
 					}
 					set_temp_variable = { pww_dtest_t = pww_do_talk }
-					log = "PWW_RESULT diplo_ai_propose.prepared INFO ready=[?pww_dap_ready|0] talk=[?pww_dtest_t|0] round=[?global.pww_dt_round^pww_dtest_t|0] rl_seen=[?global.pww_dt_rl_seen^pww_dtest_t|0] want_seen=[?global.pww_dt_want_seen^pww_dtest_t|0] price=[?pww_do_price|0] amt=[?pww_do_amt|0] pay=[?pww_do_pay|0] sweet=[?pww_do_sweet|0] fig=[?pww_do_fig|0] total=[?pww_do_e_total|0] status=[?global.pww_dt_status^pww_dtest_t|0]"
+					log = "PWW_RESULT diplo_ai_propose.prepared INFO ready=[?pww_dap_ready|0] talk=[?pww_dtest_t|0] round=[?global.pww_dt_round^pww_dtest_t|0] rl_seen=[?global.pww_dt_rl_seen^pww_dtest_t|0] want_seen=[?global.pww_dt_want_seen^pww_dtest_t|0] we_give=[?pww_do_n0|0] items (value [?pww_do_mk_m0|2]) they_give=[?pww_do_n1|0] items (value [?pww_do_mk_v1|2]) len=[?pww_do_len|0] bind=[?pww_do_bind|0] valid=[?pww_do_valid|0] total=[?pww_do_e_total|0] status=[?global.pww_dt_status^pww_dtest_t|0]"
 					log = "PWW_RESULT diplo_ai_propose.armed INFO [GetDateText] GER->[?pww_diplo_ai_offer_to.GetTag] tungsten PP=[?GER.political_power|0]"
 				}
 				# Keep the intent armed (the tick would re-arm it each month; the
@@ -47,7 +47,7 @@ on_actions = {
 					if = {
 						limit = { has_variable = pww_do_talk }
 						set_temp_variable = { pww_dtest_t = pww_do_talk }
-						log = "PWW_RESULT diplo_ai_propose.round INFO [GetDateText] round=[?global.pww_dt_round^pww_dtest_t|0] patience=[?global.pww_dt_patience^pww_dtest_t|0] rl_seen=[?global.pww_dt_rl_seen^pww_dtest_t|0] want_seen=[?global.pww_dt_want_seen^pww_dtest_t|0] line=[?global.pww_dt_line^pww_dtest_t|0] price=[?pww_do_price|0] amt=[?pww_do_amt|0] pay=[?pww_do_pay|0] total=[?pww_do_e_total|0]"
+						log = "PWW_RESULT diplo_ai_propose.round INFO [GetDateText] round=[?global.pww_dt_round^pww_dtest_t|0] patience=[?global.pww_dt_patience^pww_dtest_t|0] rl_seen=[?global.pww_dt_rl_seen^pww_dtest_t|0] want_seen=[?global.pww_dt_want_seen^pww_dtest_t|0] line=[?global.pww_dt_line^pww_dtest_t|0] we_give=[?pww_do_n0|0] they_give=[?pww_do_n1|0] gap=[?pww_do_gap|2] total=[?pww_do_e_total|0]"
 					}
 					set_country_flag = { flag = pww_diplo_ai_offer days = 30 value = 1 }
 				}

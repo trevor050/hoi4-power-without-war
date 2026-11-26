@@ -65,6 +65,8 @@ TESTS: list[Test] = [
     T("tests/integration/wolfram_full", ["--tag", "HAI", "--timeout", "1500"]),
     T("tests/integration/wolfram_full", ["--tag", "POR", "--timeout", "1500"], label="wolfram_full_human"),
     T("tests/integration/soak", ["--tag", "HAI", "--days", "730", "--timeout", "3600"], group="soak"),
+    T("tests/diplomacy/diplo_talks_look", ["--tag", "ITA", "--size", "1920x1080", "--leave-running"], group="manual",
+      notes="trade talks screenshots (Italy starts short of chromium and coal); never run by this script"),
     T("tests/diplomacy/diplo_gui_look", ["--leave-running", "--screenshot"], group="manual",
       notes="manual GUI look; never run by this script"),
 ]
