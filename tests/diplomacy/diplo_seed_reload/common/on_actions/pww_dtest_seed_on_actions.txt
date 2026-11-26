@@ -34,7 +34,9 @@ on_actions = {
 					set_variable = { global.pww_dtest_pat = global.pww_dt_patience^t }
 					set_variable = { global.pww_dtest_res = global.pww_dt_reserve^t }
 					set_variable = { global.pww_dtest_seed = global.pww_dt_seed^t }
-					set_variable = { global.pww_dtest_n = global.pww_next_talk_id }
+					# GER's talks with POR (AI countries open talks of their own meanwhile)
+					pww_dtest_seed_count = yes
+					set_variable = { global.pww_dtest_n = pww_dtest_seed_n }
 					log = "PWW_RESULT diplo_seed_reload.seeded INFO [GetDateText] talk=[?t|0] seed=[?global.pww_dtest_seed|0] redline=[?global.pww_dtest_rl|0] want=[?global.pww_dtest_want|0] patience=[?global.pww_dtest_pat|0] reserve=[?global.pww_dtest_res|0] salt=[?global.pww_diplo_salt|0]"
 				}
 				if = {

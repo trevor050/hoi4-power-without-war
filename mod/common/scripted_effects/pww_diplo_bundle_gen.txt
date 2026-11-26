@@ -7,7 +7,8 @@
 # pww_dbx_<n>, pww_dba_<n> amount, pww_dbs_<n> lease state, pww_dbu_<n> lease
 # output, pww_dbf_<n> the giver's figure: free factories, political power a
 # day or stock; resource rows pww_dbss/sp (sender short/spare) and
-# pww_dbts/tp (target)), the market values (pww_dbv_<n> per row,
+# pww_dbts/tp (target); pww_dbp_<n> the target's appetite for a payment,
+# 1 high, 2 low), the market values (pww_dbv_<n> per row,
 # pww_dbm_t0 / t1 totals, each with a
 # _f format flag; pww_dbm_bx the balance marker's x) and the add-menu figures
 # (pww_dmg<side>_*: civ, pp, r<res>_sp/_sh, e<eq>, s<res>, top/topa) and
@@ -522,6 +523,30 @@ pww_diplo_bundle_mirror = {
 	if = { limit = { check_variable = { pww_dgm_i = pww_dgm_v } } set_variable = { pww_dbv_7_f = 2 } }
 	if = { limit = { check_variable = { pww_dgm_v = 1 } } set_variable = { pww_dbv_7_f = 3 } }
 	set_variable = { pww_dbv_7 = pww_dgm_v }
+	set_variable = { pww_dbp_0 = 0 }
+	if = { limit = { check_variable = { pww_dob_p^0 > 1.149 } } set_variable = { pww_dbp_0 = 1 } }
+	if = { limit = { check_variable = { pww_dob_p^0 < 0.801 } } set_variable = { pww_dbp_0 = 2 } }
+	set_variable = { pww_dbp_1 = 0 }
+	if = { limit = { check_variable = { pww_dob_p^1 > 1.149 } } set_variable = { pww_dbp_1 = 1 } }
+	if = { limit = { check_variable = { pww_dob_p^1 < 0.801 } } set_variable = { pww_dbp_1 = 2 } }
+	set_variable = { pww_dbp_2 = 0 }
+	if = { limit = { check_variable = { pww_dob_p^2 > 1.149 } } set_variable = { pww_dbp_2 = 1 } }
+	if = { limit = { check_variable = { pww_dob_p^2 < 0.801 } } set_variable = { pww_dbp_2 = 2 } }
+	set_variable = { pww_dbp_3 = 0 }
+	if = { limit = { check_variable = { pww_dob_p^3 > 1.149 } } set_variable = { pww_dbp_3 = 1 } }
+	if = { limit = { check_variable = { pww_dob_p^3 < 0.801 } } set_variable = { pww_dbp_3 = 2 } }
+	set_variable = { pww_dbp_4 = 0 }
+	if = { limit = { check_variable = { pww_dob_p^4 > 1.149 } } set_variable = { pww_dbp_4 = 1 } }
+	if = { limit = { check_variable = { pww_dob_p^4 < 0.801 } } set_variable = { pww_dbp_4 = 2 } }
+	set_variable = { pww_dbp_5 = 0 }
+	if = { limit = { check_variable = { pww_dob_p^5 > 1.149 } } set_variable = { pww_dbp_5 = 1 } }
+	if = { limit = { check_variable = { pww_dob_p^5 < 0.801 } } set_variable = { pww_dbp_5 = 2 } }
+	set_variable = { pww_dbp_6 = 0 }
+	if = { limit = { check_variable = { pww_dob_p^6 > 1.149 } } set_variable = { pww_dbp_6 = 1 } }
+	if = { limit = { check_variable = { pww_dob_p^6 < 0.801 } } set_variable = { pww_dbp_6 = 2 } }
+	set_variable = { pww_dbp_7 = 0 }
+	if = { limit = { check_variable = { pww_dob_p^7 > 1.149 } } set_variable = { pww_dbp_7 = 1 } }
+	if = { limit = { check_variable = { pww_dob_p^7 < 0.801 } } set_variable = { pww_dbp_7 = 2 } }
 	set_temp_variable = { pww_dgm_v = pww_do_mk_m0 }
 	set_variable = { pww_dbm_t0_f = 1 }
 	if = {

@@ -1,0 +1,301 @@
+###############################################################################
+# Power Without War: stockpiles (strategic reserves), core
+#
+# Spec: docs/design/2026-11-26-stockpiles-and-market-v2.md (Stockpiles).
+# Per-resource blocks are GENERATED (tools/pww_stock_gen.py ->
+# pww_stock_res.txt, pww_stock_triggers.txt, pww_stock_dynamic_modifiers.txt,
+# pww_stock_l_english.yml). This file is hand-written.
+#
+# MODEL (aluminium, rubber, tungsten, steel, chromium, coal; oil excluded:
+# vanilla already turns spare oil into fuel)
+#   Units: resources are a daily flow; a reserve holds unit-days.
+#   Tick: every global.pww_stock_c_period (10) days per active country,
+#     staggered by core's pww_bucket (slot = bucket mod 10 = num_days mod 10).
+#     A country becomes active (flag pww_stock_active) once it produces at
+#     least c_min_prod of the six resources a day or owns c_min_fac factories;
+#     it stays active.
+#   Each tick, per resource:
+#     1. stock += (in - out) x days since the last tick; stock -= decay
+#        (c_decay = 2% per 30 days); stock >= 0.
+#     2. Stable balance B = what resource@ would read without our own flows:
+#        leak = the part of a draw re-exported under the trade law =
+#        clamp(exported - (produced - out) x min_export, 0, out x min_export);
+#        B = resource@ + cost - out + leak. (resource@ is not always
+#        produced - consumed - exported: subjects pass ~10% of output to the
+#        overlord outside those numbers, so B starts from resource@.)
+#     3. Fill when B > 0 and not full: in = min(B x c_fill_share (0.5),
+#        room / period, cap x c_fill_rate). Stored WITHOUT a cost modifier
+#        by default (c_fill_cost = 0): the leftover is output nobody uses,
+#        and a resource cost shrinks the export pool (production x
+#        min_export, minus a subject's overlord share), which the AI buys out
+#        almost everywhere (measured: MAL tungsten exports 93 -> 89 under a
+#        10.2/day cost). So filling never touches the balance or exports.
+#        c_fill_cost = 1 applies the whole intake as a cost instead (the
+#        spec's literal mechanism; cuts exports by ~min_export x intake).
+#        A cartel member's quota request pww_cartel_store_<res> (units a day)
+#        raises the intake to min(request, B, room / period); that extra is
+#        applied as country_resource_cost_<res> (pww_stock_cost_<res>):
+#        withholding exports is the quota's purpose.
+#     4. Draw when B < 0 and stock > 0: out = min(-B, cap x c_draw_rate
+#        (throughput), stock / period). Applied as country_resource_<res>.
+#        Part of a draw leaks into exports under the country's trade law
+#        (engine: received resources count as production).
+#     Fill and draw never run together for one resource.
+#   Capacity: cap = max(demand, c_min_scale) x c_base_days x
+#     (1 + depots x c_depot_mult). Base 30 days of use, minimum 300.
+#     demand = resource_consumed (met use only) + shortfall.
+#   Depots: decision pww_stock_build_depot (category pww_stock_category):
+#     locks c_depot_civs (3) civilian factories for 120 days, then depots += 1
+#     (max c_depot_max = 4). AI builds through pww_stock_ai_depots on its tick
+#     (priority: world tension, major, war, desperation, sea-borne imports;
+#     cap 1 + major + (tension > 0.6 or war), needs 7+ free factories and
+#     25+ political power: activate_decision charges the cost).
+#   Capitulation: the occupier (FROM) seizes c_seize (50%) of every reserve,
+#     up to its own capacity. Blockades and quarantine do not touch stock.
+#   Value of one stored unit (pww_stock_value_<res>): market value per unit a
+#     day (c_market = 1/8 civilian factory) x tension factor (0.4 at zero
+#     world tension to 1.2 at full; c_war_factor 1.3 at war) x
+#     (1 - (fill/100)^2) (a full warehouse values extra units at zero).
+#
+# PUBLIC INTERFACE (country scope unless noted)
+#   global flag pww_stock_loaded           set by pww_stock_init
+#   vars  pww_stock_<res>                  stored unit-days
+#         pww_stock_cap_<res>              capacity (unit-days)
+#         pww_stock_fill_<res>             0..100
+#         pww_stock_days_<res>             days of own use covered (0..9999;
+#                                          use under 1 a day counts as 1)
+#         pww_stock_in_<res>               current daily intake (fill)
+#         pww_stock_cost_<res>             part of the intake withheld from
+#                                          output (cost modifier; cartel)
+#         pww_stock_out_<res>              current daily draw
+#         pww_stock_bal_<res>              stable balance B at the last tick
+#         pww_stock_depots                 depots built (0..4)
+#   flags pww_stock_active, pww_stock_depot_building
+#   triggers pww_stock_full_<res> (fill > c_full), pww_stock_has_<res>
+#         (stock >= 1)
+#   effect pww_stock_value_<res> = yes     temp out pww_stock_unit_value
+#                                          (civilian factories per unit a day)
+#   effect pww_stock_refresh = yes         re-run this country's tick now
+#                                          (other lanes, e.g. after a ledger
+#                                          flow change; call via meta_effect
+#                                          under pww_stock_loaded)
+#   effect pww_stock_cap_all = yes         recompute cap/fill/days only
+#
+# TEMP VARIABLES: pww_stk_*, pww_stv_* (internal).
+###############################################################################
+
+# Any scope. Idempotent; constants are (re)written so a save picks up tuning.
+pww_stock_init = {
+	set_global_flag = pww_stock_loaded
+	set_variable = { global.pww_stock_c_period = 10 }
+	set_variable = { global.pww_stock_c_base_days = 30 }
+	set_variable = { global.pww_stock_c_min_scale = 10 }
+	set_variable = { global.pww_stock_c_fill_share = 0.5 }
+	set_variable = { global.pww_stock_c_fill_rate = 0.034 }
+	set_variable = { global.pww_stock_c_draw_rate = 0.02 }
+	set_variable = { global.pww_stock_c_fill_cost = 0 }
+	set_variable = { global.pww_stock_c_min_flow = 0.099 }
+	set_variable = { global.pww_stock_c_min_flow_neg = -0.099 }
+	set_variable = { global.pww_stock_c_decay = 0.02 }
+	set_variable = { global.pww_stock_c_seize = 0.5 }
+	set_variable = { global.pww_stock_c_market = 0.125 }
+	set_variable = { global.pww_stock_c_war_factor = 1.3 }
+	set_variable = { global.pww_stock_c_full = 94.999 }
+	set_variable = { global.pww_stock_c_min_prod = 4 }
+	set_variable = { global.pww_stock_c_min_fac = 5 }
+	set_variable = { global.pww_stock_c_depot_mult = 1 }
+	set_variable = { global.pww_stock_c_depot_max = 4 }
+	set_variable = { global.pww_stock_c_depot_civs = 3 }
+	set_variable = { global.pww_stock_c_ai_min_free = 6 }
+	set_variable = { global.pww_stock_version = 1 }
+}
+
+# Country scope. on_daily entry point: a few checks, the tick on the slot day.
+pww_stock_on_daily = {
+	if = {
+		limit = { NOT = { has_global_flag = pww_stock_loaded } }
+		pww_stock_init = yes
+	}
+	if = {
+		limit = {
+			has_global_flag = pww_initialized
+			has_variable = pww_bucket
+		}
+		if = {
+			limit = { NOT = { check_variable = { global.pww_stock_last_day = global.num_days } } }
+			set_variable = { global.pww_stock_last_day = global.num_days }
+			set_temp_variable = { pww_stk_dm = global.num_days }
+			modulo_temp_variable = { var = pww_stk_dm value = global.pww_stock_c_period }
+			set_variable = { global.pww_stock_day_mod = pww_stk_dm }
+		}
+		set_temp_variable = { pww_stk_slot = pww_bucket }
+		modulo_temp_variable = { var = pww_stk_slot value = global.pww_stock_c_period }
+		if = {
+			limit = { check_variable = { pww_stk_slot = global.pww_stock_day_mod } }
+			pww_stock_country_tick = yes
+		}
+	}
+}
+
+# Country scope. Active check, then the per-resource tick.
+pww_stock_country_tick = {
+	if = {
+		limit = { NOT = { has_country_flag = pww_stock_active } }
+		set_temp_variable = { pww_stk_prod = 0 }
+		set_temp_variable = { pww_stk_cons = 0 }
+		set_temp_variable = { pww_stk_imp = 0 }
+		pww_stock_sum_readings = yes
+		if = {
+			limit = {
+				OR = {
+					check_variable = { pww_stk_prod > global.pww_stock_c_min_prod }
+					check_variable = { pww_stk_prod = global.pww_stock_c_min_prod }
+					num_of_factories > 4
+				}
+			}
+			set_country_flag = pww_stock_active
+		}
+	}
+	if = {
+		limit = { has_country_flag = pww_stock_active }
+		pww_stock_run_tick = yes
+	}
+}
+
+# Country scope. The tick proper (also pww_stock_refresh).
+pww_stock_run_tick = {
+	set_temp_variable = { pww_stk_el = 0 }
+	if = {
+		limit = { has_variable = pww_stock_last_tick }
+		set_temp_variable = { pww_stk_el = global.num_days }
+		subtract_from_temp_variable = { pww_stk_el = pww_stock_last_tick }
+		clamp_temp_variable = { var = pww_stk_el min = 0 max = 60 }
+	}
+	set_variable = { pww_stock_last_tick = global.num_days }
+	set_temp_variable = { pww_stk_e = modifier@min_export }
+	clamp_temp_variable = { var = pww_stk_e min = 0 max = 1 }
+	pww_stock_tick_all = yes
+	if = {
+		limit = { NOT = { has_dynamic_modifier = { modifier = pww_stock_flows } } }
+		add_dynamic_modifier = { modifier = pww_stock_flows }
+	}
+	force_update_dynamic_modifier = yes
+	if = {
+		limit = { is_ai = yes }
+		pww_stock_ai_depots = yes
+	}
+	if = {
+		limit = { has_global_flag = pww_stock_debug }
+		log = "[GetDateText] PWW_STOCK [This.GetTag] el=[?pww_stk_el|0] e=[?pww_stk_e|2] dep=[?pww_stock_depots|0] alu=[?pww_stock_aluminium|0]+[?pww_stock_in_aluminium|1]-[?pww_stock_out_aluminium|1] rub=[?pww_stock_rubber|0]+[?pww_stock_in_rubber|1]-[?pww_stock_out_rubber|1] tun=[?pww_stock_tungsten|0]+[?pww_stock_in_tungsten|1]-[?pww_stock_out_tungsten|1] ste=[?pww_stock_steel|0]+[?pww_stock_in_steel|1]-[?pww_stock_out_steel|1] chr=[?pww_stock_chromium|0]+[?pww_stock_in_chromium|1]-[?pww_stock_out_chromium|1] coa=[?pww_stock_coal|0]+[?pww_stock_in_coal|1]-[?pww_stock_out_coal|1]"
+	}
+}
+
+# Country scope. Public: re-run this country's tick now (accrues the days
+# since its last tick first, so it never double counts).
+pww_stock_refresh = {
+	if = {
+		limit = { has_country_flag = pww_stock_active }
+		pww_stock_run_tick = yes
+	}
+}
+
+# Any scope. Temp out pww_stv_t: 0.4 + 0.8 x world tension; at war at least
+# c_war_factor. (Country scope for the war check.)
+pww_stock_tension_factor = {
+	set_temp_variable = { pww_stv_t = global.threat }
+	multiply_temp_variable = { pww_stv_t = 0.8 }
+	add_to_temp_variable = { pww_stv_t = 0.4 }
+	if = {
+		limit = {
+			has_war = yes
+			check_variable = { pww_stv_t < global.pww_stock_c_war_factor }
+		}
+		set_temp_variable = { pww_stv_t = global.pww_stock_c_war_factor }
+	}
+}
+
+# Country scope (ROOT capitulated, FROM the winner). FROM seizes a share.
+pww_stock_on_capitulation = {
+	if = {
+		limit = {
+			has_global_flag = pww_stock_loaded
+			has_country_flag = pww_stock_active
+		}
+		FROM = { set_country_flag = pww_stock_active }
+		pww_stock_seize_all = yes
+		if = {
+			limit = { has_global_flag = pww_stock_debug }
+			log = "[GetDateText] PWW_STOCK seized from [This.GetTag] by [From.GetTag]"
+		}
+	}
+}
+
+# Decision effects (shared by the player decision and the AI path).
+pww_stock_depot_start = {
+	set_country_flag = pww_stock_depot_building
+}
+
+pww_stock_depot_finish = {
+	clr_country_flag = pww_stock_depot_building
+	add_to_variable = { pww_stock_depots = 1 }
+	clamp_variable = { var = pww_stock_depots min = 0 max = global.pww_stock_c_depot_max }
+	set_country_flag = pww_stock_active
+	pww_stock_cap_all = yes
+}
+
+# Country scope, AI only. Starts a depot when the priority score is high
+# enough and the AI is under its cap. Score (integer points):
+#   +1 tension > 0.25, +1 > 0.5, +1 > 0.75, +1 major, +2 at war,
+#   +1 desperate (pww_desp_max >= 40), +1 imports over 30% of use and the
+#   country has coastal states (sea-borne imports exposed to blockade).
+# Builds at 3+. Cap: 1 + major + (tension > 0.6 or war), max c_depot_max.
+pww_stock_ai_depots = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = pww_stock_depot_building }
+			check_variable = { pww_stock_depots < global.pww_stock_c_depot_max }
+			check_variable = { num_of_civilian_factories_available_for_projects > global.pww_stock_c_ai_min_free }
+			# activate_decision charges the 15 PP cost even into the negative.
+			has_political_power > 24
+		}
+		set_temp_variable = { pww_stk_sc = 0 }
+		if = { limit = { threat > 0.25 } add_to_temp_variable = { pww_stk_sc = 1 } }
+		if = { limit = { threat > 0.5 } add_to_temp_variable = { pww_stk_sc = 1 } }
+		if = { limit = { threat > 0.75 } add_to_temp_variable = { pww_stk_sc = 1 } }
+		if = { limit = { is_major = yes } add_to_temp_variable = { pww_stk_sc = 1 } }
+		if = { limit = { has_war = yes } add_to_temp_variable = { pww_stk_sc = 2 } }
+		if = { limit = { check_variable = { pww_desp_max > 39 } } add_to_temp_variable = { pww_stk_sc = 1 } }
+		set_temp_variable = { pww_stk_prod = 0 }
+		set_temp_variable = { pww_stk_cons = 0 }
+		set_temp_variable = { pww_stk_imp = 0 }
+		pww_stock_sum_readings = yes
+		multiply_temp_variable = { pww_stk_cons = 0.3 }
+		if = {
+			limit = {
+				check_variable = { pww_stk_imp > pww_stk_cons }
+				check_variable = { pww_stk_cons > 0.5 }
+				check_variable = { pww_coastal_states^num > 0 }
+			}
+			add_to_temp_variable = { pww_stk_sc = 1 }
+		}
+		set_temp_variable = { pww_stk_capd = 1 }
+		if = { limit = { is_major = yes } add_to_temp_variable = { pww_stk_capd = 1 } }
+		if = {
+			limit = { OR = { threat > 0.6 has_war = yes } }
+			add_to_temp_variable = { pww_stk_capd = 1 }
+		}
+		set_variable = { pww_stock_ai_score = pww_stk_sc }
+		if = {
+			limit = {
+				check_variable = { pww_stk_sc > 2 }
+				check_variable = { pww_stock_depots < pww_stk_capd }
+			}
+			activate_decision = pww_stock_build_depot
+			pww_stock_depot_start = yes
+			if = {
+				limit = { has_global_flag = pww_stock_debug }
+				log = "[GetDateText] PWW_STOCK [This.GetTag] AI builds a depot (score [?pww_stk_sc|0], depots [?pww_stock_depots|0] of [?pww_stk_capd|0])"
+			}
+		}
+	}
+}

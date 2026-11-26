@@ -1,0 +1,32 @@
+###############################################################################
+# Power Without War: producer cartels opinion modifiers
+#   pww_cartel_cheated    members toward a member caught selling over quota
+#                         or under the cartel price
+#   pww_cartel_expelled   members toward a member they expelled
+#   pww_cartel_poacher    members toward an outsider who courted a member away
+#   pww_cartel_pressed    a member toward an importer leaning on it
+#   pww_cartel_dumping    members toward an outsider flooding the market
+###############################################################################
+
+opinion_modifiers = {
+	pww_cartel_cheated = {
+		value = -15
+		decay = 1
+	}
+	pww_cartel_expelled = {
+		value = -25
+		decay = 1
+	}
+	pww_cartel_poacher = {
+		value = -15
+		decay = 1
+	}
+	pww_cartel_pressed = {
+		value = -10
+		decay = 1
+	}
+	pww_cartel_dumping = {
+		value = -10
+		decay = 1
+	}
+}

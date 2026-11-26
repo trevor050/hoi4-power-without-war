@@ -3,12 +3,13 @@ pww_dtest_seed_check = {
 	set_temp_variable = { pww_dk_target = POR }
 	set_temp_variable = { pww_dk_act = 0 }
 	pww_diplo_offer_begin = yes
+	pww_dtest_seed_count = yes
 	set_temp_variable = { t = pww_do_talk }
-	log = "PWW_RESULT diplo_seed_reload.values INFO [GetDateText] talk=[?t|0] seed=[?global.pww_dt_seed^t|0] redline=[?global.pww_dt_redline^t|0] want=[?global.pww_dt_want^t|0] patience=[?global.pww_dt_patience^t|0] reserve=[?global.pww_dt_reserve^t|0] talks=[?global.pww_next_talk_id|0] salt=[?global.pww_diplo_salt|0]"
+	log = "PWW_RESULT diplo_seed_reload.values INFO [GetDateText] talk=[?t|0] seed=[?global.pww_dt_seed^t|0] redline=[?global.pww_dt_redline^t|0] want=[?global.pww_dt_want^t|0] patience=[?global.pww_dt_patience^t|0] reserve=[?global.pww_dt_reserve^t|0] GER-POR talks=[?pww_dtest_seed_n|0] all=[?global.pww_next_talk_id|0] salt=[?global.pww_diplo_salt|0]"
 	if = {
 		limit = {
 			check_variable = { t = global.pww_dtest_talk }
-			check_variable = { global.pww_next_talk_id = global.pww_dtest_n }
+			check_variable = { pww_dtest_seed_n = global.pww_dtest_n }
 			check_variable = { global.pww_dt_redline^t = global.pww_dtest_rl }
 			check_variable = { global.pww_dt_want^t = global.pww_dtest_want }
 			check_variable = { global.pww_dt_patience^t = global.pww_dtest_pat }
@@ -18,7 +19,7 @@ pww_dtest_seed_check = {
 		log = "PWW_RESULT diplo_seed_reload.stable PASS [GetDateText] same talk, no reseed"
 	}
 	else = {
-		log = "PWW_RESULT diplo_seed_reload.stable FAIL [GetDateText] talk=[?t|0] vs [?global.pww_dtest_talk|0] talks=[?global.pww_next_talk_id|0] vs [?global.pww_dtest_n|0]"
+		log = "PWW_RESULT diplo_seed_reload.stable FAIL [GetDateText] talk=[?t|0] vs [?global.pww_dtest_talk|0] GER-POR talks=[?pww_dtest_seed_n|0] vs [?global.pww_dtest_n|0]"
 	}
 	# The seed is a pure function of the saved salt, the pair's core buckets
 	# and the talk id, so it can be recomputed and must match.
@@ -41,4 +42,21 @@ pww_dtest_seed_check = {
 		log = "PWW_RESULT diplo_seed_reload.recompute FAIL recomputed=[?s|0] stored=[?global.pww_dt_seed^t|0]"
 	}
 	log = "PWW_DONE diplo_seed_reload"
+}
+
+# GER scope. out: temp pww_dtest_seed_n, GER's Propose talks with POR (AI
+# countries, GER included, open talks of their own meanwhile).
+pww_dtest_seed_count = {
+	set_temp_variable = { pww_dtest_seed_n = 0 }
+	for_each_loop = {
+		array = pww_dt_ids
+		value = pww_dtest_seed_v
+		if = {
+			limit = {
+				check_variable = { global.pww_dt_target^pww_dtest_seed_v = POR }
+				check_variable = { global.pww_dt_act^pww_dtest_seed_v = 0 }
+			}
+			add_to_temp_variable = { pww_dtest_seed_n = 1 }
+		}
+	}
 }

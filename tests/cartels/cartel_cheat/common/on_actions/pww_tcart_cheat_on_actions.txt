@@ -1,0 +1,160 @@
+# Cartels test: cheating is detected, warned, expelled; the agreement then
+# collapses when its cohesion falls. Start tag POR (human). AI cheating,
+# poaching and new conferences are off; detection is forced (every cheat is
+# caught) so the sequence is deterministic.
+# Run: python tools/run_hoi4.py --test tests/cartels/cartel_cheat
+#   day 3  Siam signs a committal side deal with Germany: 9 rubber for one
+#          civilian factory, under the agreed price (a committal deal cannot
+#          be cancelled by complying, so it is still there next time).
+#          Siam's member tick:
+#            detected  9 units undercut, suspicion > 0, one warning, cohesion -10
+#                      (a warned AI may comply, which clears its cheat figure),
+#                      Malaya's opinion of Siam falls 15 (pww_cartel_cheated)
+#   day 4  Siam's next tick:
+#            expelled  second catch: status 3, no member flag, standing
+#                      under 31, members one fewer, cohesion down again
+#   day 5  collapse   Brazil (rubber producer outside) floods the market and
+#                      the cohesion had worn down to 22: the monthly drift
+#                      takes it under 20 and the agreement breaks. Status 2,
+#                      no live rubber cartel, ex-members lose their member
+#                      flag and hold, and carry the price war flag.
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = POR }
+				add_to_variable = { global.pww_tcc_day = 1 }
+
+				if = {
+					limit = { check_variable = { global.pww_tcc_day = 1 } }
+					set_global_flag = pww_cartel_debug
+					set_variable = { global.pww_cartel_c_ai_cheat = 0 }
+					set_variable = { global.pww_cartel_c_ai_poach = 0 }
+					set_variable = { global.pww_cartel_c_ai_form = 0 }
+					set_variable = { global.pww_cartel_c_detect_force = 1 }
+					# Keep Siam's natural member tick out of the way
+					SIA = { set_variable = { pww_bucket = 99 } }
+					SIA = { set_temp_variable = { pww_opinion_target = THIS } } MAL = { set_temp_variable = { pww_tcc_o = opinion@var:pww_opinion_target } }
+					set_variable = { global.pww_tcc_ms0 = pww_tcc_o }
+					BRA = { set_temp_variable = { pww_opinion_target = THIS } } MAL = { set_temp_variable = { pww_tcc_o = opinion@var:pww_opinion_target } }
+					set_variable = { global.pww_tcc_mb0 = pww_tcc_o }
+				}
+
+				if = {
+					limit = { check_variable = { global.pww_tcc_day = 3 } }
+					set_temp_variable = { pww_tcc_c = global.pww_cart_by_res^2 }
+					set_variable = { global.pww_tcc_cid = pww_tcc_c }
+					set_variable = { global.pww_tcc_coh0 = global.pww_cart_cohesion^pww_tcc_c }
+					set_variable = { global.pww_tcc_n0 = global.pww_cart_n^pww_tcc_c }
+					SIA = {
+						set_temp_variable = { pww_in_res = 2 }
+						pww_cartel_find_member = yes
+						set_variable = { global.pww_tcc_cm = pww_out_cm }
+					}
+					pww_cartel_ledger_clear_inputs = yes
+					SIA = { set_temp_variable = { pww_l_seller = THIS } }
+					GER = { set_temp_variable = { pww_l_buyer = THIS } }
+					set_temp_variable = { pww_l_res = 2 }
+					set_temp_variable = { pww_l_amount = 9 }
+					set_temp_variable = { pww_l_civ = 1 }
+					set_temp_variable = { pww_l_committal = 1 }
+					set_temp_variable = { pww_l_term_days = 365 }
+					set_temp_variable = { pww_l_activate = 1 }
+					pww_ledger_create_agreement = yes
+					log = "PWW_RESULT cartel_cheat.side_deal INFO ledger result [?pww_l_result] fail [?pww_l_fail] id [?pww_l_new_id] cm [?global.pww_tcc_cm]"
+					SIA = { pww_cartel_member_tick_country = yes }
+					set_temp_variable = { pww_tcc_m = global.pww_tcc_cm }
+					set_temp_variable = { pww_tcc_coh = global.pww_cart_cohesion^pww_tcc_c }
+					SIA = { set_temp_variable = { pww_opinion_target = THIS } } MAL = { set_temp_variable = { pww_tcc_o = opinion@var:pww_opinion_target } }
+					set_temp_variable = { pww_tcc_odrop = global.pww_tcc_ms0 }
+					subtract_from_temp_variable = { pww_tcc_odrop = pww_tcc_o }
+					set_temp_variable = { pww_tcc_drop = global.pww_tcc_coh0 }
+					subtract_from_temp_variable = { pww_tcc_drop = pww_tcc_coh }
+					if = {
+						limit = {
+							check_variable = { pww_l_result = 1 }
+							check_variable = { pww_tcc_m > -1 }
+							check_variable = { global.pww_cm_under^pww_tcc_m > 8.99 }
+							check_variable = { global.pww_cm_susp^pww_tcc_m > 0 }
+							check_variable = { global.pww_cm_warns^pww_tcc_m = 1 }
+							check_variable = { global.pww_cm_status^pww_tcc_m = 1 }
+							check_variable = { pww_tcc_drop > 9.99 }
+							check_variable = { pww_tcc_odrop > 9.99 }
+						}
+						log = "PWW_RESULT cartel_cheat.detected PASS Siam undercut [?global.pww_cm_under^pww_tcc_m|1] cheat [?global.pww_cm_cheat^pww_tcc_m|1] suspicion [?global.pww_cm_susp^pww_tcc_m|0] warnings 1 cohesion [?global.pww_tcc_coh0|0] -> [?pww_tcc_coh|0], Malaya's opinion of Siam -[?pww_tcc_odrop|0]"
+					}
+					else = {
+						log = "PWW_RESULT cartel_cheat.detected FAIL ledger [?pww_l_result] cm [?pww_tcc_m] sold [?global.pww_cm_sold^pww_tcc_m|1] under [?global.pww_cm_under^pww_tcc_m|1] cheat [?global.pww_cm_cheat^pww_tcc_m|1] susp [?global.pww_cm_susp^pww_tcc_m|0] warns [?global.pww_cm_warns^pww_tcc_m] status [?global.pww_cm_status^pww_tcc_m] drop [?pww_tcc_drop|0] opinion drop [?pww_tcc_odrop|0]"
+					}
+				}
+
+				if = {
+					limit = { check_variable = { global.pww_tcc_day = 4 } }
+					set_temp_variable = { pww_tcc_m = global.pww_tcc_cm }
+					set_temp_variable = { pww_tcc_c = global.pww_tcc_cid }
+					set_variable = { global.pww_tcc_coh1 = global.pww_tcc_coh0 }
+					subtract_from_variable = { global.pww_tcc_coh1 = 39 }
+					SIA = { pww_cartel_member_tick_country = yes }
+					SIA = { set_temp_variable = { pww_opinion_target = THIS } } MAL = { set_temp_variable = { pww_tcc_o = opinion@var:pww_opinion_target } }
+					set_temp_variable = { pww_tcc_odrop = global.pww_tcc_ms0 }
+					subtract_from_temp_variable = { pww_tcc_odrop = pww_tcc_o }
+					set_temp_variable = { pww_tcc_n1 = global.pww_tcc_n0 }
+					subtract_from_temp_variable = { pww_tcc_n1 = 1 }
+					if = {
+						limit = {
+							check_variable = { global.pww_cm_status^pww_tcc_m = 3 }
+							check_variable = { global.pww_cm_warns^pww_tcc_m = 2 }
+							check_variable = { global.pww_cart_n^pww_tcc_c = pww_tcc_n1 }
+							check_variable = { global.pww_cart_cohesion^pww_tcc_c < global.pww_tcc_coh1 }
+							SIA = {
+								NOT = { has_country_flag = pww_cartel_mem_rubber }
+								check_variable = { pww_cartel_standing < 31 }
+								check_variable = { pww_cart_my^num = 0 }
+							}
+							check_variable = { pww_tcc_odrop > 34.99 }
+						}
+						log = "PWW_RESULT cartel_cheat.expelled PASS Siam expelled; members [?global.pww_cart_n^pww_tcc_c] cohesion [?global.pww_tcc_coh0|0] -> [?global.pww_cart_cohesion^pww_tcc_c|0] standing [?SIA.pww_cartel_standing|0]"
+					}
+					else = {
+						log = "PWW_RESULT cartel_cheat.expelled FAIL status [?global.pww_cm_status^pww_tcc_m] warns [?global.pww_cm_warns^pww_tcc_m] members [?global.pww_cart_n^pww_tcc_c] (want [?pww_tcc_n1]) cohesion [?global.pww_cart_cohesion^pww_tcc_c|0] standing [?SIA.pww_cartel_standing|0]"
+					}
+				}
+
+				if = {
+					limit = { check_variable = { global.pww_tcc_day = 5 } }
+					set_temp_variable = { pww_tcc_c = global.pww_tcc_cid }
+					set_variable = { global.pww_cart_cohesion^pww_tcc_c = 22 }
+					set_temp_variable = { pww_in_res = 2 }
+					BRA = { set_temp_variable = { pww_in_flooder = THIS } }
+					pww_cartel_flood = yes
+					set_temp_variable = { pww_tcc_fl = pww_out_result }
+					set_temp_variable = { pww_kco_cid = pww_tcc_c }
+					pww_cartel_cohesion_tick = yes
+					BRA = { set_temp_variable = { pww_opinion_target = THIS } } MAL = { set_temp_variable = { pww_tcc_o = opinion@var:pww_opinion_target } }
+					set_temp_variable = { pww_tcc_odrop = global.pww_tcc_mb0 }
+					subtract_from_temp_variable = { pww_tcc_odrop = pww_tcc_o }
+					if = {
+						limit = {
+							check_variable = { pww_tcc_fl = 1 }
+							check_variable = { global.pww_cart_status^pww_tcc_c = 2 }
+							check_variable = { global.pww_cart_cause^pww_tcc_c = 1 }
+							check_variable = { global.pww_cart_by_res^2 = -1 }
+							MAL = {
+								NOT = { has_country_flag = pww_cartel_mem_rubber }
+								has_country_flag = pww_cartel_pricewar_rubber
+								check_variable = { pww_cartel_hold_rubber = 0 }
+							}
+							ENG = { has_country_flag = pww_cartel_pricewar_rubber }
+							check_variable = { pww_tcc_odrop > 8.99 }
+						}
+						log = "PWW_RESULT cartel_cheat.collapse PASS rubber agreement broken (cohesion [?global.pww_cart_cohesion^pww_tcc_c|0]); Malaya dumps [?MAL.pww_cartel_dump_rubber|2] a day until day [?MAL.pww_cartel_dump_until|0]"
+					}
+					else = {
+						log = "PWW_RESULT cartel_cheat.collapse FAIL flood [?pww_tcc_fl] status [?global.pww_cart_status^pww_tcc_c] cause [?global.pww_cart_cause^pww_tcc_c] cohesion [?global.pww_cart_cohesion^pww_tcc_c|0] by_res [?global.pww_cart_by_res^2]"
+					}
+					log = "PWW_DONE cartel_cheat"
+				}
+			}
+		}
+	}
+}

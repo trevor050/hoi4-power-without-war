@@ -1,0 +1,24 @@
+###############################################################################
+# Power Without War: producer cartels scripted localisation
+#   [pww_cartel_loc_res]   resource name from the viewer's pww_cartel_ev_res
+#   [pww_cartel_loc_coh]   cohesion word from the viewer's pww_cartel_ev_coh
+###############################################################################
+
+defined_text = {
+	name = pww_cartel_loc_res
+	text = { trigger = { check_variable = { pww_cartel_ev_res = 1 } } localization_key = pww_cartel_res_1 }
+	text = { trigger = { check_variable = { pww_cartel_ev_res = 2 } } localization_key = pww_cartel_res_2 }
+	text = { trigger = { check_variable = { pww_cartel_ev_res = 3 } } localization_key = pww_cartel_res_3 }
+	text = { trigger = { check_variable = { pww_cartel_ev_res = 4 } } localization_key = pww_cartel_res_4 }
+	text = { trigger = { check_variable = { pww_cartel_ev_res = 5 } } localization_key = pww_cartel_res_5 }
+	text = { trigger = { check_variable = { pww_cartel_ev_res = 6 } } localization_key = pww_cartel_res_6 }
+}
+
+defined_text = {
+	name = pww_cartel_loc_coh
+	text = { trigger = { check_variable = { pww_cartel_ev_coh > 79.999 } } localization_key = pww_cartel_cohesion_band_4 }
+	text = { trigger = { check_variable = { pww_cartel_ev_coh > 59.999 } } localization_key = pww_cartel_cohesion_band_3 }
+	text = { trigger = { check_variable = { pww_cartel_ev_coh > 39.999 } } localization_key = pww_cartel_cohesion_band_2 }
+	text = { trigger = { check_variable = { pww_cartel_ev_coh > 19.999 } } localization_key = pww_cartel_cohesion_band_1 }
+	text = { localization_key = pww_cartel_cohesion_band_0 }
+}

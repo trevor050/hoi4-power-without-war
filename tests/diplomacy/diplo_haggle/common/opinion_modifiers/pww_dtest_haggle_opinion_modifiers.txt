@@ -1,6 +1,6 @@
 opinion_modifiers = {
 	# Test only: a strong snub so the target dislikes the sender.
 	pww_dtest_hg_snub = {
-		value = -80
+		value = -150
 	}
 }

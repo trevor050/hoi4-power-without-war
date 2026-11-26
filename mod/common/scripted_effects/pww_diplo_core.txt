@@ -370,6 +370,82 @@ pww_diplo_read_res = {
 }
 
 ###############################################################################
+# Market position of one resource (country scope). in: pww_dg_res (0..6).
+# Runs pww_diplo_read_res first (pww_dg_prod / _net / _desp are set too).
+# out: pww_dg_exp     resource_exported@res (units it already sells)
+#      pww_dg_unsold  unsold output: the positive part of resource@res (what
+#                     is left after its own use and its exports earns nothing)
+#      pww_dg_imp     resource_imported@res (what it buys on the open market)
+#      pww_dg_demand  what it would buy from us: its imports plus any
+#                     shortfall still open (the negative part of resource@res)
+# Test hooks: country vars pww_diplo_test_unsold / pww_diplo_test_exported
+# replace those figures (tests cannot lower resource@ in game), for every
+# resource or only for resource pww_diplo_test_res when that is set.
+###############################################################################
+pww_diplo_read_market = {
+	pww_diplo_read_res = yes
+	set_temp_variable = { pww_dg_exp = 0 }
+	set_temp_variable = { pww_dg_imp = 0 }
+	if = {
+		limit = { check_variable = { pww_dg_res = 0 } }
+		set_temp_variable = { pww_dg_exp = resource_exported@oil }
+		set_temp_variable = { pww_dg_imp = resource_imported@oil }
+	}
+	else_if = {
+		limit = { check_variable = { pww_dg_res = 1 } }
+		set_temp_variable = { pww_dg_exp = resource_exported@aluminium }
+		set_temp_variable = { pww_dg_imp = resource_imported@aluminium }
+	}
+	else_if = {
+		limit = { check_variable = { pww_dg_res = 2 } }
+		set_temp_variable = { pww_dg_exp = resource_exported@rubber }
+		set_temp_variable = { pww_dg_imp = resource_imported@rubber }
+	}
+	else_if = {
+		limit = { check_variable = { pww_dg_res = 3 } }
+		set_temp_variable = { pww_dg_exp = resource_exported@tungsten }
+		set_temp_variable = { pww_dg_imp = resource_imported@tungsten }
+	}
+	else_if = {
+		limit = { check_variable = { pww_dg_res = 4 } }
+		set_temp_variable = { pww_dg_exp = resource_exported@steel }
+		set_temp_variable = { pww_dg_imp = resource_imported@steel }
+	}
+	else_if = {
+		limit = { check_variable = { pww_dg_res = 5 } }
+		set_temp_variable = { pww_dg_exp = resource_exported@chromium }
+		set_temp_variable = { pww_dg_imp = resource_imported@chromium }
+	}
+	else_if = {
+		limit = { check_variable = { pww_dg_res = 6 } }
+		set_temp_variable = { pww_dg_exp = resource_exported@coal }
+		set_temp_variable = { pww_dg_imp = resource_imported@coal }
+	}
+	set_temp_variable = { pww_dg_unsold = pww_dg_net }
+	clamp_temp_variable = { var = pww_dg_unsold min = 0 max = 99999 }
+	set_temp_variable = { pww_dg_demand = pww_dg_net }
+	multiply_temp_variable = { pww_dg_demand = -1 }
+	clamp_temp_variable = { var = pww_dg_demand min = 0 max = 99999 }
+	add_to_temp_variable = { pww_dg_demand = pww_dg_imp }
+	if = {
+		limit = {
+			OR = {
+				NOT = { has_variable = pww_diplo_test_res }
+				check_variable = { pww_diplo_test_res = pww_dg_res }
+			}
+		}
+		if = {
+			limit = { has_variable = pww_diplo_test_unsold }
+			set_temp_variable = { pww_dg_unsold = pww_diplo_test_unsold }
+		}
+		if = {
+			limit = { has_variable = pww_diplo_test_exported }
+			set_temp_variable = { pww_dg_exp = pww_diplo_test_exported }
+		}
+	}
+}
+
+###############################################################################
 # Producing state by slot (country scope = the state owner).
 # in: pww_dg_res, pww_dg_slot. out: pww_dg_state (plain numeric state id,
 #     0 none; what the ledger and meta_effect text need), pww_dg_state_s (the

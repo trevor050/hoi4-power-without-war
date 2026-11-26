@@ -1,0 +1,538 @@
+###############################################################################
+# Power Without War: producer cartels, invitations and outsiders
+#
+#   pww_cartel_ai_invite_score   (country = AI invitee) in pww_kvs_cid
+#       out pww_kvs_score; accepts at 50+. 30 + 40 x unsold share of output,
+#       + normalized opinion of the leader / 4, +15 subject or faction
+#       partner of the leader, +5 same government, -10 under 15 civilian
+#       factories (a quota limits sales for factories), -20 a client of a
+#       major short of the resource outside the cartel (subject or faction
+#       partner), -5 standing under 50, -30 at war.
+#   pww_cartel_join = yes        in pww_in_cartel_id, pww_in_country
+#   pww_cartel_tempt = yes       poaching. in pww_in_cm (member entry),
+#       pww_in_tempter, optional pww_in_premium (price factor, 0 = cartel
+#       price + 0.15). out pww_out_result (1 the member left and signed),
+#       pww_out_fail (1 not an active member, 2 tempter cannot pay or is
+#       not allowed, 3 a human member was asked: pww_cartel.9 decides).
+#       AI member: 20 + 100 x (premium - cartel price) + 25 x unsold share
+#       + 15 under 15 factories + opinion of the tempter / 4 - cohesion / 3
+#       - 20 subject or faction partner of the leader + half its temptation;
+#       leaves at 30+. Accepted: a committal one-year supply deal (half its
+#       unsold, 8..40 units, civilian factories at the premium) and the
+#       member leaves (cause 1, cohesion -25). Declined: temptation +15,
+#       cohesion -3.
+#   pww_cartel_press = yes       importer pressure. in pww_in_cm,
+#       pww_in_presser. Opinion, temptation +20, cohesion -5, presser flag
+#       pww_cartel_press_cd (90 days).
+#   pww_cartel_flood = yes       in pww_in_res, pww_in_flooder (a producer
+#       outside the cartel). Timed flag pww_cartel_flooding_<res> (120
+#       days): cohesion -6 a month, members tempted; members' opinion.
+#   pww_cartel_ai_outsiders = yes (monthly, in pww_kao_cid) an AI major
+#       short of the resource (desperation 50+) outside the cartel tempts
+#       the AI member with the largest unsold share (25% a month).
+###############################################################################
+
+# Country scope (the invitee). in: pww_kvs_cid. out: pww_kvs_score.
+pww_cartel_ai_invite_score = {
+	set_temp_variable = { pww_kvs_res = global.pww_cart_res^pww_kvs_cid }
+	set_temp_variable = { pww_kvs_l = global.pww_cart_leader^pww_kvs_cid }
+	set_temp_variable = { pww_kr_res = pww_kvs_res }
+	pww_cartel_read_res = yes
+	set_temp_variable = { pww_kvs_p = pww_kr_prod }
+	clamp_temp_variable = { var = pww_kvs_p min = 1 max = 99999 }
+	set_temp_variable = { pww_kvs_score = pww_kr_unsold }
+	divide_temp_variable = { pww_kvs_score = pww_kvs_p }
+	clamp_temp_variable = { var = pww_kvs_score min = 0 max = 1 }
+	multiply_temp_variable = { pww_kvs_score = 40 }
+	add_to_temp_variable = { pww_kvs_score = 30 }
+	set_temp_variable = { pww_opinion_target = pww_kvs_l }
+	pww_core_norm_opinion = yes
+	divide_temp_variable = { pww_norm_opinion = 4 }
+	add_to_temp_variable = { pww_kvs_score = pww_norm_opinion }
+	if = {
+		limit = {
+			OR = {
+				is_subject_of = var:pww_kvs_l
+				is_in_faction_with = var:pww_kvs_l
+			}
+		}
+		add_to_temp_variable = { pww_kvs_score = 15 }
+	}
+	if = {
+		limit = {
+			OR = {
+				AND = { has_government = democratic var:pww_kvs_l = { has_government = democratic } }
+				AND = { has_government = fascism var:pww_kvs_l = { has_government = fascism } }
+				AND = { has_government = communism var:pww_kvs_l = { has_government = communism } }
+				AND = { has_government = neutrality var:pww_kvs_l = { has_government = neutrality } }
+			}
+		}
+		add_to_temp_variable = { pww_kvs_score = 5 }
+	}
+	if = {
+		limit = { num_of_civilian_factories < 15 }
+		subtract_from_temp_variable = { pww_kvs_score = 10 }
+	}
+	set_temp_variable = { pww_kx_res = pww_kvs_res }
+	if = {
+		limit = {
+			any_country = {
+				is_major = yes
+				pww_cartel_is_member_res = no
+				pww_cartel_has_deficit_res = yes
+				OR = {
+					is_in_faction_with = PREV
+					PREV = { is_subject_of = PREV }
+				}
+			}
+		}
+		subtract_from_temp_variable = { pww_kvs_score = 20 }
+	}
+	if = {
+		limit = { check_variable = { pww_cartel_standing < 50 } }
+		subtract_from_temp_variable = { pww_kvs_score = 5 }
+	}
+	if = {
+		limit = { has_war = yes }
+		subtract_from_temp_variable = { pww_kvs_score = 30 }
+	}
+}
+
+# in: pww_in_cartel_id, pww_in_country. out: pww_out_result, pww_out_fail
+# (1 bad cartel, 2 does not produce, 3 already in, 4 standing under 30).
+pww_cartel_join = {
+	set_temp_variable = { pww_out_result = 0 }
+	set_temp_variable = { pww_out_fail = 0 }
+	set_temp_variable = { pww_kjn_cid = pww_in_cartel_id }
+	set_temp_variable = { pww_kjn_who = pww_in_country }
+	if = {
+		limit = {
+			OR = {
+				check_variable = { pww_kjn_cid < 0 }
+				NOT = { check_variable = { pww_kjn_cid < global.pww_next_cart_id } }
+			}
+		}
+		set_temp_variable = { pww_out_fail = 1 }
+	}
+	else_if = {
+		limit = { check_variable = { global.pww_cart_status^pww_kjn_cid > 1 } }
+		set_temp_variable = { pww_out_fail = 1 }
+	}
+	if = {
+		limit = { check_variable = { pww_out_fail = 0 } }
+		set_temp_variable = { pww_kjn_res = global.pww_cart_res^pww_kjn_cid }
+		var:pww_kjn_who = {
+			pww_cartel_ensure_country = yes
+			set_temp_variable = { pww_kr_res = pww_kjn_res }
+			pww_cartel_read_res = yes
+			set_temp_variable = { pww_in_res = pww_kjn_res }
+			pww_cartel_find_member = yes
+			if = {
+				limit = { check_variable = { pww_kr_produces = 0 } }
+				set_temp_variable = { pww_out_fail = 2 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { pww_out_cm > -1 }
+					check_variable = { global.pww_cm_status^pww_out_cm = 1 }
+				}
+				set_temp_variable = { pww_out_fail = 3 }
+			}
+			else_if = {
+				limit = { check_variable = { pww_cartel_standing < 30 } }
+				set_temp_variable = { pww_out_fail = 4 }
+			}
+		}
+	}
+	if = {
+		limit = { check_variable = { pww_out_fail = 0 } }
+		if = {
+			limit = { check_variable = { pww_out_cm > -1 } }
+			# An open invitation: accept it
+			set_temp_variable = { pww_in_cm = pww_out_cm }
+			set_temp_variable = { pww_in_accept = 1 }
+			var:pww_kjn_who = { pww_cartel_answer_invite = yes }
+		}
+		else = {
+			set_temp_variable = { pww_km_cid = pww_kjn_cid }
+			set_temp_variable = { pww_km_who = pww_kjn_who }
+			set_temp_variable = { pww_km_status = 1 }
+			pww_cartel_alloc_member = yes
+			if = {
+				limit = { check_variable = { global.pww_cart_status^pww_kjn_cid = 1 } }
+				set_temp_variable = { pww_kam_cm = pww_km_id }
+				pww_cartel_activate_member = yes
+				set_temp_variable = { pww_kcz_cid = pww_kjn_cid }
+				set_temp_variable = { pww_kcz_delta = 5 }
+				pww_cartel_add_cohesion = yes
+			}
+			set_temp_variable = { pww_kcx_cid = pww_kjn_cid }
+			pww_cartel_recount = yes
+		}
+		set_temp_variable = { pww_out_result = 1 }
+		log = "[GetDateText] PWW_CARTEL join: [?pww_kjn_who.GetTag] cartel [?pww_kjn_cid] members [?global.pww_cart_n^pww_kjn_cid]"
+	}
+}
+
+# Poaching. See the header.
+pww_cartel_tempt = {
+	set_temp_variable = { pww_out_result = 0 }
+	set_temp_variable = { pww_out_fail = 0 }
+	set_temp_variable = { pww_ktp_cm = pww_in_cm }
+	set_temp_variable = { pww_ktp_t = pww_in_tempter }
+	set_temp_variable = { pww_ktp_cid = global.pww_cm_cart^pww_ktp_cm }
+	set_temp_variable = { pww_ktp_who = global.pww_cm_who^pww_ktp_cm }
+	set_temp_variable = { pww_ktp_prem = pww_in_premium }
+	if = {
+		limit = { check_variable = { pww_ktp_prem < 0.01 } }
+		set_temp_variable = { pww_ktp_prem = global.pww_cart_price^pww_ktp_cid }
+		add_to_temp_variable = { pww_ktp_prem = 0.15 }
+	}
+	if = {
+		limit = {
+			OR = {
+				NOT = { check_variable = { global.pww_cm_status^pww_ktp_cm = 1 } }
+				NOT = { check_variable = { global.pww_cart_status^pww_ktp_cid = 1 } }
+			}
+		}
+		set_temp_variable = { pww_out_fail = 1 }
+	}
+	else_if = {
+		limit = {
+			OR = {
+				check_variable = { pww_ktp_t = pww_ktp_who }
+				var:pww_ktp_t = { var:pww_ktp_who = { has_war_with = PREV } }
+			}
+		}
+		set_temp_variable = { pww_out_fail = 2 }
+	}
+	if = {
+		limit = { check_variable = { pww_out_fail = 0 } }
+		pww_cartel_tempt_terms = yes
+		var:pww_ktp_t = { set_temp_variable = { pww_ktp_free = num_of_civilian_factories_available_for_projects } }
+		if = {
+			limit = { check_variable = { pww_ktp_free < pww_ktp_civ } }
+			set_temp_variable = { pww_out_fail = 2 }
+		}
+	}
+	if = {
+		limit = { check_variable = { pww_out_fail = 0 } }
+		if = {
+			limit = { var:pww_ktp_who = { is_ai = no } }
+			set_temp_variable = { pww_out_fail = 3 }
+			var:pww_ktp_who = {
+				set_variable = { pww_cartel_ev_cm = pww_ktp_cm }
+				set_variable = { pww_cartel_ev_who = pww_ktp_t }
+				set_variable = { pww_cartel_ev_prem = pww_ktp_prem }
+				set_variable = { pww_cartel_ev_amt = pww_ktp_amt }
+				set_variable = { pww_cartel_ev_civ = pww_ktp_civ }
+				country_event = { id = pww_cartel.9 }
+			}
+		}
+		else = {
+			set_temp_variable = { pww_ktp_score = pww_ktp_prem }
+			subtract_from_temp_variable = { pww_ktp_score = global.pww_cart_price^pww_ktp_cid }
+			clamp_temp_variable = { var = pww_ktp_score min = 0 max = 1 }
+			multiply_temp_variable = { pww_ktp_score = 100 }
+			add_to_temp_variable = { pww_ktp_score = 20 }
+			var:pww_ktp_who = {
+				set_temp_variable = { pww_kr_res = global.pww_cart_res^pww_ktp_cid }
+				pww_cartel_read_res = yes
+				set_temp_variable = { pww_ktp_p = pww_kr_prod }
+				clamp_temp_variable = { var = pww_ktp_p min = 1 max = 99999 }
+				set_temp_variable = { pww_ktp_sh = pww_kr_unsold }
+				divide_temp_variable = { pww_ktp_sh = pww_ktp_p }
+				clamp_temp_variable = { var = pww_ktp_sh min = 0 max = 1 }
+				multiply_temp_variable = { pww_ktp_sh = 25 }
+				add_to_temp_variable = { pww_ktp_score = pww_ktp_sh }
+				if = {
+					limit = { num_of_civilian_factories < 15 }
+					add_to_temp_variable = { pww_ktp_score = 15 }
+				}
+				set_temp_variable = { pww_opinion_target = pww_ktp_t }
+				pww_core_norm_opinion = yes
+				divide_temp_variable = { pww_norm_opinion = 4 }
+				add_to_temp_variable = { pww_ktp_score = pww_norm_opinion }
+				set_temp_variable = { pww_ktp_l = global.pww_cart_leader^pww_ktp_cid }
+				if = {
+					limit = {
+						NOT = { check_variable = { pww_ktp_l = THIS } }
+						OR = {
+							is_subject_of = var:pww_ktp_l
+							is_in_faction_with = var:pww_ktp_l
+						}
+					}
+					subtract_from_temp_variable = { pww_ktp_score = 20 }
+				}
+			}
+			set_temp_variable = { pww_ktp_c = global.pww_cart_cohesion^pww_ktp_cid }
+			divide_temp_variable = { pww_ktp_c = 3 }
+			subtract_from_temp_variable = { pww_ktp_score = pww_ktp_c }
+			set_temp_variable = { pww_ktp_tm = global.pww_cm_tempt^pww_ktp_cm }
+			multiply_temp_variable = { pww_ktp_tm = 0.5 }
+			add_to_temp_variable = { pww_ktp_score = pww_ktp_tm }
+			log = "[GetDateText] PWW_CARTEL tempt: [?pww_ktp_t.GetTag] courts [?pww_ktp_who.GetTag] at [?pww_ktp_prem|2] score [?pww_ktp_score|0]"
+			if = {
+				limit = { check_variable = { pww_ktp_score > 29.999 } }
+				pww_cartel_tempt_accept = yes
+			}
+			else = {
+				add_to_variable = { global.pww_cm_tempt^pww_ktp_cm = 15 }
+				set_temp_variable = { pww_kcz_cid = pww_ktp_cid }
+				set_temp_variable = { pww_kcz_delta = -3 }
+				pww_cartel_add_cohesion = yes
+				set_temp_variable = { pww_kck_cid = pww_ktp_cid }
+				pww_cartel_check_collapse = yes
+			}
+		}
+		var:pww_ktp_t = {
+			if = {
+				limit = { is_ai = no }
+				set_variable = { pww_cartel_ev_who = pww_ktp_who }
+				set_variable = { pww_cartel_ev_cid = pww_ktp_cid }
+				if = {
+					limit = { check_variable = { pww_out_result = 1 } }
+					country_event = { id = pww_cartel.10 }
+				}
+				else_if = {
+					limit = { check_variable = { pww_out_fail = 0 } }
+					country_event = { id = pww_cartel.11 }
+				}
+			}
+		}
+	}
+}
+
+# in: pww_ktp_cm, pww_ktp_cid, pww_ktp_prem. out: pww_ktp_amt, pww_ktp_civ.
+pww_cartel_tempt_terms = {
+	set_temp_variable = { pww_ktp_amt = global.pww_cm_unsold^pww_ktp_cm }
+	multiply_temp_variable = { pww_ktp_amt = 0.5 }
+	clamp_temp_variable = { var = pww_ktp_amt min = 8 max = 40 }
+	round_temp_variable = pww_ktp_amt
+	set_temp_variable = { pww_ktp_civ = pww_ktp_amt }
+	multiply_temp_variable = { pww_ktp_civ = pww_ktp_prem }
+	divide_temp_variable = { pww_ktp_civ = 8 }
+	round_temp_variable = pww_ktp_civ
+	clamp_temp_variable = { var = pww_ktp_civ min = 1 max = 15 }
+}
+
+# in: pww_ktp_cm, pww_ktp_cid, pww_ktp_who, pww_ktp_t, pww_ktp_amt,
+# pww_ktp_civ. The member signs with the tempter and leaves the cartel.
+pww_cartel_tempt_accept = {
+	pww_cartel_ledger_clear_inputs = yes
+	set_temp_variable = { pww_l_seller = pww_ktp_who }
+	set_temp_variable = { pww_l_buyer = pww_ktp_t }
+	set_temp_variable = { pww_l_res = global.pww_cart_res^pww_ktp_cid }
+	set_temp_variable = { pww_l_amount = pww_ktp_amt }
+	set_temp_variable = { pww_l_committal = 1 }
+	set_temp_variable = { pww_l_term_days = 365 }
+	set_temp_variable = { pww_l_civ = pww_ktp_civ }
+	set_temp_variable = { pww_l_activate = 1 }
+	pww_ledger_create_agreement = yes
+	set_temp_variable = { pww_ktp_ag = pww_l_new_id }
+	if = {
+		limit = { check_variable = { pww_l_result = 1 } }
+		set_temp_variable = { pww_out_result = 1 }
+		for_each_loop = {
+			array = global.pww_cm_cart
+			value = pww_ktp_c
+			index = pww_ktp_i
+			if = {
+				limit = {
+					check_variable = { pww_ktp_c = pww_ktp_cid }
+					check_variable = { global.pww_cm_status^pww_ktp_i = 1 }
+					NOT = { check_variable = { pww_ktp_i = pww_ktp_cm } }
+				}
+				set_temp_variable = { pww_ktp_m = global.pww_cm_who^pww_ktp_i }
+				var:pww_ktp_t = { var:pww_ktp_m = { add_opinion_modifier = { target = PREV modifier = pww_cartel_poacher } } }
+			}
+		}
+		set_temp_variable = { pww_in_cm = pww_ktp_cm }
+		set_temp_variable = { pww_in_cause = 1 }
+		pww_cartel_leave = yes
+		log = "[GetDateText] PWW_CARTEL poached: [?pww_ktp_who.GetTag] leaves cartel [?pww_ktp_cid] for [?pww_ktp_t.GetTag] ([?pww_ktp_amt|0] units for [?pww_ktp_civ|0] factories, agreement [?pww_ktp_ag])"
+	}
+	else = {
+		set_temp_variable = { pww_out_fail = 2 }
+		log = "[GetDateText] PWW_CARTEL poach deal refused by the ledger: fail [?pww_l_fail]"
+	}
+}
+
+# Human member answers a poaching offer (pww_cartel.9). Country scope (the
+# member). in: pww_in_accept. Reads the event variables.
+pww_cartel_answer_tempt = {
+	set_temp_variable = { pww_ktp_cm = pww_cartel_ev_cm }
+	set_temp_variable = { pww_ktp_cid = global.pww_cm_cart^pww_ktp_cm }
+	set_temp_variable = { pww_ktp_who = THIS }
+	set_temp_variable = { pww_ktp_t = pww_cartel_ev_who }
+	set_temp_variable = { pww_ktp_amt = pww_cartel_ev_amt }
+	set_temp_variable = { pww_ktp_civ = pww_cartel_ev_civ }
+	set_temp_variable = { pww_out_result = 0 }
+	if = {
+		limit = {
+			check_variable = { pww_in_accept = 1 }
+			check_variable = { global.pww_cm_status^pww_ktp_cm = 1 }
+		}
+		pww_cartel_tempt_accept = yes
+	}
+	else_if = {
+		limit = { check_variable = { global.pww_cm_status^pww_ktp_cm = 1 } }
+		add_to_variable = { global.pww_cm_tempt^pww_ktp_cm = 15 }
+	}
+}
+
+# Importer pressure. in: pww_in_cm, pww_in_presser.
+pww_cartel_press = {
+	set_temp_variable = { pww_out_result = 0 }
+	set_temp_variable = { pww_kpr_cm = pww_in_cm }
+	set_temp_variable = { pww_kpr_p = pww_in_presser }
+	if = {
+		limit = { check_variable = { global.pww_cm_status^pww_kpr_cm = 1 } }
+		set_temp_variable = { pww_kpr_cid = global.pww_cm_cart^pww_kpr_cm }
+		set_temp_variable = { pww_kpr_who = global.pww_cm_who^pww_kpr_cm }
+		var:pww_kpr_p = { var:pww_kpr_who = { add_opinion_modifier = { target = PREV modifier = pww_cartel_pressed } } }
+		add_to_variable = { global.pww_cm_tempt^pww_kpr_cm = 20 }
+		var:pww_kpr_p = { set_country_flag = { flag = pww_cartel_press_cd days = 90 value = 1 } }
+		set_temp_variable = { pww_kcz_cid = pww_kpr_cid }
+		set_temp_variable = { pww_kcz_delta = -5 }
+		pww_cartel_add_cohesion = yes
+		set_temp_variable = { pww_kck_cid = pww_kpr_cid }
+		pww_cartel_check_collapse = yes
+		set_temp_variable = { pww_out_result = 1 }
+		log = "[GetDateText] PWW_CARTEL pressed: [?pww_kpr_p.GetTag] leans on [?pww_kpr_who.GetTag] (cartel [?pww_kpr_cid])"
+	}
+}
+
+# Flooding. in: pww_in_res, pww_in_flooder.
+pww_cartel_flood = {
+	set_temp_variable = { pww_out_result = 0 }
+	set_temp_variable = { pww_kfl_res = pww_in_res }
+	set_temp_variable = { pww_kfl_f = pww_in_flooder }
+	set_temp_variable = { pww_kfl_cid = global.pww_cart_by_res^pww_kfl_res }
+	if = {
+		limit = {
+			check_variable = { pww_kfl_cid > -1 }
+			check_variable = { global.pww_cart_status^pww_kfl_cid = 1 }
+		}
+		var:pww_kfl_f = {
+			if = { limit = { check_variable = { pww_kfl_res = 1 } } set_country_flag = { flag = pww_cartel_flooding_aluminium days = 120 value = 1 } }
+			else_if = { limit = { check_variable = { pww_kfl_res = 2 } } set_country_flag = { flag = pww_cartel_flooding_rubber days = 120 value = 1 } }
+			else_if = { limit = { check_variable = { pww_kfl_res = 3 } } set_country_flag = { flag = pww_cartel_flooding_tungsten days = 120 value = 1 } }
+			else_if = { limit = { check_variable = { pww_kfl_res = 4 } } set_country_flag = { flag = pww_cartel_flooding_steel days = 120 value = 1 } }
+			else_if = { limit = { check_variable = { pww_kfl_res = 5 } } set_country_flag = { flag = pww_cartel_flooding_chromium days = 120 value = 1 } }
+			else_if = { limit = { check_variable = { pww_kfl_res = 6 } } set_country_flag = { flag = pww_cartel_flooding_coal days = 120 value = 1 } }
+		}
+		for_each_loop = {
+			array = global.pww_cm_cart
+			value = pww_kfl_c
+			index = pww_kfl_i
+			if = {
+				limit = {
+					check_variable = { pww_kfl_c = pww_kfl_cid }
+					check_variable = { global.pww_cm_status^pww_kfl_i = 1 }
+				}
+				set_temp_variable = { pww_kfl_m = global.pww_cm_who^pww_kfl_i }
+				var:pww_kfl_f = { var:pww_kfl_m = { add_opinion_modifier = { target = PREV modifier = pww_cartel_dumping } } }
+				add_to_variable = { global.pww_cm_tempt^pww_kfl_i = 10 }
+			}
+		}
+		set_temp_variable = { pww_out_result = 1 }
+		log = "[GetDateText] PWW_CARTEL flooding: [?pww_kfl_f.GetTag] floods res [?pww_kfl_res] against cartel [?pww_kfl_cid]"
+	}
+}
+
+# Monthly. in: pww_kao_cid. See the header.
+pww_cartel_ai_outsiders = {
+	set_temp_variable_to_random = { var = pww_kao_roll min = 0 max = 100 integer = yes }
+	if = {
+		limit = { check_variable = { pww_kao_roll < 25 } }
+		set_temp_variable = { pww_kao_res = global.pww_cart_res^pww_kao_cid }
+		set_temp_variable = { pww_kx_res = pww_kao_res }
+		set_temp_variable = { pww_kao_t = -1 }
+		set_temp_variable = { pww_kao_best = 49.999 }
+		every_country = {
+			limit = {
+				exists = yes
+				is_ai = yes
+				is_major = yes
+				pww_cartel_is_member_res = no
+				num_of_available_civilian_factories > 2
+			}
+			set_temp_variable = { pww_kr_res = pww_kao_res }
+			pww_cartel_read_res = yes
+			if = {
+				limit = { check_variable = { pww_kr_desp > pww_kao_best } }
+				set_temp_variable = { pww_kao_best = pww_kr_desp }
+				set_temp_variable = { pww_kao_t = THIS }
+			}
+		}
+		if = {
+			limit = { check_variable = { pww_kao_t > -1 } }
+			set_temp_variable = { pww_kao_cm = -1 }
+			set_temp_variable = { pww_kao_sh = -1 }
+			set_temp_variable = { pww_kao_l = global.pww_cart_leader^pww_kao_cid }
+			for_each_loop = {
+				array = global.pww_cm_cart
+				value = pww_kao_c
+				index = pww_kao_i
+				if = {
+					limit = {
+						check_variable = { pww_kao_c = pww_kao_cid }
+						check_variable = { global.pww_cm_status^pww_kao_i = 1 }
+						NOT = { check_variable = { global.pww_cm_who^pww_kao_i = pww_kao_l } }
+					}
+					set_temp_variable = { pww_kao_w = global.pww_cm_who^pww_kao_i }
+					if = {
+						limit = {
+							var:pww_kao_w = { is_ai = yes }
+							NOT = { var:pww_kao_w = { var:pww_kao_t = { has_war_with = PREV } } }
+							check_variable = { global.pww_cm_unsold^pww_kao_i > pww_kao_sh }
+						}
+						set_temp_variable = { pww_kao_sh = global.pww_cm_unsold^pww_kao_i }
+						set_temp_variable = { pww_kao_cm = pww_kao_i }
+					}
+				}
+			}
+			if = {
+				limit = { check_variable = { pww_kao_cm > -1 } }
+				set_temp_variable = { pww_in_cm = pww_kao_cm }
+				set_temp_variable = { pww_in_tempter = pww_kao_t }
+				set_temp_variable = { pww_in_premium = 0 }
+				pww_cartel_tempt = yes
+			}
+		}
+	}
+}
+
+###############################################################################
+# Event helpers (country scope = the human recipient). Copy the record into
+# country variables the event text reads and save event targets:
+#   pww_cartel_chair (leader), pww_cartel_other (pww_cartel_ev_who, if set).
+#   pww_cartel_ev_res, _coh (cohesion), _pct (cartel price, % over market),
+#   _n (members), _quota / _sold / _susp / _warns (when a member entry is
+#   known).
+###############################################################################
+pww_cartel_ev_from_cm = {
+	set_variable = { pww_cartel_ev_cid = global.pww_cm_cart^pww_cartel_ev_cm }
+	set_variable = { pww_cartel_ev_quota = global.pww_cm_quota^pww_cartel_ev_cm }
+	set_variable = { pww_cartel_ev_sold = global.pww_cm_sold^pww_cartel_ev_cm }
+	set_variable = { pww_cartel_ev_susp = global.pww_cm_susp^pww_cartel_ev_cm }
+	set_variable = { pww_cartel_ev_warns = global.pww_cm_warns^pww_cartel_ev_cm }
+	pww_cartel_ev_from_cid = yes
+}
+
+pww_cartel_ev_from_cid = {
+	set_variable = { pww_cartel_ev_res = global.pww_cart_res^pww_cartel_ev_cid }
+	set_variable = { pww_cartel_ev_coh = global.pww_cart_cohesion^pww_cartel_ev_cid }
+	set_variable = { pww_cartel_ev_n = global.pww_cart_n^pww_cartel_ev_cid }
+	set_variable = { pww_cartel_ev_pct = global.pww_cart_price^pww_cartel_ev_cid }
+	subtract_from_variable = { pww_cartel_ev_pct = 1 }
+	multiply_variable = { pww_cartel_ev_pct = 100 }
+	round_variable = pww_cartel_ev_pct
+	set_temp_variable = { pww_kev_l = global.pww_cart_leader^pww_cartel_ev_cid }
+	var:pww_kev_l = { save_event_target_as = pww_cartel_chair }
+	if = {
+		limit = { has_variable = pww_cartel_ev_who }
+		var:pww_cartel_ev_who = { save_event_target_as = pww_cartel_other }
+	}
+}

@@ -54,6 +54,7 @@ TESTS: list[Test] = [
     T("tests/diplomacy/diplo_ai_propose", ["--tag", "SWI"]),
     T("tests/diplomacy/diplo_auction", ["--tag", "SWI"]),
     T("tests/diplomacy/diplo_haggle", ["--tag", "GER"]),
+    T("tests/diplomacy/diplo_glut_sale", ["--tag", "ITA"]),
     T("tests/diplomacy/diplo_seed_reload",
       ["--autosave", "MONTHLY", "--clear-saves"], ["--continue-last-save"]),
     T("tests/situations/sit_wolfram_ai", ["--tag", "HAI"]),
@@ -74,6 +75,28 @@ for _d in sorted((REPO / "tests" / "engine").glob("t*")):
     if _d.is_dir():
         TESTS.append(T(str(_d.relative_to(REPO)).replace("\\", "/"), ["--no-pww"], group="engine",
                        r56=_d.name == "t9_discovery"))
+# Cartels lane
+TESTS += [
+    T("tests/cartels/cartel_irra", []),
+    T("tests/cartels/cartel_cheat", []),
+    T("tests/cartels/cartel_poach", []),
+]
+# Stockpiles lane.
+TESTS += [
+    T("tests/stockpiles/stock_fill", ["--timeout", "900"]),
+    T("tests/stockpiles/stock_draw", ["--tag", "ITA", "--timeout", "900"]),
+    T("tests/stockpiles/stock_depot", ["--timeout", "1200"]),
+    T("tests/stockpiles/stock_reload",
+      ["--autosave", "MONTHLY", "--clear-saves", "--until", "stock_reload.session1_done", "--timeout", "900"],
+      ["--continue-last-save", "--timeout", "900"]),
+]
+# Logistics + relationships lane.
+TESTS += [
+    T("tests/logistics/logi_cost", []),
+    T("tests/logistics/rel_bond", []),
+    T("tests/logistics/logi_probe", [], group="manual",
+      notes="engine probe for distance_to / neighbors / convoy_threat; never run by this script"),
+]
 
 
 @dataclass

@@ -1,0 +1,117 @@
+# Stockpiles test: Strategic Depots (run as POR, default).
+# Day 1: world tension raised by 80 (named threat).
+# Day 2: POR takes the depot decision (activate_decision: what the button
+#        does, minus the click).
+#   building    day 4: the decision is active, POR's flag is set and its
+#               civilian factory use rose by 3
+#   capacity    day 145: the 120-day build is done, POR has 1 depot, the
+#               lock is gone and steel capacity is twice the base
+#   ai_starts   day 30: at least one AI country is building a depot (AI
+#               starts need 25 PP, so the first begin around day 21)
+#   ai_builds   day 145: at least one AI country finished a depot
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = POR }
+				add_to_variable = { global.pww_stest_day = 1 }
+				if = {
+					limit = { check_variable = { global.pww_stest_day = 1 } }
+					set_global_flag = pww_stock_debug
+					add_named_threat = { threat = 80 name = pww_stest_threat }
+				}
+				if = {
+					limit = { check_variable = { global.pww_stest_day = 2 } }
+					set_variable = { global.pww_stest_pp0 = political_power }
+					set_variable = { global.pww_stest_cu0 = modifier@civilian_factory_use }
+					pww_stock_cap_all = yes
+					set_variable = { global.pww_stest_cap0 = pww_stock_cap_steel }
+					activate_decision = pww_stock_build_depot
+				}
+				if = {
+					limit = { check_variable = { global.pww_stest_day = 4 } }
+					set_temp_variable = { pww_stest_cu = modifier@civilian_factory_use }
+					subtract_from_temp_variable = { pww_stest_cu = global.pww_stest_cu0 }
+					log = "PWW_RESULT stock_depot.building_values INFO pp [?global.pww_stest_pp0|1] -> [?political_power|1], civ use +[?pww_stest_cu|1], cap_steel [?global.pww_stest_cap0|0], threat [?global.threat|2]"
+					if = {
+						limit = {
+							has_country_flag = pww_stock_depot_building
+							check_variable = { pww_stest_cu > 2.9 }
+						}
+						log = "PWW_RESULT stock_depot.building PASS depot under construction, 3 civilian factories locked"
+					}
+					else = {
+						log = "PWW_RESULT stock_depot.building FAIL flag or factory lock missing"
+					}
+				}
+				if = {
+					limit = { check_variable = { global.pww_stest_day = 30 } }
+					set_temp_variable = { pww_stest_n = 0 }
+					every_country = {
+						limit = {
+							is_ai = yes
+							OR = {
+								has_country_flag = pww_stock_depot_building
+								check_variable = { pww_stock_depots > 0 }
+							}
+						}
+						add_to_temp_variable = { pww_stest_n = 1 }
+						log = "PWW_RESULT stock_depot.ai_country INFO [This.GetTag] building (score [?pww_stock_ai_score|0], free factories [?num_of_civilian_factories_available_for_projects|0])"
+					}
+					set_variable = { global.pww_stest_ai30 = pww_stest_n }
+					if = {
+						limit = { check_variable = { pww_stest_n > 0 } }
+						log = "PWW_RESULT stock_depot.ai_starts PASS [?pww_stest_n|0] AI countries started depots at tension [?global.threat|2]"
+					}
+					else = {
+						log = "PWW_RESULT stock_depot.ai_starts FAIL no AI country started a depot"
+					}
+				}
+				if = {
+					limit = { check_variable = { global.pww_stest_day = 145 } }
+					set_temp_variable = { pww_stest_cu = modifier@civilian_factory_use }
+					subtract_from_temp_variable = { pww_stest_cu = global.pww_stest_cu0 }
+					set_temp_variable = { pww_stest_base = resource_consumed@steel }
+					if = {
+						limit = { check_variable = { pww_stest_base < global.pww_stock_c_min_scale } }
+						set_temp_variable = { pww_stest_base = global.pww_stock_c_min_scale }
+					}
+					multiply_temp_variable = { pww_stest_base = global.pww_stock_c_base_days }
+					set_temp_variable = { pww_stest_ratio = pww_stock_cap_steel }
+					divide_temp_variable = { var = pww_stest_ratio value = pww_stest_base if_zero = 0 }
+					log = "PWW_RESULT stock_depot.capacity_values INFO depots [?pww_stock_depots|0], civ use +[?pww_stest_cu|1], steel cap [?global.pww_stest_cap0|0] -> [?pww_stock_cap_steel|0] (base now [?pww_stest_base|0], ratio [?pww_stest_ratio|2])"
+					if = {
+						limit = {
+							check_variable = { pww_stock_depots = 1 }
+							NOT = { has_country_flag = pww_stock_depot_building }
+							check_variable = { pww_stest_cu < 0.1 }
+							check_variable = { pww_stest_ratio > 1.99 }
+							check_variable = { pww_stest_ratio < 2.01 }
+						}
+						log = "PWW_RESULT stock_depot.capacity PASS the finished depot doubled capacity and released the factories"
+					}
+					else = {
+						log = "PWW_RESULT stock_depot.capacity FAIL"
+					}
+					set_temp_variable = { pww_stest_n = 0 }
+					every_country = {
+						limit = {
+							is_ai = yes
+							check_variable = { pww_stock_depots > 0 }
+						}
+						add_to_temp_variable = { pww_stest_n = 1 }
+						log = "PWW_RESULT stock_depot.ai_done INFO [This.GetTag] depots [?pww_stock_depots|0]"
+					}
+					if = {
+						limit = { check_variable = { pww_stest_n > 0 } }
+						log = "PWW_RESULT stock_depot.ai_builds PASS [?pww_stest_n|0] AI countries finished a depot"
+					}
+					else = {
+						log = "PWW_RESULT stock_depot.ai_builds FAIL no AI depot finished"
+					}
+					log = "PWW_DONE stock_depot"
+				}
+			}
+		}
+	}
+}

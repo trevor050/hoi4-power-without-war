@@ -287,18 +287,38 @@ def build_hint_loc(n, recv):
     else:
         a_cases = [(R(cv(f"{us_sh}_{n}", ">", 0.5)), loc(f"pww_dt_h{tag}_a_sh_{n}", f"we're short {num(f'{us_sh}_{n}')}"))]
         a_def = loc("pww_dt_h_a_enough", "we have enough")
-        b_cases = [(R(cv(f"{th_sp}_{n}", ">", 0.5)), loc(f"pww_dt_h{tag}_b_sp_{n}", f"they have {num(f'{th_sp}_{n}')}"))]
-        b_def = loc("pww_dt_h_b_nosp", "they have none")
+        # Their unsold output (what is left after their own use and exports):
+        # unsold goods are cheap to them; none means every unit is already sold.
+        b_cases = [(R(cv(f"{th_sp}_{n}", ">", 0.5)), loc(f"pww_dt_h{tag}_b_sp_{n}", f"{num(f'{th_sp}_{n}')} unsold"))]
+        b_def = loc("pww_dt_h_b_nosp", "sold out")
     dt(f"pww_dt_sl_h{tag}a_{n}", a_cases, a_def)
     dt(f"pww_dt_sl_h{tag}b_{n}", b_cases, b_def)
     loc(f"pww_dt_h{tag}_res_{n}", f"{val} §g· [pww_dt_sl_h{tag}a_{n}] · [pww_dt_sl_h{tag}b_{n}]§!")
     giver_us = we_give
     who = "we" if giver_us else "they"
+    civ = loc(f"pww_dt_h{tag}_civ_{n}", f"{val} §g· {who} have {num(f)} free§!")
+    pp = loc(f"pww_dt_h{tag}_pp_{n}", f"{val} §g· {who} gain {num(f, 2)} a day§!")
+    eq = loc(f"pww_dt_h{tag}_eq_{n}", f"{val} §g· {who} hold {num(f)}§!")
+    if not recv:
+        # The target's appetite for the payment (pww_dbp_<n>: 1 high, 2 low),
+        # a word only; the capacity figure gets shorter to make room.
+        ap = f"pww_dbp_{n}"
+        hi, lo = R(cv(ap, "=", 1)), R(cv(ap, "=", 2))
+        civ_s, pp_s, eq_s = f"{num(f)} free", f"+{num(f, 2)} a day", f"{num(f)} held"
+        for kind, base, short, need in (("civ", civ, civ_s, "they need them"), ("pp", pp, pp_s, "they need it"),
+                                        ("eq", eq, eq_s, "they need it")):
+            dt(f"pww_dt_sl_h{tag}{kind}_{n}", [
+                (hi, loc(f"pww_dt_h{tag}_{kind}_hi_{n}", f"{val} §g· {short} ·§! {need}")),
+                (lo, loc(f"pww_dt_h{tag}_{kind}_lo_{n}", f"{val} §g· {short} ·§! they have plenty")),
+            ], base)
+        # A defined_text case needs a loc KEY, not another defined_text name,
+        # so wrap each nested defined_text in a loc key that calls it.
+        civ, pp, eq = (loc(f"pww_dt_h{tag}_{k}w_{n}", f"[pww_dt_sl_h{tag}{k}_{n}]") for k in ("civ", "pp", "eq"))
     cases = [
-        (kind_is(n, 1), loc(f"pww_dt_h{tag}_civ_{n}", f"{val} §g· {who} have {num(f)} free§!")),
-        (kind_is(n, 2), loc(f"pww_dt_h{tag}_pp_{n}", f"{val} §g· {who} gain {num(f, 2)} a day§!")),
+        (kind_is(n, 1), civ),
+        (kind_is(n, 2), pp),
         (kind_is(n, 3), f"pww_dt_h{tag}_res_{n}"),
-        (kind_is(n, 4), loc(f"pww_dt_h{tag}_eq_{n}", f"{val} §g· {who} hold {num(f)}§!")),
+        (kind_is(n, 4), eq),
         (kind_is(n, 5), loc(f"pww_dt_h{tag}_lic_{n}", f"{val} §g· " + ("they may build our design§!" if giver_us else "we may build their design§!"))),
     ]
     dt(nm, cases, "pww_dt_empty")
@@ -619,7 +639,8 @@ def summary_loc():
            60: "We have not researched a design we offer to license.",
            61: "They have not researched a design we ask to license.",
            62: "There is no producing state for that mine lease.",
-           63: "Lease Mines needs a mine lease on their side."}
+           63: "Lease Mines needs a mine lease on their side.",
+           64: "They embargo us: they will not trade with us."}
     dt("pww_dt_sl_invalid", [(R(cv("pww_do_valid", "=", c)), loc(f"pww_dt_invalid_{c}", f"§R{t}§!")) for c, t in inv.items()],
        "pww_dt_empty")
     # Party header surplus line: the counterparty's spare of the first resource (or mine lease)
@@ -725,14 +746,20 @@ def build_recv(effects, triggers):
     b.tb("line", GL, 338, "[pww_dt_sl_rline]", CW, h=36)
     # Counter marks: decline with one marked to send it back as a counter.
     y = 376
-    for v, t in ((1, "Counter: ask them to pay more"), (2, "Counter: give them less"), (3, "Counter: a shorter term")):
+    # When the sender sells goods (frame 1) the first two marks read as a lower
+    # price and a smaller amount.
+    dt("pww_dt_sl_counter_1", [(R(cv("pww_do_frame", "=", 1)), loc("pww_dt_counter_1s", "Counter: a lower price"))],
+       loc("pww_dt_counter_1", "Counter: ask them to pay more"))
+    dt("pww_dt_sl_counter_2", [(R(cv("pww_do_frame", "=", 1)), loc("pww_dt_counter_2s", "Counter: a smaller amount"))],
+       loc("pww_dt_counter_2", "Counter: give them less"))
+    for v, t in ((1, "[pww_dt_sl_counter_1]"), (2, "[pww_dt_sl_counter_2]"), (3, "Counter: a shorter term")):
         on = cv("pww_dr_counter", "=", v)
         click = (f"\t\t\t\tif = {{ limit = {{ {on} }} set_variable = {{ pww_dr_counter = 0 }} }}\n"
                  f"\t\t\t\telse = {{ set_variable = {{ pww_dr_counter = {v} }} }}\n"
                  f"\t\t\t\tadd_to_variable = {{ pww_diplo_dirty = 1 }}\n")
         b.btn(f"c{v}_off", GL, y + 2, "GFX_pww_diplo_box_off", vis=f"NOT = {{ {on} }}", click=click)
         b.btn(f"c{v}_on", GL, y + 2, "GFX_pww_diplo_box_on", vis=on, click=click)
-        b.tb(f"c{v}_l", GL + 22, y + 1, loc(f"pww_dt_counter_{v}", t), CW - 22)
+        b.tb(f"c{v}_l", GL + 22, y + 1, t if t.startswith("[") else loc(f"pww_dt_counter_{v}", t), CW - 22)
         y += 22
     b.tb("hint", GL, y + 2, loc("pww_dt_counter_hint", "§gAccept signs these terms. Decline with a counter marked sends it back.§!"), CW)
     effects[b.g] = b.eff
@@ -828,7 +855,8 @@ def mirror_effects():
          "# pww_dbx_<n>, pww_dba_<n> amount, pww_dbs_<n> lease state, pww_dbu_<n> lease\n"
          "# output, pww_dbf_<n> the giver's figure: free factories, political power a\n"
          "# day or stock; resource rows pww_dbss/sp (sender short/spare) and\n"
-         "# pww_dbts/tp (target)), the market values (pww_dbv_<n> per row,\n"
+         "# pww_dbts/tp (target); pww_dbp_<n> the target's appetite for a payment,\n"
+         "# 1 high, 2 low), the market values (pww_dbv_<n> per row,\n"
          "# pww_dbm_t0 / t1 totals, each with a\n"
          "# _f format flag; pww_dbm_bx the balance marker's x) and the add-menu figures\n"
          "# (pww_dmg<side>_*: civ, pp, r<res>_sp/_sh, e<eq>, s<res>, top/topa) and\n"
@@ -871,6 +899,11 @@ def mirror_effects():
     # market values: per row, side totals, balance marker
     for n in range(8):
         m.append(fmt_value(f"pww_dob_m^{n}", f"pww_dbv_{n}"))
+    # The target's appetite for a payment row, as a word: 1 high, 2 low, 0 none.
+    for n in range(8):
+        m.append(f"\tset_variable = {{ pww_dbp_{n} = 0 }}\n"
+                 f"\tif = {{ limit = {{ check_variable = {{ pww_dob_p^{n} > 1.149 }} }} set_variable = {{ pww_dbp_{n} = 1 }} }}\n"
+                 f"\tif = {{ limit = {{ check_variable = {{ pww_dob_p^{n} < 0.801 }} }} set_variable = {{ pww_dbp_{n} = 2 }} }}\n")
     m.append(fmt_value("pww_do_mk_m0", "pww_dbm_t0"))
     m.append(fmt_value("pww_do_mk_m1", "pww_dbm_t1"))
     m.append("\t# Marker x: leans toward the side that gets more (left: we get more),\n"

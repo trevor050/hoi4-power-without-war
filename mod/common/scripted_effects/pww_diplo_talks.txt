@@ -45,7 +45,9 @@
 #   desperation: a seller in need loses more (x 1 + desp/100), a desperate
 #   buyer gains more (x 1 + desp/50). A lease costs the seller +30% of the
 #   value (foreign rights on home soil), 15 points less with a fig leaf.
-# Acceptance points (the AI accepts when the total is above zero):
+# Acceptance points of an auction bid (the AI accepts when the total is above
+# zero). Trade-talks bundles use the market-floor model in the header of
+# pww_diplo_bundle.txt (glut, scarcity-scaled reserve, fair part):
 #   terms     (gain - loss) / resource value x 100, clamped -100..100: a
 #             percentage, so price cards weigh the same on any deal size
 #             (30% below market = -30, 35% above = +35)
@@ -61,9 +63,7 @@
 #   patron    -20 when a patron underwrites them against this sender
 #   reserve   their hidden reservation (2..25)
 #   repeat    -1000 when the exact draft was already refused
-# So below market never clears a neutral, comfortable seller; a plain
-# at-market draft clears about one seed in four (more with good relations
-# or their want); above market usually clears.
+# So a bid below market never clears a neutral, comfortable holder.
 ###############################################################################
 
 ###############################################################################
@@ -735,6 +735,7 @@ pww_diplo_eval_offer = {
 	set_variable = { pww_do_e_trust = 0 }
 	set_variable = { pww_do_e_rel = 0 }
 	set_variable = { pww_do_e_reserve = -10 }
+	set_variable = { pww_do_e_fair = 0 }
 	set_variable = { pww_do_e_repeat = 0 }
 	if = {
 		limit = {
@@ -1127,7 +1128,7 @@ pww_diplo_talk_reply = {
 		}
 		if = {
 			limit = { has_global_flag = pww_diplo_debug }
-			log = "[GetDateText] PWW_DIPLO reply talk=[?pww_dr_t|0] round=[?pww_dr_round|0] patience=[?pww_dr_pat|0] line=[?pww_dr_line|0] sig=[?pww_do_sig|0] total=[?pww_do_e_total|0] terms=[?pww_do_e_terms|0] need=[?pww_do_e_need|0] want=[?pww_do_e_want|0] red=[?pww_do_e_red|0] trust=[?pww_do_e_trust|0] rel=[?pww_do_e_rel|0] patron=[?pww_do_e_patron|0] reserve=[?pww_do_e_reserve|0] repeat=[?pww_do_e_repeat|0] invalid=[?pww_do_valid|0] gap=[?pww_do_gap|2] len=[?pww_do_len|0] bind=[?pww_do_bind|0] status=[?global.pww_dt_status^pww_dr_t|0]"
+			log = "[GetDateText] PWW_DIPLO reply talk=[?pww_dr_t|0] round=[?pww_dr_round|0] patience=[?pww_dr_pat|0] line=[?pww_dr_line|0] sig=[?pww_do_sig|0] total=[?pww_do_e_total|0] terms=[?pww_do_e_terms|0] need=[?pww_do_e_need|0] want=[?pww_do_e_want|0] red=[?pww_do_e_red|0] trust=[?pww_do_e_trust|0] rel=[?pww_do_e_rel|0] patron=[?pww_do_e_patron|0] reserve=[?pww_do_e_reserve|0] fair=[?pww_do_e_fair|0] scar=[?pww_do_scar|2] repeat=[?pww_do_e_repeat|0] invalid=[?pww_do_valid|0] gap=[?pww_do_gap|2] len=[?pww_do_len|0] bind=[?pww_do_bind|0] status=[?global.pww_dt_status^pww_dr_t|0]"
 		}
 	}
 	pww_diplo_refresh_display = yes

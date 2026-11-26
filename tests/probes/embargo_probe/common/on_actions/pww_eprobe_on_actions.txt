@@ -1,0 +1,24 @@
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = GER }
+				add_to_variable = { global.pww_ep_day = 1 }
+				if = {
+					limit = { check_variable = { global.pww_ep_day = 2 } }
+					if = { limit = { any_other_country = { is_embargoed_by = ROOT } } log = "PWW_RESULT ep.start_anyother INFO true" } else = { log = "PWW_RESULT ep.start_anyother INFO false" }
+					every_other_country = { limit = { is_embargoed_by = ROOT } log = "PWW_RESULT ep.start_embargoed INFO [THIS.GetTag] embargoed by GER" }
+					every_other_country = { limit = { ROOT = { is_embargoed_by = PREV } } log = "PWW_RESULT ep.start_embargoing_ger INFO [THIS.GetTag] embargoes GER" }
+					send_embargo = HUN
+				}
+				if = {
+					limit = { check_variable = { global.pww_ep_day = 4 } }
+					if = { limit = { HUN = { is_embargoed_by = GER } } log = "PWW_RESULT ep.hun_embargoed_by_ger INFO true" } else = { log = "PWW_RESULT ep.hun_embargoed_by_ger INFO false" }
+					if = { limit = { is_embargoing = HUN } log = "PWW_RESULT ep.ger_is_embargoing_hun INFO true" } else = { log = "PWW_RESULT ep.ger_is_embargoing_hun INFO false" }
+					if = { limit = { any_other_country = { is_embargoed_by = ROOT } } log = "PWW_RESULT ep.after_anyother INFO true" } else = { log = "PWW_RESULT ep.after_anyother INFO false" }
+					log = "PWW_DONE embargo_probe"
+				}
+			}
+		}
+	}
+}

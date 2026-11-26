@@ -1,0 +1,186 @@
+# Cartels test: outsiders against the rubber agreement, and the player
+# joining it. Start tag POR (human; Portugal produces a little rubber in
+# Mozambique). AI cheating, AI poaching and new conferences are off.
+# Run: python tools/run_hoi4.py --test tests/cartels/cartel_poach
+#   day 3  declined   Germany courts Britain (the chair) at the agreed
+#                     price: Britain stays; its temptation rises and
+#                     cohesion slips 3
+#          poached    Germany courts Siam (40 unsold, forced through the test
+#                     hook) at 1.30 of market: Siam leaves
+#                     (status 4, cause courted away), a committal one-year
+#                     Siam -> Germany rubber deal is active, cohesion -25,
+#                     Malaya resents Germany (pww_cartel_poacher)
+#          pressed    Germany leans on France: temptation +20, cohesion -5
+#          joined     Portugal joins through the decision effect: member
+#                     flag, a quota, one more member
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = POR }
+				add_to_variable = { global.pww_tcp_day = 1 }
+
+				if = {
+					limit = { check_variable = { global.pww_tcp_day = 1 } }
+					set_global_flag = pww_cartel_debug
+					set_variable = { global.pww_cartel_c_ai_cheat = 0 }
+					set_variable = { global.pww_cartel_c_ai_poach = 0 }
+					set_variable = { global.pww_cartel_c_ai_form = 0 }
+				}
+
+				if = {
+					limit = { check_variable = { global.pww_tcp_day = 3 } }
+					set_temp_variable = { pww_tcp_cid = global.pww_cart_by_res^2 }
+
+					# --- declined: Britain at the agreed price -----------------
+					set_temp_variable = { pww_tcp_c0 = global.pww_cart_cohesion^pww_tcp_cid }
+					ENG = {
+						set_temp_variable = { pww_in_res = 2 }
+						pww_cartel_find_member = yes
+					}
+					set_temp_variable = { pww_tcp_mcm = pww_out_cm }
+					set_temp_variable = { pww_in_cm = pww_tcp_mcm }
+					GER = { set_temp_variable = { pww_in_tempter = THIS } }
+					set_temp_variable = { pww_in_premium = global.pww_cart_price^pww_tcp_cid }
+					pww_cartel_tempt = yes
+					set_temp_variable = { pww_tcp_r1 = pww_out_result }
+					set_temp_variable = { pww_tcp_f1 = pww_out_fail }
+					set_temp_variable = { pww_tcp_c1 = global.pww_cart_cohesion^pww_tcp_cid }
+					set_temp_variable = { pww_tcp_d1 = pww_tcp_c0 }
+					subtract_from_temp_variable = { pww_tcp_d1 = pww_tcp_c1 }
+					if = {
+						limit = {
+							check_variable = { pww_tcp_r1 = 0 }
+							check_variable = { pww_tcp_f1 = 0 }
+							check_variable = { global.pww_cm_status^pww_tcp_mcm = 1 }
+							check_variable = { global.pww_cm_tempt^pww_tcp_mcm > 14.99 }
+							check_variable = { pww_tcp_d1 > 2.99 }
+							ENG = { has_country_flag = pww_cartel_mem_rubber }
+						}
+						log = "PWW_RESULT cartel_poach.declined PASS Britain stays; temptation [?global.pww_cm_tempt^pww_tcp_mcm|0], cohesion [?pww_tcp_c0|0] -> [?pww_tcp_c1|0]"
+					}
+					else = {
+						log = "PWW_RESULT cartel_poach.declined FAIL result [?pww_tcp_r1] fail [?pww_tcp_f1] status [?global.pww_cm_status^pww_tcp_mcm] tempt [?global.pww_cm_tempt^pww_tcp_mcm|0] cohesion drop [?pww_tcp_d1|0]"
+					}
+
+					# --- poached: Siam at 1.30 ---------------------------------
+					GER = { set_temp_variable = { pww_opinion_target = THIS } } MAL = { set_temp_variable = { pww_tcp_o0 = opinion@var:pww_opinion_target } }
+					SIA = {
+						set_temp_variable = { pww_in_res = 2 }
+						pww_cartel_find_member = yes
+					}
+					set_temp_variable = { pww_tcp_scm = pww_out_cm }
+					SIA = {
+						set_variable = { pww_cartel_test_res = 2 }
+						set_variable = { pww_cartel_test_unsold = 40 }
+					}
+					set_variable = { global.pww_cm_unsold^pww_tcp_scm = 40 }
+					set_temp_variable = { pww_tcp_n0 = global.pww_cart_n^pww_tcp_cid }
+					set_temp_variable = { pww_in_cm = pww_tcp_scm }
+					GER = { set_temp_variable = { pww_in_tempter = THIS } }
+					set_temp_variable = { pww_in_premium = 1.30 }
+					pww_cartel_tempt = yes
+					set_temp_variable = { pww_tcp_r2 = pww_out_result }
+					set_temp_variable = { pww_tcp_ag = pww_ktp_ag }
+					set_temp_variable = { pww_tcp_c2 = global.pww_cart_cohesion^pww_tcp_cid }
+					set_temp_variable = { pww_tcp_d2 = pww_tcp_c1 }
+					subtract_from_temp_variable = { pww_tcp_d2 = pww_tcp_c2 }
+					GER = { set_temp_variable = { pww_opinion_target = THIS } } MAL = { set_temp_variable = { pww_tcp_o1 = opinion@var:pww_opinion_target } }
+					set_temp_variable = { pww_tcp_od = pww_tcp_o0 }
+					subtract_from_temp_variable = { pww_tcp_od = pww_tcp_o1 }
+					set_temp_variable = { pww_tcp_n1 = pww_tcp_n0 }
+					subtract_from_temp_variable = { pww_tcp_n1 = 1 }
+					if = {
+						limit = {
+							check_variable = { pww_tcp_r2 = 1 }
+							check_variable = { global.pww_cm_status^pww_tcp_scm = 4 }
+							check_variable = { global.pww_cart_n^pww_tcp_cid = pww_tcp_n1 }
+							check_variable = { pww_tcp_d2 > 24.99 }
+							check_variable = { pww_tcp_ag > -1 }
+							check_variable = { global.pww_ag_status^pww_tcp_ag = 1 }
+							check_variable = { global.pww_ag_res^pww_tcp_ag = 2 }
+							check_variable = { global.pww_ag_committal^pww_tcp_ag = 1 }
+							SIA = {
+								check_variable = { global.pww_ag_seller^pww_tcp_ag = THIS }
+								NOT = { has_country_flag = pww_cartel_mem_rubber }
+							}
+							GER = { check_variable = { global.pww_ag_buyer^pww_tcp_ag = THIS } }
+							check_variable = { pww_tcp_od > 13.99 }
+						}
+						log = "PWW_RESULT cartel_poach.poached PASS Siam leaves for Germany: [?global.pww_ag_amount^pww_tcp_ag|0] rubber for [?global.pww_ag_civ^pww_tcp_ag|0] factories (agreement [?pww_tcp_ag]); cohesion [?pww_tcp_c1|0] -> [?pww_tcp_c2|0]"
+					}
+					else = {
+						log = "PWW_RESULT cartel_poach.poached FAIL result [?pww_tcp_r2] fail [?pww_out_fail] status [?global.pww_cm_status^pww_tcp_scm] members [?global.pww_cart_n^pww_tcp_cid] (want [?pww_tcp_n1]) drop [?pww_tcp_d2|0] ag [?pww_tcp_ag]"
+					}
+
+					# --- pressed: Germany leans on France -----------------------
+					FRA = {
+						set_temp_variable = { pww_in_res = 2 }
+						pww_cartel_find_member = yes
+					}
+					set_temp_variable = { pww_tcp_fcm = pww_out_cm }
+					set_temp_variable = { pww_tcp_t0 = global.pww_cm_tempt^pww_tcp_fcm }
+					GER = { set_temp_variable = { pww_opinion_target = THIS } } FRA = { set_temp_variable = { pww_tcp_o2 = opinion@var:pww_opinion_target } }
+					set_temp_variable = { pww_in_cm = pww_tcp_fcm }
+					GER = { set_temp_variable = { pww_in_presser = THIS } }
+					pww_cartel_press = yes
+					set_temp_variable = { pww_tcp_c3 = global.pww_cart_cohesion^pww_tcp_cid }
+					set_temp_variable = { pww_tcp_d3 = pww_tcp_c2 }
+					subtract_from_temp_variable = { pww_tcp_d3 = pww_tcp_c3 }
+					GER = { set_temp_variable = { pww_opinion_target = THIS } } FRA = { set_temp_variable = { pww_tcp_o3 = opinion@var:pww_opinion_target } }
+					set_temp_variable = { pww_tcp_od2 = pww_tcp_o2 }
+					subtract_from_temp_variable = { pww_tcp_od2 = pww_tcp_o3 }
+					set_temp_variable = { pww_tcp_t1 = global.pww_cm_tempt^pww_tcp_fcm }
+					subtract_from_temp_variable = { pww_tcp_t1 = pww_tcp_t0 }
+					if = {
+						limit = {
+							check_variable = { pww_out_result = 1 }
+							check_variable = { pww_tcp_t1 > 19.99 }
+							check_variable = { pww_tcp_d3 > 4.99 }
+							check_variable = { pww_tcp_od2 > 8.99 }
+							GER = { has_country_flag = pww_cartel_press_cd }
+						}
+						log = "PWW_RESULT cartel_poach.pressed PASS France tempted +[?pww_tcp_t1|0], cohesion [?pww_tcp_c2|0] -> [?pww_tcp_c3|0]"
+					}
+					else = {
+						log = "PWW_RESULT cartel_poach.pressed FAIL result [?pww_out_result] tempt +[?pww_tcp_t1|0] drop [?pww_tcp_d3|0]"
+					}
+
+					# --- joined: Portugal signs --------------------------------
+					set_temp_variable = { pww_tcp_n2 = global.pww_cart_n^pww_tcp_cid }
+					set_temp_variable = { pww_in_cartel_id = pww_tcp_cid }
+					POR = { set_temp_variable = { pww_in_country = THIS } }
+					pww_cartel_join = yes
+					set_temp_variable = { pww_tcp_jr = pww_out_result }
+					set_temp_variable = { pww_tcp_jf = pww_out_fail }
+					POR = {
+						set_temp_variable = { pww_in_res = 2 }
+						pww_cartel_find_member = yes
+					}
+					set_temp_variable = { pww_tcp_pcm = pww_out_cm }
+					set_temp_variable = { pww_tcp_n3 = pww_tcp_n2 }
+					add_to_temp_variable = { pww_tcp_n3 = 1 }
+					if = {
+						limit = { POR = { pww_core_produces_rubber = no } }
+						log = "PWW_RESULT cartel_poach.joined INFO Portugal does not produce rubber on this map (join refused, fail [?pww_tcp_jf])"
+					}
+					else_if = {
+						limit = {
+							check_variable = { pww_tcp_jr = 1 }
+							check_variable = { pww_tcp_pcm > -1 }
+							check_variable = { global.pww_cm_status^pww_tcp_pcm = 1 }
+							check_variable = { global.pww_cm_quota^pww_tcp_pcm > -1 }
+							check_variable = { global.pww_cart_n^pww_tcp_cid = pww_tcp_n3 }
+							POR = { has_country_flag = pww_cartel_mem_rubber }
+						}
+						log = "PWW_RESULT cartel_poach.joined PASS Portugal joins with quota [?global.pww_cm_quota^pww_tcp_pcm|1]; members [?global.pww_cart_n^pww_tcp_cid]"
+					}
+					else = {
+						log = "PWW_RESULT cartel_poach.joined FAIL result [?pww_tcp_jr] fail [?pww_tcp_jf] cm [?pww_tcp_pcm] members [?global.pww_cart_n^pww_tcp_cid] (want [?pww_tcp_n3])"
+					}
+					log = "PWW_DONE cartel_poach"
+				}
+			}
+		}
+	}
+}

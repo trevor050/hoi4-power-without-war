@@ -1,0 +1,30 @@
+###############################################################################
+# Power Without War: stockpiles on_actions
+#   on_startup      pww_stock_init (no scope: run inside any country). Also run
+#                   lazily from on_daily (saves where on_startup did not fire).
+#   on_daily        per country: the staggered reserve tick (every 10 days).
+#   on_capitulation ROOT capitulated, FROM winner: FROM seizes a share.
+###############################################################################
+
+on_actions = {
+	on_startup = {
+		effect = {
+			random_country = {
+				limit = { exists = yes }
+				pww_stock_init = yes
+			}
+		}
+	}
+
+	on_daily = {
+		effect = {
+			pww_stock_on_daily = yes
+		}
+	}
+
+	on_capitulation = {
+		effect = {
+			pww_stock_on_capitulation = yes
+		}
+	}
+}

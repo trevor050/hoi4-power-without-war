@@ -1,0 +1,213 @@
+pww_stest_fill_day = {
+	if = {
+		limit = { check_variable = { global.pww_stest_day = 1 } }
+		set_global_flag = pww_stock_debug
+		set_variable = { global.pww_stest_ok_bal = 1 }
+		set_variable = { global.pww_stest_ok_pool = 1 }
+		set_variable = { global.pww_stest_ok_exp = 1 }
+		set_variable = { global.pww_stest_ok_usa = 1 }
+		set_variable = { global.pww_stest_max_in = 0 }
+		MAL = {
+			set_variable = { global.pww_stest_exp1 = resource_exported@tungsten }
+			set_variable = { global.pww_stest_rexp1 = resource_exported@rubber }
+			set_variable = { global.pww_stest_prod1 = resource_produced@tungsten }
+		}
+		USA = {
+			set_variable = { global.pww_stest_uexp1 = resource_exported@steel }
+		}
+		ICE = {
+			set_country_flag = pww_stock_active
+			set_variable = { pww_stock_tungsten = 1000 }
+			set_variable = { global.pww_stest_ice_t0 = -1 }
+		}
+		log = "PWW_RESULT stock_fill.start INFO MAL tungsten exported [?global.pww_stest_exp1|1], rubber [?global.pww_stest_rexp1|1]"
+	}
+	# Iceland's first tick (no decay yet: elapsed 0) starts the decay clock.
+	if = {
+		limit = {
+			check_variable = { global.pww_stest_ice_t0 = -1 }
+			ICE = { has_variable = pww_stock_last_tick }
+		}
+		ICE = { set_variable = { global.pww_stest_ice_t0 = pww_stock_last_tick } }
+	}
+	if = {
+		limit = {
+			check_variable = { global.pww_stest_day > 2 }
+			check_variable = { global.pww_stest_day < 62 }
+		}
+		set_temp_variable = { pww_stest_m = global.pww_stest_day }
+		modulo_temp_variable = { var = pww_stest_m value = 5 }
+		if = {
+			limit = { check_variable = { pww_stest_m = 1 } }
+			MAL = { pww_stest_fill_sample = yes }
+			USA = {
+				set_temp_variable = { pww_stest_e = resource_exported@steel }
+				add_to_temp_variable = { pww_stest_e = 2 }
+				if = {
+					limit = { check_variable = { pww_stest_e < global.pww_stest_uexp1 } }
+					set_variable = { global.pww_stest_ok_usa = 0 }
+				}
+				log = "PWW_RESULT stock_fill.usa_sample INFO day=[?global.pww_stest_day|0] steel prod=[?resource_produced@steel|1] exp=[?resource_exported@steel|1] bal=[?resource@steel|1] stock=[?pww_stock_steel|1] in=[?pww_stock_in_steel|2] B=[?pww_stock_bal_steel|1]"
+			}
+		}
+	}
+	if = {
+		limit = { check_variable = { global.pww_stest_day = 61 } }
+		MAL = {
+			log = "PWW_RESULT stock_fill.mal_final INFO tungsten stock=[?pww_stock_tungsten|1] cap=[?pww_stock_cap_tungsten|0] fill=[?pww_stock_fill_tungsten|1]% in=[?pww_stock_in_tungsten|2] max_in=[?global.pww_stest_max_in|2] exported day1=[?global.pww_stest_exp1|1] now=[?resource_exported@tungsten|1]; rubber stock=[?pww_stock_rubber|1] fill=[?pww_stock_fill_rubber|1]%"
+			if = {
+				limit = {
+					check_variable = { pww_stock_tungsten > 100 }
+					check_variable = { global.pww_stest_max_in > 0.5 }
+				}
+				log = "PWW_RESULT stock_fill.fills PASS MAL stored [?pww_stock_tungsten|1] tungsten ([?pww_stock_fill_tungsten|1]% of [?pww_stock_cap_tungsten|0])"
+			}
+			else = {
+				log = "PWW_RESULT stock_fill.fills FAIL MAL stored only [?pww_stock_tungsten|1] tungsten"
+			}
+			if = {
+				limit = { pww_stock_has_tungsten = yes }
+				log = "PWW_RESULT stock_fill.trigger_has PASS pww_stock_has_tungsten"
+			}
+			else = {
+				log = "PWW_RESULT stock_fill.trigger_has FAIL pww_stock_has_tungsten false"
+			}
+		}
+		if = {
+			limit = { check_variable = { global.pww_stest_ok_bal = 1 } }
+			log = "PWW_RESULT stock_fill.balance PASS MAL tungsten balance never negative while filling"
+		}
+		else = {
+			log = "PWW_RESULT stock_fill.balance FAIL MAL tungsten balance went negative"
+		}
+		if = {
+			limit = { check_variable = { global.pww_stest_ok_pool = 1 } }
+			log = "PWW_RESULT stock_fill.output PASS filling withheld nothing from output (tungsten produced kept, no storage cost)"
+		}
+		else = {
+			log = "PWW_RESULT stock_fill.output FAIL tungsten output was reduced while filling"
+		}
+		if = {
+			limit = { check_variable = { global.pww_stest_ok_exp = 1 } }
+			log = "PWW_RESULT stock_fill.exports_kept PASS MAL tungsten exports never fell below day 1 ([?global.pww_stest_exp1|1])"
+		}
+		else = {
+			log = "PWW_RESULT stock_fill.exports_kept FAIL MAL tungsten exports fell below day 1 ([?global.pww_stest_exp1|1])"
+		}
+		USA = {
+			if = {
+				limit = {
+					check_variable = { global.pww_stest_ok_usa = 1 }
+					check_variable = { pww_stock_steel > 100 }
+				}
+				log = "PWW_RESULT stock_fill.usa_fill PASS USA (export pool fully sold) stored [?pww_stock_steel|0] steel and kept its exports ([?global.pww_stest_uexp1|0] -> [?resource_exported@steel|0])"
+			}
+			else = {
+				log = "PWW_RESULT stock_fill.usa_fill FAIL stock [?pww_stock_steel|0] exports [?global.pww_stest_uexp1|0] -> [?resource_exported@steel|0]"
+			}
+		}
+		ICE = {
+			set_temp_variable = { pww_stest_days = pww_stock_last_tick }
+			subtract_from_temp_variable = { pww_stest_days = global.pww_stest_ice_t0 }
+			# expected ~ 1000 x (1 - 0.02/30 x days); compounding per tick is < 1 unit off
+			set_temp_variable = { pww_stest_exp = pww_stest_days }
+			multiply_temp_variable = { pww_stest_exp = -0.6667 }
+			add_to_temp_variable = { pww_stest_exp = 1000 }
+			set_temp_variable = { pww_stest_diff = pww_stock_tungsten }
+			subtract_from_temp_variable = { pww_stest_diff = pww_stest_exp }
+			log = "PWW_RESULT stock_fill.decay_values INFO ICE tungsten [?pww_stock_tungsten|2] after [?pww_stest_days|0] days (linear estimate [?pww_stest_exp|2], in [?pww_stock_in_tungsten|2] out [?pww_stock_out_tungsten|2])"
+			if = {
+				limit = {
+					check_variable = { pww_stest_days > 39 }
+					check_variable = { pww_stest_diff < 3 }
+					check_variable = { pww_stest_diff > -3 }
+					check_variable = { pww_stock_in_tungsten < 0.001 }
+					check_variable = { pww_stock_out_tungsten < 0.001 }
+				}
+				log = "PWW_RESULT stock_fill.decay PASS about 2% a month"
+			}
+			else = {
+				log = "PWW_RESULT stock_fill.decay FAIL"
+			}
+		}
+	}
+	if = {
+		limit = { check_variable = { global.pww_stest_day = 62 } }
+		set_variable = { pww_stest_fill_save = pww_stock_fill_steel }
+		set_variable = { pww_stock_fill_steel = 0 }
+		pww_stock_value_steel = yes
+		set_variable = { global.pww_stest_v0 = pww_stock_unit_value }
+		set_variable = { pww_stock_fill_steel = 50 }
+		pww_stock_value_steel = yes
+		set_variable = { global.pww_stest_v50 = pww_stock_unit_value }
+		set_variable = { pww_stock_fill_steel = 100 }
+		pww_stock_value_steel = yes
+		set_variable = { global.pww_stest_v100 = pww_stock_unit_value }
+		set_variable = { pww_stock_fill_steel = pww_stest_fill_save }
+		set_variable = { global.pww_stest_t0 = global.threat }
+		add_named_threat = { threat = 60 name = pww_stest_threat }
+	}
+	if = {
+		limit = { check_variable = { global.pww_stest_day = 64 } }
+		set_variable = { pww_stest_fill_save = pww_stock_fill_steel }
+		set_variable = { pww_stock_fill_steel = 0 }
+		pww_stock_value_steel = yes
+		set_variable = { global.pww_stest_vt = pww_stock_unit_value }
+		set_variable = { pww_stock_fill_steel = pww_stest_fill_save }
+		log = "PWW_RESULT stock_fill.value_values INFO tension [?global.pww_stest_t0|2]: fill 0 [?global.pww_stest_v0|3], 50 [?global.pww_stest_v50|3], 100 [?global.pww_stest_v100|3]; tension [?global.threat|2]: fill 0 [?global.pww_stest_vt|3] (civilian factories per unit a day; market 0.125)"
+		if = {
+			limit = {
+				check_variable = { global.pww_stest_v0 > global.pww_stest_v50 }
+				check_variable = { global.pww_stest_v50 > global.pww_stest_v100 }
+				check_variable = { global.pww_stest_v100 < 0.001 }
+			}
+			log = "PWW_RESULT stock_fill.value_fill PASS value falls as the reserve fills"
+		}
+		else = {
+			log = "PWW_RESULT stock_fill.value_fill FAIL"
+		}
+		if = {
+			limit = { check_variable = { global.pww_stest_vt > global.pww_stest_v0 } }
+			log = "PWW_RESULT stock_fill.value_tension PASS value rises with world tension"
+		}
+		else = {
+			log = "PWW_RESULT stock_fill.value_tension FAIL"
+		}
+		log = "PWW_DONE stock_fill"
+	}
+}
+
+# MAL scope. One sample: tungsten carries the checks (no cartel quota at
+# start); rubber is logged to show the 1934 rubber cartel's storage requests
+# (pww_cartel_store_rubber) being taken.
+pww_stest_fill_sample = {
+	set_temp_variable = { pww_stest_pool = resource_produced@tungsten }
+	multiply_temp_variable = { pww_stest_pool = modifier@min_export }
+	add_to_temp_variable = { pww_stest_pool = 1 }
+	if = {
+		limit = { check_variable = { resource@tungsten < 0 } }
+		set_variable = { global.pww_stest_ok_bal = 0 }
+	}
+	set_temp_variable = { pww_stest_p = resource_produced@tungsten }
+	add_to_temp_variable = { pww_stest_p = 2 }
+	if = {
+		limit = {
+			OR = {
+				check_variable = { pww_stest_p < global.pww_stest_prod1 }
+				check_variable = { pww_stock_cost_tungsten > 0.001 }
+			}
+		}
+		set_variable = { global.pww_stest_ok_pool = 0 }
+	}
+	if = {
+		limit = { check_variable = { pww_stock_in_tungsten > global.pww_stest_max_in } }
+		set_variable = { global.pww_stest_max_in = pww_stock_in_tungsten }
+	}
+	set_temp_variable = { pww_stest_e = resource_exported@tungsten }
+	add_to_temp_variable = { pww_stest_e = 2 }
+	if = {
+		limit = { check_variable = { pww_stest_e < global.pww_stest_exp1 } }
+		set_variable = { global.pww_stest_ok_exp = 0 }
+	}
+	log = "PWW_RESULT stock_fill.mal_sample INFO day=[?global.pww_stest_day|0] tungsten prod=[?resource_produced@tungsten|1] pool=[?pww_stest_pool|1] exp=[?resource_exported@tungsten|1] bal=[?resource@tungsten|1] stock=[?pww_stock_tungsten|1]/[?pww_stock_cap_tungsten|0] in=[?pww_stock_in_tungsten|2] B=[?pww_stock_bal_tungsten|1] | rubber prod=[?resource_produced@rubber|1] exp=[?resource_exported@rubber|1] bal=[?resource@rubber|1] stock=[?pww_stock_rubber|1] in=[?pww_stock_in_rubber|2] cost=[?pww_stock_cost_rubber|2] cartel_store=[?pww_cartel_store_rubber|2]"
+}

@@ -1,0 +1,33 @@
+###############################################################################
+# Power Without War: producer cartels on_actions
+#   on_startup   pww_cartel_init (idempotent; on_daily inits lazily too)
+#   on_daily     per country: once-a-day global work (anchor, conference
+#                deadlines, price war ends), the member tick on the
+#                country's core bucket day, dump expiry
+#   on_monthly   per country: the first caller 28+ days after the last run
+#                does cohesion, AI outsiders and the formation scan
+# Handlers: common/scripted_effects/pww_cartel_core.txt
+###############################################################################
+
+on_actions = {
+	on_startup = {
+		effect = {
+			random_country = {
+				limit = { exists = yes }
+				pww_cartel_init = yes
+			}
+		}
+	}
+
+	on_daily = {
+		effect = {
+			pww_cartel_on_daily = yes
+		}
+	}
+
+	on_monthly = {
+		effect = {
+			pww_cartel_on_monthly = yes
+		}
+	}
+}

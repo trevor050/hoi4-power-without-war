@@ -1,0 +1,177 @@
+###############################################################################
+# Power Without War: producer cartel events (namespace pww_cartel)
+#
+# Fired only to human countries by the pww_cartel_* effects, which set the
+# recipient's pww_cartel_ev_cid / pww_cartel_ev_cm / pww_cartel_ev_who first.
+# Each event's immediate block copies the record into pww_cartel_ev_* and
+# saves the targets pww_cartel_chair / pww_cartel_other
+# (pww_cartel_ev_from_cid / _from_cm in pww_cartel_outsiders.txt).
+# Choices that time out take the first option, so the no-change option is
+# listed first (decline, deny).
+#
+#   .1 invitation to a producers' conference     .2 the cartel is formed
+#   .3 the conference failed (leader)            .4 a member caught cheating
+#   .5 collapse, price war                       .6 you are expelled
+#   .7 a member is expelled                      .8 warning: you are caught
+#   .9 an outsider courts you away               .10 / .11 your courting
+#                                                     succeeded / failed
+###############################################################################
+
+add_namespace = pww_cartel
+
+country_event = {
+	id = pww_cartel.1
+	title = pww_cartel.1.t
+	desc = pww_cartel.1.d
+	picture = GFX_report_event_generic_conference
+	is_triggered_only = yes
+	immediate = { hidden_effect = { pww_cartel_ev_from_cm = yes } }
+	option = {
+		name = pww_cartel.1.a
+		ai_chance = { base = 1 }
+		hidden_effect = {
+			set_temp_variable = { pww_in_cm = pww_cartel_ev_cm }
+			set_temp_variable = { pww_in_accept = 0 }
+			pww_cartel_answer_invite = yes
+		}
+	}
+	option = {
+		name = pww_cartel.1.b
+		ai_chance = { base = 0 }
+		custom_effect_tooltip = pww_cartel.1.b.tt
+		hidden_effect = {
+			set_temp_variable = { pww_in_cm = pww_cartel_ev_cm }
+			set_temp_variable = { pww_in_accept = 1 }
+			pww_cartel_answer_invite = yes
+		}
+	}
+}
+
+country_event = {
+	id = pww_cartel.2
+	title = pww_cartel.2.t
+	desc = pww_cartel.2.d
+	picture = GFX_report_event_generic_conference
+	is_triggered_only = yes
+	immediate = { hidden_effect = { pww_cartel_ev_from_cid = yes } }
+	option = { name = pww_cartel.2.a }
+}
+
+country_event = {
+	id = pww_cartel.3
+	title = pww_cartel.3.t
+	desc = pww_cartel.3.d
+	picture = GFX_report_event_generic_read_write
+	is_triggered_only = yes
+	immediate = { hidden_effect = { pww_cartel_ev_from_cid = yes } }
+	option = { name = pww_cartel.3.a }
+}
+
+country_event = {
+	id = pww_cartel.4
+	title = pww_cartel.4.t
+	desc = pww_cartel.4.d
+	picture = GFX_report_event_generic_read_write
+	is_triggered_only = yes
+	immediate = { hidden_effect = { pww_cartel_ev_from_cid = yes } }
+	option = { name = pww_cartel.4.a }
+}
+
+country_event = {
+	id = pww_cartel.5
+	title = pww_cartel.5.t
+	desc = pww_cartel.5.d
+	picture = GFX_report_event_generic_factory
+	is_triggered_only = yes
+	immediate = { hidden_effect = { pww_cartel_ev_from_cid = yes } }
+	option = { name = pww_cartel.5.a }
+}
+
+country_event = {
+	id = pww_cartel.6
+	title = pww_cartel.6.t
+	desc = pww_cartel.6.d
+	picture = GFX_report_event_generic_read_write
+	is_triggered_only = yes
+	immediate = { hidden_effect = { pww_cartel_ev_from_cid = yes } }
+	option = { name = pww_cartel.6.a }
+}
+
+country_event = {
+	id = pww_cartel.7
+	title = pww_cartel.7.t
+	desc = pww_cartel.7.d
+	picture = GFX_report_event_generic_read_write
+	is_triggered_only = yes
+	immediate = { hidden_effect = { pww_cartel_ev_from_cid = yes } }
+	option = { name = pww_cartel.7.a }
+}
+
+country_event = {
+	id = pww_cartel.8
+	title = pww_cartel.8.t
+	desc = pww_cartel.8.d
+	picture = GFX_report_event_generic_read_write
+	is_triggered_only = yes
+	immediate = { hidden_effect = { pww_cartel_ev_from_cm = yes } }
+	option = {
+		name = pww_cartel.8.a
+		ai_chance = { base = 1 }
+		custom_effect_tooltip = pww_cartel.8.a.tt
+	}
+	option = {
+		name = pww_cartel.8.b
+		ai_chance = { base = 0 }
+		custom_effect_tooltip = pww_cartel.8.b.tt
+		hidden_effect = {
+			set_temp_variable = { pww_in_cm = pww_cartel_ev_cm }
+			pww_cartel_comply = yes
+		}
+	}
+}
+
+country_event = {
+	id = pww_cartel.9
+	title = pww_cartel.9.t
+	desc = pww_cartel.9.d
+	picture = GFX_report_event_generic_conference
+	is_triggered_only = yes
+	immediate = { hidden_effect = { pww_cartel_ev_from_cm = yes } }
+	option = {
+		name = pww_cartel.9.a
+		ai_chance = { base = 1 }
+		hidden_effect = {
+			set_temp_variable = { pww_in_accept = 0 }
+			pww_cartel_answer_tempt = yes
+		}
+	}
+	option = {
+		name = pww_cartel.9.b
+		ai_chance = { base = 0 }
+		custom_effect_tooltip = pww_cartel.9.b.tt
+		hidden_effect = {
+			set_temp_variable = { pww_in_accept = 1 }
+			pww_cartel_answer_tempt = yes
+		}
+	}
+}
+
+country_event = {
+	id = pww_cartel.10
+	title = pww_cartel.10.t
+	desc = pww_cartel.10.d
+	picture = GFX_report_event_generic_sign_treaty1
+	is_triggered_only = yes
+	immediate = { hidden_effect = { pww_cartel_ev_from_cid = yes } }
+	option = { name = pww_cartel.10.a }
+}
+
+country_event = {
+	id = pww_cartel.11
+	title = pww_cartel.11.t
+	desc = pww_cartel.11.d
+	picture = GFX_report_event_generic_read_write
+	is_triggered_only = yes
+	immediate = { hidden_effect = { pww_cartel_ev_from_cid = yes } }
+	option = { name = pww_cartel.11.a }
+}

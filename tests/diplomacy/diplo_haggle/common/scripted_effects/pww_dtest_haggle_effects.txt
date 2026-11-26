@@ -246,12 +246,16 @@ pww_dtest_hg_bundle_sign = {
 #                       the displayed row figure is that value rounded
 #   pww_dtest_hg_s0/s1  row values summed per side (must equal m0 / m1)
 #   pww_dtest_hg_sumok  1 when the sums and the displayed totals match m0 / m1
-#   pww_dtest_hg_tm     terms from the displayed totals: (m0 - m1) / base x 100
-#                       (equals pww_do_e_terms while the seller's desperation is 0)
+#   pww_dtest_hg_tm     terms from the shown row values and the target's appetite:
+#                       (sum of m x p on our side - on theirs) / base x 100
+#                       (equals pww_do_e_terms while the seller's desperation is
+#                       0; with every appetite at 1 it is (m0 - m1) / base)
 pww_dtest_hg_check_market = {
 	set_temp_variable = { pww_dtest_hg_rowok = 1 }
 	set_temp_variable = { pww_dtest_hg_s0 = 0 }
 	set_temp_variable = { pww_dtest_hg_s1 = 0 }
+	set_temp_variable = { pww_dtest_hg_q0 = 0 }
+	set_temp_variable = { pww_dtest_hg_q1 = 0 }
 	for_loop_effect = {
 		start = 0
 		end = 8
@@ -279,12 +283,16 @@ pww_dtest_hg_check_market = {
 				}
 				set_temp_variable = { pww_dtest_hg_rowok = 0 }
 			}
+			set_temp_variable = { pww_dtest_hg_q = pww_dob_m^pww_dtest_hg_i }
+			multiply_temp_variable = { pww_dtest_hg_q = pww_dob_p^pww_dtest_hg_i }
 			if = {
 				limit = { check_variable = { pww_dtest_hg_i < 4 } }
 				add_to_temp_variable = { pww_dtest_hg_s0 = pww_dob_m^pww_dtest_hg_i }
+				add_to_temp_variable = { pww_dtest_hg_q0 = pww_dtest_hg_q }
 			}
 			else = {
 				add_to_temp_variable = { pww_dtest_hg_s1 = pww_dob_m^pww_dtest_hg_i }
+				add_to_temp_variable = { pww_dtest_hg_q1 = pww_dtest_hg_q }
 			}
 		}
 	}
@@ -308,14 +316,14 @@ pww_dtest_hg_check_market = {
 	set_temp_variable = { pww_dtest_hg_d = pww_dbm_t1 }
 	subtract_from_temp_variable = { pww_dtest_hg_d = pww_do_mk_m1 }
 	if = { limit = { OR = { check_variable = { pww_dtest_hg_d > 0.051 } check_variable = { pww_dtest_hg_d < -0.051 } } } set_temp_variable = { pww_dtest_hg_sumok = 0 } }
-	# Terms from the totals alone
+	# Terms from the rows and the appetite
 	set_temp_variable = { pww_dtest_hg_b = pww_do_mk_base }
 	if = {
 		limit = { check_variable = { pww_dtest_hg_b < 0.25 } }
 		set_temp_variable = { pww_dtest_hg_b = 0.25 }
 	}
-	set_temp_variable = { pww_dtest_hg_tm = pww_do_mk_m0 }
-	subtract_from_temp_variable = { pww_dtest_hg_tm = pww_do_mk_m1 }
+	set_temp_variable = { pww_dtest_hg_tm = pww_dtest_hg_q0 }
+	subtract_from_temp_variable = { pww_dtest_hg_tm = pww_dtest_hg_q1 }
 	divide_temp_variable = { pww_dtest_hg_tm = pww_dtest_hg_b }
 	multiply_temp_variable = { pww_dtest_hg_tm = 100 }
 	clamp_temp_variable = { var = pww_dtest_hg_tm min = -100 max = 100 }
@@ -352,5 +360,74 @@ pww_dtest_hg_balance_case = {
 		}
 		set_temp_variable = { pww_dtest_hg_iok = 1 }
 	}
-	log = "PWW_RESULT diplo_haggle.I_values INFO case=[?pww_dtest_hg_tag|0] before=[?pww_dtest_hg_mk0|0] after=[?pww_do_mk|0] valid=[?pww_do_valid|0] msg=[?pww_dbl_msg|0] we_give=[?pww_dob_k^0|0]x[?pww_dob_a^0|2]+[?pww_dob_k^1|0]x[?pww_dob_a^1|2] they_give=[?pww_dob_k^4|0]x[?pww_dob_a^4|0] m0=[?pww_do_mk_m0|3] m1=[?pww_do_mk_m1|3] shown=[?pww_dbm_t0|2]/[?pww_dbm_t1|2] rows=[?pww_dbv_0|2],[?pww_dbv_1|2]|[?pww_dbv_4|2] gap=[?pww_do_gap|3] tol=[?pww_do_mk_tol|3] rowok=[?pww_dtest_hg_rowok|0] sumok=[?pww_dtest_hg_sumok|0] terms=[?pww_do_e_terms|0] terms_from_totals=[?pww_dtest_hg_tm|0] marker_x=[?pww_dbm_bx|0]"
+	log = "PWW_RESULT diplo_haggle.I_values INFO case=[?pww_dtest_hg_tag|0] before=[?pww_dtest_hg_mk0|0] after=[?pww_do_mk|0] valid=[?pww_do_valid|0] msg=[?pww_dbl_msg|0] we_give=[?pww_dob_k^0|0]x[?pww_dob_a^0|2]+[?pww_dob_k^1|0]x[?pww_dob_a^1|2] they_give=[?pww_dob_k^4|0]x[?pww_dob_a^4|0] m0=[?pww_do_mk_m0|3] m1=[?pww_do_mk_m1|3] shown=[?pww_dbm_t0|2]/[?pww_dbm_t1|2] rows=[?pww_dbv_0|2],[?pww_dbv_1|2]|[?pww_dbv_4|2] gap=[?pww_do_gap|3] tol=[?pww_do_mk_tol|3] rowok=[?pww_dtest_hg_rowok|0] sumok=[?pww_dtest_hg_sumok|0] terms=[?pww_do_e_terms|0] terms_from_rows=[?pww_dtest_hg_tm|0] appetite=[?pww_dob_p^0|2],[?pww_dob_p^1|2] ap_pp=[?pww_do_ap_pp|2] ap_civ=[?pww_do_ap_civ|2] marker_x=[?pww_dbm_bx|0]"
+}
+
+# Any scope. Sets the target's market position for every resource through
+# the diplomacy test hooks. in: pww_dtest_hg_tgt, pww_dtest_hg_uns (unsold
+# units), pww_dtest_hg_exp (units it already exports); pww_dtest_hg_uns -1
+# clears both hooks (the live game figures again).
+pww_dtest_hg_market = {
+	var:pww_dtest_hg_tgt = {
+		if = {
+			limit = { check_variable = { pww_dtest_hg_uns < 0 } }
+			clear_variable = pww_diplo_test_unsold
+			clear_variable = pww_diplo_test_exported
+		}
+		else = {
+			set_variable = { pww_diplo_test_unsold = pww_dtest_hg_uns }
+			set_variable = { pww_diplo_test_exported = pww_dtest_hg_exp }
+		}
+	}
+}
+
+# GER scope. A plain purchase: pww_dtest_hg_units of pww_dtest_hg_res from
+# pww_dtest_hg_tgt for pww_dtest_hg_civ civilian factories, one year,
+# pww_dtest_hg_bind (0 either side may end it: the player's default).
+pww_dtest_hg_draft_civ = {
+	set_temp_variable = { pww_dk_target = pww_dtest_hg_tgt }
+	set_temp_variable = { pww_dk_act = 0 }
+	pww_diplo_offer_begin = yes
+	pww_diplo_bundle_clear = yes
+	set_variable = { pww_do_len = 1 }
+	set_variable = { pww_do_bind = pww_dtest_hg_bind }
+	set_temp_variable = { pww_dba_side = 1 }
+	set_temp_variable = { pww_dba_kind = 3 }
+	set_temp_variable = { pww_dba_x = pww_dtest_hg_res }
+	pww_diplo_bundle_add = yes
+	set_variable = { pww_dob_a^pww_dba_new = pww_dtest_hg_units }
+	set_temp_variable = { pww_dba_side = 0 }
+	set_temp_variable = { pww_dba_kind = 1 }
+	set_temp_variable = { pww_dba_x = 0 }
+	pww_diplo_bundle_add = yes
+	set_variable = { pww_dob_a^pww_dba_new = pww_dtest_hg_civ }
+	pww_diplo_offer_changed = yes
+}
+
+# GER scope. Case M: one fresh draft (pww_dtest_hg_draft_civ inputs), reserve
+# 13, relations 0. out: pww_dtest_hg_m_scar, pww_dtest_hg_m_ok, pww_dtest_hg_n
+# (of 24 reserves), and when refused the reply the receiver gives
+# (pww_dtest_hg_m_line, pww_dtest_hg_m_st = talk status after it).
+pww_dtest_hg_m_case = {
+	pww_dtest_hg_close_talk = yes
+	pww_dtest_hg_draft_civ = yes
+	set_temp_variable = { pww_dtest_hg_relv = 0 }
+	pww_dtest_hg_set_rel = yes
+	set_temp_variable = { pww_dtest_hg_rsv = 13 }
+	pww_dtest_hg_set_reserve = yes
+	set_temp_variable = { pww_dtest_hg_m_scar = pww_do_scar }
+	set_temp_variable = { pww_dtest_hg_m_ok = pww_do_ok }
+	set_temp_variable = { pww_dtest_hg_tag = 130 }
+	pww_dtest_hg_log = yes
+	pww_dtest_hg_sweep = yes
+	set_temp_variable = { pww_dtest_hg_m_line = 0 }
+	set_temp_variable = { pww_dtest_hg_m_st = -1 }
+	if = {
+		limit = { check_variable = { pww_dtest_hg_m_ok = 0 } }
+		set_temp_variable = { pww_dtest_hg_t = pww_do_talk }
+		pww_diplo_eval_bundle = yes
+		pww_diplo_talk_reply = yes
+		set_temp_variable = { pww_dtest_hg_m_line = global.pww_dt_line^pww_dtest_hg_t }
+		set_temp_variable = { pww_dtest_hg_m_st = global.pww_dt_status^pww_dtest_hg_t }
+	}
 }

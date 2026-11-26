@@ -19,27 +19,39 @@ on_actions = {
 						log = "PWW_RESULT ledger.tranche_after_service FAIL status=[?global.pww_lt_status^1|0] due=[?global.pww_lt_due^1|0] now=[?global.num_days|0]"
 					}
 					# Suspend, check flows stop, resume, check they return
+					# AI trade (glut sales) may give GER and POR other agreements:
+					# compare the drop agreement 0 makes, not absolute zeros.
+					set_temp_variable = { pww_ltest_in0 = GER.pww_lf_in_tungsten }
+					set_temp_variable = { pww_ltest_use0 = GER.pww_lf_civ_use }
+					set_temp_variable = { pww_ltest_off0 = POR.pww_lf_civ_offsite }
 					set_temp_variable = { pww_l_ag = 0 }
 					set_temp_variable = { pww_l_cause = 15 }
 					pww_ledger_suspend = yes
+					set_temp_variable = { pww_ltest_din = pww_ltest_in0 }
+					subtract_from_temp_variable = { pww_ltest_din = GER.pww_lf_in_tungsten }
+					set_temp_variable = { pww_ltest_duse = pww_ltest_use0 }
+					subtract_from_temp_variable = { pww_ltest_duse = GER.pww_lf_civ_use }
+					set_temp_variable = { pww_ltest_doff = pww_ltest_off0 }
+					subtract_from_temp_variable = { pww_ltest_doff = POR.pww_lf_civ_offsite }
 					if = {
 						limit = {
 							check_variable = { global.pww_ag_status^0 = 2 }
-							GER = { check_variable = { pww_lf_in_tungsten = 0 } check_variable = { pww_lf_civ_use = 0 } }
-							POR = { check_variable = { pww_lf_civ_offsite = 0 } }
+							check_variable = { pww_ltest_din > 3.99 }
+							check_variable = { pww_ltest_duse = 1 }
+							check_variable = { pww_ltest_doff = 1 }
 						}
-						log = "PWW_RESULT ledger.suspend PASS flows paused"
+						log = "PWW_RESULT ledger.suspend PASS flows paused (tungsten -[?pww_ltest_din|2], factories -[?pww_ltest_duse|0])"
 					}
 					else = {
-						log = "PWW_RESULT ledger.suspend FAIL status=[?global.pww_ag_status^0|0] in=[?GER.pww_lf_in_tungsten|2] offsite=[?POR.pww_lf_civ_offsite|0]"
+						log = "PWW_RESULT ledger.suspend FAIL status=[?global.pww_ag_status^0|0] in drop=[?pww_ltest_din|2] use drop=[?pww_ltest_duse|0] offsite drop=[?pww_ltest_doff|0] (now in=[?GER.pww_lf_in_tungsten|2] use=[?GER.pww_lf_civ_use|0] offsite=[?POR.pww_lf_civ_offsite|0])"
 					}
 					set_temp_variable = { pww_l_ag = 0 }
 					pww_ledger_resume = yes
 					if = {
 						limit = {
 							check_variable = { global.pww_ag_status^0 = 1 }
-							GER = { check_variable = { pww_lf_in_tungsten = 4 } }
-							POR = { check_variable = { pww_lf_civ_offsite = 1 } }
+							GER = { check_variable = { pww_lf_in_tungsten = pww_ltest_in0 } }
+							POR = { check_variable = { pww_lf_civ_offsite = pww_ltest_off0 } }
 						}
 						log = "PWW_RESULT ledger.resume PASS flows restored"
 					}

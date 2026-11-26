@@ -1,0 +1,126 @@
+# Stockpiles test: draw in a deficit (run with --tag ITA: the human Italy
+# does not auto-import, so it runs short of rubber from the start).
+# Day 1: ITA gets 100 rubber in reserve; the throughput constant is lowered
+# to 1% of capacity a day (capacity 300 -> 3 a day) so the cap binds below
+# the ~5 a day shortfall. Every 2 days to day 61:
+#   capped   the draw never exceeds min(shortfall, cap x rate) and runs at
+#            the cap while the reserve is large
+#   covers   while drawing, resource@rubber is better than the stable
+#            balance by about the draw
+#   no_fill  fill and draw never run together
+#   empties  the reserve runs out and the draw stops (day 61)
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = ITA }
+				add_to_variable = { global.pww_stest_day = 1 }
+				if = {
+					limit = { check_variable = { global.pww_stest_day = 1 } }
+					set_global_flag = pww_stock_debug
+					set_variable = { global.pww_stock_c_draw_rate = 0.01 }
+					set_country_flag = pww_stock_active
+					set_variable = { pww_stock_rubber = 100 }
+					set_variable = { global.pww_stest_ok_cap = 1 }
+					set_variable = { global.pww_stest_ok_both = 1 }
+					set_variable = { global.pww_stest_at_cap = 0 }
+					set_variable = { global.pww_stest_cover = 0 }
+					set_variable = { global.pww_stest_drew = 0 }
+				}
+				if = {
+					limit = {
+						check_variable = { global.pww_stest_day > 2 }
+						check_variable = { global.pww_stest_day < 62 }
+					}
+					set_temp_variable = { pww_stest_m = global.pww_stest_day }
+					modulo_temp_variable = { var = pww_stest_m value = 2 }
+					if = {
+						limit = { check_variable = { pww_stest_m = 1 } }
+						set_temp_variable = { pww_stest_lim = pww_stock_cap_rubber }
+						multiply_temp_variable = { pww_stest_lim = global.pww_stock_c_draw_rate }
+						add_to_temp_variable = { pww_stest_lim = 0.01 }
+						set_temp_variable = { pww_stest_short = pww_stock_bal_rubber }
+						multiply_temp_variable = { pww_stest_short = -1 }
+						add_to_temp_variable = { pww_stest_short = 0.01 }
+						if = {
+							limit = {
+								OR = {
+									check_variable = { pww_stock_out_rubber > pww_stest_lim }
+									check_variable = { pww_stock_out_rubber > pww_stest_short }
+								}
+							}
+							set_variable = { global.pww_stest_ok_cap = 0 }
+						}
+						if = {
+							limit = {
+								check_variable = { pww_stock_out_rubber > 0.001 }
+								check_variable = { pww_stock_in_rubber > 0.001 }
+							}
+							set_variable = { global.pww_stest_ok_both = 0 }
+						}
+						subtract_from_temp_variable = { pww_stest_lim = 0.02 }
+						if = {
+							limit = { check_variable = { pww_stock_out_rubber > pww_stest_lim } }
+							set_variable = { global.pww_stest_at_cap = 1 }
+						}
+						if = {
+							limit = { check_variable = { pww_stock_out_rubber > 0.001 } }
+							set_variable = { global.pww_stest_drew = 1 }
+							# covered: resource@ is above the stable balance by at least half the draw
+							set_temp_variable = { pww_stest_c = pww_stock_out_rubber }
+							multiply_temp_variable = { pww_stest_c = 0.5 }
+							add_to_temp_variable = { pww_stest_c = pww_stock_bal_rubber }
+							if = {
+								limit = { check_variable = { resource@rubber > pww_stest_c } }
+								set_variable = { global.pww_stest_cover = 1 }
+							}
+						}
+						log = "PWW_RESULT stock_draw.sample INFO day=[?global.pww_stest_day|0] rubber prod=[?resource_produced@rubber|1] use=[?resource_consumed@rubber|1] exp=[?resource_exported@rubber|1] bal=[?resource@rubber|1] B=[?pww_stock_bal_rubber|1] stock=[?pww_stock_rubber|2]/[?pww_stock_cap_rubber|0] in=[?pww_stock_in_rubber|2] out=[?pww_stock_out_rubber|2] days=[?pww_stock_days_rubber|1]"
+					}
+				}
+				if = {
+					limit = { check_variable = { global.pww_stest_day = 61 } }
+					if = {
+						limit = {
+							check_variable = { global.pww_stest_ok_cap = 1 }
+							check_variable = { global.pww_stest_at_cap = 1 }
+						}
+						log = "PWW_RESULT stock_draw.capped PASS the draw ran at the cap ([?global.pww_stock_c_draw_rate|2] x capacity a day) and never above the cap or the shortfall"
+					}
+					else = {
+						log = "PWW_RESULT stock_draw.capped FAIL ok=[?global.pww_stest_ok_cap|0] at_cap=[?global.pww_stest_at_cap|0]"
+					}
+					if = {
+						limit = {
+							check_variable = { global.pww_stest_drew = 1 }
+							check_variable = { global.pww_stest_cover = 1 }
+						}
+						log = "PWW_RESULT stock_draw.covers PASS drawing lifted resource@rubber above the stable shortfall"
+					}
+					else = {
+						log = "PWW_RESULT stock_draw.covers FAIL drew=[?global.pww_stest_drew|0] cover=[?global.pww_stest_cover|0]"
+					}
+					if = {
+						limit = { check_variable = { global.pww_stest_ok_both = 1 } }
+						log = "PWW_RESULT stock_draw.no_fill PASS fill and draw never ran together"
+					}
+					else = {
+						log = "PWW_RESULT stock_draw.no_fill FAIL"
+					}
+					if = {
+						limit = {
+							check_variable = { pww_stock_rubber < 1 }
+							check_variable = { pww_stock_out_rubber < 0.001 }
+							pww_stock_has_rubber = no
+						}
+						log = "PWW_RESULT stock_draw.empties PASS the reserve ran out ([?pww_stock_rubber|2] left) and the draw stopped"
+					}
+					else = {
+						log = "PWW_RESULT stock_draw.empties FAIL stock=[?pww_stock_rubber|2] out=[?pww_stock_out_rubber|2]"
+					}
+					log = "PWW_DONE stock_draw"
+				}
+			}
+		}
+	}
+}

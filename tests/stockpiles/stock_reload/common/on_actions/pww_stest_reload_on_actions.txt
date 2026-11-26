@@ -1,0 +1,80 @@
+# Stockpiles test: save and reload persistence.
+# Session 1 (--autosave MONTHLY --clear-saves --until
+# "stock_reload.session1_done"): British Malaya's tungsten reserve fills; day 30
+# copies its stock, intake and last tick into globals (all in the 1 February
+# autosave; MAL gets 3 depots on day 1 so it is not full by day 45). Day 33 runs the check and logs session1_done.
+# Session 2 (--continue-last-save): the save resumes at 1 February and the
+# same day-33 check runs after the load:
+#   persist   stock = the day-30 copy plus intake over any tick since, minus
+#             decay (within 1 + 1%), the intake is still set and the
+#             dynamic modifier is still applied
+#   continues day 45: the reserve kept filling after the load
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = POR }
+				add_to_variable = { global.pww_stest_day = 1 }
+				if = {
+					limit = { check_variable = { global.pww_stest_day = 1 } }
+					set_global_flag = pww_stock_debug
+					# Room to keep filling past day 45 (base capacity 300 fills in a month).
+					MAL = { set_variable = { pww_stock_depots = 3 } }
+				}
+				if = {
+					limit = { check_variable = { global.pww_stest_day = 30 } }
+					MAL = {
+						set_variable = { global.pww_stest_s30 = pww_stock_tungsten }
+						set_variable = { global.pww_stest_i30 = pww_stock_in_tungsten }
+						set_variable = { global.pww_stest_t30 = pww_stock_last_tick }
+					}
+					log = "PWW_RESULT stock_reload.copy INFO day 30: MAL tungsten stock [?global.pww_stest_s30|2] in [?global.pww_stest_i30|2] last tick [?global.pww_stest_t30|0]"
+				}
+				if = {
+					limit = { check_variable = { global.pww_stest_day = 33 } }
+					MAL = {
+						set_temp_variable = { pww_stest_dt = pww_stock_last_tick }
+						subtract_from_temp_variable = { pww_stest_dt = global.pww_stest_t30 }
+						set_temp_variable = { pww_stest_exp = global.pww_stest_i30 }
+						multiply_temp_variable = { pww_stest_exp = pww_stest_dt }
+						add_to_temp_variable = { pww_stest_exp = global.pww_stest_s30 }
+						set_temp_variable = { pww_stest_tol = pww_stest_exp }
+						multiply_temp_variable = { pww_stest_tol = 0.01 }
+						add_to_temp_variable = { pww_stest_tol = 1 }
+						set_temp_variable = { pww_stest_diff = pww_stock_tungsten }
+						subtract_from_temp_variable = { pww_stest_diff = pww_stest_exp }
+						set_variable = { global.pww_stest_s33 = pww_stock_tungsten }
+						log = "PWW_RESULT stock_reload.values INFO day 33: stock [?pww_stock_tungsten|2] (expected [?pww_stest_exp|2]) in [?pww_stock_in_tungsten|2] cap [?pww_stock_cap_tungsten|0] last tick [?pww_stock_last_tick|0]"
+						if = {
+							limit = {
+								has_dynamic_modifier = { modifier = pww_stock_flows }
+								check_variable = { pww_stock_tungsten > 1 }
+								check_variable = { pww_stest_diff < pww_stest_tol }
+								check_variable = { pww_stest_diff > -5 }
+								check_variable = { pww_stock_in_tungsten > 0.001 }
+							}
+							log = "PWW_RESULT stock_reload.persist PASS reserve, intake and modifier intact"
+						}
+						else = {
+							log = "PWW_RESULT stock_reload.persist FAIL"
+						}
+					}
+					log = "PWW_RESULT stock_reload.session1_done INFO"
+				}
+				if = {
+					limit = { check_variable = { global.pww_stest_day = 45 } }
+					MAL = {
+						if = {
+							limit = { check_variable = { pww_stock_tungsten > global.pww_stest_s33 } }
+							log = "PWW_RESULT stock_reload.continues PASS the reserve kept filling after the load ([?global.pww_stest_s33|1] -> [?pww_stock_tungsten|1])"
+						}
+						else = {
+							log = "PWW_RESULT stock_reload.continues FAIL [?global.pww_stest_s33|1] -> [?pww_stock_tungsten|1]"
+						}
+					}
+					log = "PWW_DONE stock_reload"
+				}
+			}
+		}
+	}
+}

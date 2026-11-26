@@ -1,0 +1,264 @@
+# Cartels test: the 1934 rubber agreement exists at start, quotas keep the
+# surplus off the market, and a new cartel forms from a glut.
+# Start tag POR (human). Run: python tools/run_hoi4.py --test tests/cartels/cartel_irra
+#   day 3  irra_members   the anchor is active, Britain in the chair, with
+#                         every historical signatory that produces rubber
+#                         (ENG, MAL, INS, FRA, SIA)
+#          quota_math     INS with a forced 100 unsold: store = unsold minus
+#                         quota headroom; the fallback withholds it through
+#                         the dynamic modifier (or, with the stockpiles lane,
+#                         storage is asked to take it)
+#   day 6  formation      three AI chromium producers with a forced glut: the
+#                         monthly scan calls a conference, the AI invitees
+#                         accept, and the conference makes it active
+#   day 12 mal_withheld   Malaya's rubber balance has fallen by its hold since
+#                         startup (INFO if it had no unsold surplus)
+on_actions = {
+	on_startup = {
+		effect = {
+			MAL = {
+				set_variable = { global.pww_tci_net0 = resource@rubber }
+				set_variable = { global.pww_tci_exp0 = resource_exported@rubber }
+			}
+		}
+	}
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = POR }
+				add_to_variable = { global.pww_tci_day = 1 }
+
+				if = {
+					limit = { check_variable = { global.pww_tci_day = 3 } }
+					set_global_flag = pww_cartel_debug
+					set_temp_variable = { pww_tci_cid = global.pww_cart_by_res^2 }
+					set_temp_variable = { pww_tci_ok = 1 }
+					set_temp_variable = { pww_tci_want = 1 }
+					if = {
+						limit = { check_variable = { pww_tci_cid < 0 } }
+						set_temp_variable = { pww_tci_ok = 0 }
+					}
+					else = {
+						if = {
+							limit = {
+								OR = {
+									NOT = { check_variable = { global.pww_cart_status^pww_tci_cid = 1 } }
+									NOT = { check_variable = { global.pww_cart_anchor^pww_tci_cid = 1 } }
+								}
+							}
+							set_temp_variable = { pww_tci_ok = 0 }
+						}
+						set_temp_variable = { pww_tci_l = global.pww_cart_leader^pww_tci_cid }
+						ENG = {
+							if = {
+								limit = { NOT = { check_variable = { pww_tci_l = THIS } } }
+								set_temp_variable = { pww_tci_ok = 0 }
+							}
+							if = {
+								limit = { NOT = { has_country_flag = pww_cartel_mem_rubber } }
+								set_temp_variable = { pww_tci_ok = 0 }
+							}
+						}
+						every_country = {
+							limit = {
+								OR = { tag = MAL tag = INS tag = FRA tag = SIA }
+								pww_core_produces_rubber = yes
+							}
+							add_to_temp_variable = { pww_tci_want = 1 }
+							if = {
+								limit = { NOT = { has_country_flag = pww_cartel_mem_rubber } }
+								set_temp_variable = { pww_tci_ok = 0 }
+								log = "PWW_RESULT cartel_irra.irra_missing INFO [?THIS.GetTag] produces rubber but is not a member"
+							}
+						}
+						if = {
+							limit = { NOT = { check_variable = { global.pww_cart_n^pww_tci_cid = pww_tci_want } } }
+							set_temp_variable = { pww_tci_ok = 0 }
+						}
+						if = {
+							limit = { check_variable = { pww_tci_want < 4 } }
+							set_temp_variable = { pww_tci_ok = 0 }
+						}
+					}
+					if = {
+						limit = { check_variable = { pww_tci_ok = 1 } }
+						log = "PWW_RESULT cartel_irra.irra_members PASS cartel [?pww_tci_cid] members [?global.pww_cart_n^pww_tci_cid] (expected [?pww_tci_want]) price [?global.pww_cart_price^pww_tci_cid|2] cohesion [?global.pww_cart_cohesion^pww_tci_cid|0]"
+					}
+					else = {
+						log = "PWW_RESULT cartel_irra.irra_members FAIL cartel [?pww_tci_cid] status [?global.pww_cart_status^pww_tci_cid] members [?global.pww_cart_n^pww_tci_cid] expected [?pww_tci_want]"
+					}
+
+					# Quota arithmetic on INS with a forced unsold reading
+					INS = {
+						set_temp_variable = { pww_in_res = 2 }
+						pww_cartel_find_member = yes
+						set_temp_variable = { pww_tci_cm = pww_out_cm }
+						set_variable = { pww_cartel_test_res = 2 }
+						set_variable = { pww_cartel_test_unsold = 100 }
+						if = {
+							limit = { check_variable = { pww_tci_cm > -1 } }
+							set_temp_variable = { pww_kt_cm2 = pww_tci_cm }
+							pww_cartel_apply_quota = yes
+							set_temp_variable = { pww_tci_head = global.pww_cm_quota^pww_tci_cm }
+							subtract_from_temp_variable = { pww_tci_head = global.pww_cm_sold^pww_tci_cm }
+							clamp_temp_variable = { var = pww_tci_head min = 0 max = 99999 }
+							set_temp_variable = { pww_tci_exp = 100 }
+							subtract_from_temp_variable = { pww_tci_exp = pww_tci_head }
+							clamp_temp_variable = { var = pww_tci_exp min = 0 max = 99999 }
+							set_temp_variable = { pww_tci_d = global.pww_cm_store^pww_tci_cm }
+							subtract_from_temp_variable = { pww_tci_d = pww_tci_exp }
+							set_temp_variable = { pww_tci_h = pww_cartel_hold_rubber }
+							if = {
+								limit = { has_global_flag = pww_stock_loaded }
+								log = "PWW_RESULT cartel_irra.quota_path INFO stockpiles lane loaded: store request [?pww_cartel_store_rubber|1], storage intake [?pww_stock_in_rubber|1], withheld remainder [?pww_tci_h|1]"
+							}
+							else = {
+								log = "PWW_RESULT cartel_irra.quota_path INFO no stockpiles lane: fallback withholds the whole store request"
+								set_temp_variable = { pww_tci_d2 = pww_tci_h }
+								subtract_from_temp_variable = { pww_tci_d2 = pww_tci_exp }
+								if = {
+									limit = {
+										OR = {
+											check_variable = { pww_tci_d2 > 0.01 }
+											check_variable = { pww_tci_d2 < -0.01 }
+										}
+									}
+									set_temp_variable = { pww_tci_d = 99 }
+								}
+							}
+							if = {
+								limit = {
+									check_variable = { pww_tci_exp > 1 }
+									check_variable = { pww_tci_d < 0.01 }
+									check_variable = { pww_tci_d > -0.01 }
+									check_variable = { pww_cartel_store_rubber = pww_tci_exp }
+									has_dynamic_modifier = { modifier = pww_cartel_flows }
+								}
+								log = "PWW_RESULT cartel_irra.quota_math PASS INS quota [?global.pww_cm_quota^pww_tci_cm|1] sold [?global.pww_cm_sold^pww_tci_cm|1] unsold 100 -> store [?global.pww_cm_store^pww_tci_cm|1] hold [?pww_tci_h|1]"
+							}
+							else = {
+								log = "PWW_RESULT cartel_irra.quota_math FAIL INS quota [?global.pww_cm_quota^pww_tci_cm|1] sold [?global.pww_cm_sold^pww_tci_cm|1] expected store [?pww_tci_exp|1] got [?global.pww_cm_store^pww_tci_cm|1] hold [?pww_tci_h|1] var [?pww_cartel_store_rubber|1]"
+							}
+						}
+						else = {
+							log = "PWW_RESULT cartel_irra.quota_math FAIL INS has no member entry"
+						}
+						clear_variable = pww_cartel_test_unsold
+						clear_variable = pww_cartel_test_res
+						if = {
+							limit = { check_variable = { pww_tci_cm > -1 } }
+							set_temp_variable = { pww_kt_cm2 = pww_tci_cm }
+							pww_cartel_apply_quota = yes
+						}
+					}
+				}
+
+				if = {
+					limit = { check_variable = { global.pww_tci_day = 6 } }
+					# Only chromium may form; force a glut on three AI producers
+					for_loop_effect = {
+						start = 1
+						end = 7
+						value = pww_tci_r
+						if = {
+							limit = { NOT = { check_variable = { pww_tci_r = 5 } } }
+							set_temp_variable = { pww_tci_far = global.num_days }
+							add_to_temp_variable = { pww_tci_far = 99999 }
+							set_variable = { global.pww_cart_cd_res^pww_tci_r = pww_tci_far }
+						}
+					}
+					set_variable = { global.pww_cartel_c_max_live = 99 }
+					set_variable = { global.pww_cartel_c_desp_buyers = 99 }
+					set_variable = { global.pww_cartel_c_form_chance = 101 }
+					set_temp_variable = { pww_tci_k = 0 }
+					every_country = {
+						limit = {
+							exists = yes
+							is_ai = yes
+							has_war = no
+							pww_core_produces_chromium = yes
+						}
+						if = {
+							limit = { check_variable = { pww_tci_k < 3 } }
+							set_variable = { pww_cartel_test_res = 5 }
+							set_variable = { pww_cartel_test_unsold = 60 }
+							add_to_temp_variable = { pww_tci_k = 1 }
+							set_temp_variable = { pww_tci_pc = resource_produced@chromium }
+							log = "PWW_RESULT cartel_irra.glut_producer INFO [?THIS.GetTag] chromium output [?pww_tci_pc|1]"
+						}
+					}
+					pww_cartel_formation_scan = yes
+					set_temp_variable = { pww_tci_c5 = global.pww_cart_by_res^5 }
+					if = {
+						limit = {
+							check_variable = { pww_tci_c5 > -1 }
+							check_variable = { global.pww_cart_status^pww_tci_c5 = 0 }
+						}
+						set_temp_variable = { pww_tci_l5 = global.pww_cart_leader^pww_tci_c5 }
+						log = "PWW_RESULT cartel_irra.conference PASS chromium conference [?pww_tci_c5] called by [?pww_tci_l5.GetTag], glut producers [?global.pww_cart_glut_n^5]"
+						set_temp_variable = { pww_kc_cid = pww_tci_c5 }
+						pww_cartel_conference_resolve = yes
+						if = {
+							limit = {
+								check_variable = { global.pww_cart_status^pww_tci_c5 = 1 }
+								check_variable = { global.pww_cart_n^pww_tci_c5 > 1 }
+							}
+							log = "PWW_RESULT cartel_irra.formation PASS chromium agreement active with [?global.pww_cart_n^pww_tci_c5] members"
+						}
+						else = {
+							log = "PWW_RESULT cartel_irra.formation FAIL status [?global.pww_cart_status^pww_tci_c5] members [?global.pww_cart_n^pww_tci_c5]"
+						}
+					}
+					else = {
+						log = "PWW_RESULT cartel_irra.conference FAIL no chromium conference: cartel [?pww_tci_c5] glut producers [?global.pww_cart_glut_n^5] ripe [?global.pww_cart_ripe^5]"
+					}
+				}
+
+				if = {
+					limit = { check_variable = { global.pww_tci_day = 12 } }
+					# Withholding lowers what Malaya has to sell: both its unsold
+					# balance and its exports fall below their startup level.
+					# Residual = (balance + exports now + hold + stored) minus
+					# (balance + exports at startup), logged for tuning: the
+					# engine does not take the full hold out of the market.
+					MAL = {
+						set_temp_variable = { pww_tci_net1 = resource@rubber }
+						set_temp_variable = { pww_tci_exp1 = resource_exported@rubber }
+						set_temp_variable = { pww_tci_hold = pww_cartel_hold_rubber }
+						set_temp_variable = { pww_tci_sin = pww_stock_in_rubber }
+						set_temp_variable = { pww_tci_a0 = global.pww_tci_net0 }
+						add_to_temp_variable = { pww_tci_a0 = global.pww_tci_exp0 }
+						set_temp_variable = { pww_tci_a1 = pww_tci_net1 }
+						add_to_temp_variable = { pww_tci_a1 = pww_tci_exp1 }
+						set_temp_variable = { pww_tci_dev = pww_tci_a1 }
+						add_to_temp_variable = { pww_tci_dev = pww_tci_hold }
+						add_to_temp_variable = { pww_tci_dev = pww_tci_sin }
+						subtract_from_temp_variable = { pww_tci_dev = pww_tci_a0 }
+						set_temp_variable = { pww_tci_tol = pww_tci_hold }
+						multiply_temp_variable = { pww_tci_tol = 0.2 }
+						add_to_temp_variable = { pww_tci_tol = 2 }
+						set_temp_variable = { pww_tci_ntol = pww_tci_tol }
+						multiply_temp_variable = { pww_tci_ntol = -1 }
+						if = {
+							limit = { check_variable = { pww_tci_a0 < 1 } }
+							log = "PWW_RESULT cartel_irra.mal_withheld INFO Malaya had no rubber to sell at start ([?pww_tci_a0|1])"
+						}
+						else_if = {
+							limit = {
+								check_variable = { pww_tci_hold > 1 }
+								check_variable = { pww_tci_a1 < pww_tci_a0 }
+								check_variable = { pww_tci_net1 < global.pww_tci_net0 }
+								has_dynamic_modifier = { modifier = pww_cartel_flows }
+							}
+							log = "PWW_RESULT cartel_irra.mal_withheld PASS Malaya balance+exports [?pww_tci_a0|1] -> [?pww_tci_a1|1]; withheld [?pww_tci_hold|1] + stored [?pww_tci_sin|1] (residual [?pww_tci_dev|1])"
+						}
+						else = {
+							log = "PWW_RESULT cartel_irra.mal_withheld FAIL Malaya balance [?global.pww_tci_net0|1]+[?global.pww_tci_exp0|1] -> [?pww_tci_net1|1]+[?pww_tci_exp1|1]; hold [?pww_tci_hold|1] stored [?pww_tci_sin|1] residual [?pww_tci_dev|1]"
+						}
+					}
+					log = "PWW_DONE cartel_irra"
+				}
+			}
+		}
+	}
+}

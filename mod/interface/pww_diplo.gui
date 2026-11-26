@@ -3161,7 +3161,7 @@ guiTypes = {
 			name = "pww_ro_c1_l"
 			position = { x = 62 y = 377 }
 			font = "hoi_16mbs"
-			text = "pww_dt_counter_1"
+			text = "[pww_dt_sl_counter_1]"
 			maxWidth = 482
 			maxHeight = 18
 			format = left
@@ -3181,7 +3181,7 @@ guiTypes = {
 			name = "pww_ro_c2_l"
 			position = { x = 62 y = 399 }
 			font = "hoi_16mbs"
-			text = "pww_dt_counter_2"
+			text = "[pww_dt_sl_counter_2]"
 			maxWidth = 482
 			maxHeight = 18
 			format = left

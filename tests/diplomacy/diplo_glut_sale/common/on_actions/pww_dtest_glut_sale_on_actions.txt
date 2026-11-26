@@ -1,0 +1,246 @@
+# Diplomacy test: glut sellers approach buyers (pww_diplo_ai_sale_intent,
+# SALES in the header of pww_diplo_ticks.txt). Run with --tag ITA (Italy, the
+# human, starts short of chromium). Each seller's unsold output is set through
+# the diplomacy test hooks (pww_diplo_test_res / _unsold / _exported); the
+# buyers' shortfalls are the live game's.
+# Day 1 blocks every natural sale (ITA's 30-day human limit pushed ahead, the
+# AI-to-AI window full) so only the scripted sellers below act. Day 32:
+#   ai_to_ai     British Malaya (300 unsold rubber) runs its sale intent with
+#                ITA blocked: it drafts a rubber sale (we give rubber, they
+#                pay, at or a little below market) to an AI short of rubber,
+#                and the real Propose Trade Deal action carries it: the buyer
+#                answers (signed: PASS).
+#   to_human     the AI-to-AI window full and ITA's limit cleared, Turkey (100
+#                unsold chromium) drafts a chromium sale to ITA, and ITA's
+#                monthly limit is stamped.
+#   rate_limit   South Africa (60 unsold chromium) the same day finds no buyer:
+#                ITA already had its offer this month; a control run with the
+#                limit cleared does pick ITA (then withdrawn).
+#   received     INFO/PASS: whether the engine delivers Turkey's proposal to
+#                the human (ITA's receive GUI mirror pww_dr_from = TUR). The
+#                popup waits for the player; the harness can screenshot it
+#                (--leave-running --until "diplo_glut_sale.received PASS").
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = ITA }
+				add_to_variable = { global.pww_dtest_gs_day = 1 }
+				if = {
+					limit = { check_variable = { global.pww_dtest_gs_day = 1 } }
+					set_global_flag = pww_diplo_debug
+					set_temp_variable = { pww_dtest_gs_f = global.num_days }
+					add_to_temp_variable = { pww_dtest_gs_f = 1000 }
+					set_variable = { pww_diplo_ai_sale_last = pww_dtest_gs_f }
+					set_variable = { global.pww_ds_win = global.num_days }
+					add_to_variable = { global.pww_ds_win = 31 }
+					set_variable = { global.pww_ds_n = 99 }
+				}
+				if = {
+					limit = { check_variable = { global.pww_dtest_gs_day = 32 } }
+					set_variable = { pww_diplo_ai_sale_last = global.num_days }
+					set_variable = { global.pww_ds_win = global.num_days }
+					set_variable = { global.pww_ds_n = 0 }
+
+					# --- ai_to_ai: Malaya's rubber -------------------------------
+					MAL = {
+						set_variable = { pww_diplo_test_res = 2 }
+						set_variable = { pww_diplo_test_unsold = 300 }
+						set_variable = { pww_diplo_test_exported = 0 }
+						clr_country_flag = pww_diplo_ai_offer
+						clr_country_flag = pww_diplo_ai_sell_cd
+						pww_diplo_ai_sale_intent = yes
+						set_variable = { global.pww_dtest_gs_t1 = -1 }
+						set_variable = { global.pww_dtest_gs_b1 = 0 }
+						if = {
+							limit = { has_variable = pww_diplo_ai_offer_to }
+							set_variable = { global.pww_dtest_gs_b1 = pww_diplo_ai_offer_to }
+							set_variable = { global.pww_dtest_gs_t1 = pww_do_talk }
+						}
+						set_temp_variable = { pww_dtest_gs_ok = 0 }
+						if = {
+							limit = {
+								has_country_flag = pww_diplo_ai_offer
+								check_variable = { pww_diplo_ai_offer_sell = 1 }
+								check_variable = { pww_diplo_ai_offer_res = 2 }
+								check_variable = { pww_dob_k^0 = 3 }
+								check_variable = { pww_dob_x^0 = 2 }
+								check_variable = { pww_do_n1 > 0 }
+								check_variable = { pww_do_valid = 0 }
+								# at or below market to the buyer (not asking more)
+								NOT = { check_variable = { pww_do_mk = -1 } }
+								var:pww_diplo_ai_offer_to = { is_ai = yes }
+							}
+							set_temp_variable = { pww_dtest_gs_ok = 1 }
+						}
+						log = "PWW_RESULT diplo_glut_sale.ai_to_ai_values INFO MAL->[?pww_diplo_ai_offer_to.GetTag] flag_set=[?pww_dtest_gs_ok|0] sell=[?pww_diplo_ai_offer_sell|0] res=[?pww_diplo_ai_offer_res|0] we_give=[?pww_dob_k^0|0]/[?pww_dob_x^0|0]x[?pww_dob_a^0|0] they_give=[?pww_dob_k^4|0]x[?pww_dob_a^4|2]+[?pww_dob_k^5|0]x[?pww_dob_a^5|2] market=[?pww_do_mk_m0|2]/[?pww_do_mk_m1|2] verdict=[?pww_do_mk|0] price_factor=[?pww_do_sale_pf|2] buyer_total=[?pww_do_e_total|0] valid=[?pww_do_valid|0] talk=[?pww_do_talk|0]"
+						if = {
+							limit = { check_variable = { pww_dtest_gs_ok = 1 } }
+							log = "PWW_RESULT diplo_glut_sale.ai_to_ai_drafted PASS Malaya drafts [?pww_dob_a^0|0] rubber to [?pww_diplo_ai_offer_to.GetTag] (short of rubber) at [?pww_do_sale_pf|2] of market"
+						}
+						else = {
+							log = "PWW_RESULT diplo_glut_sale.ai_to_ai_drafted FAIL see ai_to_ai_values"
+						}
+					}
+
+					# --- to_human: Turkey's chromium to Italy --------------------
+					set_variable = { global.pww_ds_n = 6 }
+					clear_variable = pww_diplo_ai_sale_last
+					set_temp_variable = { pww_dtest_gs_net = resource@chromium }
+					TUR = {
+						set_variable = { pww_diplo_test_res = 5 }
+						set_variable = { pww_diplo_test_unsold = 100 }
+						set_variable = { pww_diplo_test_exported = 0 }
+						clr_country_flag = pww_diplo_ai_offer
+						clr_country_flag = pww_diplo_ai_sell_cd
+						pww_diplo_ai_sale_intent = yes
+						set_variable = { global.pww_dtest_gs_t2 = pww_do_talk }
+						set_temp_variable = { pww_dtest_gs_ok = 0 }
+						if = {
+							limit = {
+								has_country_flag = pww_diplo_ai_offer
+								check_variable = { pww_diplo_ai_offer_sell = 1 }
+								check_variable = { pww_diplo_ai_offer_to = ITA }
+								check_variable = { pww_dob_k^0 = 3 }
+								check_variable = { pww_dob_x^0 = 5 }
+								check_variable = { pww_do_valid = 0 }
+								ITA = { check_variable = { pww_diplo_ai_sale_last = global.num_days } }
+							}
+							set_temp_variable = { pww_dtest_gs_ok = 1 }
+						}
+						log = "PWW_RESULT diplo_glut_sale.to_human_values INFO ITA chromium net=[?pww_dtest_gs_net|0] TUR->[?pww_diplo_ai_offer_to.GetTag] flag_set=[?pww_dtest_gs_ok|0] we_give=[?pww_dob_k^0|0]/[?pww_dob_x^0|0]x[?pww_dob_a^0|0] they_give=[?pww_dob_k^4|0]x[?pww_dob_a^4|2]+[?pww_dob_k^5|0]x[?pww_dob_a^5|2] market=[?pww_do_mk_m0|2]/[?pww_do_mk_m1|2] price_factor=[?pww_do_sale_pf|2] valid=[?pww_do_valid|0] talk=[?pww_do_talk|0]"
+						if = {
+							limit = { check_variable = { pww_dtest_gs_ok = 1 } }
+							log = "PWW_RESULT diplo_glut_sale.to_human PASS Turkey drafts [?pww_dob_a^0|0] chromium to the human Italy and stamps its monthly limit"
+						}
+						else = {
+							log = "PWW_RESULT diplo_glut_sale.to_human FAIL see to_human_values"
+						}
+					}
+
+					# --- rate_limit: South Africa finds Italy served -------------
+					SAF = {
+						set_variable = { pww_diplo_test_res = 5 }
+						set_variable = { pww_diplo_test_unsold = 60 }
+						set_variable = { pww_diplo_test_exported = 0 }
+						clr_country_flag = pww_diplo_ai_offer
+						clr_country_flag = pww_diplo_ai_sell_cd
+						set_variable = { pww_diplo_ai_offer_to = SAF }
+						pww_diplo_ai_sale_intent = yes
+						set_temp_variable = { pww_dtest_gs_lim = 0 }
+						if = {
+							limit = {
+								NOT = { has_country_flag = pww_diplo_ai_offer }
+								NOT = { check_variable = { pww_diplo_ai_offer_to = ITA } }
+							}
+							set_temp_variable = { pww_dtest_gs_lim = 1 }
+						}
+						# Control: the same intent with Italy's limit cleared.
+						set_temp_variable = { pww_dtest_gs_keep = ITA.pww_diplo_ai_sale_last }
+						ITA = { clear_variable = pww_diplo_ai_sale_last }
+						clr_country_flag = pww_diplo_ai_sell_cd
+						pww_diplo_ai_sale_intent = yes
+						set_temp_variable = { pww_dtest_gs_ctl = 0 }
+						if = {
+							limit = {
+								has_country_flag = pww_diplo_ai_offer
+								check_variable = { pww_diplo_ai_offer_to = ITA }
+							}
+							set_temp_variable = { pww_dtest_gs_ctl = 1 }
+						}
+						# Withdraw the control draft.
+						clr_country_flag = pww_diplo_ai_offer
+						set_variable = { pww_diplo_ai_offer_to = SAF }
+						set_temp_variable = { pww_dtc_t = pww_do_talk }
+						set_temp_variable = { pww_dtc_status = 4 }
+						if = {
+							limit = {
+								check_variable = { pww_dtc_t > -1 }
+								check_variable = { global.pww_dt_status^pww_dtc_t = 0 }
+							}
+							pww_diplo_talk_close = yes
+						}
+						ITA = { set_variable = { pww_diplo_ai_sale_last = pww_dtest_gs_keep } }
+						if = {
+							limit = {
+								check_variable = { pww_dtest_gs_lim = 1 }
+								check_variable = { pww_dtest_gs_ctl = 1 }
+							}
+							log = "PWW_RESULT diplo_glut_sale.rate_limit PASS the same day South Africa offers Italy nothing (already served this month); with the limit cleared it would have"
+						}
+						else = {
+							log = "PWW_RESULT diplo_glut_sale.rate_limit FAIL limited=[?pww_dtest_gs_lim|0] control_picks_italy=[?pww_dtest_gs_ctl|0]"
+						}
+					}
+					set_variable = { global.pww_ds_n = 99 }
+				}
+				# --- watch the two proposals ------------------------------------
+				if = {
+					limit = {
+						check_variable = { global.pww_dtest_gs_day > 32 }
+						NOT = { has_global_flag = pww_dtest_gs_recv }
+						check_variable = { pww_dr_from = TUR }
+					}
+					set_global_flag = pww_dtest_gs_recv
+					log = "PWW_RESULT diplo_glut_sale.received PASS [GetDateText] Turkey's chromium sale reached the human Italy's receive screen (day [?global.pww_dtest_gs_day|0]; frame [?pww_do_frame|0], rows [?pww_dbk_0|0]x[?pww_dba_0|0] for [?pww_dbk_4|0]x[?pww_dba_4|2])"
+				}
+				if = {
+					limit = {
+						check_variable = { global.pww_dtest_gs_day > 32 }
+						NOT = { has_global_flag = pww_dtest_gs_ai }
+						check_variable = { global.pww_dtest_gs_t1 > -1 }
+					}
+					set_temp_variable = { pww_dtest_gs_t = global.pww_dtest_gs_t1 }
+					if = {
+						limit = {
+							OR = {
+								NOT = { check_variable = { global.pww_dt_status^pww_dtest_gs_t = 0 } }
+								check_variable = { global.pww_dt_round^pww_dtest_gs_t > 0 }
+							}
+						}
+						set_global_flag = pww_dtest_gs_ai
+						set_temp_variable = { pww_dtest_gs_ag = global.pww_dt_ag^pww_dtest_gs_t }
+						if = {
+							limit = {
+								check_variable = { global.pww_dt_status^pww_dtest_gs_t = 1 }
+								check_variable = { pww_dtest_gs_ag > -1 }
+								check_variable = { global.pww_ag_seller^pww_dtest_gs_ag = MAL }
+								check_variable = { global.pww_ag_res^pww_dtest_gs_ag = 2 }
+							}
+							log = "PWW_RESULT diplo_glut_sale.ai_to_ai PASS [GetDateText] Malaya's rubber sale to [?global.pww_dtest_gs_b1.GetTag] was sent and signed (agreement [?pww_dtest_gs_ag|0]: [?global.pww_ag_amount^pww_dtest_gs_ag|1] rubber a day, [?global.pww_ag_civ^pww_dtest_gs_ag|0] factories, [?global.pww_ag_pp^pww_dtest_gs_ag|2] political power)"
+						}
+						else = {
+							log = "PWW_RESULT diplo_glut_sale.ai_to_ai FAIL [GetDateText] the buyer answered without signing: status=[?global.pww_dt_status^pww_dtest_gs_t|0] round=[?global.pww_dt_round^pww_dtest_gs_t|0] line=[?global.pww_dt_line^pww_dtest_gs_t|0]"
+						}
+					}
+				}
+				if = {
+					limit = {
+						check_variable = { global.pww_dtest_gs_day > 32 }
+						has_global_flag = pww_dtest_gs_ai
+						has_global_flag = pww_dtest_gs_recv
+						NOT = { has_global_flag = pww_dtest_gs_done }
+					}
+					set_global_flag = pww_dtest_gs_done
+					log = "PWW_DONE diplo_glut_sale"
+				}
+				if = {
+					limit = {
+						check_variable = { global.pww_dtest_gs_day = 92 }
+						NOT = { has_global_flag = pww_dtest_gs_done }
+					}
+					if = {
+						limit = { NOT = { has_global_flag = pww_dtest_gs_ai } }
+						set_temp_variable = { pww_dtest_gs_t = global.pww_dtest_gs_t1 }
+						log = "PWW_RESULT diplo_glut_sale.ai_to_ai FAIL no answer in 60 days (talk [?pww_dtest_gs_t|0], status [?global.pww_dt_status^pww_dtest_gs_t|0])"
+					}
+					if = {
+						limit = { NOT = { has_global_flag = pww_dtest_gs_recv } }
+						log = "PWW_RESULT diplo_glut_sale.received INFO the engine did not deliver Turkey's proposal to the human in 60 days; AI-to-human scripted proposals remain unobserved"
+					}
+					log = "PWW_DONE diplo_glut_sale"
+				}
+			}
+		}
+	}
+}

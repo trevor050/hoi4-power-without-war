@@ -2,20 +2,24 @@
 # (GER is the human player tabling Propose Trade Deal bundles to AI minors:
 # a resource against whole civilian factories). Each case evaluates a bundle
 # with the same code the target's ai_acceptance reads and logs the values,
-# then one PASS/FAIL row:
-#   A below_market   GER buys POR tungsten 30% below market, POR not
-#                    desperate: refused even at the most lenient seeded
-#                    reserve, and the refusal carries an envoy reason line.
-#   B at_market      the same deal at market with neutral relations clears
-#                    for some seeded reserves but not most (first answer is
-#                    usually a counter); good relations clear more often;
-#                    an above-market draft clears for most reserves.
+# then one PASS/FAIL row. A seller's market position (unsold output, units
+# it already exports) is set through the diplomacy test hooks where a case
+# needs it (pww_dtest_hg_market).
+#   A below_market   GER buys POR tungsten 30% below market from a POR with
+#                    every unit already sold: refused even at the most
+#                    lenient seeded reserve, with an envoy reason line.
+#   B at_market      Italy's aluminium at market (Italy has 20-40 civilian
+#                    factories, so a factory is worth one to it): with unsold
+#                    aluminium it signs for all 24 seeded reserves (no
+#                    scarcity); sold out (the ask is all it still sells) it
+#                    counters most (under half clear), good relations clear
+#                    more, above market clears most.
 #   C desperate      GER sells 16 steel to POR above market (3 factories):
 #                    refused while POR is comfortable, accepted while POR is
 #                    desperate for steel.
-#   D dislike        at market with a lenient reserve: accepted at POR's own
-#                    relations, refused once POR dislikes GER (snub -80),
-#                    accepted again when GER pays above market.
+#   D dislike        at market from an Italy with unsold aluminium, reserve
+#                    3: accepted at Italy's own relations, refused once Italy
+#                    dislikes GER (snub -150), accepted again above market.
 #   E partners       INFO: natural at-market verdicts with five other minors.
 #   F bundle_sign    GER buys steel and tungsten from SWE for civilian
 #                    factories, political power and a rifle shipment: two
@@ -30,7 +34,30 @@
 #                    empty-side and political-power-only drafts to market
 #                    without touching their side, and the market values the
 #                    screen shows (rows, totals) are the acceptance model's:
-#                    terms computed from the shown totals equal the terms.
+#                    terms computed from the shown rows (times the target's
+#                    appetite) equal the terms.
+#   J appetite       the same political-power-only draft at market: once POR
+#                    sits on 2000 more political power it values the payment
+#                    far below market (appetite under 0.45, the row says "they
+#                    have plenty", terms at least 40 lower, refused).
+#   K malaya_rubber  the playtest case: GER offers British Malaya 8 rubber for
+#                    1 civilian factory (exactly market) as the player's
+#                    default draft (one year, either side may end it):
+#                    signed on the first draft, natural values, and for all
+#                    24 seeded reserves.
+#   L glut_discount  POR with a large unsold glut of tungsten accepts 25%
+#                    below market (political power payment) for all 24
+#                    reserves; the same draft with every unit already sold is
+#                    refused for all 24.
+#   M scarcity       at market and below: a POR selling out of its own use
+#                    (nothing unsold or exported) and a POR whose tungsten is
+#                    contested (four other active traders desperate for it,
+#                    every unit sold) both counter (refused at the natural
+#                    reserve, a reply line, talks still open), scarcity 1.
+#   N factory_value  one civilian factory is worth at least twice as much to
+#                    Malaya (3 factories) as to the United States: the target's
+#                    factory appetite, and the terms of the same 8-units-for-
+#                    1-factory draft.
 # Day 32 so core has computed every country's desperation once.
 on_actions = {
 	on_daily = {
@@ -47,7 +74,10 @@ on_actions = {
 						set_variable = { pww_desp_steel = 0 }
 					}
 
-					# --- A: below market, comfortable seller ------------------
+					# --- A: below market, a seller with nothing unsold ---------
+					set_temp_variable = { pww_dtest_hg_uns = 0 }
+					set_temp_variable = { pww_dtest_hg_exp = 999 }
+					pww_dtest_hg_market = yes
 					set_temp_variable = { pww_dtest_hg_res = 3 }
 					set_temp_variable = { pww_dtest_hg_dir = 0 }
 					set_temp_variable = { pww_dtest_hg_pay = 0 }
@@ -86,10 +116,22 @@ on_actions = {
 					}
 
 					# --- B: at market, neutral / friendly / generous ----------
+					# Italy's aluminium (20 to 40 civilian factories: a factory
+					# is worth one to it, so "at market" is at market to it).
 					# A fresh talk: the first answer, nothing revealed yet.
+					ITA = {
+						set_temp_variable = { pww_dtest_hg_tgt = THIS }
+						set_variable = { pww_desp_aluminium = 0 }
+					}
+					set_temp_variable = { pww_dtest_hg_res = 1 }
 					set_temp_variable = { pww_dtest_hg_price = 1 }
 					pww_dtest_hg_close_talk = yes
 					pww_dtest_hg_draft = yes
+					# Sold out: the ask is all Italy still sells (nothing unsold).
+					set_temp_variable = { pww_dtest_hg_uns = 0 }
+					set_temp_variable = { pww_dtest_hg_exp = pww_dtest_hg_u }
+					pww_dtest_hg_market = yes
+					pww_diplo_offer_changed = yes
 					set_temp_variable = { pww_dtest_hg_relv = 0 }
 					pww_dtest_hg_set_rel = yes
 					set_temp_variable = { pww_dtest_hg_tag = 2 }
@@ -109,20 +151,39 @@ on_actions = {
 					pww_dtest_hg_log = yes
 					pww_dtest_hg_sweep = yes
 					set_temp_variable = { pww_dtest_hg_b_gen = pww_dtest_hg_n }
-					# A plain at-market first draft should usually be countered
-					# (under half the seeds clear it).
+					# The same at-market draft to an Italy with unsold aluminium: a
+					# routine purchase, signed on the first draft at any reserve.
+					set_temp_variable = { pww_dtest_hg_price = 1 }
+					set_temp_variable = { pww_dtest_hg_uns = 999 }
+					set_temp_variable = { pww_dtest_hg_exp = 0 }
+					pww_dtest_hg_market = yes
+					pww_dtest_hg_close_talk = yes
+					pww_dtest_hg_draft = yes
+					set_temp_variable = { pww_dtest_hg_relv = 0 }
+					pww_dtest_hg_set_rel = yes
+					set_temp_variable = { pww_dtest_hg_tag = 22 }
+					pww_dtest_hg_log = yes
+					pww_dtest_hg_sweep = yes
+					set_temp_variable = { pww_dtest_hg_b_glut = pww_dtest_hg_n }
+					set_temp_variable = { pww_dtest_hg_b_gscar = pww_do_scar }
+					set_temp_variable = { pww_dtest_hg_uns = -1 }
+					pww_dtest_hg_market = yes
+					POR = { set_temp_variable = { pww_dtest_hg_tgt = THIS } }
+					# Sold out (every unit already sold): an at-market first draft
+					# is usually countered (under half the seeds clear it).
 					set_temp_variable = { pww_dtest_hg_b_cap = 11 }
 					if = {
 						limit = {
-							check_variable = { pww_dtest_hg_b_neu > 0 }
 							NOT = { check_variable = { pww_dtest_hg_b_neu > pww_dtest_hg_b_cap } }
 							check_variable = { pww_dtest_hg_b_fr > pww_dtest_hg_b_neu }
 							check_variable = { pww_dtest_hg_b_gen > 12 }
+							check_variable = { pww_dtest_hg_b_glut = 24 }
+							check_variable = { pww_dtest_hg_b_gscar < 0.01 }
 						}
-						log = "PWW_RESULT diplo_haggle.B_at_market PASS of 24 seeded reserves: at market neutral accepts [?pww_dtest_hg_b_neu|0] (counters the rest), friendly (+15) accepts [?pww_dtest_hg_b_fr|0], above market neutral accepts [?pww_dtest_hg_b_gen|0]; want part=[?pww_dtest_hg_b_want|0]"
+						log = "PWW_RESULT diplo_haggle.B_at_market PASS of 24 seeded reserves at market: Italy with unsold aluminium accepts [?pww_dtest_hg_b_glut|0] (scarcity [?pww_dtest_hg_b_gscar|2]); Italy sold out, neutral accepts [?pww_dtest_hg_b_neu|0] (counters the rest), friendly (+15) accepts [?pww_dtest_hg_b_fr|0], above market accepts [?pww_dtest_hg_b_gen|0]; want part=[?pww_dtest_hg_b_want|0]"
 					}
 					else = {
-						log = "PWW_RESULT diplo_haggle.B_at_market FAIL of 24 reserves: neutral=[?pww_dtest_hg_b_neu|0] (cap [?pww_dtest_hg_b_cap|0]) friendly=[?pww_dtest_hg_b_fr|0] generous=[?pww_dtest_hg_b_gen|0] want=[?pww_dtest_hg_b_want|0]"
+						log = "PWW_RESULT diplo_haggle.B_at_market FAIL of 24 reserves: glut=[?pww_dtest_hg_b_glut|0] (scar [?pww_dtest_hg_b_gscar|2]) sold-out neutral=[?pww_dtest_hg_b_neu|0] (cap [?pww_dtest_hg_b_cap|0]) friendly=[?pww_dtest_hg_b_fr|0] generous=[?pww_dtest_hg_b_gen|0] want=[?pww_dtest_hg_b_want|0]"
 					}
 
 					# --- C: desperate counterparty accepts worse terms --------
@@ -156,8 +217,13 @@ on_actions = {
 						log = "PWW_RESULT diplo_haggle.C_desperate FAIL comfortable accepts=[?pww_dtest_hg_c_calm|0] desperate accepts=[?pww_dtest_hg_c_desp|0]"
 					}
 
-					# --- D: dislike demands more -------------------------------
-					set_temp_variable = { pww_dtest_hg_res = 3 }
+					# --- D: dislike outweighs a fair price -------------------
+					# Italy has unsold aluminium: at market it is a routine sale.
+					ITA = { set_temp_variable = { pww_dtest_hg_tgt = THIS } }
+					set_temp_variable = { pww_dtest_hg_uns = 999 }
+					set_temp_variable = { pww_dtest_hg_exp = 0 }
+					pww_dtest_hg_market = yes
+					set_temp_variable = { pww_dtest_hg_res = 1 }
 					set_temp_variable = { pww_dtest_hg_dir = 0 }
 					set_temp_variable = { pww_dtest_hg_price = 1 }
 					pww_dtest_hg_close_talk = yes
@@ -169,7 +235,7 @@ on_actions = {
 					set_temp_variable = { pww_dtest_hg_d_neu = pww_do_ok }
 					set_temp_variable = { pww_dtest_hg_d_rel0 = pww_do_e_rel }
 					pww_dtest_hg_close_talk = yes
-					POR = { add_opinion_modifier = { target = GER modifier = pww_dtest_hg_snub } }
+					ITA = { add_opinion_modifier = { target = GER modifier = pww_dtest_hg_snub } }
 					pww_dtest_hg_draft = yes
 					set_temp_variable = { pww_dtest_hg_rsv = 3 }
 					pww_dtest_hg_set_reserve = yes
@@ -189,11 +255,15 @@ on_actions = {
 							check_variable = { pww_dtest_hg_d_high = 1 }
 							check_variable = { pww_dtest_hg_d_rel1 < pww_dtest_hg_d_rel0 }
 						}
-						log = "PWW_RESULT diplo_haggle.D_dislike PASS at market (reserve 3): accepted at relations [?pww_dtest_hg_d_rel0|0], refused at relations [?pww_dtest_hg_d_rel1|0] after the snub, accepted again above market"
+						log = "PWW_RESULT diplo_haggle.D_dislike PASS at market from a seller with unsold output (reserve 3): accepted at relations [?pww_dtest_hg_d_rel0|0], refused at relations [?pww_dtest_hg_d_rel1|0] after the snub, accepted again above market"
 					}
 					else = {
 						log = "PWW_RESULT diplo_haggle.D_dislike FAIL neutral=[?pww_dtest_hg_d_neu|0] (rel [?pww_dtest_hg_d_rel0|0]) disliked=[?pww_dtest_hg_d_dis|0] (rel [?pww_dtest_hg_d_rel1|0]) disliked_above=[?pww_dtest_hg_d_high|0]"
 					}
+
+					set_temp_variable = { pww_dtest_hg_uns = -1 }
+					pww_dtest_hg_market = yes
+					ITA = { remove_opinion_modifier = { target = GER modifier = pww_dtest_hg_snub } }
 
 					# --- E: natural at-market verdicts, other minors -----------
 					set_temp_variable = { pww_dtest_hg_price = 1 }
@@ -224,7 +294,11 @@ on_actions = {
 					pww_dtest_hg_log = yes
 
 					# --- G: market verdict follows the evaluated numbers ------
+					# Every POR unit already sold: no glut discount, no premium.
 					POR = { set_temp_variable = { pww_dtest_hg_tgt = THIS } }
+					set_temp_variable = { pww_dtest_hg_uns = 0 }
+					set_temp_variable = { pww_dtest_hg_exp = 999 }
+					pww_dtest_hg_market = yes
 					set_temp_variable = { pww_dtest_hg_res = 3 }
 					set_temp_variable = { pww_dtest_hg_dir = 0 }
 					set_temp_variable = { pww_dtest_hg_price = 0 }
@@ -310,6 +384,254 @@ on_actions = {
 					}
 					else = {
 						log = "PWW_RESULT diplo_haggle.I_balance_it FAIL below=[?pww_dtest_hg_i1|0] above=[?pww_dtest_hg_i2|0] empty=[?pww_dtest_hg_i3|0] (n0 before [?pww_dtest_hg_i3n|0]) pp_only=[?pww_dtest_hg_i4|0] (kind [?pww_dtest_hg_i4k|0]); see I_values"
+					}
+
+					# --- J: appetite, a political-power-rich POR --------------
+					# The draft left by I94: POR tungsten for political power at
+					# market.
+					pww_diplo_offer_changed = yes
+					set_temp_variable = { pww_dtest_hg_j_ap0 = pww_do_ap_pp }
+					set_temp_variable = { pww_dtest_hg_j_t0 = pww_do_e_terms }
+					set_temp_variable = { pww_dtest_hg_j_f0 = pww_dbp_0 }
+					POR = {
+						add_political_power = 2000
+						set_temp_variable = { pww_dtest_hg_j_pp = political_power }
+					}
+					pww_diplo_offer_changed = yes
+					set_temp_variable = { pww_dtest_hg_j_ap1 = pww_do_ap_pp }
+					set_temp_variable = { pww_dtest_hg_j_t1 = pww_do_e_terms }
+					set_temp_variable = { pww_dtest_hg_j_f1 = pww_dbp_0 }
+					set_temp_variable = { pww_dtest_hg_j_ok1 = pww_do_ok }
+					set_temp_variable = { pww_dtest_hg_j_mk1 = pww_do_mk }
+					POR = { add_political_power = -2000 }
+					pww_diplo_offer_changed = yes
+					set_temp_variable = { pww_dtest_hg_j_d = pww_dtest_hg_j_t0 }
+					subtract_from_temp_variable = { pww_dtest_hg_j_d = pww_dtest_hg_j_t1 }
+					log = "PWW_RESULT diplo_haggle.J_values INFO natural ap_pp=[?pww_dtest_hg_j_ap0|2] terms=[?pww_dtest_hg_j_t0|0] word=[?pww_dtest_hg_j_f0|0]; rich (stock [?pww_dtest_hg_j_pp|0]) ap_pp=[?pww_dtest_hg_j_ap1|2] terms=[?pww_dtest_hg_j_t1|0] word=[?pww_dtest_hg_j_f1|0] ok=[?pww_dtest_hg_j_ok1|0] market=[?pww_dtest_hg_j_mk1|0]"
+					if = {
+						limit = {
+							check_variable = { pww_dtest_hg_j_ap0 > 0.9 }
+							check_variable = { pww_dtest_hg_j_ap1 < 0.45 }
+							check_variable = { pww_dtest_hg_j_f1 = 2 }
+							check_variable = { pww_dtest_hg_j_d > 39.9 }
+							check_variable = { pww_dtest_hg_j_ok1 = 0 }
+							check_variable = { pww_dtest_hg_j_mk1 = 0 }
+						}
+						log = "PWW_RESULT diplo_haggle.J_appetite PASS the same at-market political power payment: POR natural appetite [?pww_dtest_hg_j_ap0|2] (terms [?pww_dtest_hg_j_t0|0]), sitting on [?pww_dtest_hg_j_pp|0] political power [?pww_dtest_hg_j_ap1|2] (terms [?pww_dtest_hg_j_t1|0], row says they have plenty, refused); the market figures do not move"
+					}
+					else = {
+						log = "PWW_RESULT diplo_haggle.J_appetite FAIL see J_values"
+					}
+
+					# --- K: the playtest case, British Malaya rubber -----------
+					# Natural values throughout (no hooks): 8 rubber for 1
+					# factory, one year, either side may end it.
+					MAL = { set_temp_variable = { pww_dtest_hg_tgt = THIS } }
+					set_temp_variable = { pww_dtest_hg_res = 2 }
+					set_temp_variable = { pww_dtest_hg_units = 8 }
+					set_temp_variable = { pww_dtest_hg_civ = 1 }
+					set_temp_variable = { pww_dtest_hg_bind = 0 }
+					pww_dtest_hg_draft_civ = yes
+					set_temp_variable = { pww_dtest_hg_tag = 110 }
+					pww_dtest_hg_log = yes
+					set_temp_variable = { pww_dtest_hg_k_ok = pww_do_ok }
+					set_temp_variable = { pww_dtest_hg_k_mk = pww_do_mk }
+					set_temp_variable = { pww_dtest_hg_k_terms = pww_do_e_terms }
+					set_temp_variable = { pww_dtest_hg_k_total = pww_do_e_total }
+					set_temp_variable = { pww_dtest_hg_k_valid = pww_do_valid }
+					set_temp_variable = { pww_dtest_hg_k_scar = pww_do_scar }
+					set_temp_variable = { pww_dtest_hg_k_fair = pww_do_e_fair }
+					set_temp_variable = { pww_dtest_hg_k_rsv = pww_do_e_reserve }
+					set_temp_variable = { pww_dtest_hg_k_rel = pww_do_e_rel }
+					set_temp_variable = { pww_dtest_hg_k_red = pww_do_e_red }
+					set_temp_variable = { pww_dtest_hg_k_ap = pww_do_ap_civ }
+					set_temp_variable = { pww_dtest_hg_k_g = pww_do_glut_rate }
+					pww_dtest_hg_sweep = yes
+					set_temp_variable = { pww_dtest_hg_k_n = pww_dtest_hg_n }
+					set_temp_variable = { pww_dg_res = 2 }
+					MAL = {
+						pww_diplo_read_market = yes
+						set_temp_variable = { pww_dtest_hg_k_civs = num_of_civilian_factories }
+					}
+					log = "PWW_RESULT diplo_haggle.K_values INFO MAL rubber produced=[?pww_dg_prod|0] exported=[?pww_dg_exp|0] unsold=[?pww_dg_unsold|0] desp=[?pww_dg_desp|0] imported=[?pww_dg_imp|0] civs=[?pww_dtest_hg_k_civs|0] factory_appetite=[?pww_dtest_hg_k_ap|2] glut_rate=[?pww_dtest_hg_k_g|2] scarcity=[?pww_dtest_hg_k_scar|2] verdict=[?pww_dtest_hg_k_mk|0] terms=[?pww_dtest_hg_k_terms|0] fair=[?pww_dtest_hg_k_fair|0] reserve=[?pww_dtest_hg_k_rsv|0] rel=[?pww_dtest_hg_k_rel|0] red=[?pww_dtest_hg_k_red|0] total=[?pww_dtest_hg_k_total|0] valid=[?pww_dtest_hg_k_valid|0] accepts=[?pww_dtest_hg_k_ok|0] of24=[?pww_dtest_hg_k_n|0]"
+					if = {
+						limit = {
+							check_variable = { pww_dtest_hg_k_ok = 1 }
+							check_variable = { pww_dtest_hg_k_mk = 0 }
+							check_variable = { pww_dtest_hg_k_n = 24 }
+						}
+						log = "PWW_RESULT diplo_haggle.K_malaya_rubber PASS British Malaya signs 8 rubber for 1 factory on the first draft (terms [?pww_dtest_hg_k_terms|0], total [?pww_dtest_hg_k_total|0]) and for all 24 seeded reserves"
+					}
+					else = {
+						log = "PWW_RESULT diplo_haggle.K_malaya_rubber FAIL accepts=[?pww_dtest_hg_k_ok|0] verdict=[?pww_dtest_hg_k_mk|0] of24=[?pww_dtest_hg_k_n|0]; see K_values"
+					}
+
+					# --- L: a glut seller takes 25% below market -------------
+					# 32 tungsten (4 factories at market) for 3 factories.
+					POR = { set_temp_variable = { pww_dtest_hg_tgt = THIS } }
+					set_temp_variable = { pww_dtest_hg_uns = 999 }
+					set_temp_variable = { pww_dtest_hg_exp = 0 }
+					pww_dtest_hg_market = yes
+					pww_dtest_hg_close_talk = yes
+					set_temp_variable = { pww_dtest_hg_res = 3 }
+					set_temp_variable = { pww_dtest_hg_units = 32 }
+					set_temp_variable = { pww_dtest_hg_civ = 3 }
+					set_temp_variable = { pww_dtest_hg_bind = 1 }
+					pww_dtest_hg_draft_civ = yes
+					set_temp_variable = { pww_dtest_hg_relv = 0 }
+					pww_dtest_hg_set_rel = yes
+					set_temp_variable = { pww_dtest_hg_tag = 120 }
+					pww_dtest_hg_log = yes
+					set_temp_variable = { pww_dtest_hg_l_mk = pww_do_mk }
+					set_temp_variable = { pww_dtest_hg_l_t0 = pww_do_e_terms }
+					set_temp_variable = { pww_dtest_hg_l_g = pww_do_glut_rate }
+					pww_dtest_hg_sweep = yes
+					set_temp_variable = { pww_dtest_hg_l_glut = pww_dtest_hg_n }
+					set_temp_variable = { pww_dtest_hg_uns = 0 }
+					set_temp_variable = { pww_dtest_hg_exp = 999 }
+					pww_dtest_hg_market = yes
+					pww_diplo_offer_changed = yes
+					set_temp_variable = { pww_dtest_hg_tag = 121 }
+					pww_dtest_hg_log = yes
+					set_temp_variable = { pww_dtest_hg_l_t1 = pww_do_e_terms }
+					pww_dtest_hg_sweep = yes
+					set_temp_variable = { pww_dtest_hg_l_sold = pww_dtest_hg_n }
+					if = {
+						limit = {
+							check_variable = { pww_dtest_hg_l_mk = -1 }
+							check_variable = { pww_dtest_hg_l_glut = 24 }
+							check_variable = { pww_dtest_hg_l_sold < 3 }
+						}
+						log = "PWW_RESULT diplo_haggle.L_glut_discount PASS 25% below market: POR with unsold tungsten (glut rate [?pww_dtest_hg_l_g|2], terms [?pww_dtest_hg_l_t0|0]) accepts for [?pww_dtest_hg_l_glut|0] of 24 reserves; with every unit already sold (terms [?pww_dtest_hg_l_t1|0]) [?pww_dtest_hg_l_sold|0] of 24"
+					}
+					else = {
+						log = "PWW_RESULT diplo_haggle.L_glut_discount FAIL verdict=[?pww_dtest_hg_l_mk|0] glut accepts=[?pww_dtest_hg_l_glut|0] (terms [?pww_dtest_hg_l_t0|0], rate [?pww_dtest_hg_l_g|2]) sold accepts=[?pww_dtest_hg_l_sold|0] (terms [?pww_dtest_hg_l_t1|0])"
+					}
+
+					# --- M: sold out, contested: haggling comes back ---------
+					# Italy (20-40 civilian factories: a factory is worth one to
+					# it) sells 24 aluminium; reserve 13, relations 0.
+					ITA = {
+						set_temp_variable = { pww_dtest_hg_tgt = THIS }
+						set_variable = { pww_desp_aluminium = 0 }
+					}
+					set_temp_variable = { pww_dtest_hg_res = 1 }
+					set_temp_variable = { pww_dtest_hg_units = 24 }
+					set_temp_variable = { pww_dtest_hg_bind = 1 }
+					# M1: out of its own use (nothing unsold, nothing exported)
+					set_temp_variable = { pww_dtest_hg_uns = 0 }
+					set_temp_variable = { pww_dtest_hg_exp = 0 }
+					pww_dtest_hg_market = yes
+					set_temp_variable = { pww_dtest_hg_civ = 3 }
+					pww_dtest_hg_m_case = yes
+					set_temp_variable = { pww_dtest_hg_m1_scar = pww_dtest_hg_m_scar }
+					set_temp_variable = { pww_dtest_hg_m1_ok = pww_dtest_hg_m_ok }
+					set_temp_variable = { pww_dtest_hg_m1_n = pww_dtest_hg_n }
+					set_temp_variable = { pww_dtest_hg_m1_line = pww_dtest_hg_m_line }
+					set_temp_variable = { pww_dtest_hg_m1_st = pww_dtest_hg_m_st }
+					set_temp_variable = { pww_dtest_hg_civ = 2 }
+					pww_dtest_hg_m_case = yes
+					set_temp_variable = { pww_dtest_hg_m1b_ok = pww_dtest_hg_m_ok }
+					# M2: every unit already sold and contested: four other
+					# active traders desperate for aluminium
+					set_temp_variable = { pww_dtest_hg_uns = 0 }
+					set_temp_variable = { pww_dtest_hg_exp = 999 }
+					pww_dtest_hg_market = yes
+					clear_temp_array = pww_dtest_hg_cont
+					clear_temp_array = pww_dtest_hg_contv
+					for_each_loop = {
+						array = global.pww_active_traders
+						value = pww_dtest_hg_c
+						if = {
+							limit = {
+								check_variable = { pww_dtest_hg_cont^num < 4 }
+								NOT = { check_variable = { pww_dtest_hg_c = ITA } }
+								NOT = { check_variable = { pww_dtest_hg_c = GER } }
+							}
+							add_to_temp_array = { pww_dtest_hg_cont = pww_dtest_hg_c }
+							var:pww_dtest_hg_c = {
+								add_to_temp_array = { pww_dtest_hg_contv = pww_desp_aluminium }
+								set_variable = { pww_desp_aluminium = 80 }
+							}
+						}
+					}
+					set_temp_variable = { pww_dtest_hg_civ = 3 }
+					pww_dtest_hg_m_case = yes
+					set_temp_variable = { pww_dtest_hg_m2_scar = pww_dtest_hg_m_scar }
+					set_temp_variable = { pww_dtest_hg_m2_ok = pww_dtest_hg_m_ok }
+					set_temp_variable = { pww_dtest_hg_m2_n = pww_dtest_hg_n }
+					set_temp_variable = { pww_dtest_hg_m2_line = pww_dtest_hg_m_line }
+					set_temp_variable = { pww_dtest_hg_m2_st = pww_dtest_hg_m_st }
+					set_temp_variable = { pww_dtest_hg_civ = 2 }
+					pww_dtest_hg_m_case = yes
+					set_temp_variable = { pww_dtest_hg_m2b_ok = pww_dtest_hg_m_ok }
+					for_each_loop = {
+						array = pww_dtest_hg_cont
+						value = pww_dtest_hg_c
+						index = pww_dtest_hg_ci
+						var:pww_dtest_hg_c = { set_variable = { pww_desp_aluminium = pww_dtest_hg_contv^pww_dtest_hg_ci } }
+					}
+					# M3: every unit already sold, not contested: a routine sale
+					set_temp_variable = { pww_dtest_hg_civ = 3 }
+					pww_dtest_hg_m_case = yes
+					set_temp_variable = { pww_dtest_hg_m3_scar = pww_dtest_hg_m_scar }
+					set_temp_variable = { pww_dtest_hg_m3_ok = pww_dtest_hg_m_ok }
+					set_temp_variable = { pww_dtest_hg_m3_n = pww_dtest_hg_n }
+					set_temp_variable = { pww_dtest_hg_uns = -1 }
+					pww_dtest_hg_market = yes
+					log = "PWW_RESULT diplo_haggle.M_values INFO contested by [?pww_dtest_hg_cont^num|0] traders; own use: scarcity [?pww_dtest_hg_m1_scar|2] at market accepts [?pww_dtest_hg_m1_ok|0] ([?pww_dtest_hg_m1_n|0] of 24) line [?pww_dtest_hg_m1_line|0] status [?pww_dtest_hg_m1_st|0], below accepts [?pww_dtest_hg_m1b_ok|0]; contested: scarcity [?pww_dtest_hg_m2_scar|2] at market accepts [?pww_dtest_hg_m2_ok|0] ([?pww_dtest_hg_m2_n|0] of 24) line [?pww_dtest_hg_m2_line|0] status [?pww_dtest_hg_m2_st|0], below accepts [?pww_dtest_hg_m2b_ok|0]; sold, uncontested: scarcity [?pww_dtest_hg_m3_scar|2] at market accepts [?pww_dtest_hg_m3_ok|0] ([?pww_dtest_hg_m3_n|0] of 24)"
+					if = {
+						limit = {
+							check_variable = { pww_dtest_hg_cont^num = 4 }
+							check_variable = { pww_dtest_hg_m1_scar > 0.99 }
+							check_variable = { pww_dtest_hg_m1_ok = 0 }
+							check_variable = { pww_dtest_hg_m1b_ok = 0 }
+							check_variable = { pww_dtest_hg_m1_n < 7 }
+							check_variable = { pww_dtest_hg_m1_line > 0 }
+							check_variable = { pww_dtest_hg_m1_st = 0 }
+							check_variable = { pww_dtest_hg_m2_scar > 0.99 }
+							check_variable = { pww_dtest_hg_m2_ok = 0 }
+							check_variable = { pww_dtest_hg_m2b_ok = 0 }
+							check_variable = { pww_dtest_hg_m2_n < 7 }
+							check_variable = { pww_dtest_hg_m2_line > 0 }
+							check_variable = { pww_dtest_hg_m2_st = 0 }
+							check_variable = { pww_dtest_hg_m3_scar < 0.5 }
+							check_variable = { pww_dtest_hg_m3_ok = 1 }
+						}
+						log = "PWW_RESULT diplo_haggle.M_scarcity PASS selling out of its own use and selling contested aluminium, Italy counters at market and below (scarcity 1, talks open); the same at-market sale, uncontested, signs; see M_values"
+					}
+					else = {
+						log = "PWW_RESULT diplo_haggle.M_scarcity FAIL see M_values"
+					}
+
+					# --- N: a factory is worth more to a small economy -------
+					MAL = { set_temp_variable = { pww_dtest_hg_tgt = THIS } }
+					set_temp_variable = { pww_dtest_hg_res = 2 }
+					set_temp_variable = { pww_dtest_hg_units = 8 }
+					set_temp_variable = { pww_dtest_hg_civ = 1 }
+					set_temp_variable = { pww_dtest_hg_bind = 1 }
+					pww_dtest_hg_draft_civ = yes
+					set_temp_variable = { pww_dtest_hg_n_mal = pww_do_ap_civ }
+					set_temp_variable = { pww_dtest_hg_n_malp = pww_dob_p^0 }
+					USA = { set_temp_variable = { pww_dtest_hg_tgt = THIS } }
+					set_temp_variable = { pww_dtest_hg_res = 0 }
+					pww_dtest_hg_draft_civ = yes
+					set_temp_variable = { pww_dtest_hg_n_usa = pww_do_ap_civ }
+					set_temp_variable = { pww_dtest_hg_n_usap = pww_dob_p^0 }
+					MAL = { set_temp_variable = { pww_dtest_hg_n_malc = num_of_civilian_factories } }
+					USA = { set_temp_variable = { pww_dtest_hg_n_usac = num_of_civilian_factories } }
+					set_temp_variable = { pww_dtest_hg_n_r = pww_dtest_hg_n_usap }
+					multiply_temp_variable = { pww_dtest_hg_n_r = 2 }
+					if = {
+						limit = {
+							check_variable = { pww_dtest_hg_n_mal > 1.79 }
+							check_variable = { pww_dtest_hg_n_usa < 0.81 }
+							check_variable = { pww_dtest_hg_n_malp > pww_dtest_hg_n_r }
+						}
+						log = "PWW_RESULT diplo_haggle.N_factory_value PASS one civilian factory: worth [?pww_dtest_hg_n_mal|2] to Malaya ([?pww_dtest_hg_n_malc|0] factories), [?pww_dtest_hg_n_usa|2] to the United States ([?pww_dtest_hg_n_usac|0]); row appetite [?pww_dtest_hg_n_malp|2] vs [?pww_dtest_hg_n_usap|2]"
+					}
+					else = {
+						log = "PWW_RESULT diplo_haggle.N_factory_value FAIL Malaya [?pww_dtest_hg_n_mal|2] (row [?pww_dtest_hg_n_malp|2], [?pww_dtest_hg_n_malc|0] factories) United States [?pww_dtest_hg_n_usa|2] (row [?pww_dtest_hg_n_usap|2], [?pww_dtest_hg_n_usac|0])"
 					}
 
 					# --- F: a bundle reaches the ledger as linked agreements --

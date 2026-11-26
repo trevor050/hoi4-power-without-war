@@ -1,0 +1,9 @@
+﻿l_english:
+ pww_stock_flows: "Strategic Reserves"
+ pww_stock_flows_desc: "Spare resources moving into storage, and stored resources covering shortages."
+ pww_stock_category: "Strategic Reserves"
+ pww_stock_category_desc: "Resources we cannot sell go into storage on their own, and storage covers shortages on its own. Stored stock slowly shrinks (about 2% a month). Depots let us store more.\n\nDepots built: [?ROOT.pww_stock_depots|0] of [?global.pww_stock_c_depot_max|0]\nAluminium: [?ROOT.pww_stock_aluminium|0] in store (~[?ROOT.pww_stock_days_aluminium|0] days of use), [?ROOT.pww_stock_fill_aluminium|0]% full\nRubber: [?ROOT.pww_stock_rubber|0] in store (~[?ROOT.pww_stock_days_rubber|0] days of use), [?ROOT.pww_stock_fill_rubber|0]% full\nTungsten: [?ROOT.pww_stock_tungsten|0] in store (~[?ROOT.pww_stock_days_tungsten|0] days of use), [?ROOT.pww_stock_fill_tungsten|0]% full\nSteel: [?ROOT.pww_stock_steel|0] in store (~[?ROOT.pww_stock_days_steel|0] days of use), [?ROOT.pww_stock_fill_steel|0]% full\nChromium: [?ROOT.pww_stock_chromium|0] in store (~[?ROOT.pww_stock_days_chromium|0] days of use), [?ROOT.pww_stock_fill_chromium|0]% full\nCoal: [?ROOT.pww_stock_coal|0] in store (~[?ROOT.pww_stock_days_coal|0] days of use), [?ROOT.pww_stock_fill_coal|0]% full"
+ pww_stock_build_depot: "Build Strategic Depots"
+ pww_stock_build_depot_desc: "Put civilian factories to work on warehouses and rail sidings. When the depots are finished, every resource reserve can hold more and release it faster in a shortage."
+ pww_stock_depot_done_tt: "When finished: every resource reserve can hold §Gmore§! and release it faster."
+ pww_stock_depot_max_tt: "Fewer than [?global.pww_stock_c_depot_max|0] depots built"

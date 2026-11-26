@@ -1,0 +1,26 @@
+###############################################################################
+# Power Without War: producer cartels dynamic modifier
+#   pww_cartel_hold_<res>   units/day a member withholds under its quota
+#                           (fallback when storage cannot take it)
+#   pww_cartel_dump_<res>   units/day an ex-member dumps from its withheld
+#                           pool during a price war
+# Written by pww_cartel_write_res (pww_cartel_core.txt). Oil is not covered.
+###############################################################################
+
+pww_cartel_flows = {
+	enable = { always = yes }
+	icon = GFX_idea_export_focus
+
+	country_resource_cost_aluminium = pww_cartel_hold_aluminium
+	country_resource_cost_rubber = pww_cartel_hold_rubber
+	country_resource_cost_tungsten = pww_cartel_hold_tungsten
+	country_resource_cost_steel = pww_cartel_hold_steel
+	country_resource_cost_chromium = pww_cartel_hold_chromium
+	country_resource_cost_coal = pww_cartel_hold_coal
+	country_resource_aluminium = pww_cartel_dump_aluminium
+	country_resource_rubber = pww_cartel_dump_rubber
+	country_resource_tungsten = pww_cartel_dump_tungsten
+	country_resource_steel = pww_cartel_dump_steel
+	country_resource_chromium = pww_cartel_dump_chromium
+	country_resource_coal = pww_cartel_dump_coal
+}

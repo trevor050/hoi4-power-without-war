@@ -1,0 +1,8 @@
+# Power Without War: stockpiles decision category (strategic reserves).
+pww_stock_category = {
+	icon = generic_economy
+	priority = 50
+	visible = {
+		has_global_flag = pww_stock_loaded
+	}
+}

@@ -1,0 +1,70 @@
+###############################################################################
+# Power Without War: producer cartels, triggers
+#
+# Public (country scope; for diplomacy, UI and decisions):
+#   pww_cartel_member_<res>     a member of the live cartel for that
+#                               resource (status 1; quota applies once the
+#                               cartel is active)
+#   pww_cartel_pricewar_<res>   an ex-member in the price war after a
+#                               collapse (180 days)
+# Internal (temp pww_kx_res = resource index 1..6):
+#   pww_cartel_is_member_res, pww_cartel_has_deficit_res,
+#   pww_cartel_is_flooding_res, pww_cartel_is_glut_res
+###############################################################################
+
+pww_cartel_member_aluminium = { has_country_flag = pww_cartel_mem_aluminium }
+pww_cartel_member_rubber = { has_country_flag = pww_cartel_mem_rubber }
+pww_cartel_member_tungsten = { has_country_flag = pww_cartel_mem_tungsten }
+pww_cartel_member_steel = { has_country_flag = pww_cartel_mem_steel }
+pww_cartel_member_chromium = { has_country_flag = pww_cartel_mem_chromium }
+pww_cartel_member_coal = { has_country_flag = pww_cartel_mem_coal }
+pww_cartel_pricewar_aluminium = { has_country_flag = pww_cartel_pricewar_aluminium }
+pww_cartel_pricewar_rubber = { has_country_flag = pww_cartel_pricewar_rubber }
+pww_cartel_pricewar_tungsten = { has_country_flag = pww_cartel_pricewar_tungsten }
+pww_cartel_pricewar_steel = { has_country_flag = pww_cartel_pricewar_steel }
+pww_cartel_pricewar_chromium = { has_country_flag = pww_cartel_pricewar_chromium }
+pww_cartel_pricewar_coal = { has_country_flag = pww_cartel_pricewar_coal }
+
+pww_cartel_is_member_res = {
+	OR = {
+		AND = { check_variable = { pww_kx_res = 1 } has_country_flag = pww_cartel_mem_aluminium }
+		AND = { check_variable = { pww_kx_res = 2 } has_country_flag = pww_cartel_mem_rubber }
+		AND = { check_variable = { pww_kx_res = 3 } has_country_flag = pww_cartel_mem_tungsten }
+		AND = { check_variable = { pww_kx_res = 4 } has_country_flag = pww_cartel_mem_steel }
+		AND = { check_variable = { pww_kx_res = 5 } has_country_flag = pww_cartel_mem_chromium }
+		AND = { check_variable = { pww_kx_res = 6 } has_country_flag = pww_cartel_mem_coal }
+	}
+}
+
+pww_cartel_is_flooding_res = {
+	OR = {
+		AND = { check_variable = { pww_kx_res = 1 } has_country_flag = pww_cartel_flooding_aluminium }
+		AND = { check_variable = { pww_kx_res = 2 } has_country_flag = pww_cartel_flooding_rubber }
+		AND = { check_variable = { pww_kx_res = 3 } has_country_flag = pww_cartel_flooding_tungsten }
+		AND = { check_variable = { pww_kx_res = 4 } has_country_flag = pww_cartel_flooding_steel }
+		AND = { check_variable = { pww_kx_res = 5 } has_country_flag = pww_cartel_flooding_chromium }
+		AND = { check_variable = { pww_kx_res = 6 } has_country_flag = pww_cartel_flooding_coal }
+	}
+}
+
+pww_cartel_is_glut_res = {
+	OR = {
+		AND = { check_variable = { pww_kx_res = 1 } has_country_flag = pww_cartel_glut_aluminium }
+		AND = { check_variable = { pww_kx_res = 2 } has_country_flag = pww_cartel_glut_rubber }
+		AND = { check_variable = { pww_kx_res = 3 } has_country_flag = pww_cartel_glut_tungsten }
+		AND = { check_variable = { pww_kx_res = 4 } has_country_flag = pww_cartel_glut_steel }
+		AND = { check_variable = { pww_kx_res = 5 } has_country_flag = pww_cartel_glut_chromium }
+		AND = { check_variable = { pww_kx_res = 6 } has_country_flag = pww_cartel_glut_coal }
+	}
+}
+
+pww_cartel_has_deficit_res = {
+	OR = {
+		AND = { check_variable = { pww_kx_res = 1 } pww_core_has_deficit_aluminium = yes }
+		AND = { check_variable = { pww_kx_res = 2 } pww_core_has_deficit_rubber = yes }
+		AND = { check_variable = { pww_kx_res = 3 } pww_core_has_deficit_tungsten = yes }
+		AND = { check_variable = { pww_kx_res = 4 } pww_core_has_deficit_steel = yes }
+		AND = { check_variable = { pww_kx_res = 5 } pww_core_has_deficit_chromium = yes }
+		AND = { check_variable = { pww_kx_res = 6 } pww_core_has_deficit_coal = yes }
+	}
+}

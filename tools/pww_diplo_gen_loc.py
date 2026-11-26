@@ -129,6 +129,7 @@ ui = {
     "pww_diplo_acc_relations": "Relations",
     "pww_diplo_acc_patron": "A patron stands behind them",
     "pww_diplo_acc_reserve": "Their own asking price",
+    "pww_diplo_acc_fair": "A fair price for what they can spare",
     "pww_diplo_acc_repeat": "Nothing has changed since the last draft",
     "pww_diplo_acc_unworkable": "The terms cannot be carried out",
     "pww_diplo_acc_pressure": "How hard they are pressed",

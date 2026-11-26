@@ -1,0 +1,26 @@
+# Stockpiles test: fill, decay and reserve value (run as POR, default).
+#   fill       British Malaya (MAL) tungsten (no cartel quota at start; the
+#              cartel lane's 1934 rubber agreement quotas MAL rubber from
+#              day 1, so rubber is only logged, showing storage taking the
+#              quota's request through the cost modifier). Every 5 days to
+#              day 61: resource@tungsten stays >= 0, output is not reduced
+#              and no storage cost applies (the fill stores unused leftover),
+#              exports never fall below the day-1 figure by more than 2, the
+#              stock grows past 100.
+#   usa_fill   USA steel: its free-trade export pool is fully sold; it still
+#              stores its leftover and keeps its exports.
+#   decay      Iceland (ICE) neither makes nor uses tungsten: 1000 units set
+#              on day 1 lose about 2% a month and nothing else (day 61).
+#   value      day 62/64 on POR: pww_stock_value_steel falls with fill (0,
+#              50, 100%) and rises with world tension (+60 named threat).
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = POR }
+				add_to_variable = { global.pww_stest_day = 1 }
+				pww_stest_fill_day = yes
+			}
+		}
+	}
+}
