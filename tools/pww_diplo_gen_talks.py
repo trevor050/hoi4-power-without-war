@@ -452,8 +452,8 @@ def menu_loc():
         dt(f"pww_dt_sl_mh_{j}", hint, "pww_dt_empty")
 
 
-def terms(b, recv):
-    y = TERMS_Y
+def terms(b, recv, up=0, sfx="", tier=None):
+    y = TERMS_Y - up
     if recv:
         b.tb("terms", GL, y + 2, "[pww_dt_sl_rterms]", CW, fmt="centre")
         cases = []
@@ -463,31 +463,31 @@ def terms(b, recv):
                               loc(f"pww_dt_rterms_{i}_{bd}", f"§gLength§! {w}   §gBinding§! {bt}")))
         dt("pww_dt_sl_rterms", cases, "pww_dt_empty")
         return
-    vis = MENU_CLOSED
-    b.tb("len_l", GL, y + 3, loc("pww_dt_len", "§gLength§!"), 60, vis=vis)
+    vis = MENU_CLOSED + (" " + tier if tier else "")
+    b.tb("len_l" + sfx, GL, y + 3, loc("pww_dt_len", "§gLength§!"), 60, vis=vis)
     bw = (CW - 62) // 4 - 4
     for i, w in enumerate(LEN):
         x = GL + 62 + i * (bw + 4)
         on = R(cv("pww_do_len", "=", i))
         off = R(f"NOT = {{ {cv('pww_do_len', '=', i)} }}")
         loc(f"pww_dt_len_{i}", w)
-        b.btn(f"len{i}_on", x, y, "GFX_pww_dt_seg_on", w=bw, h=22, text=loc(f"pww_dt_len_on_{i}", f"§Y{w}§!"), vis=vis + " " + on)
-        b.btn(f"len{i}_off", x, y, "GFX_pww_dt_seg", w=bw, h=22, text=f"pww_dt_len_{i}", vis=vis + " " + off,
+        b.btn(f"len{i}_on{sfx}", x, y, "GFX_pww_dt_seg_on", w=bw, h=22, text=loc(f"pww_dt_len_on_{i}", f"§Y{w}§!"), vis=vis + " " + on)
+        b.btn(f"len{i}_off{sfx}", x, y, "GFX_pww_dt_seg", w=bw, h=22, text=f"pww_dt_len_{i}", vis=vis + " " + off,
               click=root_do(f"set_variable = {{ pww_do_len = {i} }}", "pww_diplo_offer_changed = yes"))
     y2 = y + 26
-    b.tb("bind_l", GL, y2 + 3, loc("pww_dt_bind", "§gBinding§!"), 60, vis=vis)
+    b.tb("bind_l" + sfx, GL, y2 + 3, loc("pww_dt_bind", "§gBinding§!"), 60, vis=vis)
     half = (CW - 62) // 2 - 2
     widths = [(GL + 62, half, "Either side may end it"), (GL + 62 + half + 4, CW - 62 - half - 4, "Fixed contract")]
     for i, (x, w, t) in enumerate(widths):
         on = R(cv("pww_do_bind", "=", i))
         off = R(f"NOT = {{ {cv('pww_do_bind', '=', i)} }}")
         loc(f"pww_dt_bind_{i}", t)
-        b.btn(f"bind{i}_on", x, y2, "GFX_pww_dt_seg_on", w=w, h=22, text=loc(f"pww_dt_bind_on_{i}", f"§Y{t}§!"), vis=vis + " " + on)
-        b.btn(f"bind{i}_off", x, y2, "GFX_pww_dt_seg", w=w, h=22, text=f"pww_dt_bind_{i}", vis=vis + " " + off,
+        b.btn(f"bind{i}_on{sfx}", x, y2, "GFX_pww_dt_seg_on", w=w, h=22, text=loc(f"pww_dt_bind_on_{i}", f"§Y{t}§!"), vis=vis + " " + on)
+        b.btn(f"bind{i}_off{sfx}", x, y2, "GFX_pww_dt_seg", w=w, h=22, text=f"pww_dt_bind_{i}", vis=vis + " " + off,
               click=root_do(f"set_variable = {{ pww_do_bind = {i} }}", "pww_diplo_offer_changed = yes"),
               enabled=R(cv("pww_do_once", "=", 0)) if i == 0 else None,
               tooltip="pww_dt_tt_fixed" if i == 0 else None)
-    b.tb("note", GL, y2 + 24, loc("pww_dt_note_once", "§gShipments, licences and mine leases need a fixed contract.§!"),
+    b.tb("note" + sfx, GL, y2 + 24, loc("pww_dt_note_once", "§gShipments, licences and mine leases need a fixed contract.§!"),
          CW, vis=vis + " " + R(cv("pww_do_once", "=", 1)))
 
 
@@ -546,12 +546,18 @@ def summary_loc():
            63: "Lease Mines needs a mine lease on their side."}
     dt("pww_dt_sl_invalid", [(R(cv("pww_do_valid", "=", c)), loc(f"pww_dt_invalid_{c}", f"§R{t}§!")) for c, t in inv.items()],
        "pww_dt_empty")
-    # Party header surplus line
+    # Party header surplus line: the counterparty's spare of the first resource (or mine lease)
+    # they provide on the table. send: their side of the bundle (slots 4..7), receive: the
+    # sender's side (slots 0..3). Blank while nothing like that is on the table.
     for recv in (0, 1):
         g = "pww_dmg0" if recv else "pww_dmg1"
-        cases = [(R(cv(f"{g}_top", "=", r)), loc(f"pww_dt_top_{recv}_{r}", f"§g{RES[r]} surplus: {num(g + '_topa')}§!"))
-                 for r in range(7)]
-        dt(f"pww_dt_sl_top_{recv}", cases, loc("pww_dt_top_none", "§gNo resource surplus§!"))
+        base = 0 if recv else 4
+        cases = []
+        for n in range(base, base + 4):
+            for r in range(7):
+                cond = f"OR = {{ {cv(f'pww_dbk_{n}', '=', 3)} {cv(f'pww_dbk_{n}', '=', 6)} }} {cv(f'pww_dbx_{n}', '=', r)}"
+                cases.append((R(cond), loc(f"pww_dt_top_{recv}_{n - base}_{r}", f"§g{RES[r]} surplus: {num(f'{g}_r{r}_sp')}§!")))
+        dt(f"pww_dt_sl_top_{recv}", cases, "pww_dt_empty")
 
 
 def envoy_loc():
@@ -593,15 +599,23 @@ def build_send(effects, triggers):
                   vis=MENU_CLOSED + " " + R(cv(f"pww_do_n{s}", "=", c)),
                   click=root_do(f"set_variable = {{ pww_dbm_side = {s} }}", "set_variable = { pww_dbm_page = 0 }",
                                 "pww_diplo_bundle_mirror = yes", "add_to_variable = { pww_diplo_dirty = 1 }"))
-    terms(b, False)
+    # The block under the item rows moves up when the taller column leaves rows free (the
+    # add button takes one row, so a column of n items needs n + 1 rows). The space freed
+    # ends up above the vanilla button bar instead of between the rows and the terms.
+    n0, n1 = "pww_do_n0", "pww_do_n1"
+    tiers = [("", 0, R(f"OR = {{ {cv(n0, '>', 2)} {cv(n1, '>', 2)} }}")),
+             ("_u1", ROW_H, R(f"{cv(n0, '<', 3)} {cv(n1, '<', 3)} OR = {{ {cv(n0, '>', 1)} {cv(n1, '>', 1)} }}")),
+             ("_u2", 2 * ROW_H, R(f"{cv(n0, '<', 2)} {cv(n1, '<', 2)}"))]
+    for sfx, up, tier in tiers:
+        terms(b, False, up, sfx, tier)
+        divider(b, "div1" + sfx, 306 - up, tier)
+        b.tb("sum" + sfx, GL, 314 - up, "pww_dt_summary_0", CW, h=52, vis=tier)
+        b.tb("mkt" + sfx, GL, 366 - up, "pww_dt_market_0", CW, h=34, vis=tier + " " + R(cv("pww_do_valid", "=", 0)))
+        b.tb("inv" + sfx, GL, 366 - up, "[pww_dt_sl_invalid]", CW, h=34, vis=tier + " " + R(f"NOT = {{ {cv('pww_do_valid', '=', 0)} }}"))
+        divider(b, "div2" + sfx, 400 - up, tier)
+        b.tb("envoy" + sfx, GL, 408 - up, "pww_dt_envoy", CW, h=36, vis=tier)
+        b.tb("chips" + sfx, GL, 446 - up, "pww_dt_chips", CW, h=18, vis=tier)
     menu(b)
-    divider(b, "div1", 306)
-    b.tb("sum", GL, 314, "pww_dt_summary_0", CW, h=52)
-    b.tb("mkt", GL, 366, "pww_dt_market_0", CW, h=34, vis=R(cv("pww_do_valid", "=", 0)))
-    b.tb("inv", GL, 366, "[pww_dt_sl_invalid]", CW, h=34, vis=R(f"NOT = {{ {cv('pww_do_valid', '=', 0)} }}"))
-    divider(b, "div2", 400)
-    b.tb("envoy", GL, 408, "pww_dt_envoy", CW, h=36)
-    b.tb("chips", GL, 446, "pww_dt_chips", CW, h=18)
     # Centred above the gap between the vanilla Cancel and Send buttons.
     b.tb("round", 200, 468, "[pww_dt_sl_round]", 184, fmt="centre")
     effects[b.g] = b.eff

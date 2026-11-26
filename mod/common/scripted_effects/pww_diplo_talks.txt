@@ -412,18 +412,20 @@ pww_diplo_refresh_display = {
 		set_variable = { pww_dd_line = global.pww_dt_line^pww_drd_t }
 		set_variable = { pww_dd_round = global.pww_dt_round^pww_drd_t }
 		set_variable = { pww_dd_floor = global.pww_dt_floor^pww_drd_t }
-		# Patience in words: 0 nearly gone, 1 running thin, 2 steady, 3 patient
+		# Patience in words: 0 nearly gone, 1 running thin, 2 steady, 3 patient.
+		# Bands follow the reply thresholds (< 35 turns curt, < 15 ends talks), so a fresh
+		# talk (seeded 45..80, shifted by relations) reads steady unless the party is hostile.
 		set_temp_variable = { pww_drd_p = global.pww_dt_patience^pww_drd_t }
 		if = {
-			limit = { check_variable = { pww_drd_p > 69 } }
+			limit = { check_variable = { pww_drd_p > 64 } }
 			set_variable = { pww_dd_pat = 3 }
 		}
 		else_if = {
-			limit = { check_variable = { pww_drd_p > 44 } }
+			limit = { check_variable = { pww_drd_p > 34 } }
 			set_variable = { pww_dd_pat = 2 }
 		}
 		else_if = {
-			limit = { check_variable = { pww_drd_p > 24 } }
+			limit = { check_variable = { pww_drd_p > 14 } }
 			set_variable = { pww_dd_pat = 1 }
 		}
 		if = {

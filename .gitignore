@@ -2,3 +2,5 @@
 *.log
 tests/engine/**/userdir/
 .hoi4-userdir/
+__pycache__/
+*.pyc
