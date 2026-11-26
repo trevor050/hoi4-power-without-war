@@ -1,0 +1,6 @@
+defined_text = {
+	name = pww_uipr2_sl_at
+	text = { trigger = { check_variable = { pww_uipr2_v@ROOT = 5 } } localization_key = pww_uipr2_at5 }
+	text = { trigger = { has_variable = pww_uipr2_v@ROOT } localization_key = pww_uipr2_athas }
+	text = { localization_key = pww_uipr2_atno }
+}

@@ -1,0 +1,22 @@
+scripted_gui = {
+	pww_uipr2_gui = {
+		context_type = player_context
+		window_name = "pww_uipr2_win"
+		visible = { always = yes }
+		dirty = pww_uipr2_dirty
+		properties = {
+			pww_uipr2_sec = { y = pww_uipr2_y }
+			pww_uipr2_ty = { y = ROOT.pww_uipr2_y }
+			pww_uipr2_sec2 = { x = ROOT.pww_uipr2_y y = ROOT.pww_uipr2_y }
+			pww_uipr2_tab = { frame = ROOT.pww_uipr2_fr }
+			pww_uipr2_fill = { x = ROOT.pww_uipr2_fx }
+		}
+	}
+	pww_uipr2_dgui = {
+		context_type = diplomacy_target_context
+		window_name = "pww_uipr2_dwin"
+		parent_window_token = selected_country_view_diplomacy
+		visible = { always = yes }
+		dirty = pww_uipr2_dirty
+	}
+}

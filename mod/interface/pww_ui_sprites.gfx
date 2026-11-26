@@ -11,4 +11,18 @@ spriteTypes = {
 		name = "GFX_pww_ui_divider"
 		texturefile = "gfx/interface/divider.dds"
 	}
+	corneredTileSpriteType = {
+		name = "GFX_pww_ui_bar_bg"
+		size = { x = 100 y = 6 }
+		textureFile = "gfx/interface/construction_progressbar_bg.dds"
+		borderSize = { x = 0 y = 0 }
+		tilingCenter = no
+	}
+	corneredTileSpriteType = {
+		name = "GFX_pww_ui_bar_fill"
+		size = { x = 100 y = 6 }
+		textureFile = "gfx/interface/construction_progressbar.dds"
+		borderSize = { x = 0 y = 0 }
+		tilingCenter = no
+	}
 }

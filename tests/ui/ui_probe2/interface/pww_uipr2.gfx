@@ -1,0 +1,16 @@
+spriteTypes = {
+	corneredTileSpriteType = {
+		name = "GFX_pww_uipr2_fill"
+		size = { x = 80 y = 6 }
+		textureFile = "gfx/interface/construction_progressbar.dds"
+		borderSize = { x = 0 y = 0 }
+		tilingCenter = no
+	}
+	corneredTileSpriteType = {
+		name = "GFX_pww_uipr2_barbg"
+		size = { x = 80 y = 6 }
+		textureFile = "gfx/interface/construction_progressbar_bg.dds"
+		borderSize = { x = 0 y = 0 }
+		tilingCenter = no
+	}
+}

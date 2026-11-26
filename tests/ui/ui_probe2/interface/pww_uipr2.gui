@@ -1,0 +1,103 @@
+guiTypes = {
+	containerWindowType = {
+		name = "pww_uipr2_win"
+		position = { x = 100 y = 120 }
+		size = { width = 420 height = 400 }
+		clipping = no
+		background = { name = "bg" quadTextureSprite = "GFX_tiled_window_1b_border" }
+		buttonType = {
+			name = "pww_uipr2_tab"
+			position = { x = 10 y = 10 }
+			quadTextureSprite = "GFX_tab_medium"
+			buttonText = "pww_uipr2_tabtxt"
+			buttonFont = "hoi_16mbs"
+		}
+		containerWindowType = {
+			name = "pww_uipr2_sec"
+			position = { x = 10 y = 60 }
+			size = { width = 400 height = 40 }
+			clipping = no
+			instantTextBoxType = {
+				name = "pww_uipr2_t"
+				position = { x = 0 y = 0 }
+				font = "hoi_16mbs"
+				text = "pww_uipr2_sectxt"
+				maxWidth = 400
+				maxHeight = 20
+				format = left
+				fixedsize = yes
+			}
+		}
+		instantTextBoxType = {
+			name = "pww_uipr2_ty"
+			position = { x = 200 y = 60 }
+			font = "hoi_16mbs"
+			text = "pww_uipr2_tytxt"
+			maxWidth = 200
+			maxHeight = 20
+			format = left
+			fixedsize = yes
+		}
+		containerWindowType = {
+			name = "pww_uipr2_sec2"
+			position = { x = 10 y = 100 }
+			size = { width = 400 height = 40 }
+			clipping = no
+			instantTextBoxType = {
+				name = "pww_uipr2_t3"
+				position = { x = 0 y = 0 }
+				font = "hoi_16mbs"
+				text = "pww_uipr2_sec2txt"
+				maxWidth = 400
+				maxHeight = 20
+				format = left
+				fixedsize = yes
+			}
+		}
+		instantTextBoxType = {
+			name = "pww_uipr2_t2"
+			position = { x = 10 y = 300 }
+			font = "hoi_16mbs"
+			text = "pww_uipr2_flags"
+			maxWidth = 400
+			maxHeight = 20
+			format = left
+			fixedsize = yes
+		}
+		iconType = {
+			name = "pww_uipr2_barbg"
+			position = { x = 10 y = 330 }
+			spriteType = "GFX_pww_uipr2_barbg"
+			alwaystransparent = yes
+		}
+		containerWindowType = {
+			name = "pww_uipr2_clip"
+			position = { x = 10 y = 330 }
+			size = { width = 80 height = 6 }
+			clipping = yes
+			iconType = {
+				name = "pww_uipr2_fill"
+				position = { x = 0 y = 0 }
+				spriteType = "GFX_pww_uipr2_fill"
+				alwaystransparent = yes
+			}
+		}
+	}
+	containerWindowType = {
+		name = "pww_uipr2_dwin"
+		position = { x = 20 y = 360 }
+		size = { width = 360 height = 60 }
+		clipping = no
+		background = { name = "bg" quadTextureSprite = "GFX_tiled_window_1b_border" }
+		instantTextBoxType = {
+			name = "pww_uipr2_d1"
+			position = { x = 16 y = 12 }
+			font = "hoi_16mbs"
+			text = "[pww_uipr2_sl_at]"
+			maxWidth = 328
+			maxHeight = 40
+			format = left
+			fixedsize = yes
+		}
+	}
+}

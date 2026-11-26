@@ -1,0 +1,9 @@
+﻿l_english:
+ pww_uipr2_tabtxt:0 "Tab"
+ pww_uipr2_sectxt:0 "Section moved to y=[?ROOT.pww_uipr2_y]"
+ pww_uipr2_flags:0 "Flags: [?pww_uipr2_c1.GetFlag][?pww_uipr2_c2.GetFlag] end"
+ pww_uipr2_at5:0 "AT ROOT works: 5 [?pww_uipr2_v@ROOT]"
+ pww_uipr2_athas:0 "has but not 5"
+ pww_uipr2_atno:0 "no var@ROOT"
+ pww_uipr2_tytxt:0 "TEXT y moved?"
+ pww_uipr2_sec2txt:0 "SEC2 xy moved?"

@@ -31,9 +31,39 @@ guiTypes = {
 			pdx_tooltip = "pww_ui_desk_close_tt"
 			clicksound = click_close
 		}
+		buttonType = {
+			name = "pww_ui_tab0"
+			position = { x = 20 y = 42 }
+			quadTextureSprite = "GFX_tab_small_116"
+			frame = 1
+			buttonText = "pww_ui_tab_overview"
+			buttonFont = "hoi_16mbs"
+			pdx_tooltip = "pww_ui_tab_overview_tt"
+			clicksound = click_default
+		}
+		buttonType = {
+			name = "pww_ui_tab1"
+			position = { x = 140 y = 42 }
+			quadTextureSprite = "GFX_tab_small_116"
+			frame = 1
+			buttonText = "pww_ui_tab_deals"
+			buttonFont = "hoi_16mbs"
+			pdx_tooltip = "pww_ui_tab_deals_tt"
+			clicksound = click_default
+		}
+		buttonType = {
+			name = "pww_ui_tab2"
+			position = { x = 260 y = 42 }
+			quadTextureSprite = "GFX_tab_small_116"
+			frame = 1
+			buttonText = "pww_ui_tab_reserves"
+			buttonFont = "hoi_16mbs"
+			pdx_tooltip = "pww_ui_tab_reserves_tt"
+			clicksound = click_default
+		}
 		instantTextBoxType = {
 			name = "pww_ui_desk_sit_hdr"
-			position = { x = 20 y = 48 }
+			position = { x = 20 y = 84 }
 			font = "hoi_18mbs"
 			text = "pww_desk_sec_situations"
 			maxWidth = 460
@@ -42,27 +72,16 @@ guiTypes = {
 			fixedsize = yes
 			alwaystransparent = yes
 		}
-		instantTextBoxType = {
-			name = "pww_ui_desk_sit_empty"
-			position = { x = 20 y = 74 }
-			font = "hoi_16mbs"
-			text = "pww_desk_empty_situations"
-			maxWidth = 460
-			maxHeight = 36
-			format = left
-			fixedsize = yes
-			alwaystransparent = yes
-		}
 		buttonType = {
 			name = "pww_ui_ds0_hl"
-			position = { x = 1 y = 74 }
+			position = { x = 1 y = 110 }
 			quadTextureSprite = "GFX_production_line_arrow_right"
 			alwaystransparent = yes
 			scale = 0.55
 		}
 		instantTextBoxType = {
 			name = "pww_ui_ds0_l1"
-			position = { x = 20 y = 73 }
+			position = { x = 20 y = 109 }
 			font = "hoi_16mbs"
 			text = "[pww_ui_sl_s0_head]"
 			maxWidth = 310
@@ -73,7 +92,7 @@ guiTypes = {
 		}
 		instantTextBoxType = {
 			name = "pww_ui_ds0_date"
-			position = { x = 330 y = 73 }
+			position = { x = 330 y = 109 }
 			font = "hoi_16mbs"
 			text = "pww_ui_s0_date"
 			maxWidth = 150
@@ -84,7 +103,7 @@ guiTypes = {
 		}
 		instantTextBoxType = {
 			name = "pww_ui_ds0_l2"
-			position = { x = 20 y = 91 }
+			position = { x = 20 y = 127 }
 			font = "hoi_16mbs"
 			text = "pww_ui_s0_line2"
 			maxWidth = 460
@@ -95,14 +114,14 @@ guiTypes = {
 		}
 		buttonType = {
 			name = "pww_ui_ds1_hl"
-			position = { x = 1 y = 114 }
+			position = { x = 1 y = 148 }
 			quadTextureSprite = "GFX_production_line_arrow_right"
 			alwaystransparent = yes
 			scale = 0.55
 		}
 		instantTextBoxType = {
 			name = "pww_ui_ds1_l1"
-			position = { x = 20 y = 113 }
+			position = { x = 20 y = 147 }
 			font = "hoi_16mbs"
 			text = "[pww_ui_sl_s1_head]"
 			maxWidth = 310
@@ -113,7 +132,7 @@ guiTypes = {
 		}
 		instantTextBoxType = {
 			name = "pww_ui_ds1_date"
-			position = { x = 330 y = 113 }
+			position = { x = 330 y = 147 }
 			font = "hoi_16mbs"
 			text = "pww_ui_s1_date"
 			maxWidth = 150
@@ -124,7 +143,7 @@ guiTypes = {
 		}
 		instantTextBoxType = {
 			name = "pww_ui_ds1_l2"
-			position = { x = 20 y = 131 }
+			position = { x = 20 y = 165 }
 			font = "hoi_16mbs"
 			text = "pww_ui_s1_line2"
 			maxWidth = 460
@@ -135,14 +154,14 @@ guiTypes = {
 		}
 		buttonType = {
 			name = "pww_ui_ds2_hl"
-			position = { x = 1 y = 154 }
+			position = { x = 1 y = 186 }
 			quadTextureSprite = "GFX_production_line_arrow_right"
 			alwaystransparent = yes
 			scale = 0.55
 		}
 		instantTextBoxType = {
 			name = "pww_ui_ds2_l1"
-			position = { x = 20 y = 153 }
+			position = { x = 20 y = 185 }
 			font = "hoi_16mbs"
 			text = "[pww_ui_sl_s2_head]"
 			maxWidth = 310
@@ -153,7 +172,7 @@ guiTypes = {
 		}
 		instantTextBoxType = {
 			name = "pww_ui_ds2_date"
-			position = { x = 330 y = 153 }
+			position = { x = 330 y = 185 }
 			font = "hoi_16mbs"
 			text = "pww_ui_s2_date"
 			maxWidth = 150
@@ -164,7 +183,7 @@ guiTypes = {
 		}
 		instantTextBoxType = {
 			name = "pww_ui_ds2_l2"
-			position = { x = 20 y = 171 }
+			position = { x = 20 y = 203 }
 			font = "hoi_16mbs"
 			text = "pww_ui_s2_line2"
 			maxWidth = 460
@@ -175,14 +194,14 @@ guiTypes = {
 		}
 		buttonType = {
 			name = "pww_ui_ds3_hl"
-			position = { x = 1 y = 194 }
+			position = { x = 1 y = 224 }
 			quadTextureSprite = "GFX_production_line_arrow_right"
 			alwaystransparent = yes
 			scale = 0.55
 		}
 		instantTextBoxType = {
 			name = "pww_ui_ds3_l1"
-			position = { x = 20 y = 193 }
+			position = { x = 20 y = 223 }
 			font = "hoi_16mbs"
 			text = "[pww_ui_sl_s3_head]"
 			maxWidth = 310
@@ -193,7 +212,7 @@ guiTypes = {
 		}
 		instantTextBoxType = {
 			name = "pww_ui_ds3_date"
-			position = { x = 330 y = 193 }
+			position = { x = 330 y = 223 }
 			font = "hoi_16mbs"
 			text = "pww_ui_s3_date"
 			maxWidth = 150
@@ -204,7 +223,7 @@ guiTypes = {
 		}
 		instantTextBoxType = {
 			name = "pww_ui_ds3_l2"
-			position = { x = 20 y = 211 }
+			position = { x = 20 y = 241 }
 			font = "hoi_16mbs"
 			text = "pww_ui_s3_line2"
 			maxWidth = 460
@@ -214,265 +233,156 @@ guiTypes = {
 			pdx_tooltip = "pww_ui_s3_tt"
 		}
 		iconType = {
-			name = "pww_ui_desk_div1"
-			position = { x = 14 y = 236 }
+			name = "pww_ui_desk_div_cart"
+			position = { x = 14 y = 74 }
 			spriteType = "GFX_pww_ui_divider"
 			scale = 0.918
 			alwaystransparent = yes
 		}
 		instantTextBoxType = {
-			name = "pww_ui_desk_led_hdr"
-			position = { x = 20 y = 246 }
+			name = "pww_ui_desk_cart_hdr"
+			position = { x = 20 y = 84 }
 			font = "hoi_18mbs"
-			text = "pww_desk_sec_ledger"
-			maxWidth = 300
+			text = "pww_desk_sec_cartels"
+			maxWidth = 460
 			maxHeight = 20
 			format = left
 			fixedsize = yes
 			alwaystransparent = yes
 		}
-		buttonType = {
-			name = "pww_ui_desk_pg_prev"
-			position = { x = 406 y = 248 }
-			quadTextureSprite = "GFX_pww_diplo_prev"
-			pdx_tooltip = "pww_ui_page_prev_tt"
-		}
-		instantTextBoxType = {
-			name = "pww_ui_desk_pg"
-			position = { x = 424 y = 247 }
-			font = "hoi_16mbs"
-			text = "pww_ui_page"
-			maxWidth = 38
-			maxHeight = 18
-			format = centre
-			fixedsize = yes
-			alwaystransparent = yes
-		}
-		buttonType = {
-			name = "pww_ui_desk_pg_next"
-			position = { x = 464 y = 248 }
-			quadTextureSprite = "GFX_pww_diplo_next"
-			pdx_tooltip = "pww_ui_page_next_tt"
-		}
-		instantTextBoxType = {
-			name = "pww_ui_desk_led_empty"
-			position = { x = 20 y = 274 }
-			font = "hoi_16mbs"
-			text = "pww_desk_empty_ledger"
-			maxWidth = 460
-			maxHeight = 36
-			format = left
-			fixedsize = yes
+		iconType = {
+			name = "pww_ui_dc0_icon"
+			position = { x = 20 y = 108 }
+			spriteType = "GFX_resources_strip"
+			frame = 1
+			scale = 0.6
 			alwaystransparent = yes
 		}
 		instantTextBoxType = {
-			name = "pww_ui_dl0_cp"
-			position = { x = 20 y = 272 }
+			name = "pww_ui_dc0_l1"
+			position = { x = 42 y = 109 }
 			font = "hoi_16mbs"
-			text = "pww_ui_l0_cp"
-			maxWidth = 168
+			text = "pww_ui_c0_l1"
+			maxWidth = 288
 			maxHeight = 18
 			format = left
 			fixedsize = yes
-			pdx_tooltip = "pww_ui_l0_tt"
+			pdx_tooltip = "pww_ui_c0_tt"
 		}
 		instantTextBoxType = {
-			name = "pww_ui_dl0_terms"
-			position = { x = 194 y = 272 }
+			name = "pww_ui_dc0_price"
+			position = { x = 330 y = 109 }
 			font = "hoi_16mbs"
-			text = "[pww_ui_sl_l0_terms]"
-			maxWidth = 212
-			maxHeight = 18
-			format = left
-			fixedsize = yes
-			pdx_tooltip = "pww_ui_l0_tt"
-		}
-		instantTextBoxType = {
-			name = "pww_ui_dl0_st"
-			position = { x = 410 y = 272 }
-			font = "hoi_16mbs"
-			text = "[pww_ui_sl_l0_status]"
-			maxWidth = 70
+			text = "[pww_ui_sl_c0_price]"
+			maxWidth = 150
 			maxHeight = 18
 			format = right
 			fixedsize = yes
-			pdx_tooltip = "pww_ui_l0_tt"
+			pdx_tooltip = "pww_ui_c0_tt"
 		}
 		instantTextBoxType = {
-			name = "pww_ui_dl1_cp"
-			position = { x = 20 y = 294 }
+			name = "pww_ui_dc0_l2"
+			position = { x = 42 y = 127 }
 			font = "hoi_16mbs"
-			text = "pww_ui_l1_cp"
-			maxWidth = 168
+			text = "[pww_ui_sl_c0_l2]"
+			maxWidth = 438
 			maxHeight = 18
 			format = left
 			fixedsize = yes
-			pdx_tooltip = "pww_ui_l1_tt"
-		}
-		instantTextBoxType = {
-			name = "pww_ui_dl1_terms"
-			position = { x = 194 y = 294 }
-			font = "hoi_16mbs"
-			text = "[pww_ui_sl_l1_terms]"
-			maxWidth = 212
-			maxHeight = 18
-			format = left
-			fixedsize = yes
-			pdx_tooltip = "pww_ui_l1_tt"
-		}
-		instantTextBoxType = {
-			name = "pww_ui_dl1_st"
-			position = { x = 410 y = 294 }
-			font = "hoi_16mbs"
-			text = "[pww_ui_sl_l1_status]"
-			maxWidth = 70
-			maxHeight = 18
-			format = right
-			fixedsize = yes
-			pdx_tooltip = "pww_ui_l1_tt"
-		}
-		instantTextBoxType = {
-			name = "pww_ui_dl2_cp"
-			position = { x = 20 y = 316 }
-			font = "hoi_16mbs"
-			text = "pww_ui_l2_cp"
-			maxWidth = 168
-			maxHeight = 18
-			format = left
-			fixedsize = yes
-			pdx_tooltip = "pww_ui_l2_tt"
-		}
-		instantTextBoxType = {
-			name = "pww_ui_dl2_terms"
-			position = { x = 194 y = 316 }
-			font = "hoi_16mbs"
-			text = "[pww_ui_sl_l2_terms]"
-			maxWidth = 212
-			maxHeight = 18
-			format = left
-			fixedsize = yes
-			pdx_tooltip = "pww_ui_l2_tt"
-		}
-		instantTextBoxType = {
-			name = "pww_ui_dl2_st"
-			position = { x = 410 y = 316 }
-			font = "hoi_16mbs"
-			text = "[pww_ui_sl_l2_status]"
-			maxWidth = 70
-			maxHeight = 18
-			format = right
-			fixedsize = yes
-			pdx_tooltip = "pww_ui_l2_tt"
-		}
-		instantTextBoxType = {
-			name = "pww_ui_dl3_cp"
-			position = { x = 20 y = 338 }
-			font = "hoi_16mbs"
-			text = "pww_ui_l3_cp"
-			maxWidth = 168
-			maxHeight = 18
-			format = left
-			fixedsize = yes
-			pdx_tooltip = "pww_ui_l3_tt"
-		}
-		instantTextBoxType = {
-			name = "pww_ui_dl3_terms"
-			position = { x = 194 y = 338 }
-			font = "hoi_16mbs"
-			text = "[pww_ui_sl_l3_terms]"
-			maxWidth = 212
-			maxHeight = 18
-			format = left
-			fixedsize = yes
-			pdx_tooltip = "pww_ui_l3_tt"
-		}
-		instantTextBoxType = {
-			name = "pww_ui_dl3_st"
-			position = { x = 410 y = 338 }
-			font = "hoi_16mbs"
-			text = "[pww_ui_sl_l3_status]"
-			maxWidth = 70
-			maxHeight = 18
-			format = right
-			fixedsize = yes
-			pdx_tooltip = "pww_ui_l3_tt"
-		}
-		instantTextBoxType = {
-			name = "pww_ui_dl4_cp"
-			position = { x = 20 y = 360 }
-			font = "hoi_16mbs"
-			text = "pww_ui_l4_cp"
-			maxWidth = 168
-			maxHeight = 18
-			format = left
-			fixedsize = yes
-			pdx_tooltip = "pww_ui_l4_tt"
-		}
-		instantTextBoxType = {
-			name = "pww_ui_dl4_terms"
-			position = { x = 194 y = 360 }
-			font = "hoi_16mbs"
-			text = "[pww_ui_sl_l4_terms]"
-			maxWidth = 212
-			maxHeight = 18
-			format = left
-			fixedsize = yes
-			pdx_tooltip = "pww_ui_l4_tt"
-		}
-		instantTextBoxType = {
-			name = "pww_ui_dl4_st"
-			position = { x = 410 y = 360 }
-			font = "hoi_16mbs"
-			text = "[pww_ui_sl_l4_status]"
-			maxWidth = 70
-			maxHeight = 18
-			format = right
-			fixedsize = yes
-			pdx_tooltip = "pww_ui_l4_tt"
-		}
-		instantTextBoxType = {
-			name = "pww_ui_dl5_cp"
-			position = { x = 20 y = 382 }
-			font = "hoi_16mbs"
-			text = "pww_ui_l5_cp"
-			maxWidth = 168
-			maxHeight = 18
-			format = left
-			fixedsize = yes
-			pdx_tooltip = "pww_ui_l5_tt"
-		}
-		instantTextBoxType = {
-			name = "pww_ui_dl5_terms"
-			position = { x = 194 y = 382 }
-			font = "hoi_16mbs"
-			text = "[pww_ui_sl_l5_terms]"
-			maxWidth = 212
-			maxHeight = 18
-			format = left
-			fixedsize = yes
-			pdx_tooltip = "pww_ui_l5_tt"
-		}
-		instantTextBoxType = {
-			name = "pww_ui_dl5_st"
-			position = { x = 410 y = 382 }
-			font = "hoi_16mbs"
-			text = "[pww_ui_sl_l5_status]"
-			maxWidth = 70
-			maxHeight = 18
-			format = right
-			fixedsize = yes
-			pdx_tooltip = "pww_ui_l5_tt"
+			pdx_tooltip = "pww_ui_c0_tt"
 		}
 		iconType = {
-			name = "pww_ui_desk_div2"
-			position = { x = 14 y = 408 }
+			name = "pww_ui_dc1_icon"
+			position = { x = 20 y = 146 }
+			spriteType = "GFX_resources_strip"
+			frame = 1
+			scale = 0.6
+			alwaystransparent = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dc1_l1"
+			position = { x = 42 y = 147 }
+			font = "hoi_16mbs"
+			text = "pww_ui_c1_l1"
+			maxWidth = 288
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_c1_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dc1_price"
+			position = { x = 330 y = 147 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_c1_price]"
+			maxWidth = 150
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_c1_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dc1_l2"
+			position = { x = 42 y = 165 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_c1_l2]"
+			maxWidth = 438
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_c1_tt"
+		}
+		iconType = {
+			name = "pww_ui_dc2_icon"
+			position = { x = 20 y = 184 }
+			spriteType = "GFX_resources_strip"
+			frame = 1
+			scale = 0.6
+			alwaystransparent = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dc2_l1"
+			position = { x = 42 y = 185 }
+			font = "hoi_16mbs"
+			text = "pww_ui_c2_l1"
+			maxWidth = 288
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_c2_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dc2_price"
+			position = { x = 330 y = 185 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_c2_price]"
+			maxWidth = 150
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_c2_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dc2_l2"
+			position = { x = 42 y = 203 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_c2_l2]"
+			maxWidth = 438
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_c2_tt"
+		}
+		iconType = {
+			name = "pww_ui_desk_div_mkt"
+			position = { x = 14 y = 74 }
 			spriteType = "GFX_pww_ui_divider"
 			scale = 0.918
 			alwaystransparent = yes
 		}
 		instantTextBoxType = {
 			name = "pww_ui_desk_mkt_hdr"
-			position = { x = 20 y = 418 }
+			position = { x = 20 y = 84 }
 			font = "hoi_18mbs"
 			text = "pww_desk_sec_market"
 			maxWidth = 300
@@ -483,7 +393,7 @@ guiTypes = {
 		}
 		instantTextBoxType = {
 			name = "pww_ui_desk_mkt_date"
-			position = { x = 310 y = 420 }
+			position = { x = 310 y = 86 }
 			font = "hoi_16mbs"
 			text = "pww_ui_mkt_dated"
 			maxWidth = 170
@@ -494,7 +404,7 @@ guiTypes = {
 		}
 		instantTextBoxType = {
 			name = "pww_ui_desk_mkt_empty"
-			position = { x = 20 y = 446 }
+			position = { x = 20 y = 112 }
 			font = "hoi_16mbs"
 			text = "pww_desk_empty_market"
 			maxWidth = 460
@@ -505,7 +415,7 @@ guiTypes = {
 		}
 		iconType = {
 			name = "pww_ui_dm_oil_icon"
-			position = { x = 20 y = 443 }
+			position = { x = 20 y = 109 }
 			spriteType = "GFX_resources_strip"
 			frame = 1
 			scale = 0.6
@@ -513,9 +423,9 @@ guiTypes = {
 		}
 		instantTextBoxType = {
 			name = "pww_ui_dm_oil"
-			position = { x = 42 y = 444 }
+			position = { x = 42 y = 110 }
 			font = "hoi_16mbs"
-			text = "[pww_ui_sl_mkt_oil]"
+			text = "pww_ui_mkt_line_oil"
 			maxWidth = 438
 			maxHeight = 18
 			format = left
@@ -524,7 +434,7 @@ guiTypes = {
 		}
 		iconType = {
 			name = "pww_ui_dm_aluminium_icon"
-			position = { x = 20 y = 461 }
+			position = { x = 20 y = 127 }
 			spriteType = "GFX_resources_strip"
 			frame = 2
 			scale = 0.6
@@ -532,9 +442,9 @@ guiTypes = {
 		}
 		instantTextBoxType = {
 			name = "pww_ui_dm_aluminium"
-			position = { x = 42 y = 462 }
+			position = { x = 42 y = 128 }
 			font = "hoi_16mbs"
-			text = "[pww_ui_sl_mkt_aluminium]"
+			text = "pww_ui_mkt_line_aluminium"
 			maxWidth = 438
 			maxHeight = 18
 			format = left
@@ -543,7 +453,7 @@ guiTypes = {
 		}
 		iconType = {
 			name = "pww_ui_dm_rubber_icon"
-			position = { x = 20 y = 479 }
+			position = { x = 20 y = 145 }
 			spriteType = "GFX_resources_strip"
 			frame = 3
 			scale = 0.6
@@ -551,9 +461,9 @@ guiTypes = {
 		}
 		instantTextBoxType = {
 			name = "pww_ui_dm_rubber"
-			position = { x = 42 y = 480 }
+			position = { x = 42 y = 146 }
 			font = "hoi_16mbs"
-			text = "[pww_ui_sl_mkt_rubber]"
+			text = "pww_ui_mkt_line_rubber"
 			maxWidth = 438
 			maxHeight = 18
 			format = left
@@ -562,7 +472,7 @@ guiTypes = {
 		}
 		iconType = {
 			name = "pww_ui_dm_tungsten_icon"
-			position = { x = 20 y = 497 }
+			position = { x = 20 y = 163 }
 			spriteType = "GFX_resources_strip"
 			frame = 4
 			scale = 0.6
@@ -570,9 +480,9 @@ guiTypes = {
 		}
 		instantTextBoxType = {
 			name = "pww_ui_dm_tungsten"
-			position = { x = 42 y = 498 }
+			position = { x = 42 y = 164 }
 			font = "hoi_16mbs"
-			text = "[pww_ui_sl_mkt_tungsten]"
+			text = "pww_ui_mkt_line_tungsten"
 			maxWidth = 438
 			maxHeight = 18
 			format = left
@@ -581,7 +491,7 @@ guiTypes = {
 		}
 		iconType = {
 			name = "pww_ui_dm_steel_icon"
-			position = { x = 20 y = 515 }
+			position = { x = 20 y = 181 }
 			spriteType = "GFX_resources_strip"
 			frame = 5
 			scale = 0.6
@@ -589,9 +499,9 @@ guiTypes = {
 		}
 		instantTextBoxType = {
 			name = "pww_ui_dm_steel"
-			position = { x = 42 y = 516 }
+			position = { x = 42 y = 182 }
 			font = "hoi_16mbs"
-			text = "[pww_ui_sl_mkt_steel]"
+			text = "pww_ui_mkt_line_steel"
 			maxWidth = 438
 			maxHeight = 18
 			format = left
@@ -600,7 +510,7 @@ guiTypes = {
 		}
 		iconType = {
 			name = "pww_ui_dm_chromium_icon"
-			position = { x = 20 y = 533 }
+			position = { x = 20 y = 199 }
 			spriteType = "GFX_resources_strip"
 			frame = 6
 			scale = 0.6
@@ -608,9 +518,9 @@ guiTypes = {
 		}
 		instantTextBoxType = {
 			name = "pww_ui_dm_chromium"
-			position = { x = 42 y = 534 }
+			position = { x = 42 y = 200 }
 			font = "hoi_16mbs"
-			text = "[pww_ui_sl_mkt_chromium]"
+			text = "pww_ui_mkt_line_chromium"
 			maxWidth = 438
 			maxHeight = 18
 			format = left
@@ -619,7 +529,7 @@ guiTypes = {
 		}
 		iconType = {
 			name = "pww_ui_dm_coal_icon"
-			position = { x = 20 y = 551 }
+			position = { x = 20 y = 217 }
 			spriteType = "GFX_resources_strip"
 			frame = 7
 			scale = 0.6
@@ -627,15 +537,899 @@ guiTypes = {
 		}
 		instantTextBoxType = {
 			name = "pww_ui_dm_coal"
-			position = { x = 42 y = 552 }
+			position = { x = 42 y = 218 }
 			font = "hoi_16mbs"
-			text = "[pww_ui_sl_mkt_coal]"
+			text = "pww_ui_mkt_line_coal"
 			maxWidth = 438
 			maxHeight = 18
 			format = left
 			fixedsize = yes
 			alwaystransparent = yes
 		}
+		instantTextBoxType = {
+			name = "pww_ui_desk_led_hdr"
+			position = { x = 20 y = 84 }
+			font = "hoi_18mbs"
+			text = "pww_desk_sec_ledger"
+			maxWidth = 300
+			maxHeight = 20
+			format = left
+			fixedsize = yes
+			alwaystransparent = yes
+		}
+		buttonType = {
+			name = "pww_ui_desk_pg_prev"
+			position = { x = 406 y = 86 }
+			quadTextureSprite = "GFX_pww_diplo_prev"
+			pdx_tooltip = "pww_ui_page_prev_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_desk_pg"
+			position = { x = 424 y = 85 }
+			font = "hoi_16mbs"
+			text = "pww_ui_page"
+			maxWidth = 38
+			maxHeight = 18
+			format = centre
+			fixedsize = yes
+			alwaystransparent = yes
+		}
+		buttonType = {
+			name = "pww_ui_desk_pg_next"
+			position = { x = 464 y = 86 }
+			quadTextureSprite = "GFX_pww_diplo_next"
+			pdx_tooltip = "pww_ui_page_next_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_desk_led_empty"
+			position = { x = 20 y = 112 }
+			font = "hoi_16mbs"
+			text = "pww_desk_empty_ledger"
+			maxWidth = 460
+			maxHeight = 36
+			format = left
+			fixedsize = yes
+			alwaystransparent = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl0_cp"
+			position = { x = 20 y = 110 }
+			font = "hoi_16mbs"
+			text = "pww_ui_l0_cp"
+			maxWidth = 168
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l0_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl0_terms"
+			position = { x = 194 y = 110 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_l0_terms]"
+			maxWidth = 212
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l0_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl0_st"
+			position = { x = 410 y = 110 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_l0_status]"
+			maxWidth = 70
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l0_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl0_l2"
+			position = { x = 42 y = 127 }
+			font = "hoi_16mbs"
+			text = "pww_ui_l0_line2"
+			maxWidth = 438
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l0_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl1_cp"
+			position = { x = 20 y = 148 }
+			font = "hoi_16mbs"
+			text = "pww_ui_l1_cp"
+			maxWidth = 168
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l1_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl1_terms"
+			position = { x = 194 y = 148 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_l1_terms]"
+			maxWidth = 212
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l1_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl1_st"
+			position = { x = 410 y = 148 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_l1_status]"
+			maxWidth = 70
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l1_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl1_l2"
+			position = { x = 42 y = 165 }
+			font = "hoi_16mbs"
+			text = "pww_ui_l1_line2"
+			maxWidth = 438
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l1_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl2_cp"
+			position = { x = 20 y = 186 }
+			font = "hoi_16mbs"
+			text = "pww_ui_l2_cp"
+			maxWidth = 168
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l2_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl2_terms"
+			position = { x = 194 y = 186 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_l2_terms]"
+			maxWidth = 212
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l2_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl2_st"
+			position = { x = 410 y = 186 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_l2_status]"
+			maxWidth = 70
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l2_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl2_l2"
+			position = { x = 42 y = 203 }
+			font = "hoi_16mbs"
+			text = "pww_ui_l2_line2"
+			maxWidth = 438
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l2_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl3_cp"
+			position = { x = 20 y = 224 }
+			font = "hoi_16mbs"
+			text = "pww_ui_l3_cp"
+			maxWidth = 168
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l3_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl3_terms"
+			position = { x = 194 y = 224 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_l3_terms]"
+			maxWidth = 212
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l3_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl3_st"
+			position = { x = 410 y = 224 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_l3_status]"
+			maxWidth = 70
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l3_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl3_l2"
+			position = { x = 42 y = 241 }
+			font = "hoi_16mbs"
+			text = "pww_ui_l3_line2"
+			maxWidth = 438
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l3_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl4_cp"
+			position = { x = 20 y = 262 }
+			font = "hoi_16mbs"
+			text = "pww_ui_l4_cp"
+			maxWidth = 168
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l4_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl4_terms"
+			position = { x = 194 y = 262 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_l4_terms]"
+			maxWidth = 212
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l4_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl4_st"
+			position = { x = 410 y = 262 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_l4_status]"
+			maxWidth = 70
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l4_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl4_l2"
+			position = { x = 42 y = 279 }
+			font = "hoi_16mbs"
+			text = "pww_ui_l4_line2"
+			maxWidth = 438
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l4_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl5_cp"
+			position = { x = 20 y = 300 }
+			font = "hoi_16mbs"
+			text = "pww_ui_l5_cp"
+			maxWidth = 168
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l5_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl5_terms"
+			position = { x = 194 y = 300 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_l5_terms]"
+			maxWidth = 212
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l5_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl5_st"
+			position = { x = 410 y = 300 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_l5_status]"
+			maxWidth = 70
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l5_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl5_l2"
+			position = { x = 42 y = 317 }
+			font = "hoi_16mbs"
+			text = "pww_ui_l5_line2"
+			maxWidth = 438
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l5_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl6_cp"
+			position = { x = 20 y = 338 }
+			font = "hoi_16mbs"
+			text = "pww_ui_l6_cp"
+			maxWidth = 168
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l6_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl6_terms"
+			position = { x = 194 y = 338 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_l6_terms]"
+			maxWidth = 212
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l6_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl6_st"
+			position = { x = 410 y = 338 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_l6_status]"
+			maxWidth = 70
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l6_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl6_l2"
+			position = { x = 42 y = 355 }
+			font = "hoi_16mbs"
+			text = "pww_ui_l6_line2"
+			maxWidth = 438
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l6_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl7_cp"
+			position = { x = 20 y = 376 }
+			font = "hoi_16mbs"
+			text = "pww_ui_l7_cp"
+			maxWidth = 168
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l7_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl7_terms"
+			position = { x = 194 y = 376 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_l7_terms]"
+			maxWidth = 212
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l7_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl7_st"
+			position = { x = 410 y = 376 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_l7_status]"
+			maxWidth = 70
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l7_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl7_l2"
+			position = { x = 42 y = 393 }
+			font = "hoi_16mbs"
+			text = "pww_ui_l7_line2"
+			maxWidth = 438
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l7_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl8_cp"
+			position = { x = 20 y = 414 }
+			font = "hoi_16mbs"
+			text = "pww_ui_l8_cp"
+			maxWidth = 168
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l8_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl8_terms"
+			position = { x = 194 y = 414 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_l8_terms]"
+			maxWidth = 212
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l8_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl8_st"
+			position = { x = 410 y = 414 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_l8_status]"
+			maxWidth = 70
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l8_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl8_l2"
+			position = { x = 42 y = 431 }
+			font = "hoi_16mbs"
+			text = "pww_ui_l8_line2"
+			maxWidth = 438
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l8_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl9_cp"
+			position = { x = 20 y = 452 }
+			font = "hoi_16mbs"
+			text = "pww_ui_l9_cp"
+			maxWidth = 168
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l9_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl9_terms"
+			position = { x = 194 y = 452 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_l9_terms]"
+			maxWidth = 212
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l9_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl9_st"
+			position = { x = 410 y = 452 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_l9_status]"
+			maxWidth = 70
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l9_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl9_l2"
+			position = { x = 42 y = 469 }
+			font = "hoi_16mbs"
+			text = "pww_ui_l9_line2"
+			maxWidth = 438
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l9_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_desk_rsv_hdr"
+			position = { x = 20 y = 84 }
+			font = "hoi_18mbs"
+			text = "pww_desk_sec_reserves"
+			maxWidth = 300
+			maxHeight = 20
+			format = left
+			fixedsize = yes
+			alwaystransparent = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ui_desk_rsv_empty"
+			position = { x = 20 y = 112 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_rsv_empty]"
+			maxWidth = 460
+			maxHeight = 36
+			format = left
+			fixedsize = yes
+			alwaystransparent = yes
+		}
+		iconType = {
+			name = "pww_ui_dr0_icon"
+			position = { x = 20 y = 109 }
+			spriteType = "GFX_resources_strip"
+			frame = 2
+			scale = 0.6
+			alwaystransparent = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dr0_name"
+			position = { x = 42 y = 110 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_r0_name]"
+			maxWidth = 78
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_r0_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dr0_days"
+			position = { x = 120 y = 110 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_r0_days]"
+			maxWidth = 84
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_r0_tt"
+		}
+		iconType = {
+			name = "pww_ui_dr0_barbg"
+			position = { x = 216 y = 116 }
+			spriteType = "GFX_pww_ui_bar_bg"
+			alwaystransparent = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dr0_trend"
+			position = { x = 328 y = 110 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_r0_trend]"
+			maxWidth = 152
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_r0_tt"
+		}
+		iconType = {
+			name = "pww_ui_dr1_icon"
+			position = { x = 20 y = 131 }
+			spriteType = "GFX_resources_strip"
+			frame = 2
+			scale = 0.6
+			alwaystransparent = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dr1_name"
+			position = { x = 42 y = 132 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_r1_name]"
+			maxWidth = 78
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_r1_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dr1_days"
+			position = { x = 120 y = 132 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_r1_days]"
+			maxWidth = 84
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_r1_tt"
+		}
+		iconType = {
+			name = "pww_ui_dr1_barbg"
+			position = { x = 216 y = 138 }
+			spriteType = "GFX_pww_ui_bar_bg"
+			alwaystransparent = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dr1_trend"
+			position = { x = 328 y = 132 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_r1_trend]"
+			maxWidth = 152
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_r1_tt"
+		}
+		iconType = {
+			name = "pww_ui_dr2_icon"
+			position = { x = 20 y = 153 }
+			spriteType = "GFX_resources_strip"
+			frame = 2
+			scale = 0.6
+			alwaystransparent = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dr2_name"
+			position = { x = 42 y = 154 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_r2_name]"
+			maxWidth = 78
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_r2_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dr2_days"
+			position = { x = 120 y = 154 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_r2_days]"
+			maxWidth = 84
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_r2_tt"
+		}
+		iconType = {
+			name = "pww_ui_dr2_barbg"
+			position = { x = 216 y = 160 }
+			spriteType = "GFX_pww_ui_bar_bg"
+			alwaystransparent = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dr2_trend"
+			position = { x = 328 y = 154 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_r2_trend]"
+			maxWidth = 152
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_r2_tt"
+		}
+		iconType = {
+			name = "pww_ui_dr3_icon"
+			position = { x = 20 y = 175 }
+			spriteType = "GFX_resources_strip"
+			frame = 2
+			scale = 0.6
+			alwaystransparent = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dr3_name"
+			position = { x = 42 y = 176 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_r3_name]"
+			maxWidth = 78
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_r3_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dr3_days"
+			position = { x = 120 y = 176 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_r3_days]"
+			maxWidth = 84
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_r3_tt"
+		}
+		iconType = {
+			name = "pww_ui_dr3_barbg"
+			position = { x = 216 y = 182 }
+			spriteType = "GFX_pww_ui_bar_bg"
+			alwaystransparent = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dr3_trend"
+			position = { x = 328 y = 176 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_r3_trend]"
+			maxWidth = 152
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_r3_tt"
+		}
+		iconType = {
+			name = "pww_ui_dr4_icon"
+			position = { x = 20 y = 197 }
+			spriteType = "GFX_resources_strip"
+			frame = 2
+			scale = 0.6
+			alwaystransparent = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dr4_name"
+			position = { x = 42 y = 198 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_r4_name]"
+			maxWidth = 78
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_r4_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dr4_days"
+			position = { x = 120 y = 198 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_r4_days]"
+			maxWidth = 84
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_r4_tt"
+		}
+		iconType = {
+			name = "pww_ui_dr4_barbg"
+			position = { x = 216 y = 204 }
+			spriteType = "GFX_pww_ui_bar_bg"
+			alwaystransparent = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dr4_trend"
+			position = { x = 328 y = 198 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_r4_trend]"
+			maxWidth = 152
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_r4_tt"
+		}
+		iconType = {
+			name = "pww_ui_dr5_icon"
+			position = { x = 20 y = 219 }
+			spriteType = "GFX_resources_strip"
+			frame = 2
+			scale = 0.6
+			alwaystransparent = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dr5_name"
+			position = { x = 42 y = 220 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_r5_name]"
+			maxWidth = 78
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_r5_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dr5_days"
+			position = { x = 120 y = 220 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_r5_days]"
+			maxWidth = 84
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_r5_tt"
+		}
+		iconType = {
+			name = "pww_ui_dr5_barbg"
+			position = { x = 216 y = 226 }
+			spriteType = "GFX_pww_ui_bar_bg"
+			alwaystransparent = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dr5_trend"
+			position = { x = 328 y = 220 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_r5_trend]"
+			maxWidth = 152
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_r5_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_desk_rsv_foot"
+			position = { x = 20 y = 84 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_rsv_foot]"
+			maxWidth = 460
+			maxHeight = 36
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_rsv_foot_tt"
+		}
+		containerWindowType = {
+			name = "pww_ui_dr0_clip"
+			position = { x = 216 y = 116 }
+			size = { width = 100 height = 6 }
+			clipping = yes
+
+			iconType = {
+				name = "pww_ui_dr0_fill"
+				position = { x = 0 y = 0 }
+				spriteType = "GFX_pww_ui_bar_fill"
+				alwaystransparent = yes
+			}
+		}
+
+		containerWindowType = {
+			name = "pww_ui_dr1_clip"
+			position = { x = 216 y = 138 }
+			size = { width = 100 height = 6 }
+			clipping = yes
+
+			iconType = {
+				name = "pww_ui_dr1_fill"
+				position = { x = 0 y = 0 }
+				spriteType = "GFX_pww_ui_bar_fill"
+				alwaystransparent = yes
+			}
+		}
+
+		containerWindowType = {
+			name = "pww_ui_dr2_clip"
+			position = { x = 216 y = 160 }
+			size = { width = 100 height = 6 }
+			clipping = yes
+
+			iconType = {
+				name = "pww_ui_dr2_fill"
+				position = { x = 0 y = 0 }
+				spriteType = "GFX_pww_ui_bar_fill"
+				alwaystransparent = yes
+			}
+		}
+
+		containerWindowType = {
+			name = "pww_ui_dr3_clip"
+			position = { x = 216 y = 182 }
+			size = { width = 100 height = 6 }
+			clipping = yes
+
+			iconType = {
+				name = "pww_ui_dr3_fill"
+				position = { x = 0 y = 0 }
+				spriteType = "GFX_pww_ui_bar_fill"
+				alwaystransparent = yes
+			}
+		}
+
+		containerWindowType = {
+			name = "pww_ui_dr4_clip"
+			position = { x = 216 y = 204 }
+			size = { width = 100 height = 6 }
+			clipping = yes
+
+			iconType = {
+				name = "pww_ui_dr4_fill"
+				position = { x = 0 y = 0 }
+				spriteType = "GFX_pww_ui_bar_fill"
+				alwaystransparent = yes
+			}
+		}
+
+		containerWindowType = {
+			name = "pww_ui_dr5_clip"
+			position = { x = 216 y = 226 }
+			size = { width = 100 height = 6 }
+			clipping = yes
+
+			iconType = {
+				name = "pww_ui_dr5_fill"
+				position = { x = 0 y = 0 }
+				spriteType = "GFX_pww_ui_bar_fill"
+				alwaystransparent = yes
+			}
+		}
+
 	}
 
 	containerWindowType = {
@@ -666,9 +1460,39 @@ guiTypes = {
 			pdx_tooltip = "pww_ui_desk_close_tt"
 			clicksound = click_close
 		}
+		buttonType = {
+			name = "pww_ui_tab0"
+			position = { x = 20 y = 42 }
+			quadTextureSprite = "GFX_tab_small_116"
+			frame = 1
+			buttonText = "pww_ui_tab_overview"
+			buttonFont = "hoi_16mbs"
+			pdx_tooltip = "pww_ui_tab_overview_tt"
+			clicksound = click_default
+		}
+		buttonType = {
+			name = "pww_ui_tab1"
+			position = { x = 140 y = 42 }
+			quadTextureSprite = "GFX_tab_small_116"
+			frame = 1
+			buttonText = "pww_ui_tab_deals"
+			buttonFont = "hoi_16mbs"
+			pdx_tooltip = "pww_ui_tab_deals_tt"
+			clicksound = click_default
+		}
+		buttonType = {
+			name = "pww_ui_tab2"
+			position = { x = 260 y = 42 }
+			quadTextureSprite = "GFX_tab_small_116"
+			frame = 1
+			buttonText = "pww_ui_tab_reserves"
+			buttonFont = "hoi_16mbs"
+			pdx_tooltip = "pww_ui_tab_reserves_tt"
+			clicksound = click_default
+		}
 		instantTextBoxType = {
 			name = "pww_ui_desk_sit_hdr"
-			position = { x = 20 y = 48 }
+			position = { x = 20 y = 84 }
 			font = "hoi_18mbs"
 			text = "pww_desk_sec_situations"
 			maxWidth = 460
@@ -677,27 +1501,16 @@ guiTypes = {
 			fixedsize = yes
 			alwaystransparent = yes
 		}
-		instantTextBoxType = {
-			name = "pww_ui_desk_sit_empty"
-			position = { x = 20 y = 74 }
-			font = "hoi_16mbs"
-			text = "pww_desk_empty_situations"
-			maxWidth = 460
-			maxHeight = 36
-			format = left
-			fixedsize = yes
-			alwaystransparent = yes
-		}
 		buttonType = {
 			name = "pww_ui_ds0_hl"
-			position = { x = 1 y = 74 }
+			position = { x = 1 y = 110 }
 			quadTextureSprite = "GFX_production_line_arrow_right"
 			alwaystransparent = yes
 			scale = 0.55
 		}
 		instantTextBoxType = {
 			name = "pww_ui_ds0_l1"
-			position = { x = 20 y = 73 }
+			position = { x = 20 y = 109 }
 			font = "hoi_16mbs"
 			text = "[pww_ui_sl_s0_head]"
 			maxWidth = 310
@@ -708,7 +1521,7 @@ guiTypes = {
 		}
 		instantTextBoxType = {
 			name = "pww_ui_ds0_date"
-			position = { x = 330 y = 73 }
+			position = { x = 330 y = 109 }
 			font = "hoi_16mbs"
 			text = "pww_ui_s0_date"
 			maxWidth = 150
@@ -719,7 +1532,7 @@ guiTypes = {
 		}
 		instantTextBoxType = {
 			name = "pww_ui_ds0_l2"
-			position = { x = 20 y = 91 }
+			position = { x = 20 y = 127 }
 			font = "hoi_16mbs"
 			text = "pww_ui_s0_line2"
 			maxWidth = 460
@@ -730,14 +1543,14 @@ guiTypes = {
 		}
 		buttonType = {
 			name = "pww_ui_ds1_hl"
-			position = { x = 1 y = 114 }
+			position = { x = 1 y = 148 }
 			quadTextureSprite = "GFX_production_line_arrow_right"
 			alwaystransparent = yes
 			scale = 0.55
 		}
 		instantTextBoxType = {
 			name = "pww_ui_ds1_l1"
-			position = { x = 20 y = 113 }
+			position = { x = 20 y = 147 }
 			font = "hoi_16mbs"
 			text = "[pww_ui_sl_s1_head]"
 			maxWidth = 310
@@ -748,7 +1561,7 @@ guiTypes = {
 		}
 		instantTextBoxType = {
 			name = "pww_ui_ds1_date"
-			position = { x = 330 y = 113 }
+			position = { x = 330 y = 147 }
 			font = "hoi_16mbs"
 			text = "pww_ui_s1_date"
 			maxWidth = 150
@@ -759,7 +1572,7 @@ guiTypes = {
 		}
 		instantTextBoxType = {
 			name = "pww_ui_ds1_l2"
-			position = { x = 20 y = 131 }
+			position = { x = 20 y = 165 }
 			font = "hoi_16mbs"
 			text = "pww_ui_s1_line2"
 			maxWidth = 460
@@ -770,14 +1583,14 @@ guiTypes = {
 		}
 		buttonType = {
 			name = "pww_ui_ds2_hl"
-			position = { x = 1 y = 154 }
+			position = { x = 1 y = 186 }
 			quadTextureSprite = "GFX_production_line_arrow_right"
 			alwaystransparent = yes
 			scale = 0.55
 		}
 		instantTextBoxType = {
 			name = "pww_ui_ds2_l1"
-			position = { x = 20 y = 153 }
+			position = { x = 20 y = 185 }
 			font = "hoi_16mbs"
 			text = "[pww_ui_sl_s2_head]"
 			maxWidth = 310
@@ -788,7 +1601,7 @@ guiTypes = {
 		}
 		instantTextBoxType = {
 			name = "pww_ui_ds2_date"
-			position = { x = 330 y = 153 }
+			position = { x = 330 y = 185 }
 			font = "hoi_16mbs"
 			text = "pww_ui_s2_date"
 			maxWidth = 150
@@ -799,7 +1612,7 @@ guiTypes = {
 		}
 		instantTextBoxType = {
 			name = "pww_ui_ds2_l2"
-			position = { x = 20 y = 171 }
+			position = { x = 20 y = 203 }
 			font = "hoi_16mbs"
 			text = "pww_ui_s2_line2"
 			maxWidth = 460
@@ -810,14 +1623,14 @@ guiTypes = {
 		}
 		buttonType = {
 			name = "pww_ui_ds3_hl"
-			position = { x = 1 y = 194 }
+			position = { x = 1 y = 224 }
 			quadTextureSprite = "GFX_production_line_arrow_right"
 			alwaystransparent = yes
 			scale = 0.55
 		}
 		instantTextBoxType = {
 			name = "pww_ui_ds3_l1"
-			position = { x = 20 y = 193 }
+			position = { x = 20 y = 223 }
 			font = "hoi_16mbs"
 			text = "[pww_ui_sl_s3_head]"
 			maxWidth = 310
@@ -828,7 +1641,7 @@ guiTypes = {
 		}
 		instantTextBoxType = {
 			name = "pww_ui_ds3_date"
-			position = { x = 330 y = 193 }
+			position = { x = 330 y = 223 }
 			font = "hoi_16mbs"
 			text = "pww_ui_s3_date"
 			maxWidth = 150
@@ -839,7 +1652,7 @@ guiTypes = {
 		}
 		instantTextBoxType = {
 			name = "pww_ui_ds3_l2"
-			position = { x = 20 y = 211 }
+			position = { x = 20 y = 241 }
 			font = "hoi_16mbs"
 			text = "pww_ui_s3_line2"
 			maxWidth = 460
@@ -849,265 +1662,156 @@ guiTypes = {
 			pdx_tooltip = "pww_ui_s3_tt"
 		}
 		iconType = {
-			name = "pww_ui_desk_div1"
-			position = { x = 14 y = 236 }
+			name = "pww_ui_desk_div_cart"
+			position = { x = 14 y = 74 }
 			spriteType = "GFX_pww_ui_divider"
 			scale = 0.918
 			alwaystransparent = yes
 		}
 		instantTextBoxType = {
-			name = "pww_ui_desk_led_hdr"
-			position = { x = 20 y = 246 }
+			name = "pww_ui_desk_cart_hdr"
+			position = { x = 20 y = 84 }
 			font = "hoi_18mbs"
-			text = "pww_desk_sec_ledger"
-			maxWidth = 300
+			text = "pww_desk_sec_cartels"
+			maxWidth = 460
 			maxHeight = 20
 			format = left
 			fixedsize = yes
 			alwaystransparent = yes
 		}
-		buttonType = {
-			name = "pww_ui_desk_pg_prev"
-			position = { x = 406 y = 248 }
-			quadTextureSprite = "GFX_pww_diplo_prev"
-			pdx_tooltip = "pww_ui_page_prev_tt"
-		}
-		instantTextBoxType = {
-			name = "pww_ui_desk_pg"
-			position = { x = 424 y = 247 }
-			font = "hoi_16mbs"
-			text = "pww_ui_page"
-			maxWidth = 38
-			maxHeight = 18
-			format = centre
-			fixedsize = yes
-			alwaystransparent = yes
-		}
-		buttonType = {
-			name = "pww_ui_desk_pg_next"
-			position = { x = 464 y = 248 }
-			quadTextureSprite = "GFX_pww_diplo_next"
-			pdx_tooltip = "pww_ui_page_next_tt"
-		}
-		instantTextBoxType = {
-			name = "pww_ui_desk_led_empty"
-			position = { x = 20 y = 274 }
-			font = "hoi_16mbs"
-			text = "pww_desk_empty_ledger"
-			maxWidth = 460
-			maxHeight = 36
-			format = left
-			fixedsize = yes
+		iconType = {
+			name = "pww_ui_dc0_icon"
+			position = { x = 20 y = 108 }
+			spriteType = "GFX_resources_strip"
+			frame = 1
+			scale = 0.6
 			alwaystransparent = yes
 		}
 		instantTextBoxType = {
-			name = "pww_ui_dl0_cp"
-			position = { x = 20 y = 272 }
+			name = "pww_ui_dc0_l1"
+			position = { x = 42 y = 109 }
 			font = "hoi_16mbs"
-			text = "pww_ui_l0_cp"
-			maxWidth = 168
+			text = "pww_ui_c0_l1"
+			maxWidth = 288
 			maxHeight = 18
 			format = left
 			fixedsize = yes
-			pdx_tooltip = "pww_ui_l0_tt"
+			pdx_tooltip = "pww_ui_c0_tt"
 		}
 		instantTextBoxType = {
-			name = "pww_ui_dl0_terms"
-			position = { x = 194 y = 272 }
+			name = "pww_ui_dc0_price"
+			position = { x = 330 y = 109 }
 			font = "hoi_16mbs"
-			text = "[pww_ui_sl_l0_terms]"
-			maxWidth = 212
-			maxHeight = 18
-			format = left
-			fixedsize = yes
-			pdx_tooltip = "pww_ui_l0_tt"
-		}
-		instantTextBoxType = {
-			name = "pww_ui_dl0_st"
-			position = { x = 410 y = 272 }
-			font = "hoi_16mbs"
-			text = "[pww_ui_sl_l0_status]"
-			maxWidth = 70
+			text = "[pww_ui_sl_c0_price]"
+			maxWidth = 150
 			maxHeight = 18
 			format = right
 			fixedsize = yes
-			pdx_tooltip = "pww_ui_l0_tt"
+			pdx_tooltip = "pww_ui_c0_tt"
 		}
 		instantTextBoxType = {
-			name = "pww_ui_dl1_cp"
-			position = { x = 20 y = 294 }
+			name = "pww_ui_dc0_l2"
+			position = { x = 42 y = 127 }
 			font = "hoi_16mbs"
-			text = "pww_ui_l1_cp"
-			maxWidth = 168
+			text = "[pww_ui_sl_c0_l2]"
+			maxWidth = 438
 			maxHeight = 18
 			format = left
 			fixedsize = yes
-			pdx_tooltip = "pww_ui_l1_tt"
-		}
-		instantTextBoxType = {
-			name = "pww_ui_dl1_terms"
-			position = { x = 194 y = 294 }
-			font = "hoi_16mbs"
-			text = "[pww_ui_sl_l1_terms]"
-			maxWidth = 212
-			maxHeight = 18
-			format = left
-			fixedsize = yes
-			pdx_tooltip = "pww_ui_l1_tt"
-		}
-		instantTextBoxType = {
-			name = "pww_ui_dl1_st"
-			position = { x = 410 y = 294 }
-			font = "hoi_16mbs"
-			text = "[pww_ui_sl_l1_status]"
-			maxWidth = 70
-			maxHeight = 18
-			format = right
-			fixedsize = yes
-			pdx_tooltip = "pww_ui_l1_tt"
-		}
-		instantTextBoxType = {
-			name = "pww_ui_dl2_cp"
-			position = { x = 20 y = 316 }
-			font = "hoi_16mbs"
-			text = "pww_ui_l2_cp"
-			maxWidth = 168
-			maxHeight = 18
-			format = left
-			fixedsize = yes
-			pdx_tooltip = "pww_ui_l2_tt"
-		}
-		instantTextBoxType = {
-			name = "pww_ui_dl2_terms"
-			position = { x = 194 y = 316 }
-			font = "hoi_16mbs"
-			text = "[pww_ui_sl_l2_terms]"
-			maxWidth = 212
-			maxHeight = 18
-			format = left
-			fixedsize = yes
-			pdx_tooltip = "pww_ui_l2_tt"
-		}
-		instantTextBoxType = {
-			name = "pww_ui_dl2_st"
-			position = { x = 410 y = 316 }
-			font = "hoi_16mbs"
-			text = "[pww_ui_sl_l2_status]"
-			maxWidth = 70
-			maxHeight = 18
-			format = right
-			fixedsize = yes
-			pdx_tooltip = "pww_ui_l2_tt"
-		}
-		instantTextBoxType = {
-			name = "pww_ui_dl3_cp"
-			position = { x = 20 y = 338 }
-			font = "hoi_16mbs"
-			text = "pww_ui_l3_cp"
-			maxWidth = 168
-			maxHeight = 18
-			format = left
-			fixedsize = yes
-			pdx_tooltip = "pww_ui_l3_tt"
-		}
-		instantTextBoxType = {
-			name = "pww_ui_dl3_terms"
-			position = { x = 194 y = 338 }
-			font = "hoi_16mbs"
-			text = "[pww_ui_sl_l3_terms]"
-			maxWidth = 212
-			maxHeight = 18
-			format = left
-			fixedsize = yes
-			pdx_tooltip = "pww_ui_l3_tt"
-		}
-		instantTextBoxType = {
-			name = "pww_ui_dl3_st"
-			position = { x = 410 y = 338 }
-			font = "hoi_16mbs"
-			text = "[pww_ui_sl_l3_status]"
-			maxWidth = 70
-			maxHeight = 18
-			format = right
-			fixedsize = yes
-			pdx_tooltip = "pww_ui_l3_tt"
-		}
-		instantTextBoxType = {
-			name = "pww_ui_dl4_cp"
-			position = { x = 20 y = 360 }
-			font = "hoi_16mbs"
-			text = "pww_ui_l4_cp"
-			maxWidth = 168
-			maxHeight = 18
-			format = left
-			fixedsize = yes
-			pdx_tooltip = "pww_ui_l4_tt"
-		}
-		instantTextBoxType = {
-			name = "pww_ui_dl4_terms"
-			position = { x = 194 y = 360 }
-			font = "hoi_16mbs"
-			text = "[pww_ui_sl_l4_terms]"
-			maxWidth = 212
-			maxHeight = 18
-			format = left
-			fixedsize = yes
-			pdx_tooltip = "pww_ui_l4_tt"
-		}
-		instantTextBoxType = {
-			name = "pww_ui_dl4_st"
-			position = { x = 410 y = 360 }
-			font = "hoi_16mbs"
-			text = "[pww_ui_sl_l4_status]"
-			maxWidth = 70
-			maxHeight = 18
-			format = right
-			fixedsize = yes
-			pdx_tooltip = "pww_ui_l4_tt"
-		}
-		instantTextBoxType = {
-			name = "pww_ui_dl5_cp"
-			position = { x = 20 y = 382 }
-			font = "hoi_16mbs"
-			text = "pww_ui_l5_cp"
-			maxWidth = 168
-			maxHeight = 18
-			format = left
-			fixedsize = yes
-			pdx_tooltip = "pww_ui_l5_tt"
-		}
-		instantTextBoxType = {
-			name = "pww_ui_dl5_terms"
-			position = { x = 194 y = 382 }
-			font = "hoi_16mbs"
-			text = "[pww_ui_sl_l5_terms]"
-			maxWidth = 212
-			maxHeight = 18
-			format = left
-			fixedsize = yes
-			pdx_tooltip = "pww_ui_l5_tt"
-		}
-		instantTextBoxType = {
-			name = "pww_ui_dl5_st"
-			position = { x = 410 y = 382 }
-			font = "hoi_16mbs"
-			text = "[pww_ui_sl_l5_status]"
-			maxWidth = 70
-			maxHeight = 18
-			format = right
-			fixedsize = yes
-			pdx_tooltip = "pww_ui_l5_tt"
+			pdx_tooltip = "pww_ui_c0_tt"
 		}
 		iconType = {
-			name = "pww_ui_desk_div2"
-			position = { x = 14 y = 408 }
+			name = "pww_ui_dc1_icon"
+			position = { x = 20 y = 146 }
+			spriteType = "GFX_resources_strip"
+			frame = 1
+			scale = 0.6
+			alwaystransparent = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dc1_l1"
+			position = { x = 42 y = 147 }
+			font = "hoi_16mbs"
+			text = "pww_ui_c1_l1"
+			maxWidth = 288
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_c1_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dc1_price"
+			position = { x = 330 y = 147 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_c1_price]"
+			maxWidth = 150
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_c1_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dc1_l2"
+			position = { x = 42 y = 165 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_c1_l2]"
+			maxWidth = 438
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_c1_tt"
+		}
+		iconType = {
+			name = "pww_ui_dc2_icon"
+			position = { x = 20 y = 184 }
+			spriteType = "GFX_resources_strip"
+			frame = 1
+			scale = 0.6
+			alwaystransparent = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dc2_l1"
+			position = { x = 42 y = 185 }
+			font = "hoi_16mbs"
+			text = "pww_ui_c2_l1"
+			maxWidth = 288
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_c2_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dc2_price"
+			position = { x = 330 y = 185 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_c2_price]"
+			maxWidth = 150
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_c2_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dc2_l2"
+			position = { x = 42 y = 203 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_c2_l2]"
+			maxWidth = 438
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_c2_tt"
+		}
+		iconType = {
+			name = "pww_ui_desk_div_mkt"
+			position = { x = 14 y = 74 }
 			spriteType = "GFX_pww_ui_divider"
 			scale = 0.918
 			alwaystransparent = yes
 		}
 		instantTextBoxType = {
 			name = "pww_ui_desk_mkt_hdr"
-			position = { x = 20 y = 418 }
+			position = { x = 20 y = 84 }
 			font = "hoi_18mbs"
 			text = "pww_desk_sec_market"
 			maxWidth = 300
@@ -1118,7 +1822,7 @@ guiTypes = {
 		}
 		instantTextBoxType = {
 			name = "pww_ui_desk_mkt_date"
-			position = { x = 310 y = 420 }
+			position = { x = 310 y = 86 }
 			font = "hoi_16mbs"
 			text = "pww_ui_mkt_dated"
 			maxWidth = 170
@@ -1129,7 +1833,7 @@ guiTypes = {
 		}
 		instantTextBoxType = {
 			name = "pww_ui_desk_mkt_empty"
-			position = { x = 20 y = 446 }
+			position = { x = 20 y = 112 }
 			font = "hoi_16mbs"
 			text = "pww_desk_empty_market"
 			maxWidth = 460
@@ -1140,7 +1844,7 @@ guiTypes = {
 		}
 		iconType = {
 			name = "pww_ui_dm_oil_icon"
-			position = { x = 20 y = 443 }
+			position = { x = 20 y = 109 }
 			spriteType = "GFX_resources_strip"
 			frame = 1
 			scale = 0.6
@@ -1148,9 +1852,9 @@ guiTypes = {
 		}
 		instantTextBoxType = {
 			name = "pww_ui_dm_oil"
-			position = { x = 42 y = 444 }
+			position = { x = 42 y = 110 }
 			font = "hoi_16mbs"
-			text = "[pww_ui_sl_mkt_oil]"
+			text = "pww_ui_mkt_line_oil"
 			maxWidth = 438
 			maxHeight = 18
 			format = left
@@ -1159,7 +1863,7 @@ guiTypes = {
 		}
 		iconType = {
 			name = "pww_ui_dm_aluminium_icon"
-			position = { x = 20 y = 461 }
+			position = { x = 20 y = 127 }
 			spriteType = "GFX_resources_strip"
 			frame = 2
 			scale = 0.6
@@ -1167,9 +1871,9 @@ guiTypes = {
 		}
 		instantTextBoxType = {
 			name = "pww_ui_dm_aluminium"
-			position = { x = 42 y = 462 }
+			position = { x = 42 y = 128 }
 			font = "hoi_16mbs"
-			text = "[pww_ui_sl_mkt_aluminium]"
+			text = "pww_ui_mkt_line_aluminium"
 			maxWidth = 438
 			maxHeight = 18
 			format = left
@@ -1178,7 +1882,7 @@ guiTypes = {
 		}
 		iconType = {
 			name = "pww_ui_dm_rubber_icon"
-			position = { x = 20 y = 479 }
+			position = { x = 20 y = 145 }
 			spriteType = "GFX_resources_strip"
 			frame = 3
 			scale = 0.6
@@ -1186,9 +1890,9 @@ guiTypes = {
 		}
 		instantTextBoxType = {
 			name = "pww_ui_dm_rubber"
-			position = { x = 42 y = 480 }
+			position = { x = 42 y = 146 }
 			font = "hoi_16mbs"
-			text = "[pww_ui_sl_mkt_rubber]"
+			text = "pww_ui_mkt_line_rubber"
 			maxWidth = 438
 			maxHeight = 18
 			format = left
@@ -1197,7 +1901,7 @@ guiTypes = {
 		}
 		iconType = {
 			name = "pww_ui_dm_tungsten_icon"
-			position = { x = 20 y = 497 }
+			position = { x = 20 y = 163 }
 			spriteType = "GFX_resources_strip"
 			frame = 4
 			scale = 0.6
@@ -1205,9 +1909,9 @@ guiTypes = {
 		}
 		instantTextBoxType = {
 			name = "pww_ui_dm_tungsten"
-			position = { x = 42 y = 498 }
+			position = { x = 42 y = 164 }
 			font = "hoi_16mbs"
-			text = "[pww_ui_sl_mkt_tungsten]"
+			text = "pww_ui_mkt_line_tungsten"
 			maxWidth = 438
 			maxHeight = 18
 			format = left
@@ -1216,7 +1920,7 @@ guiTypes = {
 		}
 		iconType = {
 			name = "pww_ui_dm_steel_icon"
-			position = { x = 20 y = 515 }
+			position = { x = 20 y = 181 }
 			spriteType = "GFX_resources_strip"
 			frame = 5
 			scale = 0.6
@@ -1224,9 +1928,9 @@ guiTypes = {
 		}
 		instantTextBoxType = {
 			name = "pww_ui_dm_steel"
-			position = { x = 42 y = 516 }
+			position = { x = 42 y = 182 }
 			font = "hoi_16mbs"
-			text = "[pww_ui_sl_mkt_steel]"
+			text = "pww_ui_mkt_line_steel"
 			maxWidth = 438
 			maxHeight = 18
 			format = left
@@ -1235,7 +1939,7 @@ guiTypes = {
 		}
 		iconType = {
 			name = "pww_ui_dm_chromium_icon"
-			position = { x = 20 y = 533 }
+			position = { x = 20 y = 199 }
 			spriteType = "GFX_resources_strip"
 			frame = 6
 			scale = 0.6
@@ -1243,9 +1947,9 @@ guiTypes = {
 		}
 		instantTextBoxType = {
 			name = "pww_ui_dm_chromium"
-			position = { x = 42 y = 534 }
+			position = { x = 42 y = 200 }
 			font = "hoi_16mbs"
-			text = "[pww_ui_sl_mkt_chromium]"
+			text = "pww_ui_mkt_line_chromium"
 			maxWidth = 438
 			maxHeight = 18
 			format = left
@@ -1254,7 +1958,7 @@ guiTypes = {
 		}
 		iconType = {
 			name = "pww_ui_dm_coal_icon"
-			position = { x = 20 y = 551 }
+			position = { x = 20 y = 217 }
 			spriteType = "GFX_resources_strip"
 			frame = 7
 			scale = 0.6
@@ -1262,15 +1966,899 @@ guiTypes = {
 		}
 		instantTextBoxType = {
 			name = "pww_ui_dm_coal"
-			position = { x = 42 y = 552 }
+			position = { x = 42 y = 218 }
 			font = "hoi_16mbs"
-			text = "[pww_ui_sl_mkt_coal]"
+			text = "pww_ui_mkt_line_coal"
 			maxWidth = 438
 			maxHeight = 18
 			format = left
 			fixedsize = yes
 			alwaystransparent = yes
 		}
+		instantTextBoxType = {
+			name = "pww_ui_desk_led_hdr"
+			position = { x = 20 y = 84 }
+			font = "hoi_18mbs"
+			text = "pww_desk_sec_ledger"
+			maxWidth = 300
+			maxHeight = 20
+			format = left
+			fixedsize = yes
+			alwaystransparent = yes
+		}
+		buttonType = {
+			name = "pww_ui_desk_pg_prev"
+			position = { x = 406 y = 86 }
+			quadTextureSprite = "GFX_pww_diplo_prev"
+			pdx_tooltip = "pww_ui_page_prev_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_desk_pg"
+			position = { x = 424 y = 85 }
+			font = "hoi_16mbs"
+			text = "pww_ui_page"
+			maxWidth = 38
+			maxHeight = 18
+			format = centre
+			fixedsize = yes
+			alwaystransparent = yes
+		}
+		buttonType = {
+			name = "pww_ui_desk_pg_next"
+			position = { x = 464 y = 86 }
+			quadTextureSprite = "GFX_pww_diplo_next"
+			pdx_tooltip = "pww_ui_page_next_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_desk_led_empty"
+			position = { x = 20 y = 112 }
+			font = "hoi_16mbs"
+			text = "pww_desk_empty_ledger"
+			maxWidth = 460
+			maxHeight = 36
+			format = left
+			fixedsize = yes
+			alwaystransparent = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl0_cp"
+			position = { x = 20 y = 110 }
+			font = "hoi_16mbs"
+			text = "pww_ui_l0_cp"
+			maxWidth = 168
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l0_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl0_terms"
+			position = { x = 194 y = 110 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_l0_terms]"
+			maxWidth = 212
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l0_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl0_st"
+			position = { x = 410 y = 110 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_l0_status]"
+			maxWidth = 70
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l0_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl0_l2"
+			position = { x = 42 y = 127 }
+			font = "hoi_16mbs"
+			text = "pww_ui_l0_line2"
+			maxWidth = 438
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l0_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl1_cp"
+			position = { x = 20 y = 148 }
+			font = "hoi_16mbs"
+			text = "pww_ui_l1_cp"
+			maxWidth = 168
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l1_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl1_terms"
+			position = { x = 194 y = 148 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_l1_terms]"
+			maxWidth = 212
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l1_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl1_st"
+			position = { x = 410 y = 148 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_l1_status]"
+			maxWidth = 70
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l1_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl1_l2"
+			position = { x = 42 y = 165 }
+			font = "hoi_16mbs"
+			text = "pww_ui_l1_line2"
+			maxWidth = 438
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l1_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl2_cp"
+			position = { x = 20 y = 186 }
+			font = "hoi_16mbs"
+			text = "pww_ui_l2_cp"
+			maxWidth = 168
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l2_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl2_terms"
+			position = { x = 194 y = 186 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_l2_terms]"
+			maxWidth = 212
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l2_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl2_st"
+			position = { x = 410 y = 186 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_l2_status]"
+			maxWidth = 70
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l2_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl2_l2"
+			position = { x = 42 y = 203 }
+			font = "hoi_16mbs"
+			text = "pww_ui_l2_line2"
+			maxWidth = 438
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l2_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl3_cp"
+			position = { x = 20 y = 224 }
+			font = "hoi_16mbs"
+			text = "pww_ui_l3_cp"
+			maxWidth = 168
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l3_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl3_terms"
+			position = { x = 194 y = 224 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_l3_terms]"
+			maxWidth = 212
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l3_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl3_st"
+			position = { x = 410 y = 224 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_l3_status]"
+			maxWidth = 70
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l3_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl3_l2"
+			position = { x = 42 y = 241 }
+			font = "hoi_16mbs"
+			text = "pww_ui_l3_line2"
+			maxWidth = 438
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l3_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl4_cp"
+			position = { x = 20 y = 262 }
+			font = "hoi_16mbs"
+			text = "pww_ui_l4_cp"
+			maxWidth = 168
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l4_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl4_terms"
+			position = { x = 194 y = 262 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_l4_terms]"
+			maxWidth = 212
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l4_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl4_st"
+			position = { x = 410 y = 262 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_l4_status]"
+			maxWidth = 70
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l4_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl4_l2"
+			position = { x = 42 y = 279 }
+			font = "hoi_16mbs"
+			text = "pww_ui_l4_line2"
+			maxWidth = 438
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l4_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl5_cp"
+			position = { x = 20 y = 300 }
+			font = "hoi_16mbs"
+			text = "pww_ui_l5_cp"
+			maxWidth = 168
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l5_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl5_terms"
+			position = { x = 194 y = 300 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_l5_terms]"
+			maxWidth = 212
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l5_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl5_st"
+			position = { x = 410 y = 300 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_l5_status]"
+			maxWidth = 70
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l5_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl5_l2"
+			position = { x = 42 y = 317 }
+			font = "hoi_16mbs"
+			text = "pww_ui_l5_line2"
+			maxWidth = 438
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l5_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl6_cp"
+			position = { x = 20 y = 338 }
+			font = "hoi_16mbs"
+			text = "pww_ui_l6_cp"
+			maxWidth = 168
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l6_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl6_terms"
+			position = { x = 194 y = 338 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_l6_terms]"
+			maxWidth = 212
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l6_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl6_st"
+			position = { x = 410 y = 338 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_l6_status]"
+			maxWidth = 70
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l6_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl6_l2"
+			position = { x = 42 y = 355 }
+			font = "hoi_16mbs"
+			text = "pww_ui_l6_line2"
+			maxWidth = 438
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l6_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl7_cp"
+			position = { x = 20 y = 376 }
+			font = "hoi_16mbs"
+			text = "pww_ui_l7_cp"
+			maxWidth = 168
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l7_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl7_terms"
+			position = { x = 194 y = 376 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_l7_terms]"
+			maxWidth = 212
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l7_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl7_st"
+			position = { x = 410 y = 376 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_l7_status]"
+			maxWidth = 70
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l7_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl7_l2"
+			position = { x = 42 y = 393 }
+			font = "hoi_16mbs"
+			text = "pww_ui_l7_line2"
+			maxWidth = 438
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l7_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl8_cp"
+			position = { x = 20 y = 414 }
+			font = "hoi_16mbs"
+			text = "pww_ui_l8_cp"
+			maxWidth = 168
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l8_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl8_terms"
+			position = { x = 194 y = 414 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_l8_terms]"
+			maxWidth = 212
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l8_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl8_st"
+			position = { x = 410 y = 414 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_l8_status]"
+			maxWidth = 70
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l8_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl8_l2"
+			position = { x = 42 y = 431 }
+			font = "hoi_16mbs"
+			text = "pww_ui_l8_line2"
+			maxWidth = 438
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l8_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl9_cp"
+			position = { x = 20 y = 452 }
+			font = "hoi_16mbs"
+			text = "pww_ui_l9_cp"
+			maxWidth = 168
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l9_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl9_terms"
+			position = { x = 194 y = 452 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_l9_terms]"
+			maxWidth = 212
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l9_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl9_st"
+			position = { x = 410 y = 452 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_l9_status]"
+			maxWidth = 70
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l9_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dl9_l2"
+			position = { x = 42 y = 469 }
+			font = "hoi_16mbs"
+			text = "pww_ui_l9_line2"
+			maxWidth = 438
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_l9_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_desk_rsv_hdr"
+			position = { x = 20 y = 84 }
+			font = "hoi_18mbs"
+			text = "pww_desk_sec_reserves"
+			maxWidth = 300
+			maxHeight = 20
+			format = left
+			fixedsize = yes
+			alwaystransparent = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ui_desk_rsv_empty"
+			position = { x = 20 y = 112 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_rsv_empty]"
+			maxWidth = 460
+			maxHeight = 36
+			format = left
+			fixedsize = yes
+			alwaystransparent = yes
+		}
+		iconType = {
+			name = "pww_ui_dr0_icon"
+			position = { x = 20 y = 109 }
+			spriteType = "GFX_resources_strip"
+			frame = 2
+			scale = 0.6
+			alwaystransparent = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dr0_name"
+			position = { x = 42 y = 110 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_r0_name]"
+			maxWidth = 78
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_r0_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dr0_days"
+			position = { x = 120 y = 110 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_r0_days]"
+			maxWidth = 84
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_r0_tt"
+		}
+		iconType = {
+			name = "pww_ui_dr0_barbg"
+			position = { x = 216 y = 116 }
+			spriteType = "GFX_pww_ui_bar_bg"
+			alwaystransparent = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dr0_trend"
+			position = { x = 328 y = 110 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_r0_trend]"
+			maxWidth = 152
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_r0_tt"
+		}
+		iconType = {
+			name = "pww_ui_dr1_icon"
+			position = { x = 20 y = 131 }
+			spriteType = "GFX_resources_strip"
+			frame = 2
+			scale = 0.6
+			alwaystransparent = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dr1_name"
+			position = { x = 42 y = 132 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_r1_name]"
+			maxWidth = 78
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_r1_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dr1_days"
+			position = { x = 120 y = 132 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_r1_days]"
+			maxWidth = 84
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_r1_tt"
+		}
+		iconType = {
+			name = "pww_ui_dr1_barbg"
+			position = { x = 216 y = 138 }
+			spriteType = "GFX_pww_ui_bar_bg"
+			alwaystransparent = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dr1_trend"
+			position = { x = 328 y = 132 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_r1_trend]"
+			maxWidth = 152
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_r1_tt"
+		}
+		iconType = {
+			name = "pww_ui_dr2_icon"
+			position = { x = 20 y = 153 }
+			spriteType = "GFX_resources_strip"
+			frame = 2
+			scale = 0.6
+			alwaystransparent = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dr2_name"
+			position = { x = 42 y = 154 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_r2_name]"
+			maxWidth = 78
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_r2_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dr2_days"
+			position = { x = 120 y = 154 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_r2_days]"
+			maxWidth = 84
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_r2_tt"
+		}
+		iconType = {
+			name = "pww_ui_dr2_barbg"
+			position = { x = 216 y = 160 }
+			spriteType = "GFX_pww_ui_bar_bg"
+			alwaystransparent = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dr2_trend"
+			position = { x = 328 y = 154 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_r2_trend]"
+			maxWidth = 152
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_r2_tt"
+		}
+		iconType = {
+			name = "pww_ui_dr3_icon"
+			position = { x = 20 y = 175 }
+			spriteType = "GFX_resources_strip"
+			frame = 2
+			scale = 0.6
+			alwaystransparent = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dr3_name"
+			position = { x = 42 y = 176 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_r3_name]"
+			maxWidth = 78
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_r3_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dr3_days"
+			position = { x = 120 y = 176 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_r3_days]"
+			maxWidth = 84
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_r3_tt"
+		}
+		iconType = {
+			name = "pww_ui_dr3_barbg"
+			position = { x = 216 y = 182 }
+			spriteType = "GFX_pww_ui_bar_bg"
+			alwaystransparent = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dr3_trend"
+			position = { x = 328 y = 176 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_r3_trend]"
+			maxWidth = 152
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_r3_tt"
+		}
+		iconType = {
+			name = "pww_ui_dr4_icon"
+			position = { x = 20 y = 197 }
+			spriteType = "GFX_resources_strip"
+			frame = 2
+			scale = 0.6
+			alwaystransparent = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dr4_name"
+			position = { x = 42 y = 198 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_r4_name]"
+			maxWidth = 78
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_r4_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dr4_days"
+			position = { x = 120 y = 198 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_r4_days]"
+			maxWidth = 84
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_r4_tt"
+		}
+		iconType = {
+			name = "pww_ui_dr4_barbg"
+			position = { x = 216 y = 204 }
+			spriteType = "GFX_pww_ui_bar_bg"
+			alwaystransparent = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dr4_trend"
+			position = { x = 328 y = 198 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_r4_trend]"
+			maxWidth = 152
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_r4_tt"
+		}
+		iconType = {
+			name = "pww_ui_dr5_icon"
+			position = { x = 20 y = 219 }
+			spriteType = "GFX_resources_strip"
+			frame = 2
+			scale = 0.6
+			alwaystransparent = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dr5_name"
+			position = { x = 42 y = 220 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_r5_name]"
+			maxWidth = 78
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_r5_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dr5_days"
+			position = { x = 120 y = 220 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_r5_days]"
+			maxWidth = 84
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_r5_tt"
+		}
+		iconType = {
+			name = "pww_ui_dr5_barbg"
+			position = { x = 216 y = 226 }
+			spriteType = "GFX_pww_ui_bar_bg"
+			alwaystransparent = yes
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dr5_trend"
+			position = { x = 328 y = 220 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_r5_trend]"
+			maxWidth = 152
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_r5_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_desk_rsv_foot"
+			position = { x = 20 y = 84 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_rsv_foot]"
+			maxWidth = 460
+			maxHeight = 36
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_rsv_foot_tt"
+		}
+		containerWindowType = {
+			name = "pww_ui_dr0_clip"
+			position = { x = 216 y = 116 }
+			size = { width = 100 height = 6 }
+			clipping = yes
+
+			iconType = {
+				name = "pww_ui_dr0_fill"
+				position = { x = 0 y = 0 }
+				spriteType = "GFX_pww_ui_bar_fill"
+				alwaystransparent = yes
+			}
+		}
+
+		containerWindowType = {
+			name = "pww_ui_dr1_clip"
+			position = { x = 216 y = 138 }
+			size = { width = 100 height = 6 }
+			clipping = yes
+
+			iconType = {
+				name = "pww_ui_dr1_fill"
+				position = { x = 0 y = 0 }
+				spriteType = "GFX_pww_ui_bar_fill"
+				alwaystransparent = yes
+			}
+		}
+
+		containerWindowType = {
+			name = "pww_ui_dr2_clip"
+			position = { x = 216 y = 160 }
+			size = { width = 100 height = 6 }
+			clipping = yes
+
+			iconType = {
+				name = "pww_ui_dr2_fill"
+				position = { x = 0 y = 0 }
+				spriteType = "GFX_pww_ui_bar_fill"
+				alwaystransparent = yes
+			}
+		}
+
+		containerWindowType = {
+			name = "pww_ui_dr3_clip"
+			position = { x = 216 y = 182 }
+			size = { width = 100 height = 6 }
+			clipping = yes
+
+			iconType = {
+				name = "pww_ui_dr3_fill"
+				position = { x = 0 y = 0 }
+				spriteType = "GFX_pww_ui_bar_fill"
+				alwaystransparent = yes
+			}
+		}
+
+		containerWindowType = {
+			name = "pww_ui_dr4_clip"
+			position = { x = 216 y = 204 }
+			size = { width = 100 height = 6 }
+			clipping = yes
+
+			iconType = {
+				name = "pww_ui_dr4_fill"
+				position = { x = 0 y = 0 }
+				spriteType = "GFX_pww_ui_bar_fill"
+				alwaystransparent = yes
+			}
+		}
+
+		containerWindowType = {
+			name = "pww_ui_dr5_clip"
+			position = { x = 216 y = 226 }
+			size = { width = 100 height = 6 }
+			clipping = yes
+
+			iconType = {
+				name = "pww_ui_dr5_fill"
+				position = { x = 0 y = 0 }
+				spriteType = "GFX_pww_ui_bar_fill"
+				alwaystransparent = yes
+			}
+		}
+
 	}
 
 	containerWindowType = {
@@ -1422,7 +3010,7 @@ guiTypes = {
 	containerWindowType = {
 		name = "pww_ui_dossier"
 		position = { x = 8 y = 110 }
-		size = { width = 514 height = 240 }
+		size = { width = 514 height = 280 }
 		clipping = no
 		background = {
 			name = "background"
@@ -1434,22 +3022,33 @@ guiTypes = {
 			position = { x = 12 y = 8 }
 			font = "hoi_18mbs"
 			text = "pww_dossier_title"
-			maxWidth = 300
+			maxWidth = 200
 			maxHeight = 20
 			format = left
 			fixedsize = yes
 			alwaystransparent = yes
 		}
+		instantTextBoxType = {
+			name = "pww_ui_dos_count"
+			position = { x = 200 y = 10 }
+			font = "hoi_16mbs"
+			text = "pww_ui_dos_count"
+			maxWidth = 190
+			maxHeight = 18
+			format = right
+			fixedsize = yes
+			alwaystransparent = yes
+		}
 		iconType = {
 			name = "pww_ui_dos_oil_icon"
-			position = { x = 33 y = 32 }
+			position = { x = 33 y = 30 }
 			spriteType = "GFX_resources_strip"
 			frame = 1
 			alwaystransparent = yes
 		}
 		instantTextBoxType = {
 			name = "pww_ui_dos_oil_band"
-			position = { x = 12 y = 60 }
+			position = { x = 12 y = 58 }
 			font = "hoi_16mbs"
 			text = "[pww_ui_sl_short_oil]"
 			maxWidth = 70
@@ -1460,14 +3059,14 @@ guiTypes = {
 		}
 		iconType = {
 			name = "pww_ui_dos_aluminium_icon"
-			position = { x = 103 y = 32 }
+			position = { x = 103 y = 30 }
 			spriteType = "GFX_resources_strip"
 			frame = 2
 			alwaystransparent = yes
 		}
 		instantTextBoxType = {
 			name = "pww_ui_dos_aluminium_band"
-			position = { x = 82 y = 60 }
+			position = { x = 82 y = 58 }
 			font = "hoi_16mbs"
 			text = "[pww_ui_sl_short_aluminium]"
 			maxWidth = 70
@@ -1478,14 +3077,14 @@ guiTypes = {
 		}
 		iconType = {
 			name = "pww_ui_dos_rubber_icon"
-			position = { x = 173 y = 32 }
+			position = { x = 173 y = 30 }
 			spriteType = "GFX_resources_strip"
 			frame = 3
 			alwaystransparent = yes
 		}
 		instantTextBoxType = {
 			name = "pww_ui_dos_rubber_band"
-			position = { x = 152 y = 60 }
+			position = { x = 152 y = 58 }
 			font = "hoi_16mbs"
 			text = "[pww_ui_sl_short_rubber]"
 			maxWidth = 70
@@ -1496,14 +3095,14 @@ guiTypes = {
 		}
 		iconType = {
 			name = "pww_ui_dos_tungsten_icon"
-			position = { x = 243 y = 32 }
+			position = { x = 243 y = 30 }
 			spriteType = "GFX_resources_strip"
 			frame = 4
 			alwaystransparent = yes
 		}
 		instantTextBoxType = {
 			name = "pww_ui_dos_tungsten_band"
-			position = { x = 222 y = 60 }
+			position = { x = 222 y = 58 }
 			font = "hoi_16mbs"
 			text = "[pww_ui_sl_short_tungsten]"
 			maxWidth = 70
@@ -1514,14 +3113,14 @@ guiTypes = {
 		}
 		iconType = {
 			name = "pww_ui_dos_steel_icon"
-			position = { x = 313 y = 32 }
+			position = { x = 313 y = 30 }
 			spriteType = "GFX_resources_strip"
 			frame = 5
 			alwaystransparent = yes
 		}
 		instantTextBoxType = {
 			name = "pww_ui_dos_steel_band"
-			position = { x = 292 y = 60 }
+			position = { x = 292 y = 58 }
 			font = "hoi_16mbs"
 			text = "[pww_ui_sl_short_steel]"
 			maxWidth = 70
@@ -1532,14 +3131,14 @@ guiTypes = {
 		}
 		iconType = {
 			name = "pww_ui_dos_chromium_icon"
-			position = { x = 383 y = 32 }
+			position = { x = 383 y = 30 }
 			spriteType = "GFX_resources_strip"
 			frame = 6
 			alwaystransparent = yes
 		}
 		instantTextBoxType = {
 			name = "pww_ui_dos_chromium_band"
-			position = { x = 362 y = 60 }
+			position = { x = 362 y = 58 }
 			font = "hoi_16mbs"
 			text = "[pww_ui_sl_short_chromium]"
 			maxWidth = 70
@@ -1550,14 +3149,14 @@ guiTypes = {
 		}
 		iconType = {
 			name = "pww_ui_dos_coal_icon"
-			position = { x = 453 y = 32 }
+			position = { x = 453 y = 30 }
 			spriteType = "GFX_resources_strip"
 			frame = 7
 			alwaystransparent = yes
 		}
 		instantTextBoxType = {
 			name = "pww_ui_dos_coal_band"
-			position = { x = 432 y = 60 }
+			position = { x = 432 y = 58 }
 			font = "hoi_16mbs"
 			text = "[pww_ui_sl_short_coal]"
 			maxWidth = 70
@@ -1578,92 +3177,188 @@ guiTypes = {
 			pdx_tooltip = "pww_ui_imp_tt"
 		}
 		instantTextBoxType = {
-			name = "pww_ui_dos_nag"
+			name = "pww_ui_dos_bond"
 			position = { x = 256 y = 82 }
 			font = "hoi_16mbs"
-			text = "pww_ui_dos_nag"
+			text = "pww_ui_dos_bond"
 			maxWidth = 246
 			maxHeight = 18
 			format = right
 			fixedsize = yes
-			alwaystransparent = yes
+			pdx_tooltip = "pww_ui_dos_bond_tt"
 		}
 		instantTextBoxType = {
-			name = "pww_ui_dos_k0"
+			name = "pww_ui_dos_rsv"
 			position = { x = 12 y = 100 }
 			font = "hoi_16mbs"
-			text = "[pww_ui_sl_k0]"
-			maxWidth = 394
+			text = "[pww_ui_sl_dos_rsv]"
+			maxWidth = 490
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_dos_rsv_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dos_exp"
+			position = { x = 12 y = 118 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_dos_exp]"
+			maxWidth = 490
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_dos_exp_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dos_nag0"
+			position = { x = 12 y = 136 }
+			font = "hoi_16mbs"
+			text = "pww_ui_dos_nag_0"
+			maxWidth = 490
 			maxHeight = 18
 			format = left
 			fixedsize = yes
 			alwaystransparent = yes
 		}
 		instantTextBoxType = {
+			name = "pww_ui_dos_k0"
+			position = { x = 12 y = 136 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_k0]"
+			maxWidth = 344
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_k0_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dos_k0_lock"
+			position = { x = 360 y = 136 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_k0_lock]"
+			maxWidth = 60
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_k0_tt"
+		}
+		instantTextBoxType = {
 			name = "pww_ui_dos_k0_st"
-			position = { x = 412 y = 100 }
+			position = { x = 412 y = 136 }
 			font = "hoi_16mbs"
 			text = "[pww_ui_sl_k0_st]"
 			maxWidth = 90
 			maxHeight = 18
 			format = right
 			fixedsize = yes
-			alwaystransparent = yes
+			pdx_tooltip = "pww_ui_k0_tt"
+		}
+		buttonType = {
+			name = "pww_ui_dos_k0_poach"
+			position = { x = 444 y = 135 }
+			size = { x = 58 y = 20 }
+			quadTextureSprite = "GFX_pww_ui_alert_row"
+			buttonText = "pww_ui_dos_poach"
+			buttonFont = "hoi_16mbs"
+			pdx_tooltip = "pww_ui_k0_poach_tt"
+			clicksound = click_default
 		}
 		instantTextBoxType = {
 			name = "pww_ui_dos_k1"
-			position = { x = 12 y = 117 }
+			position = { x = 12 y = 154 }
 			font = "hoi_16mbs"
 			text = "[pww_ui_sl_k1]"
-			maxWidth = 394
+			maxWidth = 344
 			maxHeight = 18
 			format = left
 			fixedsize = yes
-			alwaystransparent = yes
+			pdx_tooltip = "pww_ui_k1_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dos_k1_lock"
+			position = { x = 360 y = 154 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_k1_lock]"
+			maxWidth = 60
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_k1_tt"
 		}
 		instantTextBoxType = {
 			name = "pww_ui_dos_k1_st"
-			position = { x = 412 y = 117 }
+			position = { x = 412 y = 154 }
 			font = "hoi_16mbs"
 			text = "[pww_ui_sl_k1_st]"
 			maxWidth = 90
 			maxHeight = 18
 			format = right
 			fixedsize = yes
-			alwaystransparent = yes
+			pdx_tooltip = "pww_ui_k1_tt"
+		}
+		buttonType = {
+			name = "pww_ui_dos_k1_poach"
+			position = { x = 444 y = 153 }
+			size = { x = 58 y = 20 }
+			quadTextureSprite = "GFX_pww_ui_alert_row"
+			buttonText = "pww_ui_dos_poach"
+			buttonFont = "hoi_16mbs"
+			pdx_tooltip = "pww_ui_k1_poach_tt"
+			clicksound = click_default
 		}
 		instantTextBoxType = {
 			name = "pww_ui_dos_k2"
-			position = { x = 12 y = 134 }
+			position = { x = 12 y = 172 }
 			font = "hoi_16mbs"
 			text = "[pww_ui_sl_k2]"
-			maxWidth = 394
+			maxWidth = 344
 			maxHeight = 18
 			format = left
 			fixedsize = yes
-			alwaystransparent = yes
+			pdx_tooltip = "pww_ui_k2_tt"
+		}
+		instantTextBoxType = {
+			name = "pww_ui_dos_k2_lock"
+			position = { x = 360 y = 172 }
+			font = "hoi_16mbs"
+			text = "[pww_ui_sl_k2_lock]"
+			maxWidth = 60
+			maxHeight = 18
+			format = left
+			fixedsize = yes
+			pdx_tooltip = "pww_ui_k2_tt"
 		}
 		instantTextBoxType = {
 			name = "pww_ui_dos_k2_st"
-			position = { x = 412 y = 134 }
+			position = { x = 412 y = 172 }
 			font = "hoi_16mbs"
 			text = "[pww_ui_sl_k2_st]"
 			maxWidth = 90
 			maxHeight = 18
 			format = right
 			fixedsize = yes
-			alwaystransparent = yes
+			pdx_tooltip = "pww_ui_k2_tt"
+		}
+		buttonType = {
+			name = "pww_ui_dos_k2_poach"
+			position = { x = 444 y = 171 }
+			size = { x = 58 y = 20 }
+			quadTextureSprite = "GFX_pww_ui_alert_row"
+			buttonText = "pww_ui_dos_poach"
+			buttonFont = "hoi_16mbs"
+			pdx_tooltip = "pww_ui_k2_poach_tt"
+			clicksound = click_default
 		}
 		iconType = {
 			name = "pww_ui_dos_div"
-			position = { x = 4 y = 154 }
+			position = { x = 4 y = 192 }
 			spriteType = "GFX_pww_ui_divider"
 			scale = 0.984
 			alwaystransparent = yes
 		}
 		instantTextBoxType = {
 			name = "pww_ui_dos_rd_head"
-			position = { x = 12 y = 162 }
+			position = { x = 12 y = 200 }
 			font = "hoi_16mbs"
 			text = "pww_ui_rd_head"
 			maxWidth = 490
@@ -1674,7 +3369,7 @@ guiTypes = {
 		}
 		instantTextBoxType = {
 			name = "pww_ui_dos_rd_for"
-			position = { x = 12 y = 180 }
+			position = { x = 12 y = 218 }
 			font = "hoi_16mbs"
 			text = "pww_ui_rd_for"
 			maxWidth = 490
@@ -1685,7 +3380,7 @@ guiTypes = {
 		}
 		instantTextBoxType = {
 			name = "pww_ui_dos_rd_hold"
-			position = { x = 12 y = 198 }
+			position = { x = 12 y = 236 }
 			font = "hoi_16mbs"
 			text = "pww_ui_rd_hold"
 			maxWidth = 490
@@ -1696,7 +3391,7 @@ guiTypes = {
 		}
 		instantTextBoxType = {
 			name = "pww_ui_dos_rd_more"
-			position = { x = 12 y = 216 }
+			position = { x = 12 y = 254 }
 			font = "hoi_16mbs"
 			text = "pww_ui_rd_more"
 			maxWidth = 490
@@ -1707,7 +3402,7 @@ guiTypes = {
 		}
 		instantTextBoxType = {
 			name = "pww_ui_dos_pr_head"
-			position = { x = 12 y = 162 }
+			position = { x = 12 y = 200 }
 			font = "hoi_16mbs"
 			text = "pww_ui_pr_head"
 			maxWidth = 490
@@ -1718,7 +3413,7 @@ guiTypes = {
 		}
 		instantTextBoxType = {
 			name = "pww_ui_dos_st"
-			position = { x = 12 y = 198 }
+			position = { x = 12 y = 236 }
 			font = "hoi_16mbs"
 			text = "pww_ui_dos_st"
 			maxWidth = 490
@@ -1729,7 +3424,7 @@ guiTypes = {
 		}
 		instantTextBoxType = {
 			name = "pww_ui_dos_quiet"
-			position = { x = 12 y = 162 }
+			position = { x = 12 y = 200 }
 			font = "hoi_16mbs"
 			text = "pww_ui_dos_quiet"
 			maxWidth = 490

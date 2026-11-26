@@ -24,11 +24,24 @@
 #                       facing a demand, 4 holder writing lots, 5 patron, 6
 #                       patron pledged, 7 lease renewal)
 #   pww_ui_focus        slot highlighted in the desk (-1 none)
+#   pww_ui_tab          desk tab 0 Overview, 1 Deals, 2 Reserves;
+#                       pww_ui_tabf<t> tab sprite frame (2 selected, 1 not)
+#   pww_ui_nc           cartel rows (0..3), slots pww_ui_c<k>_*: id res frame
+#                       status anchor pct (cartel price over market, %) cb
+#                       (cohesion band) n nm m0..m5 (member flags, chair
+#                       first) leader me (1 member, 2 invited, 0 outsider
+#                       short of the resource) quota sold room over sb
+#                       (suspicion band of us) conf (conference date value)
+#   pww_ui_nr           reserve rows (0..6), slots pww_ui_r<k>_*: res stock cap
+#                       fill days in out frame fx (fill bar x offset)
+#   pww_uy_<element>    y of each flowing desk element (pww_ui_layout)
 #   pww_ui_nag / pww_ui_page / pww_ui_npages / pww_ui_page_n   live agreements
 #                       (active, suspended, reserved) and paging, 6 per page;
 #                       slots pww_ui_l<k>_*: on id st kind res amt side (1 we
 #                       buy or hold the lease) cp state civ pay (0 none, 1
 #                       factories, 2 political power) wepay end open com
+#                       bond (seller->buyer band 0..4, -1 unknown) route (0
+#                       land, 1 sea, 2 none, -1 n/a) dsh (delivery cost %)
 #   pww_ui_marked       countries carrying this viewer's marks (below)
 #   flags pww_ui_desk_open (desk on the trade view), pww_ui_desk_float (desk
 #                       opened from the alert strip), pww_ui_dos_open (dossier)
@@ -36,8 +49,20 @@
 # Per country (the dossier target), viewer independent
 #   pww_ui_imp_band     import reliance 0..4 (imports and mod supply bought,
 #                       over consumption)
-#   pww_ui_nk / pww_ui_nk_all, slots pww_ui_k<k>_* (3 rows, fields as the
-#                       ledger slots, from the country's own perspective)
+#   pww_ui_nk / pww_ui_nk_all / pww_ui_nk_more, slots pww_ui_k<k>_* (3
+#                       rows, fields as the ledger slots, from the country's
+#                       own perspective; route not computed)
+#   pww_ui_nrv, pww_ui_rv<j>_res / _b   deepest reserves (words)
+#   pww_ui_x1 / pww_ui_x2   main exports (resource index, -1 none)
+#   pww_uy_dos_*        y of the dossier demand block (pww_ui_dossier_layout)
+# Per country, per human viewer V (pww_ui_views, monthly), stored as var@V:
+#   pww_ui_vb (stronger bond band of the two directions; soured wins),
+#   pww_ui_vb0 (this country -> V), pww_ui_vb1 (V -> this country),
+#   pww_ui_vr (route of this country's main export to V: 0 land, 1 sea,
+#   2 none), pww_ui_vc (delivery cost word 0..3: under 3%, 10%, 20%, more)
+# Per viewer, set by the dossier Poach button (HOOK for the valuation lane's
+#   Poach Supplier action: a preselection it may read, never required):
+#   pww_ui_poach_ag (ledger id of the deal to beat), pww_ui_poach_target
 # Per country, marks set by a viewer V (V's refresh clears and rewrites them)
 #   pww_ui_rd_viewer = V   V presses a live demand on this country. The
 #                       coercion readout V loaded is copied here (pww_coer_rd_*
@@ -54,7 +79,9 @@
 #   global.pww_ui_mkt_band_<r> (0 glut .. 6 frantic), _c1_<r> (0 none, 1 one
 #   buyer, 2 two buyers bidding, 3 quiet), _b1_<r> / _b2_<r> (countries),
 #   _c2_<r> (1 = a live Situation over r), _ho_<r> (its holder).
+#   _c3_<r> (cartel: 1 conference, 2 in force, 3 price war).
 #   global.pww_ui_sum_seq: ledger queue sequence the summaries were built at.
+#   flag pww_ui_view_ready: pww_ui_views has run at least once.
 #
 # Dates: a date value is hours since year -5000 divided by 100000, so one
 #   day is 0.00024 (verified in game: 45 days from 1 January 1936 renders
@@ -73,6 +100,10 @@ pww_ui_on_daily = {
 			}
 			pww_ui_summaries = yes
 		}
+		if = {
+			limit = { NOT = { has_global_flag = pww_ui_view_ready } }
+			pww_ui_views = yes
+		}
 		pww_ui_refresh = yes
 	}
 }
@@ -89,6 +120,7 @@ pww_ui_on_monthly = {
 		}
 		pww_ui_market_report = yes
 		pww_ui_summaries = yes
+		pww_ui_views = yes
 	}
 }
 
@@ -154,6 +186,10 @@ pww_ui_country_summary = {
 			add_to_variable = { pww_ui_nk_all = 1 }
 		}
 	}
+	set_variable = { pww_ui_nk_more = pww_ui_nk_all }
+	subtract_from_variable = { pww_ui_nk_more = pww_ui_nk }
+	pww_ui_country_trade_words = yes
+	pww_ui_dossier_layout = yes
 	set_variable = { pww_ui_imp_band = 0 }
 	if = {
 		limit = { check_variable = { pww_ui_con > 0.5 } }
@@ -286,6 +322,31 @@ pww_ui_load_ag = {
 		limit = { check_variable = { pww_ui_t_civ < 0 } }
 		multiply_temp_variable = { pww_ui_t_civ = -1 }
 	}
+	# Bond of the ordered pair (seller -> buyer); delivery route only when the
+	# caller sets temp pww_ui_want_route = 1 (the viewer's own Deals rows).
+	set_temp_variable = { pww_ui_t_bond = -1 }
+	set_temp_variable = { pww_ui_t_route = -1 }
+	set_temp_variable = { pww_ui_t_dsh = 0 }
+	set_temp_variable = { pww_in_seller = global.pww_ag_seller^pww_ui_v }
+	set_temp_variable = { pww_in_buyer = global.pww_ag_buyer^pww_ui_v }
+	if = {
+		limit = { has_global_flag = pww_rel_loaded }
+		meta_effect = { text = { pww_rel_get = [Y] } Y = "yes" }
+		set_temp_variable = { pww_ui_t_bond = pww_rel_band }
+	}
+	if = {
+		limit = {
+			has_global_flag = pww_logi_loaded
+			check_variable = { pww_ui_want_route = 1 }
+			check_variable = { pww_ui_t_kind = 0 }
+		}
+		set_temp_variable = { pww_in_resource = pww_ui_t_res }
+		meta_effect = { text = { pww_logi_delivered_cost = [Y] } Y = "yes" }
+		set_temp_variable = { pww_ui_t_route = pww_logi_route }
+		set_temp_variable = { pww_ui_t_dsh = pww_logi_cost_share }
+		multiply_temp_variable = { pww_ui_t_dsh = 100 }
+		round_temp_variable = pww_ui_t_dsh
+	}
 	set_temp_variable = { pww_ui_t_end = global.pww_ag_end^pww_ui_v }
 	set_temp_variable = { pww_ui_t_open = 0 }
 	if = {
@@ -306,6 +367,16 @@ pww_ui_refresh = {
 		limit = { NOT = { has_variable = pww_ui_focus } }
 		set_variable = { pww_ui_focus = -1 }
 	}
+	if = {
+		limit = { NOT = { has_variable = pww_ui_tab } }
+		set_variable = { pww_ui_tab = 0 }
+	}
+	set_variable = { pww_ui_tabf0 = 1 }
+	set_variable = { pww_ui_tabf1 = 1 }
+	set_variable = { pww_ui_tabf2 = 1 }
+	if = { limit = { check_variable = { pww_ui_tab = 0 } } set_variable = { pww_ui_tabf0 = 2 } }
+	else_if = { limit = { check_variable = { pww_ui_tab = 1 } } set_variable = { pww_ui_tabf1 = 2 } }
+	else = { set_variable = { pww_ui_tabf2 = 2 } }
 	# Situations in our seats (live only; the noise cap keeps it to four)
 	set_variable = { pww_ui_ns = 0 }
 	if = {
@@ -327,6 +398,7 @@ pww_ui_refresh = {
 	}
 	# Agreements ledger: count, clamp the page, fill this page's rows
 	pww_ui_clear_ag_slots = yes
+	set_temp_variable = { pww_ui_want_route = 1 }
 	set_variable = { pww_ui_nag = 0 }
 	for_each_loop = {
 		array = pww_ag_ids
@@ -372,8 +444,177 @@ pww_ui_refresh = {
 			add_to_temp_variable = { pww_ui_c = 1 }
 		}
 	}
+	set_temp_variable = { pww_ui_want_route = 0 }
+	pww_ui_load_cartels = yes
+	pww_ui_load_reserves = yes
+	pww_ui_layout = yes
 	pww_ui_mark_counterparts = yes
 	add_to_variable = { pww_ui_dirty = 1 }
+}
+
+# ---------------------------------------------------------------------------
+# Cartel rows (viewer scope): every live cartel (conference or in force) the
+# viewer is in or invited to, or that holds a resource the viewer is short of.
+pww_ui_load_cartels = {
+	set_variable = { pww_ui_nc = 0 }
+	if = {
+		limit = { has_global_flag = pww_cartel_loaded }
+		for_each_loop = {
+			array = global.pww_cart_live
+			value = pww_ui_cv
+			if = {
+				limit = { check_variable = { pww_ui_nc < 3 } }
+				pww_ui_load_cartel = yes
+				if = {
+					limit = {
+						OR = {
+							check_variable = { pww_ui_t_me > 0 }
+							check_variable = { pww_ui_t_short = 1 }
+						}
+					}
+					pww_ui_store_cart_slot = yes
+					add_to_variable = { pww_ui_nc = 1 }
+				}
+			}
+		}
+	}
+}
+
+# Viewer scope. In temp pww_ui_cv (cartel id). Out pww_ui_t_* (cartel slot
+# fields, see the header) and pww_ui_t_short.
+pww_ui_load_cartel = {
+	set_temp_variable = { pww_ui_t_id = pww_ui_cv }
+	set_temp_variable = { pww_ui_t_res = global.pww_cart_res^pww_ui_cv }
+	set_temp_variable = { pww_ui_t_frame = pww_ui_t_res }
+	add_to_temp_variable = { pww_ui_t_frame = 1 }
+	set_temp_variable = { pww_ui_t_status = global.pww_cart_status^pww_ui_cv }
+	set_temp_variable = { pww_ui_t_anchor = global.pww_cart_anchor^pww_ui_cv }
+	set_temp_variable = { pww_ui_t_pct = global.pww_cart_price^pww_ui_cv }
+	subtract_from_temp_variable = { pww_ui_t_pct = 1 }
+	multiply_temp_variable = { pww_ui_t_pct = 100 }
+	round_temp_variable = pww_ui_t_pct
+	set_temp_variable = { pww_band_value = global.pww_cart_cohesion^pww_ui_cv }
+	meta_effect = { text = { pww_cartel_band = [Y] } Y = "yes" }
+	set_temp_variable = { pww_ui_t_cb = pww_band }
+	set_temp_variable = { pww_ui_t_n = global.pww_cart_n^pww_ui_cv }
+	set_temp_variable = { pww_ui_t_leader = global.pww_cart_leader^pww_ui_cv }
+	set_temp_variable = { pww_ui_t_conf = global.pww_cart_conf_day^pww_ui_cv }
+	subtract_from_temp_variable = { pww_ui_t_conf = global.num_days }
+	multiply_temp_variable = { pww_ui_t_conf = 0.00024 }
+	add_to_temp_variable = { pww_ui_t_conf = global.date }
+	pww_ui_short_of = yes
+	# members: chair first, then the others in entry order (status 1)
+	set_temp_variable = { pww_ui_t_nm = 0 }
+	set_temp_variable = { pww_ui_mv = pww_ui_t_leader }
+	pww_ui_cart_add_flag = yes
+	set_temp_variable = { pww_ui_t_me = 0 }
+	set_temp_variable = { pww_ui_t_quota = 0 }
+	set_temp_variable = { pww_ui_t_sold = 0 }
+	set_temp_variable = { pww_ui_t_room = 0 }
+	set_temp_variable = { pww_ui_t_over = 0 }
+	set_temp_variable = { pww_ui_t_sb = 0 }
+	for_each_loop = {
+		array = global.pww_cm_cart
+		value = pww_ui_cc
+		index = pww_ui_ci
+		if = {
+			limit = { check_variable = { pww_ui_cc = pww_ui_cv } }
+			set_temp_variable = { pww_ui_cs = global.pww_cm_status^pww_ui_ci }
+			set_temp_variable = { pww_ui_mv = global.pww_cm_who^pww_ui_ci }
+			if = {
+				limit = {
+					check_variable = { pww_ui_cs = 1 }
+					NOT = { check_variable = { pww_ui_mv = pww_ui_t_leader } }
+				}
+				pww_ui_cart_add_flag = yes
+			}
+			if = {
+				limit = {
+					check_variable = { pww_ui_mv = THIS }
+					OR = {
+						check_variable = { pww_ui_cs = 0 }
+						check_variable = { pww_ui_cs = 1 }
+					}
+				}
+				set_temp_variable = { pww_ui_t_me = 1 }
+				if = {
+					limit = { check_variable = { pww_ui_cs = 0 } }
+					set_temp_variable = { pww_ui_t_me = 2 }
+				}
+				set_temp_variable = { pww_ui_t_quota = global.pww_cm_quota^pww_ui_ci }
+				set_temp_variable = { pww_ui_t_sold = global.pww_cm_sold^pww_ui_ci }
+				set_temp_variable = { pww_ui_t_over = global.pww_cm_over^pww_ui_ci }
+				set_temp_variable = { pww_ui_t_room = pww_ui_t_quota }
+				subtract_from_temp_variable = { pww_ui_t_room = pww_ui_t_sold }
+				set_temp_variable = { pww_band_value = global.pww_cm_susp^pww_ui_ci }
+				meta_effect = { text = { pww_cartel_band = [Y] } Y = "yes" }
+				set_temp_variable = { pww_ui_t_sb = pww_band }
+			}
+		}
+	}
+}
+
+# ---------------------------------------------------------------------------
+# Dossier values that depend on the viewer, for every human viewer, stored on
+# each country as var@viewer (the dossier reads var@ROOT). Monthly, and once
+# on the first day.
+pww_ui_views = {
+	set_global_flag = pww_ui_view_ready
+	every_country = {
+		limit = { is_ai = no }
+		set_temp_variable = { pww_ui_h = THIS }
+		every_country = {
+			limit = {
+				exists = yes
+				NOT = { tag = PREV }
+			}
+			pww_ui_view_of = yes
+		}
+	}
+}
+
+# Country scope (a possible dossier target). In temp pww_ui_h (the viewer).
+pww_ui_view_of = {
+	if = {
+		limit = { has_global_flag = pww_rel_loaded }
+		set_temp_variable = { pww_in_seller = THIS }
+		set_temp_variable = { pww_in_buyer = pww_ui_h }
+		meta_effect = { text = { pww_rel_get = [Y] } Y = "yes" }
+		set_temp_variable = { pww_ui_b0 = pww_rel_band }
+		set_temp_variable = { pww_ui_o0 = pww_rel_out }
+		set_temp_variable = { pww_in_seller = pww_ui_h }
+		set_temp_variable = { pww_in_buyer = THIS }
+		meta_effect = { text = { pww_rel_get = [Y] } Y = "yes" }
+		set_variable = { pww_ui_vb0@var:pww_ui_h = pww_ui_b0 }
+		set_variable = { pww_ui_vb1@var:pww_ui_h = pww_rel_band }
+		# a soured bond shows whichever side it is on; else the stronger one
+		set_variable = { pww_ui_vb@var:pww_ui_h = pww_ui_b0 }
+		if = {
+			limit = {
+				NOT = { check_variable = { pww_ui_b0 = 4 } }
+				OR = {
+					check_variable = { pww_rel_band = 4 }
+					check_variable = { pww_rel_out > pww_ui_o0 }
+				}
+			}
+			set_variable = { pww_ui_vb@var:pww_ui_h = pww_rel_band }
+		}
+	}
+	if = {
+		limit = {
+			has_global_flag = pww_logi_loaded
+			check_variable = { pww_ui_x1 > -1 }
+		}
+		set_temp_variable = { pww_in_seller = THIS }
+		set_temp_variable = { pww_in_buyer = pww_ui_h }
+		set_temp_variable = { pww_in_resource = pww_ui_x1 }
+		meta_effect = { text = { pww_logi_delivered_cost = [Y] } Y = "yes" }
+		set_variable = { pww_ui_vr@var:pww_ui_h = pww_logi_route }
+		set_variable = { pww_ui_vc@var:pww_ui_h = 3 }
+		if = { limit = { check_variable = { pww_logi_cost_share < 0.03 } } set_variable = { pww_ui_vc@var:pww_ui_h = 0 } }
+		else_if = { limit = { check_variable = { pww_logi_cost_share < 0.1 } } set_variable = { pww_ui_vc@var:pww_ui_h = 1 } }
+		else_if = { limit = { check_variable = { pww_logi_cost_share < 0.2 } } set_variable = { pww_ui_vc@var:pww_ui_h = 2 } }
+	}
 }
 
 # Country scope (the viewer). Rewrites the viewer's marks on other countries.

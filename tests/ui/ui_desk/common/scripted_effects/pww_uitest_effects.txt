@@ -7,8 +7,14 @@
 #          ledger: SWE->GER steel (committal, 2 civs), GER->ITA coal (open,
 #          1 civ), ROM->GER oil (reserved), CZE->YUG steel; demand GER->CZE
 #          quiet, steel output share; CZE makes no moves.
+#          SWE->ITA steel (committal) and SWE->POL steel (open): ITA and POL
+#          dossiers offer to poach them (GER produces steel);
+#          GER chairs a coal conference (IRRA runs from day 1; GER is short
+#          of rubber, so both cartels show on the Overview).
 #   day 3  UI slots logged (situations, ledger, marks on CZE)
-#   day 34 market report logged (first turn of the month has passed)
+#   day 5  GER rubber reserve seeded (600 unit-days): the reserve tick draws it
+#   day 33 market report logged (first turn of the month has passed)
+#   day 45 reserves and cartel rows logged, PWW_DONE
 
 # In: pww_l_seller, pww_l_buyer, pww_l_res, pww_l_amount, pww_l_committal,
 # pww_l_term_days, pww_l_civ, pww_l_cond (0 or a condition id).
@@ -79,6 +85,40 @@ pww_uitest_setup = {
 	set_temp_variable = { pww_l_cond = 0 }
 	pww_uitest_ag = yes
 
+	SWE = { set_temp_variable = { pww_l_seller = THIS } }
+	ITA = { set_temp_variable = { pww_l_buyer = THIS } }
+	set_temp_variable = { pww_l_res = 4 }
+	set_temp_variable = { pww_l_amount = 5 }
+	set_temp_variable = { pww_l_committal = 1 }
+	set_temp_variable = { pww_l_term_days = 365 }
+	set_temp_variable = { pww_l_civ = 1 }
+	set_temp_variable = { pww_l_cond = 0 }
+	pww_uitest_ag = yes
+
+	SWE = { set_temp_variable = { pww_l_seller = THIS } }
+	POL = { set_temp_variable = { pww_l_buyer = THIS } }
+	set_temp_variable = { pww_l_res = 4 }
+	set_temp_variable = { pww_l_amount = 6 }
+	set_temp_variable = { pww_l_committal = 0 }
+	set_temp_variable = { pww_l_term_days = 0 }
+	set_temp_variable = { pww_l_civ = 1 }
+	set_temp_variable = { pww_l_cond = 0 }
+	pww_uitest_ag = yes
+
+	if = {
+		limit = { has_global_flag = pww_cartel_loaded }
+		set_temp_variable = { pww_in_res = 6 }
+		GER = { set_temp_variable = { pww_in_leader = THIS } }
+		pww_cartel_open_conference = yes
+		log = "PWW_RESULT ui.setup_cartel INFO coal conference id=[?pww_out_cartel_id] result=[?pww_out_result] fail=[?pww_out_fail]"
+		set_temp_variable = { pww_in_cartel_id = pww_out_cartel_id }
+		POL = { set_temp_variable = { pww_in_country = THIS } }
+		pww_cartel_join = yes
+		CZE = { set_temp_variable = { pww_in_country = THIS } }
+		pww_cartel_join = yes
+		log = "PWW_RESULT ui.setup_cartel INFO joins result=[?pww_out_result] fail=[?pww_out_fail]"
+	}
+
 	GER = { set_temp_variable = { pww_in_claimant = THIS } }
 	CZE = { set_temp_variable = { pww_in_target = THIS } }
 	set_temp_variable = { pww_in_sit_id = -1 }
@@ -106,4 +146,23 @@ pww_uitest_report = {
 
 pww_uitest_market = {
 	log = "PWW_RESULT ui.market INFO ready=[?global.pww_ui_mkt_day] tungsten band=[?global.pww_ui_mkt_band_tungsten] c1=[?global.pww_ui_mkt_c1_tungsten] b1=[?global.pww_ui_mkt_b1_tungsten.GetTag] c2=[?global.pww_ui_mkt_c2_tungsten] oil band=[?global.pww_ui_mkt_band_oil] c1=[?global.pww_ui_mkt_c1_oil]"
+}
+
+pww_uitest_seed_stock = {
+	GER = {
+		set_variable = { pww_stock_rubber = 600 }
+		log = "PWW_RESULT ui.seed_stock INFO GER rubber=[?pww_stock_rubber] cap=[?pww_stock_cap_rubber]"
+	}
+}
+
+pww_uitest_report2 = {
+	GER = {
+		log = "PWW_RESULT ui.reserves INFO nr=[?pww_ui_nr] r0 res=[?pww_ui_r0_res] days=[?pww_ui_r0_days] fill=[?pww_ui_r0_fill] in=[?pww_ui_r0_in|2] out=[?pww_ui_r0_out|2] fx=[?pww_ui_r0_fx] depots=[?pww_stock_depots]"
+		log = "PWW_RESULT ui.cartels INFO nc=[?pww_ui_nc] c0 res=[?pww_ui_c0_res] st=[?pww_ui_c0_status] pct=[?pww_ui_c0_pct] cb=[?pww_ui_c0_cb] nm=[?pww_ui_c0_nm] me=[?pww_ui_c0_me] c1 res=[?pww_ui_c1_res] me=[?pww_ui_c1_me] quota=[?pww_ui_c1_quota]"
+		log = "PWW_RESULT ui.layout INFO tab=[?pww_ui_tab] ns=[?pww_ui_ns] y_cart_hdr=[?pww_uy_desk_cart_hdr] y_mkt_hdr=[?pww_uy_desk_mkt_hdr] l0 bond=[?pww_ui_l0_bond] route=[?pww_ui_l0_route] dsh=[?pww_ui_l0_dsh]"
+	}
+	ITA = {
+		log = "PWW_RESULT ui.dossier_ita INFO nk=[?pww_ui_nk] k0 side=[?pww_ui_k0_side] cp=[?pww_ui_k0_cp.GetTag] k1 cp=[?pww_ui_k1_cp.GetTag] bond=[?pww_ui_k1_bond] x1=[?pww_ui_x1] x2=[?pww_ui_x2] nrv=[?pww_ui_nrv] vb=[?pww_ui_vb@GER] vr=[?pww_ui_vr@GER] vc=[?pww_ui_vc@GER]"
+	}
+	log = "PWW_RESULT ui.market2 INFO rubber c3=[?global.pww_ui_mkt_c3_rubber] coal c3=[?global.pww_ui_mkt_c3_coal]"
 }

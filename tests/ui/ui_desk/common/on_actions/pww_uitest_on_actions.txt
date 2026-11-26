@@ -13,9 +13,17 @@ on_actions = {
 					pww_uitest_report = yes
 				}
 				if = {
+					limit = { check_variable = { global.pww_uitest_day = 5 } }
+					pww_uitest_seed_stock = yes
+				}
+				if = {
 					limit = { check_variable = { global.pww_uitest_day = 33 } }
 					pww_uitest_report = yes
 					pww_uitest_market = yes
+				}
+				if = {
+					limit = { check_variable = { global.pww_uitest_day = 45 } }
+					pww_uitest_report2 = yes
 					log = "PWW_DONE ui_desk"
 				}
 			}

@@ -80,6 +80,13 @@ defined_text = {
 	text = { localization_key = pww_ui_no_patron }
 }
 defined_text = {
+	name = pww_ui_sl_s0_seatline
+	text = { trigger = { check_variable = { pww_ui_s0_seat = 0 } } localization_key = pww_seat_line_claimant }
+	text = { trigger = { check_variable = { pww_ui_s0_seat = 1 } } localization_key = pww_seat_line_holder }
+	text = { trigger = { check_variable = { pww_ui_s0_seat = 2 } } localization_key = pww_seat_line_patron }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
 	name = pww_ui_sl_s1_title
 	text = { trigger = { check_variable = { pww_ui_s1_tmpl > 0 } } localization_key = pww_sit_wolfram_title }
 	text = { localization_key = pww_ui_s1_title_generic }
@@ -158,6 +165,13 @@ defined_text = {
 	name = pww_ui_sl_s1_patron
 	text = { trigger = { check_variable = { pww_ui_s1_hasp = 1 } } localization_key = pww_ui_s1_patron }
 	text = { localization_key = pww_ui_no_patron }
+}
+defined_text = {
+	name = pww_ui_sl_s1_seatline
+	text = { trigger = { check_variable = { pww_ui_s1_seat = 0 } } localization_key = pww_seat_line_claimant }
+	text = { trigger = { check_variable = { pww_ui_s1_seat = 1 } } localization_key = pww_seat_line_holder }
+	text = { trigger = { check_variable = { pww_ui_s1_seat = 2 } } localization_key = pww_seat_line_patron }
+	text = { localization_key = pww_ui_blank }
 }
 defined_text = {
 	name = pww_ui_sl_s2_title
@@ -240,6 +254,13 @@ defined_text = {
 	text = { localization_key = pww_ui_no_patron }
 }
 defined_text = {
+	name = pww_ui_sl_s2_seatline
+	text = { trigger = { check_variable = { pww_ui_s2_seat = 0 } } localization_key = pww_seat_line_claimant }
+	text = { trigger = { check_variable = { pww_ui_s2_seat = 1 } } localization_key = pww_seat_line_holder }
+	text = { trigger = { check_variable = { pww_ui_s2_seat = 2 } } localization_key = pww_seat_line_patron }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
 	name = pww_ui_sl_s3_title
 	text = { trigger = { check_variable = { pww_ui_s3_tmpl > 0 } } localization_key = pww_sit_wolfram_title }
 	text = { localization_key = pww_ui_s3_title_generic }
@@ -320,6 +341,325 @@ defined_text = {
 	text = { localization_key = pww_ui_no_patron }
 }
 defined_text = {
+	name = pww_ui_sl_s3_seatline
+	text = { trigger = { check_variable = { pww_ui_s3_seat = 0 } } localization_key = pww_seat_line_claimant }
+	text = { trigger = { check_variable = { pww_ui_s3_seat = 1 } } localization_key = pww_seat_line_holder }
+	text = { trigger = { check_variable = { pww_ui_s3_seat = 2 } } localization_key = pww_seat_line_patron }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_c0_res
+	text = { trigger = { check_variable = { pww_ui_c0_res = 0 } } localization_key = pww_mkt_res_oil }
+	text = { trigger = { check_variable = { pww_ui_c0_res = 1 } } localization_key = pww_mkt_res_aluminium }
+	text = { trigger = { check_variable = { pww_ui_c0_res = 2 } } localization_key = pww_mkt_res_rubber }
+	text = { trigger = { check_variable = { pww_ui_c0_res = 3 } } localization_key = pww_mkt_res_tungsten }
+	text = { trigger = { check_variable = { pww_ui_c0_res = 4 } } localization_key = pww_mkt_res_steel }
+	text = { trigger = { check_variable = { pww_ui_c0_res = 5 } } localization_key = pww_mkt_res_chromium }
+	text = { trigger = { check_variable = { pww_ui_c0_res = 6 } } localization_key = pww_mkt_res_coal }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_c0_res_lc
+	text = { trigger = { check_variable = { pww_ui_c0_res = 0 } } localization_key = pww_ui_res_lc_oil }
+	text = { trigger = { check_variable = { pww_ui_c0_res = 1 } } localization_key = pww_ui_res_lc_aluminium }
+	text = { trigger = { check_variable = { pww_ui_c0_res = 2 } } localization_key = pww_ui_res_lc_rubber }
+	text = { trigger = { check_variable = { pww_ui_c0_res = 3 } } localization_key = pww_ui_res_lc_tungsten }
+	text = { trigger = { check_variable = { pww_ui_c0_res = 4 } } localization_key = pww_ui_res_lc_steel }
+	text = { trigger = { check_variable = { pww_ui_c0_res = 5 } } localization_key = pww_ui_res_lc_chromium }
+	text = { trigger = { check_variable = { pww_ui_c0_res = 6 } } localization_key = pww_ui_res_lc_coal }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_c0_name
+	text = { trigger = { check_variable = { pww_ui_c0_anchor = 1 } } localization_key = pww_ui_cart_name_anchor }
+	text = { localization_key = pww_ui_c0_name }
+}
+defined_text = {
+	name = pww_ui_sl_c0_m0
+	text = { trigger = { check_variable = { pww_ui_c0_nm > 0 } } localization_key = pww_ui_c0_m0 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_c0_m1
+	text = { trigger = { check_variable = { pww_ui_c0_nm > 1 } } localization_key = pww_ui_c0_m1 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_c0_m2
+	text = { trigger = { check_variable = { pww_ui_c0_nm > 2 } } localization_key = pww_ui_c0_m2 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_c0_m3
+	text = { trigger = { check_variable = { pww_ui_c0_nm > 3 } } localization_key = pww_ui_c0_m3 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_c0_m4
+	text = { trigger = { check_variable = { pww_ui_c0_nm > 4 } } localization_key = pww_ui_c0_m4 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_c0_m5
+	text = { trigger = { check_variable = { pww_ui_c0_nm > 5 } } localization_key = pww_ui_c0_m5 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_c0_price
+	text = { trigger = { check_variable = { pww_ui_c0_status = 0 } } localization_key = pww_ui_cart_conf }
+	text = { trigger = { check_variable = { pww_ui_c0_pct < 1 } } localization_key = pww_ui_cart_at_market }
+	text = { localization_key = pww_ui_c0_over }
+}
+defined_text = {
+	name = pww_ui_sl_c0_coh
+	text = { trigger = { check_variable = { pww_ui_c0_cb = 0 } } localization_key = pww_cartel_cohesion_band_0 }
+	text = { trigger = { check_variable = { pww_ui_c0_cb = 1 } } localization_key = pww_cartel_cohesion_band_1 }
+	text = { trigger = { check_variable = { pww_ui_c0_cb = 2 } } localization_key = pww_cartel_cohesion_band_2 }
+	text = { trigger = { check_variable = { pww_ui_c0_cb = 3 } } localization_key = pww_cartel_cohesion_band_3 }
+	text = { trigger = { check_variable = { pww_ui_c0_cb = 4 } } localization_key = pww_cartel_cohesion_band_4 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_c0_susp
+	text = { trigger = { check_variable = { pww_ui_c0_sb = 0 } } localization_key = pww_cartel_susp_band_0 }
+	text = { trigger = { check_variable = { pww_ui_c0_sb = 1 } } localization_key = pww_cartel_susp_band_1 }
+	text = { trigger = { check_variable = { pww_ui_c0_sb = 2 } } localization_key = pww_cartel_susp_band_2 }
+	text = { trigger = { check_variable = { pww_ui_c0_sb = 3 } } localization_key = pww_cartel_susp_band_3 }
+	text = { trigger = { check_variable = { pww_ui_c0_sb = 4 } } localization_key = pww_cartel_susp_band_4 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_c0_l2
+	text = { trigger = { check_variable = { pww_ui_c0_me = 2 } } localization_key = pww_ui_c0_l2_invited }
+	text = { trigger = { check_variable = { pww_ui_c0_me = 1 } check_variable = { pww_ui_c0_quota < 0 } } localization_key = pww_ui_c0_l2_joined }
+	text = { trigger = { check_variable = { pww_ui_c0_me = 1 } check_variable = { pww_ui_c0_room < 0 } } localization_key = pww_ui_c0_l2_over }
+	text = { trigger = { check_variable = { pww_ui_c0_me = 1 } } localization_key = pww_ui_c0_l2_member }
+	text = { trigger = { check_variable = { pww_ui_c0_status = 0 } } localization_key = pww_ui_c0_l2_conf }
+	text = { localization_key = pww_ui_c0_l2_short }
+}
+defined_text = {
+	name = pww_ui_sl_c0_status
+	text = { trigger = { check_variable = { pww_ui_c0_status = 0 } } localization_key = pww_cartel_status_0 }
+	text = { trigger = { check_variable = { pww_ui_c0_status = 1 } } localization_key = pww_cartel_status_1 }
+	text = { trigger = { check_variable = { pww_ui_c0_status = 2 } } localization_key = pww_cartel_status_2 }
+	text = { trigger = { check_variable = { pww_ui_c0_status = 3 } } localization_key = pww_cartel_status_3 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_c0_mine
+	text = { trigger = { check_variable = { pww_ui_c0_me = 1 } } localization_key = pww_ui_c0_tt_member }
+	text = { trigger = { check_variable = { pww_ui_c0_me = 2 } } localization_key = pww_ui_cart_tt_invited }
+	text = { localization_key = pww_ui_cart_tt_outsider }
+}
+defined_text = {
+	name = pww_ui_sl_c1_res
+	text = { trigger = { check_variable = { pww_ui_c1_res = 0 } } localization_key = pww_mkt_res_oil }
+	text = { trigger = { check_variable = { pww_ui_c1_res = 1 } } localization_key = pww_mkt_res_aluminium }
+	text = { trigger = { check_variable = { pww_ui_c1_res = 2 } } localization_key = pww_mkt_res_rubber }
+	text = { trigger = { check_variable = { pww_ui_c1_res = 3 } } localization_key = pww_mkt_res_tungsten }
+	text = { trigger = { check_variable = { pww_ui_c1_res = 4 } } localization_key = pww_mkt_res_steel }
+	text = { trigger = { check_variable = { pww_ui_c1_res = 5 } } localization_key = pww_mkt_res_chromium }
+	text = { trigger = { check_variable = { pww_ui_c1_res = 6 } } localization_key = pww_mkt_res_coal }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_c1_res_lc
+	text = { trigger = { check_variable = { pww_ui_c1_res = 0 } } localization_key = pww_ui_res_lc_oil }
+	text = { trigger = { check_variable = { pww_ui_c1_res = 1 } } localization_key = pww_ui_res_lc_aluminium }
+	text = { trigger = { check_variable = { pww_ui_c1_res = 2 } } localization_key = pww_ui_res_lc_rubber }
+	text = { trigger = { check_variable = { pww_ui_c1_res = 3 } } localization_key = pww_ui_res_lc_tungsten }
+	text = { trigger = { check_variable = { pww_ui_c1_res = 4 } } localization_key = pww_ui_res_lc_steel }
+	text = { trigger = { check_variable = { pww_ui_c1_res = 5 } } localization_key = pww_ui_res_lc_chromium }
+	text = { trigger = { check_variable = { pww_ui_c1_res = 6 } } localization_key = pww_ui_res_lc_coal }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_c1_name
+	text = { trigger = { check_variable = { pww_ui_c1_anchor = 1 } } localization_key = pww_ui_cart_name_anchor }
+	text = { localization_key = pww_ui_c1_name }
+}
+defined_text = {
+	name = pww_ui_sl_c1_m0
+	text = { trigger = { check_variable = { pww_ui_c1_nm > 0 } } localization_key = pww_ui_c1_m0 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_c1_m1
+	text = { trigger = { check_variable = { pww_ui_c1_nm > 1 } } localization_key = pww_ui_c1_m1 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_c1_m2
+	text = { trigger = { check_variable = { pww_ui_c1_nm > 2 } } localization_key = pww_ui_c1_m2 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_c1_m3
+	text = { trigger = { check_variable = { pww_ui_c1_nm > 3 } } localization_key = pww_ui_c1_m3 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_c1_m4
+	text = { trigger = { check_variable = { pww_ui_c1_nm > 4 } } localization_key = pww_ui_c1_m4 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_c1_m5
+	text = { trigger = { check_variable = { pww_ui_c1_nm > 5 } } localization_key = pww_ui_c1_m5 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_c1_price
+	text = { trigger = { check_variable = { pww_ui_c1_status = 0 } } localization_key = pww_ui_cart_conf }
+	text = { trigger = { check_variable = { pww_ui_c1_pct < 1 } } localization_key = pww_ui_cart_at_market }
+	text = { localization_key = pww_ui_c1_over }
+}
+defined_text = {
+	name = pww_ui_sl_c1_coh
+	text = { trigger = { check_variable = { pww_ui_c1_cb = 0 } } localization_key = pww_cartel_cohesion_band_0 }
+	text = { trigger = { check_variable = { pww_ui_c1_cb = 1 } } localization_key = pww_cartel_cohesion_band_1 }
+	text = { trigger = { check_variable = { pww_ui_c1_cb = 2 } } localization_key = pww_cartel_cohesion_band_2 }
+	text = { trigger = { check_variable = { pww_ui_c1_cb = 3 } } localization_key = pww_cartel_cohesion_band_3 }
+	text = { trigger = { check_variable = { pww_ui_c1_cb = 4 } } localization_key = pww_cartel_cohesion_band_4 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_c1_susp
+	text = { trigger = { check_variable = { pww_ui_c1_sb = 0 } } localization_key = pww_cartel_susp_band_0 }
+	text = { trigger = { check_variable = { pww_ui_c1_sb = 1 } } localization_key = pww_cartel_susp_band_1 }
+	text = { trigger = { check_variable = { pww_ui_c1_sb = 2 } } localization_key = pww_cartel_susp_band_2 }
+	text = { trigger = { check_variable = { pww_ui_c1_sb = 3 } } localization_key = pww_cartel_susp_band_3 }
+	text = { trigger = { check_variable = { pww_ui_c1_sb = 4 } } localization_key = pww_cartel_susp_band_4 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_c1_l2
+	text = { trigger = { check_variable = { pww_ui_c1_me = 2 } } localization_key = pww_ui_c1_l2_invited }
+	text = { trigger = { check_variable = { pww_ui_c1_me = 1 } check_variable = { pww_ui_c1_quota < 0 } } localization_key = pww_ui_c1_l2_joined }
+	text = { trigger = { check_variable = { pww_ui_c1_me = 1 } check_variable = { pww_ui_c1_room < 0 } } localization_key = pww_ui_c1_l2_over }
+	text = { trigger = { check_variable = { pww_ui_c1_me = 1 } } localization_key = pww_ui_c1_l2_member }
+	text = { trigger = { check_variable = { pww_ui_c1_status = 0 } } localization_key = pww_ui_c1_l2_conf }
+	text = { localization_key = pww_ui_c1_l2_short }
+}
+defined_text = {
+	name = pww_ui_sl_c1_status
+	text = { trigger = { check_variable = { pww_ui_c1_status = 0 } } localization_key = pww_cartel_status_0 }
+	text = { trigger = { check_variable = { pww_ui_c1_status = 1 } } localization_key = pww_cartel_status_1 }
+	text = { trigger = { check_variable = { pww_ui_c1_status = 2 } } localization_key = pww_cartel_status_2 }
+	text = { trigger = { check_variable = { pww_ui_c1_status = 3 } } localization_key = pww_cartel_status_3 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_c1_mine
+	text = { trigger = { check_variable = { pww_ui_c1_me = 1 } } localization_key = pww_ui_c1_tt_member }
+	text = { trigger = { check_variable = { pww_ui_c1_me = 2 } } localization_key = pww_ui_cart_tt_invited }
+	text = { localization_key = pww_ui_cart_tt_outsider }
+}
+defined_text = {
+	name = pww_ui_sl_c2_res
+	text = { trigger = { check_variable = { pww_ui_c2_res = 0 } } localization_key = pww_mkt_res_oil }
+	text = { trigger = { check_variable = { pww_ui_c2_res = 1 } } localization_key = pww_mkt_res_aluminium }
+	text = { trigger = { check_variable = { pww_ui_c2_res = 2 } } localization_key = pww_mkt_res_rubber }
+	text = { trigger = { check_variable = { pww_ui_c2_res = 3 } } localization_key = pww_mkt_res_tungsten }
+	text = { trigger = { check_variable = { pww_ui_c2_res = 4 } } localization_key = pww_mkt_res_steel }
+	text = { trigger = { check_variable = { pww_ui_c2_res = 5 } } localization_key = pww_mkt_res_chromium }
+	text = { trigger = { check_variable = { pww_ui_c2_res = 6 } } localization_key = pww_mkt_res_coal }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_c2_res_lc
+	text = { trigger = { check_variable = { pww_ui_c2_res = 0 } } localization_key = pww_ui_res_lc_oil }
+	text = { trigger = { check_variable = { pww_ui_c2_res = 1 } } localization_key = pww_ui_res_lc_aluminium }
+	text = { trigger = { check_variable = { pww_ui_c2_res = 2 } } localization_key = pww_ui_res_lc_rubber }
+	text = { trigger = { check_variable = { pww_ui_c2_res = 3 } } localization_key = pww_ui_res_lc_tungsten }
+	text = { trigger = { check_variable = { pww_ui_c2_res = 4 } } localization_key = pww_ui_res_lc_steel }
+	text = { trigger = { check_variable = { pww_ui_c2_res = 5 } } localization_key = pww_ui_res_lc_chromium }
+	text = { trigger = { check_variable = { pww_ui_c2_res = 6 } } localization_key = pww_ui_res_lc_coal }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_c2_name
+	text = { trigger = { check_variable = { pww_ui_c2_anchor = 1 } } localization_key = pww_ui_cart_name_anchor }
+	text = { localization_key = pww_ui_c2_name }
+}
+defined_text = {
+	name = pww_ui_sl_c2_m0
+	text = { trigger = { check_variable = { pww_ui_c2_nm > 0 } } localization_key = pww_ui_c2_m0 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_c2_m1
+	text = { trigger = { check_variable = { pww_ui_c2_nm > 1 } } localization_key = pww_ui_c2_m1 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_c2_m2
+	text = { trigger = { check_variable = { pww_ui_c2_nm > 2 } } localization_key = pww_ui_c2_m2 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_c2_m3
+	text = { trigger = { check_variable = { pww_ui_c2_nm > 3 } } localization_key = pww_ui_c2_m3 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_c2_m4
+	text = { trigger = { check_variable = { pww_ui_c2_nm > 4 } } localization_key = pww_ui_c2_m4 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_c2_m5
+	text = { trigger = { check_variable = { pww_ui_c2_nm > 5 } } localization_key = pww_ui_c2_m5 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_c2_price
+	text = { trigger = { check_variable = { pww_ui_c2_status = 0 } } localization_key = pww_ui_cart_conf }
+	text = { trigger = { check_variable = { pww_ui_c2_pct < 1 } } localization_key = pww_ui_cart_at_market }
+	text = { localization_key = pww_ui_c2_over }
+}
+defined_text = {
+	name = pww_ui_sl_c2_coh
+	text = { trigger = { check_variable = { pww_ui_c2_cb = 0 } } localization_key = pww_cartel_cohesion_band_0 }
+	text = { trigger = { check_variable = { pww_ui_c2_cb = 1 } } localization_key = pww_cartel_cohesion_band_1 }
+	text = { trigger = { check_variable = { pww_ui_c2_cb = 2 } } localization_key = pww_cartel_cohesion_band_2 }
+	text = { trigger = { check_variable = { pww_ui_c2_cb = 3 } } localization_key = pww_cartel_cohesion_band_3 }
+	text = { trigger = { check_variable = { pww_ui_c2_cb = 4 } } localization_key = pww_cartel_cohesion_band_4 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_c2_susp
+	text = { trigger = { check_variable = { pww_ui_c2_sb = 0 } } localization_key = pww_cartel_susp_band_0 }
+	text = { trigger = { check_variable = { pww_ui_c2_sb = 1 } } localization_key = pww_cartel_susp_band_1 }
+	text = { trigger = { check_variable = { pww_ui_c2_sb = 2 } } localization_key = pww_cartel_susp_band_2 }
+	text = { trigger = { check_variable = { pww_ui_c2_sb = 3 } } localization_key = pww_cartel_susp_band_3 }
+	text = { trigger = { check_variable = { pww_ui_c2_sb = 4 } } localization_key = pww_cartel_susp_band_4 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_c2_l2
+	text = { trigger = { check_variable = { pww_ui_c2_me = 2 } } localization_key = pww_ui_c2_l2_invited }
+	text = { trigger = { check_variable = { pww_ui_c2_me = 1 } check_variable = { pww_ui_c2_quota < 0 } } localization_key = pww_ui_c2_l2_joined }
+	text = { trigger = { check_variable = { pww_ui_c2_me = 1 } check_variable = { pww_ui_c2_room < 0 } } localization_key = pww_ui_c2_l2_over }
+	text = { trigger = { check_variable = { pww_ui_c2_me = 1 } } localization_key = pww_ui_c2_l2_member }
+	text = { trigger = { check_variable = { pww_ui_c2_status = 0 } } localization_key = pww_ui_c2_l2_conf }
+	text = { localization_key = pww_ui_c2_l2_short }
+}
+defined_text = {
+	name = pww_ui_sl_c2_status
+	text = { trigger = { check_variable = { pww_ui_c2_status = 0 } } localization_key = pww_cartel_status_0 }
+	text = { trigger = { check_variable = { pww_ui_c2_status = 1 } } localization_key = pww_cartel_status_1 }
+	text = { trigger = { check_variable = { pww_ui_c2_status = 2 } } localization_key = pww_cartel_status_2 }
+	text = { trigger = { check_variable = { pww_ui_c2_status = 3 } } localization_key = pww_cartel_status_3 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_c2_mine
+	text = { trigger = { check_variable = { pww_ui_c2_me = 1 } } localization_key = pww_ui_c2_tt_member }
+	text = { trigger = { check_variable = { pww_ui_c2_me = 2 } } localization_key = pww_ui_cart_tt_invited }
+	text = { localization_key = pww_ui_cart_tt_outsider }
+}
+defined_text = {
 	name = pww_ui_sl_l0_res
 	text = { trigger = { check_variable = { pww_ui_l0_res = 0 } } localization_key = pww_mkt_res_oil }
 	text = { trigger = { check_variable = { pww_ui_l0_res = 1 } } localization_key = pww_mkt_res_aluminium }
@@ -390,6 +730,49 @@ defined_text = {
 	text = { trigger = { check_variable = { pww_ui_l0_st = 1 } } localization_key = pww_ui_ag_tt_status_1 }
 	text = { trigger = { check_variable = { pww_ui_l0_st = 2 } } localization_key = pww_ui_ag_tt_status_2 }
 	text = { trigger = { check_variable = { pww_ui_l0_st = 7 } } localization_key = pww_ui_ag_tt_status_7 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l0_term
+	text = { trigger = { check_variable = { pww_ui_l0_st = 7 } } localization_key = pww_ui_term_reserved }
+	text = { trigger = { check_variable = { pww_ui_l0_open = 1 } } localization_key = pww_ui_term_open }
+	text = { trigger = { check_variable = { pww_ui_l0_com = 1 } } localization_key = pww_ui_l0_locked }
+	text = { localization_key = pww_ui_l0_runs }
+}
+defined_text = {
+	name = pww_ui_sl_l0_bondw
+	text = { trigger = { check_variable = { pww_ui_l0_bond = 0 } } localization_key = pww_rel_band_0 }
+	text = { trigger = { check_variable = { pww_ui_l0_bond = 1 } } localization_key = pww_rel_band_1 }
+	text = { trigger = { check_variable = { pww_ui_l0_bond = 2 } } localization_key = pww_rel_band_2 }
+	text = { trigger = { check_variable = { pww_ui_l0_bond = 3 } } localization_key = pww_rel_band_3 }
+	text = { trigger = { check_variable = { pww_ui_l0_bond = 4 } } localization_key = pww_rel_band_4 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l0_bond
+	text = { trigger = { check_variable = { pww_ui_l0_bond > -1 } } localization_key = pww_ui_l0_bond }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l0_route
+	text = { trigger = { check_variable = { pww_ui_l0_kind > 0 } } localization_key = pww_ui_blank }
+	text = { trigger = { check_variable = { pww_ui_l0_route = 0 } } localization_key = pww_ui_l0_route_0 }
+	text = { trigger = { check_variable = { pww_ui_l0_route = 1 } } localization_key = pww_ui_l0_route_1 }
+	text = { trigger = { check_variable = { pww_ui_l0_route = 2 } } localization_key = pww_ui_l0_route_2 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l0_bondtt
+	text = { trigger = { check_variable = { pww_ui_l0_bond > -1 } } localization_key = pww_ui_l0_bondtt }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l0_bonddesc
+	text = { trigger = { check_variable = { pww_ui_l0_bond = 0 } } localization_key = pww_rel_band_0_desc }
+	text = { trigger = { check_variable = { pww_ui_l0_bond = 1 } } localization_key = pww_rel_band_1_desc }
+	text = { trigger = { check_variable = { pww_ui_l0_bond = 2 } } localization_key = pww_rel_band_2_desc }
+	text = { trigger = { check_variable = { pww_ui_l0_bond = 3 } } localization_key = pww_rel_band_3_desc }
+	text = { trigger = { check_variable = { pww_ui_l0_bond = 4 } } localization_key = pww_rel_band_4_desc }
 	text = { localization_key = pww_ui_blank }
 }
 defined_text = {
@@ -466,6 +849,49 @@ defined_text = {
 	text = { localization_key = pww_ui_blank }
 }
 defined_text = {
+	name = pww_ui_sl_l1_term
+	text = { trigger = { check_variable = { pww_ui_l1_st = 7 } } localization_key = pww_ui_term_reserved }
+	text = { trigger = { check_variable = { pww_ui_l1_open = 1 } } localization_key = pww_ui_term_open }
+	text = { trigger = { check_variable = { pww_ui_l1_com = 1 } } localization_key = pww_ui_l1_locked }
+	text = { localization_key = pww_ui_l1_runs }
+}
+defined_text = {
+	name = pww_ui_sl_l1_bondw
+	text = { trigger = { check_variable = { pww_ui_l1_bond = 0 } } localization_key = pww_rel_band_0 }
+	text = { trigger = { check_variable = { pww_ui_l1_bond = 1 } } localization_key = pww_rel_band_1 }
+	text = { trigger = { check_variable = { pww_ui_l1_bond = 2 } } localization_key = pww_rel_band_2 }
+	text = { trigger = { check_variable = { pww_ui_l1_bond = 3 } } localization_key = pww_rel_band_3 }
+	text = { trigger = { check_variable = { pww_ui_l1_bond = 4 } } localization_key = pww_rel_band_4 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l1_bond
+	text = { trigger = { check_variable = { pww_ui_l1_bond > -1 } } localization_key = pww_ui_l1_bond }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l1_route
+	text = { trigger = { check_variable = { pww_ui_l1_kind > 0 } } localization_key = pww_ui_blank }
+	text = { trigger = { check_variable = { pww_ui_l1_route = 0 } } localization_key = pww_ui_l1_route_0 }
+	text = { trigger = { check_variable = { pww_ui_l1_route = 1 } } localization_key = pww_ui_l1_route_1 }
+	text = { trigger = { check_variable = { pww_ui_l1_route = 2 } } localization_key = pww_ui_l1_route_2 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l1_bondtt
+	text = { trigger = { check_variable = { pww_ui_l1_bond > -1 } } localization_key = pww_ui_l1_bondtt }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l1_bonddesc
+	text = { trigger = { check_variable = { pww_ui_l1_bond = 0 } } localization_key = pww_rel_band_0_desc }
+	text = { trigger = { check_variable = { pww_ui_l1_bond = 1 } } localization_key = pww_rel_band_1_desc }
+	text = { trigger = { check_variable = { pww_ui_l1_bond = 2 } } localization_key = pww_rel_band_2_desc }
+	text = { trigger = { check_variable = { pww_ui_l1_bond = 3 } } localization_key = pww_rel_band_3_desc }
+	text = { trigger = { check_variable = { pww_ui_l1_bond = 4 } } localization_key = pww_rel_band_4_desc }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
 	name = pww_ui_sl_l2_res
 	text = { trigger = { check_variable = { pww_ui_l2_res = 0 } } localization_key = pww_mkt_res_oil }
 	text = { trigger = { check_variable = { pww_ui_l2_res = 1 } } localization_key = pww_mkt_res_aluminium }
@@ -536,6 +962,49 @@ defined_text = {
 	text = { trigger = { check_variable = { pww_ui_l2_st = 1 } } localization_key = pww_ui_ag_tt_status_1 }
 	text = { trigger = { check_variable = { pww_ui_l2_st = 2 } } localization_key = pww_ui_ag_tt_status_2 }
 	text = { trigger = { check_variable = { pww_ui_l2_st = 7 } } localization_key = pww_ui_ag_tt_status_7 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l2_term
+	text = { trigger = { check_variable = { pww_ui_l2_st = 7 } } localization_key = pww_ui_term_reserved }
+	text = { trigger = { check_variable = { pww_ui_l2_open = 1 } } localization_key = pww_ui_term_open }
+	text = { trigger = { check_variable = { pww_ui_l2_com = 1 } } localization_key = pww_ui_l2_locked }
+	text = { localization_key = pww_ui_l2_runs }
+}
+defined_text = {
+	name = pww_ui_sl_l2_bondw
+	text = { trigger = { check_variable = { pww_ui_l2_bond = 0 } } localization_key = pww_rel_band_0 }
+	text = { trigger = { check_variable = { pww_ui_l2_bond = 1 } } localization_key = pww_rel_band_1 }
+	text = { trigger = { check_variable = { pww_ui_l2_bond = 2 } } localization_key = pww_rel_band_2 }
+	text = { trigger = { check_variable = { pww_ui_l2_bond = 3 } } localization_key = pww_rel_band_3 }
+	text = { trigger = { check_variable = { pww_ui_l2_bond = 4 } } localization_key = pww_rel_band_4 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l2_bond
+	text = { trigger = { check_variable = { pww_ui_l2_bond > -1 } } localization_key = pww_ui_l2_bond }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l2_route
+	text = { trigger = { check_variable = { pww_ui_l2_kind > 0 } } localization_key = pww_ui_blank }
+	text = { trigger = { check_variable = { pww_ui_l2_route = 0 } } localization_key = pww_ui_l2_route_0 }
+	text = { trigger = { check_variable = { pww_ui_l2_route = 1 } } localization_key = pww_ui_l2_route_1 }
+	text = { trigger = { check_variable = { pww_ui_l2_route = 2 } } localization_key = pww_ui_l2_route_2 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l2_bondtt
+	text = { trigger = { check_variable = { pww_ui_l2_bond > -1 } } localization_key = pww_ui_l2_bondtt }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l2_bonddesc
+	text = { trigger = { check_variable = { pww_ui_l2_bond = 0 } } localization_key = pww_rel_band_0_desc }
+	text = { trigger = { check_variable = { pww_ui_l2_bond = 1 } } localization_key = pww_rel_band_1_desc }
+	text = { trigger = { check_variable = { pww_ui_l2_bond = 2 } } localization_key = pww_rel_band_2_desc }
+	text = { trigger = { check_variable = { pww_ui_l2_bond = 3 } } localization_key = pww_rel_band_3_desc }
+	text = { trigger = { check_variable = { pww_ui_l2_bond = 4 } } localization_key = pww_rel_band_4_desc }
 	text = { localization_key = pww_ui_blank }
 }
 defined_text = {
@@ -612,6 +1081,49 @@ defined_text = {
 	text = { localization_key = pww_ui_blank }
 }
 defined_text = {
+	name = pww_ui_sl_l3_term
+	text = { trigger = { check_variable = { pww_ui_l3_st = 7 } } localization_key = pww_ui_term_reserved }
+	text = { trigger = { check_variable = { pww_ui_l3_open = 1 } } localization_key = pww_ui_term_open }
+	text = { trigger = { check_variable = { pww_ui_l3_com = 1 } } localization_key = pww_ui_l3_locked }
+	text = { localization_key = pww_ui_l3_runs }
+}
+defined_text = {
+	name = pww_ui_sl_l3_bondw
+	text = { trigger = { check_variable = { pww_ui_l3_bond = 0 } } localization_key = pww_rel_band_0 }
+	text = { trigger = { check_variable = { pww_ui_l3_bond = 1 } } localization_key = pww_rel_band_1 }
+	text = { trigger = { check_variable = { pww_ui_l3_bond = 2 } } localization_key = pww_rel_band_2 }
+	text = { trigger = { check_variable = { pww_ui_l3_bond = 3 } } localization_key = pww_rel_band_3 }
+	text = { trigger = { check_variable = { pww_ui_l3_bond = 4 } } localization_key = pww_rel_band_4 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l3_bond
+	text = { trigger = { check_variable = { pww_ui_l3_bond > -1 } } localization_key = pww_ui_l3_bond }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l3_route
+	text = { trigger = { check_variable = { pww_ui_l3_kind > 0 } } localization_key = pww_ui_blank }
+	text = { trigger = { check_variable = { pww_ui_l3_route = 0 } } localization_key = pww_ui_l3_route_0 }
+	text = { trigger = { check_variable = { pww_ui_l3_route = 1 } } localization_key = pww_ui_l3_route_1 }
+	text = { trigger = { check_variable = { pww_ui_l3_route = 2 } } localization_key = pww_ui_l3_route_2 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l3_bondtt
+	text = { trigger = { check_variable = { pww_ui_l3_bond > -1 } } localization_key = pww_ui_l3_bondtt }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l3_bonddesc
+	text = { trigger = { check_variable = { pww_ui_l3_bond = 0 } } localization_key = pww_rel_band_0_desc }
+	text = { trigger = { check_variable = { pww_ui_l3_bond = 1 } } localization_key = pww_rel_band_1_desc }
+	text = { trigger = { check_variable = { pww_ui_l3_bond = 2 } } localization_key = pww_rel_band_2_desc }
+	text = { trigger = { check_variable = { pww_ui_l3_bond = 3 } } localization_key = pww_rel_band_3_desc }
+	text = { trigger = { check_variable = { pww_ui_l3_bond = 4 } } localization_key = pww_rel_band_4_desc }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
 	name = pww_ui_sl_l4_res
 	text = { trigger = { check_variable = { pww_ui_l4_res = 0 } } localization_key = pww_mkt_res_oil }
 	text = { trigger = { check_variable = { pww_ui_l4_res = 1 } } localization_key = pww_mkt_res_aluminium }
@@ -682,6 +1194,49 @@ defined_text = {
 	text = { trigger = { check_variable = { pww_ui_l4_st = 1 } } localization_key = pww_ui_ag_tt_status_1 }
 	text = { trigger = { check_variable = { pww_ui_l4_st = 2 } } localization_key = pww_ui_ag_tt_status_2 }
 	text = { trigger = { check_variable = { pww_ui_l4_st = 7 } } localization_key = pww_ui_ag_tt_status_7 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l4_term
+	text = { trigger = { check_variable = { pww_ui_l4_st = 7 } } localization_key = pww_ui_term_reserved }
+	text = { trigger = { check_variable = { pww_ui_l4_open = 1 } } localization_key = pww_ui_term_open }
+	text = { trigger = { check_variable = { pww_ui_l4_com = 1 } } localization_key = pww_ui_l4_locked }
+	text = { localization_key = pww_ui_l4_runs }
+}
+defined_text = {
+	name = pww_ui_sl_l4_bondw
+	text = { trigger = { check_variable = { pww_ui_l4_bond = 0 } } localization_key = pww_rel_band_0 }
+	text = { trigger = { check_variable = { pww_ui_l4_bond = 1 } } localization_key = pww_rel_band_1 }
+	text = { trigger = { check_variable = { pww_ui_l4_bond = 2 } } localization_key = pww_rel_band_2 }
+	text = { trigger = { check_variable = { pww_ui_l4_bond = 3 } } localization_key = pww_rel_band_3 }
+	text = { trigger = { check_variable = { pww_ui_l4_bond = 4 } } localization_key = pww_rel_band_4 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l4_bond
+	text = { trigger = { check_variable = { pww_ui_l4_bond > -1 } } localization_key = pww_ui_l4_bond }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l4_route
+	text = { trigger = { check_variable = { pww_ui_l4_kind > 0 } } localization_key = pww_ui_blank }
+	text = { trigger = { check_variable = { pww_ui_l4_route = 0 } } localization_key = pww_ui_l4_route_0 }
+	text = { trigger = { check_variable = { pww_ui_l4_route = 1 } } localization_key = pww_ui_l4_route_1 }
+	text = { trigger = { check_variable = { pww_ui_l4_route = 2 } } localization_key = pww_ui_l4_route_2 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l4_bondtt
+	text = { trigger = { check_variable = { pww_ui_l4_bond > -1 } } localization_key = pww_ui_l4_bondtt }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l4_bonddesc
+	text = { trigger = { check_variable = { pww_ui_l4_bond = 0 } } localization_key = pww_rel_band_0_desc }
+	text = { trigger = { check_variable = { pww_ui_l4_bond = 1 } } localization_key = pww_rel_band_1_desc }
+	text = { trigger = { check_variable = { pww_ui_l4_bond = 2 } } localization_key = pww_rel_band_2_desc }
+	text = { trigger = { check_variable = { pww_ui_l4_bond = 3 } } localization_key = pww_rel_band_3_desc }
+	text = { trigger = { check_variable = { pww_ui_l4_bond = 4 } } localization_key = pww_rel_band_4_desc }
 	text = { localization_key = pww_ui_blank }
 }
 defined_text = {
@@ -758,6 +1313,705 @@ defined_text = {
 	text = { localization_key = pww_ui_blank }
 }
 defined_text = {
+	name = pww_ui_sl_l5_term
+	text = { trigger = { check_variable = { pww_ui_l5_st = 7 } } localization_key = pww_ui_term_reserved }
+	text = { trigger = { check_variable = { pww_ui_l5_open = 1 } } localization_key = pww_ui_term_open }
+	text = { trigger = { check_variable = { pww_ui_l5_com = 1 } } localization_key = pww_ui_l5_locked }
+	text = { localization_key = pww_ui_l5_runs }
+}
+defined_text = {
+	name = pww_ui_sl_l5_bondw
+	text = { trigger = { check_variable = { pww_ui_l5_bond = 0 } } localization_key = pww_rel_band_0 }
+	text = { trigger = { check_variable = { pww_ui_l5_bond = 1 } } localization_key = pww_rel_band_1 }
+	text = { trigger = { check_variable = { pww_ui_l5_bond = 2 } } localization_key = pww_rel_band_2 }
+	text = { trigger = { check_variable = { pww_ui_l5_bond = 3 } } localization_key = pww_rel_band_3 }
+	text = { trigger = { check_variable = { pww_ui_l5_bond = 4 } } localization_key = pww_rel_band_4 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l5_bond
+	text = { trigger = { check_variable = { pww_ui_l5_bond > -1 } } localization_key = pww_ui_l5_bond }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l5_route
+	text = { trigger = { check_variable = { pww_ui_l5_kind > 0 } } localization_key = pww_ui_blank }
+	text = { trigger = { check_variable = { pww_ui_l5_route = 0 } } localization_key = pww_ui_l5_route_0 }
+	text = { trigger = { check_variable = { pww_ui_l5_route = 1 } } localization_key = pww_ui_l5_route_1 }
+	text = { trigger = { check_variable = { pww_ui_l5_route = 2 } } localization_key = pww_ui_l5_route_2 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l5_bondtt
+	text = { trigger = { check_variable = { pww_ui_l5_bond > -1 } } localization_key = pww_ui_l5_bondtt }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l5_bonddesc
+	text = { trigger = { check_variable = { pww_ui_l5_bond = 0 } } localization_key = pww_rel_band_0_desc }
+	text = { trigger = { check_variable = { pww_ui_l5_bond = 1 } } localization_key = pww_rel_band_1_desc }
+	text = { trigger = { check_variable = { pww_ui_l5_bond = 2 } } localization_key = pww_rel_band_2_desc }
+	text = { trigger = { check_variable = { pww_ui_l5_bond = 3 } } localization_key = pww_rel_band_3_desc }
+	text = { trigger = { check_variable = { pww_ui_l5_bond = 4 } } localization_key = pww_rel_band_4_desc }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l6_res
+	text = { trigger = { check_variable = { pww_ui_l6_res = 0 } } localization_key = pww_mkt_res_oil }
+	text = { trigger = { check_variable = { pww_ui_l6_res = 1 } } localization_key = pww_mkt_res_aluminium }
+	text = { trigger = { check_variable = { pww_ui_l6_res = 2 } } localization_key = pww_mkt_res_rubber }
+	text = { trigger = { check_variable = { pww_ui_l6_res = 3 } } localization_key = pww_mkt_res_tungsten }
+	text = { trigger = { check_variable = { pww_ui_l6_res = 4 } } localization_key = pww_mkt_res_steel }
+	text = { trigger = { check_variable = { pww_ui_l6_res = 5 } } localization_key = pww_mkt_res_chromium }
+	text = { trigger = { check_variable = { pww_ui_l6_res = 6 } } localization_key = pww_mkt_res_coal }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l6_res_lc
+	text = { trigger = { check_variable = { pww_ui_l6_res = 0 } } localization_key = pww_ui_res_lc_oil }
+	text = { trigger = { check_variable = { pww_ui_l6_res = 1 } } localization_key = pww_ui_res_lc_aluminium }
+	text = { trigger = { check_variable = { pww_ui_l6_res = 2 } } localization_key = pww_ui_res_lc_rubber }
+	text = { trigger = { check_variable = { pww_ui_l6_res = 3 } } localization_key = pww_ui_res_lc_tungsten }
+	text = { trigger = { check_variable = { pww_ui_l6_res = 4 } } localization_key = pww_ui_res_lc_steel }
+	text = { trigger = { check_variable = { pww_ui_l6_res = 5 } } localization_key = pww_ui_res_lc_chromium }
+	text = { trigger = { check_variable = { pww_ui_l6_res = 6 } } localization_key = pww_ui_res_lc_coal }
+	text = { localization_key = pww_ui_l6_allres }
+}
+defined_text = {
+	name = pww_ui_sl_l6_status
+	text = { trigger = { check_variable = { pww_ui_l6_st = 1 } } localization_key = pww_ag_status_active }
+	text = { trigger = { check_variable = { pww_ui_l6_st = 2 } } localization_key = pww_ag_status_suspended }
+	text = { trigger = { check_variable = { pww_ui_l6_st = 7 } } localization_key = pww_ag_status_reserved }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l6_terms
+	text = { trigger = { check_variable = { pww_ui_l6_kind > 0 } check_variable = { pww_ui_l6_side = 1 } } localization_key = pww_ui_l6_t_lease_in }
+	text = { trigger = { check_variable = { pww_ui_l6_kind > 0 } } localization_key = pww_ui_l6_t_lease_out }
+	text = { trigger = { check_variable = { pww_ui_l6_side = 1 } } localization_key = pww_ui_l6_t_buy }
+	text = { localization_key = pww_ui_l6_t_sell }
+}
+defined_text = {
+	name = pww_ui_sl_l6_pay
+	text = { trigger = { check_variable = { pww_ui_l6_pay = 1 } OR = { AND = { check_variable = { pww_ui_l6_side = 1 } check_variable = { pww_ui_l6_wepay = 1 } } AND = { check_variable = { pww_ui_l6_side = 0 } check_variable = { pww_ui_l6_wepay = 0 } } } } localization_key = pww_ui_l6_pay_civ }
+	text = { trigger = { check_variable = { pww_ui_l6_pay = 1 } check_variable = { pww_ui_l6_wepay = 1 } } localization_key = pww_ui_l6_pay_civ_we }
+	text = { trigger = { check_variable = { pww_ui_l6_pay = 1 } } localization_key = pww_ui_l6_pay_civ_they }
+	text = { trigger = { check_variable = { pww_ui_l6_pay = 2 } OR = { AND = { check_variable = { pww_ui_l6_side = 1 } check_variable = { pww_ui_l6_wepay = 1 } } AND = { check_variable = { pww_ui_l6_side = 0 } check_variable = { pww_ui_l6_wepay = 0 } } } } localization_key = pww_ui_pay_pp }
+	text = { trigger = { check_variable = { pww_ui_l6_pay = 2 } check_variable = { pww_ui_l6_wepay = 1 } } localization_key = pww_ui_pay_pp_we }
+	text = { trigger = { check_variable = { pww_ui_l6_pay = 2 } } localization_key = pww_ui_pay_pp_they }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l6_fac
+	text = { trigger = { check_variable = { pww_ui_l6_civ = 1 } } localization_key = pww_ui_factory }
+	text = { localization_key = pww_ui_factories }
+}
+defined_text = {
+	name = pww_ui_sl_l6_end
+	text = { trigger = { check_variable = { pww_ui_l6_open = 1 } } localization_key = pww_ui_open_ended }
+	text = { localization_key = pww_ui_l6_until }
+}
+defined_text = {
+	name = pww_ui_sl_l6_vehicle
+	text = { trigger = { check_variable = { pww_ui_l6_kind > 0 } } localization_key = pww_ag_vehicle_lease }
+	text = { localization_key = pww_ag_vehicle_supply }
+}
+defined_text = {
+	name = pww_ui_sl_l6_type
+	text = { trigger = { check_variable = { pww_ui_l6_com = 1 } } localization_key = pww_ag_type_committal }
+	text = { localization_key = pww_ag_type_noncommittal }
+}
+defined_text = {
+	name = pww_ui_sl_l6_sttt
+	text = { trigger = { check_variable = { pww_ui_l6_st = 1 } } localization_key = pww_ui_ag_tt_status_1 }
+	text = { trigger = { check_variable = { pww_ui_l6_st = 2 } } localization_key = pww_ui_ag_tt_status_2 }
+	text = { trigger = { check_variable = { pww_ui_l6_st = 7 } } localization_key = pww_ui_ag_tt_status_7 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l6_term
+	text = { trigger = { check_variable = { pww_ui_l6_st = 7 } } localization_key = pww_ui_term_reserved }
+	text = { trigger = { check_variable = { pww_ui_l6_open = 1 } } localization_key = pww_ui_term_open }
+	text = { trigger = { check_variable = { pww_ui_l6_com = 1 } } localization_key = pww_ui_l6_locked }
+	text = { localization_key = pww_ui_l6_runs }
+}
+defined_text = {
+	name = pww_ui_sl_l6_bondw
+	text = { trigger = { check_variable = { pww_ui_l6_bond = 0 } } localization_key = pww_rel_band_0 }
+	text = { trigger = { check_variable = { pww_ui_l6_bond = 1 } } localization_key = pww_rel_band_1 }
+	text = { trigger = { check_variable = { pww_ui_l6_bond = 2 } } localization_key = pww_rel_band_2 }
+	text = { trigger = { check_variable = { pww_ui_l6_bond = 3 } } localization_key = pww_rel_band_3 }
+	text = { trigger = { check_variable = { pww_ui_l6_bond = 4 } } localization_key = pww_rel_band_4 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l6_bond
+	text = { trigger = { check_variable = { pww_ui_l6_bond > -1 } } localization_key = pww_ui_l6_bond }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l6_route
+	text = { trigger = { check_variable = { pww_ui_l6_kind > 0 } } localization_key = pww_ui_blank }
+	text = { trigger = { check_variable = { pww_ui_l6_route = 0 } } localization_key = pww_ui_l6_route_0 }
+	text = { trigger = { check_variable = { pww_ui_l6_route = 1 } } localization_key = pww_ui_l6_route_1 }
+	text = { trigger = { check_variable = { pww_ui_l6_route = 2 } } localization_key = pww_ui_l6_route_2 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l6_bondtt
+	text = { trigger = { check_variable = { pww_ui_l6_bond > -1 } } localization_key = pww_ui_l6_bondtt }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l6_bonddesc
+	text = { trigger = { check_variable = { pww_ui_l6_bond = 0 } } localization_key = pww_rel_band_0_desc }
+	text = { trigger = { check_variable = { pww_ui_l6_bond = 1 } } localization_key = pww_rel_band_1_desc }
+	text = { trigger = { check_variable = { pww_ui_l6_bond = 2 } } localization_key = pww_rel_band_2_desc }
+	text = { trigger = { check_variable = { pww_ui_l6_bond = 3 } } localization_key = pww_rel_band_3_desc }
+	text = { trigger = { check_variable = { pww_ui_l6_bond = 4 } } localization_key = pww_rel_band_4_desc }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l7_res
+	text = { trigger = { check_variable = { pww_ui_l7_res = 0 } } localization_key = pww_mkt_res_oil }
+	text = { trigger = { check_variable = { pww_ui_l7_res = 1 } } localization_key = pww_mkt_res_aluminium }
+	text = { trigger = { check_variable = { pww_ui_l7_res = 2 } } localization_key = pww_mkt_res_rubber }
+	text = { trigger = { check_variable = { pww_ui_l7_res = 3 } } localization_key = pww_mkt_res_tungsten }
+	text = { trigger = { check_variable = { pww_ui_l7_res = 4 } } localization_key = pww_mkt_res_steel }
+	text = { trigger = { check_variable = { pww_ui_l7_res = 5 } } localization_key = pww_mkt_res_chromium }
+	text = { trigger = { check_variable = { pww_ui_l7_res = 6 } } localization_key = pww_mkt_res_coal }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l7_res_lc
+	text = { trigger = { check_variable = { pww_ui_l7_res = 0 } } localization_key = pww_ui_res_lc_oil }
+	text = { trigger = { check_variable = { pww_ui_l7_res = 1 } } localization_key = pww_ui_res_lc_aluminium }
+	text = { trigger = { check_variable = { pww_ui_l7_res = 2 } } localization_key = pww_ui_res_lc_rubber }
+	text = { trigger = { check_variable = { pww_ui_l7_res = 3 } } localization_key = pww_ui_res_lc_tungsten }
+	text = { trigger = { check_variable = { pww_ui_l7_res = 4 } } localization_key = pww_ui_res_lc_steel }
+	text = { trigger = { check_variable = { pww_ui_l7_res = 5 } } localization_key = pww_ui_res_lc_chromium }
+	text = { trigger = { check_variable = { pww_ui_l7_res = 6 } } localization_key = pww_ui_res_lc_coal }
+	text = { localization_key = pww_ui_l7_allres }
+}
+defined_text = {
+	name = pww_ui_sl_l7_status
+	text = { trigger = { check_variable = { pww_ui_l7_st = 1 } } localization_key = pww_ag_status_active }
+	text = { trigger = { check_variable = { pww_ui_l7_st = 2 } } localization_key = pww_ag_status_suspended }
+	text = { trigger = { check_variable = { pww_ui_l7_st = 7 } } localization_key = pww_ag_status_reserved }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l7_terms
+	text = { trigger = { check_variable = { pww_ui_l7_kind > 0 } check_variable = { pww_ui_l7_side = 1 } } localization_key = pww_ui_l7_t_lease_in }
+	text = { trigger = { check_variable = { pww_ui_l7_kind > 0 } } localization_key = pww_ui_l7_t_lease_out }
+	text = { trigger = { check_variable = { pww_ui_l7_side = 1 } } localization_key = pww_ui_l7_t_buy }
+	text = { localization_key = pww_ui_l7_t_sell }
+}
+defined_text = {
+	name = pww_ui_sl_l7_pay
+	text = { trigger = { check_variable = { pww_ui_l7_pay = 1 } OR = { AND = { check_variable = { pww_ui_l7_side = 1 } check_variable = { pww_ui_l7_wepay = 1 } } AND = { check_variable = { pww_ui_l7_side = 0 } check_variable = { pww_ui_l7_wepay = 0 } } } } localization_key = pww_ui_l7_pay_civ }
+	text = { trigger = { check_variable = { pww_ui_l7_pay = 1 } check_variable = { pww_ui_l7_wepay = 1 } } localization_key = pww_ui_l7_pay_civ_we }
+	text = { trigger = { check_variable = { pww_ui_l7_pay = 1 } } localization_key = pww_ui_l7_pay_civ_they }
+	text = { trigger = { check_variable = { pww_ui_l7_pay = 2 } OR = { AND = { check_variable = { pww_ui_l7_side = 1 } check_variable = { pww_ui_l7_wepay = 1 } } AND = { check_variable = { pww_ui_l7_side = 0 } check_variable = { pww_ui_l7_wepay = 0 } } } } localization_key = pww_ui_pay_pp }
+	text = { trigger = { check_variable = { pww_ui_l7_pay = 2 } check_variable = { pww_ui_l7_wepay = 1 } } localization_key = pww_ui_pay_pp_we }
+	text = { trigger = { check_variable = { pww_ui_l7_pay = 2 } } localization_key = pww_ui_pay_pp_they }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l7_fac
+	text = { trigger = { check_variable = { pww_ui_l7_civ = 1 } } localization_key = pww_ui_factory }
+	text = { localization_key = pww_ui_factories }
+}
+defined_text = {
+	name = pww_ui_sl_l7_end
+	text = { trigger = { check_variable = { pww_ui_l7_open = 1 } } localization_key = pww_ui_open_ended }
+	text = { localization_key = pww_ui_l7_until }
+}
+defined_text = {
+	name = pww_ui_sl_l7_vehicle
+	text = { trigger = { check_variable = { pww_ui_l7_kind > 0 } } localization_key = pww_ag_vehicle_lease }
+	text = { localization_key = pww_ag_vehicle_supply }
+}
+defined_text = {
+	name = pww_ui_sl_l7_type
+	text = { trigger = { check_variable = { pww_ui_l7_com = 1 } } localization_key = pww_ag_type_committal }
+	text = { localization_key = pww_ag_type_noncommittal }
+}
+defined_text = {
+	name = pww_ui_sl_l7_sttt
+	text = { trigger = { check_variable = { pww_ui_l7_st = 1 } } localization_key = pww_ui_ag_tt_status_1 }
+	text = { trigger = { check_variable = { pww_ui_l7_st = 2 } } localization_key = pww_ui_ag_tt_status_2 }
+	text = { trigger = { check_variable = { pww_ui_l7_st = 7 } } localization_key = pww_ui_ag_tt_status_7 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l7_term
+	text = { trigger = { check_variable = { pww_ui_l7_st = 7 } } localization_key = pww_ui_term_reserved }
+	text = { trigger = { check_variable = { pww_ui_l7_open = 1 } } localization_key = pww_ui_term_open }
+	text = { trigger = { check_variable = { pww_ui_l7_com = 1 } } localization_key = pww_ui_l7_locked }
+	text = { localization_key = pww_ui_l7_runs }
+}
+defined_text = {
+	name = pww_ui_sl_l7_bondw
+	text = { trigger = { check_variable = { pww_ui_l7_bond = 0 } } localization_key = pww_rel_band_0 }
+	text = { trigger = { check_variable = { pww_ui_l7_bond = 1 } } localization_key = pww_rel_band_1 }
+	text = { trigger = { check_variable = { pww_ui_l7_bond = 2 } } localization_key = pww_rel_band_2 }
+	text = { trigger = { check_variable = { pww_ui_l7_bond = 3 } } localization_key = pww_rel_band_3 }
+	text = { trigger = { check_variable = { pww_ui_l7_bond = 4 } } localization_key = pww_rel_band_4 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l7_bond
+	text = { trigger = { check_variable = { pww_ui_l7_bond > -1 } } localization_key = pww_ui_l7_bond }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l7_route
+	text = { trigger = { check_variable = { pww_ui_l7_kind > 0 } } localization_key = pww_ui_blank }
+	text = { trigger = { check_variable = { pww_ui_l7_route = 0 } } localization_key = pww_ui_l7_route_0 }
+	text = { trigger = { check_variable = { pww_ui_l7_route = 1 } } localization_key = pww_ui_l7_route_1 }
+	text = { trigger = { check_variable = { pww_ui_l7_route = 2 } } localization_key = pww_ui_l7_route_2 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l7_bondtt
+	text = { trigger = { check_variable = { pww_ui_l7_bond > -1 } } localization_key = pww_ui_l7_bondtt }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l7_bonddesc
+	text = { trigger = { check_variable = { pww_ui_l7_bond = 0 } } localization_key = pww_rel_band_0_desc }
+	text = { trigger = { check_variable = { pww_ui_l7_bond = 1 } } localization_key = pww_rel_band_1_desc }
+	text = { trigger = { check_variable = { pww_ui_l7_bond = 2 } } localization_key = pww_rel_band_2_desc }
+	text = { trigger = { check_variable = { pww_ui_l7_bond = 3 } } localization_key = pww_rel_band_3_desc }
+	text = { trigger = { check_variable = { pww_ui_l7_bond = 4 } } localization_key = pww_rel_band_4_desc }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l8_res
+	text = { trigger = { check_variable = { pww_ui_l8_res = 0 } } localization_key = pww_mkt_res_oil }
+	text = { trigger = { check_variable = { pww_ui_l8_res = 1 } } localization_key = pww_mkt_res_aluminium }
+	text = { trigger = { check_variable = { pww_ui_l8_res = 2 } } localization_key = pww_mkt_res_rubber }
+	text = { trigger = { check_variable = { pww_ui_l8_res = 3 } } localization_key = pww_mkt_res_tungsten }
+	text = { trigger = { check_variable = { pww_ui_l8_res = 4 } } localization_key = pww_mkt_res_steel }
+	text = { trigger = { check_variable = { pww_ui_l8_res = 5 } } localization_key = pww_mkt_res_chromium }
+	text = { trigger = { check_variable = { pww_ui_l8_res = 6 } } localization_key = pww_mkt_res_coal }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l8_res_lc
+	text = { trigger = { check_variable = { pww_ui_l8_res = 0 } } localization_key = pww_ui_res_lc_oil }
+	text = { trigger = { check_variable = { pww_ui_l8_res = 1 } } localization_key = pww_ui_res_lc_aluminium }
+	text = { trigger = { check_variable = { pww_ui_l8_res = 2 } } localization_key = pww_ui_res_lc_rubber }
+	text = { trigger = { check_variable = { pww_ui_l8_res = 3 } } localization_key = pww_ui_res_lc_tungsten }
+	text = { trigger = { check_variable = { pww_ui_l8_res = 4 } } localization_key = pww_ui_res_lc_steel }
+	text = { trigger = { check_variable = { pww_ui_l8_res = 5 } } localization_key = pww_ui_res_lc_chromium }
+	text = { trigger = { check_variable = { pww_ui_l8_res = 6 } } localization_key = pww_ui_res_lc_coal }
+	text = { localization_key = pww_ui_l8_allres }
+}
+defined_text = {
+	name = pww_ui_sl_l8_status
+	text = { trigger = { check_variable = { pww_ui_l8_st = 1 } } localization_key = pww_ag_status_active }
+	text = { trigger = { check_variable = { pww_ui_l8_st = 2 } } localization_key = pww_ag_status_suspended }
+	text = { trigger = { check_variable = { pww_ui_l8_st = 7 } } localization_key = pww_ag_status_reserved }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l8_terms
+	text = { trigger = { check_variable = { pww_ui_l8_kind > 0 } check_variable = { pww_ui_l8_side = 1 } } localization_key = pww_ui_l8_t_lease_in }
+	text = { trigger = { check_variable = { pww_ui_l8_kind > 0 } } localization_key = pww_ui_l8_t_lease_out }
+	text = { trigger = { check_variable = { pww_ui_l8_side = 1 } } localization_key = pww_ui_l8_t_buy }
+	text = { localization_key = pww_ui_l8_t_sell }
+}
+defined_text = {
+	name = pww_ui_sl_l8_pay
+	text = { trigger = { check_variable = { pww_ui_l8_pay = 1 } OR = { AND = { check_variable = { pww_ui_l8_side = 1 } check_variable = { pww_ui_l8_wepay = 1 } } AND = { check_variable = { pww_ui_l8_side = 0 } check_variable = { pww_ui_l8_wepay = 0 } } } } localization_key = pww_ui_l8_pay_civ }
+	text = { trigger = { check_variable = { pww_ui_l8_pay = 1 } check_variable = { pww_ui_l8_wepay = 1 } } localization_key = pww_ui_l8_pay_civ_we }
+	text = { trigger = { check_variable = { pww_ui_l8_pay = 1 } } localization_key = pww_ui_l8_pay_civ_they }
+	text = { trigger = { check_variable = { pww_ui_l8_pay = 2 } OR = { AND = { check_variable = { pww_ui_l8_side = 1 } check_variable = { pww_ui_l8_wepay = 1 } } AND = { check_variable = { pww_ui_l8_side = 0 } check_variable = { pww_ui_l8_wepay = 0 } } } } localization_key = pww_ui_pay_pp }
+	text = { trigger = { check_variable = { pww_ui_l8_pay = 2 } check_variable = { pww_ui_l8_wepay = 1 } } localization_key = pww_ui_pay_pp_we }
+	text = { trigger = { check_variable = { pww_ui_l8_pay = 2 } } localization_key = pww_ui_pay_pp_they }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l8_fac
+	text = { trigger = { check_variable = { pww_ui_l8_civ = 1 } } localization_key = pww_ui_factory }
+	text = { localization_key = pww_ui_factories }
+}
+defined_text = {
+	name = pww_ui_sl_l8_end
+	text = { trigger = { check_variable = { pww_ui_l8_open = 1 } } localization_key = pww_ui_open_ended }
+	text = { localization_key = pww_ui_l8_until }
+}
+defined_text = {
+	name = pww_ui_sl_l8_vehicle
+	text = { trigger = { check_variable = { pww_ui_l8_kind > 0 } } localization_key = pww_ag_vehicle_lease }
+	text = { localization_key = pww_ag_vehicle_supply }
+}
+defined_text = {
+	name = pww_ui_sl_l8_type
+	text = { trigger = { check_variable = { pww_ui_l8_com = 1 } } localization_key = pww_ag_type_committal }
+	text = { localization_key = pww_ag_type_noncommittal }
+}
+defined_text = {
+	name = pww_ui_sl_l8_sttt
+	text = { trigger = { check_variable = { pww_ui_l8_st = 1 } } localization_key = pww_ui_ag_tt_status_1 }
+	text = { trigger = { check_variable = { pww_ui_l8_st = 2 } } localization_key = pww_ui_ag_tt_status_2 }
+	text = { trigger = { check_variable = { pww_ui_l8_st = 7 } } localization_key = pww_ui_ag_tt_status_7 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l8_term
+	text = { trigger = { check_variable = { pww_ui_l8_st = 7 } } localization_key = pww_ui_term_reserved }
+	text = { trigger = { check_variable = { pww_ui_l8_open = 1 } } localization_key = pww_ui_term_open }
+	text = { trigger = { check_variable = { pww_ui_l8_com = 1 } } localization_key = pww_ui_l8_locked }
+	text = { localization_key = pww_ui_l8_runs }
+}
+defined_text = {
+	name = pww_ui_sl_l8_bondw
+	text = { trigger = { check_variable = { pww_ui_l8_bond = 0 } } localization_key = pww_rel_band_0 }
+	text = { trigger = { check_variable = { pww_ui_l8_bond = 1 } } localization_key = pww_rel_band_1 }
+	text = { trigger = { check_variable = { pww_ui_l8_bond = 2 } } localization_key = pww_rel_band_2 }
+	text = { trigger = { check_variable = { pww_ui_l8_bond = 3 } } localization_key = pww_rel_band_3 }
+	text = { trigger = { check_variable = { pww_ui_l8_bond = 4 } } localization_key = pww_rel_band_4 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l8_bond
+	text = { trigger = { check_variable = { pww_ui_l8_bond > -1 } } localization_key = pww_ui_l8_bond }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l8_route
+	text = { trigger = { check_variable = { pww_ui_l8_kind > 0 } } localization_key = pww_ui_blank }
+	text = { trigger = { check_variable = { pww_ui_l8_route = 0 } } localization_key = pww_ui_l8_route_0 }
+	text = { trigger = { check_variable = { pww_ui_l8_route = 1 } } localization_key = pww_ui_l8_route_1 }
+	text = { trigger = { check_variable = { pww_ui_l8_route = 2 } } localization_key = pww_ui_l8_route_2 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l8_bondtt
+	text = { trigger = { check_variable = { pww_ui_l8_bond > -1 } } localization_key = pww_ui_l8_bondtt }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l8_bonddesc
+	text = { trigger = { check_variable = { pww_ui_l8_bond = 0 } } localization_key = pww_rel_band_0_desc }
+	text = { trigger = { check_variable = { pww_ui_l8_bond = 1 } } localization_key = pww_rel_band_1_desc }
+	text = { trigger = { check_variable = { pww_ui_l8_bond = 2 } } localization_key = pww_rel_band_2_desc }
+	text = { trigger = { check_variable = { pww_ui_l8_bond = 3 } } localization_key = pww_rel_band_3_desc }
+	text = { trigger = { check_variable = { pww_ui_l8_bond = 4 } } localization_key = pww_rel_band_4_desc }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l9_res
+	text = { trigger = { check_variable = { pww_ui_l9_res = 0 } } localization_key = pww_mkt_res_oil }
+	text = { trigger = { check_variable = { pww_ui_l9_res = 1 } } localization_key = pww_mkt_res_aluminium }
+	text = { trigger = { check_variable = { pww_ui_l9_res = 2 } } localization_key = pww_mkt_res_rubber }
+	text = { trigger = { check_variable = { pww_ui_l9_res = 3 } } localization_key = pww_mkt_res_tungsten }
+	text = { trigger = { check_variable = { pww_ui_l9_res = 4 } } localization_key = pww_mkt_res_steel }
+	text = { trigger = { check_variable = { pww_ui_l9_res = 5 } } localization_key = pww_mkt_res_chromium }
+	text = { trigger = { check_variable = { pww_ui_l9_res = 6 } } localization_key = pww_mkt_res_coal }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l9_res_lc
+	text = { trigger = { check_variable = { pww_ui_l9_res = 0 } } localization_key = pww_ui_res_lc_oil }
+	text = { trigger = { check_variable = { pww_ui_l9_res = 1 } } localization_key = pww_ui_res_lc_aluminium }
+	text = { trigger = { check_variable = { pww_ui_l9_res = 2 } } localization_key = pww_ui_res_lc_rubber }
+	text = { trigger = { check_variable = { pww_ui_l9_res = 3 } } localization_key = pww_ui_res_lc_tungsten }
+	text = { trigger = { check_variable = { pww_ui_l9_res = 4 } } localization_key = pww_ui_res_lc_steel }
+	text = { trigger = { check_variable = { pww_ui_l9_res = 5 } } localization_key = pww_ui_res_lc_chromium }
+	text = { trigger = { check_variable = { pww_ui_l9_res = 6 } } localization_key = pww_ui_res_lc_coal }
+	text = { localization_key = pww_ui_l9_allres }
+}
+defined_text = {
+	name = pww_ui_sl_l9_status
+	text = { trigger = { check_variable = { pww_ui_l9_st = 1 } } localization_key = pww_ag_status_active }
+	text = { trigger = { check_variable = { pww_ui_l9_st = 2 } } localization_key = pww_ag_status_suspended }
+	text = { trigger = { check_variable = { pww_ui_l9_st = 7 } } localization_key = pww_ag_status_reserved }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l9_terms
+	text = { trigger = { check_variable = { pww_ui_l9_kind > 0 } check_variable = { pww_ui_l9_side = 1 } } localization_key = pww_ui_l9_t_lease_in }
+	text = { trigger = { check_variable = { pww_ui_l9_kind > 0 } } localization_key = pww_ui_l9_t_lease_out }
+	text = { trigger = { check_variable = { pww_ui_l9_side = 1 } } localization_key = pww_ui_l9_t_buy }
+	text = { localization_key = pww_ui_l9_t_sell }
+}
+defined_text = {
+	name = pww_ui_sl_l9_pay
+	text = { trigger = { check_variable = { pww_ui_l9_pay = 1 } OR = { AND = { check_variable = { pww_ui_l9_side = 1 } check_variable = { pww_ui_l9_wepay = 1 } } AND = { check_variable = { pww_ui_l9_side = 0 } check_variable = { pww_ui_l9_wepay = 0 } } } } localization_key = pww_ui_l9_pay_civ }
+	text = { trigger = { check_variable = { pww_ui_l9_pay = 1 } check_variable = { pww_ui_l9_wepay = 1 } } localization_key = pww_ui_l9_pay_civ_we }
+	text = { trigger = { check_variable = { pww_ui_l9_pay = 1 } } localization_key = pww_ui_l9_pay_civ_they }
+	text = { trigger = { check_variable = { pww_ui_l9_pay = 2 } OR = { AND = { check_variable = { pww_ui_l9_side = 1 } check_variable = { pww_ui_l9_wepay = 1 } } AND = { check_variable = { pww_ui_l9_side = 0 } check_variable = { pww_ui_l9_wepay = 0 } } } } localization_key = pww_ui_pay_pp }
+	text = { trigger = { check_variable = { pww_ui_l9_pay = 2 } check_variable = { pww_ui_l9_wepay = 1 } } localization_key = pww_ui_pay_pp_we }
+	text = { trigger = { check_variable = { pww_ui_l9_pay = 2 } } localization_key = pww_ui_pay_pp_they }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l9_fac
+	text = { trigger = { check_variable = { pww_ui_l9_civ = 1 } } localization_key = pww_ui_factory }
+	text = { localization_key = pww_ui_factories }
+}
+defined_text = {
+	name = pww_ui_sl_l9_end
+	text = { trigger = { check_variable = { pww_ui_l9_open = 1 } } localization_key = pww_ui_open_ended }
+	text = { localization_key = pww_ui_l9_until }
+}
+defined_text = {
+	name = pww_ui_sl_l9_vehicle
+	text = { trigger = { check_variable = { pww_ui_l9_kind > 0 } } localization_key = pww_ag_vehicle_lease }
+	text = { localization_key = pww_ag_vehicle_supply }
+}
+defined_text = {
+	name = pww_ui_sl_l9_type
+	text = { trigger = { check_variable = { pww_ui_l9_com = 1 } } localization_key = pww_ag_type_committal }
+	text = { localization_key = pww_ag_type_noncommittal }
+}
+defined_text = {
+	name = pww_ui_sl_l9_sttt
+	text = { trigger = { check_variable = { pww_ui_l9_st = 1 } } localization_key = pww_ui_ag_tt_status_1 }
+	text = { trigger = { check_variable = { pww_ui_l9_st = 2 } } localization_key = pww_ui_ag_tt_status_2 }
+	text = { trigger = { check_variable = { pww_ui_l9_st = 7 } } localization_key = pww_ui_ag_tt_status_7 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l9_term
+	text = { trigger = { check_variable = { pww_ui_l9_st = 7 } } localization_key = pww_ui_term_reserved }
+	text = { trigger = { check_variable = { pww_ui_l9_open = 1 } } localization_key = pww_ui_term_open }
+	text = { trigger = { check_variable = { pww_ui_l9_com = 1 } } localization_key = pww_ui_l9_locked }
+	text = { localization_key = pww_ui_l9_runs }
+}
+defined_text = {
+	name = pww_ui_sl_l9_bondw
+	text = { trigger = { check_variable = { pww_ui_l9_bond = 0 } } localization_key = pww_rel_band_0 }
+	text = { trigger = { check_variable = { pww_ui_l9_bond = 1 } } localization_key = pww_rel_band_1 }
+	text = { trigger = { check_variable = { pww_ui_l9_bond = 2 } } localization_key = pww_rel_band_2 }
+	text = { trigger = { check_variable = { pww_ui_l9_bond = 3 } } localization_key = pww_rel_band_3 }
+	text = { trigger = { check_variable = { pww_ui_l9_bond = 4 } } localization_key = pww_rel_band_4 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l9_bond
+	text = { trigger = { check_variable = { pww_ui_l9_bond > -1 } } localization_key = pww_ui_l9_bond }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l9_route
+	text = { trigger = { check_variable = { pww_ui_l9_kind > 0 } } localization_key = pww_ui_blank }
+	text = { trigger = { check_variable = { pww_ui_l9_route = 0 } } localization_key = pww_ui_l9_route_0 }
+	text = { trigger = { check_variable = { pww_ui_l9_route = 1 } } localization_key = pww_ui_l9_route_1 }
+	text = { trigger = { check_variable = { pww_ui_l9_route = 2 } } localization_key = pww_ui_l9_route_2 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l9_bondtt
+	text = { trigger = { check_variable = { pww_ui_l9_bond > -1 } } localization_key = pww_ui_l9_bondtt }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_l9_bonddesc
+	text = { trigger = { check_variable = { pww_ui_l9_bond = 0 } } localization_key = pww_rel_band_0_desc }
+	text = { trigger = { check_variable = { pww_ui_l9_bond = 1 } } localization_key = pww_rel_band_1_desc }
+	text = { trigger = { check_variable = { pww_ui_l9_bond = 2 } } localization_key = pww_rel_band_2_desc }
+	text = { trigger = { check_variable = { pww_ui_l9_bond = 3 } } localization_key = pww_rel_band_3_desc }
+	text = { trigger = { check_variable = { pww_ui_l9_bond = 4 } } localization_key = pww_rel_band_4_desc }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_rsv_empty
+	text = { trigger = { NOT = { has_global_flag = pww_stock_loaded } } localization_key = pww_ui_rsv_empty_off }
+	text = { localization_key = pww_ui_rsv_empty }
+}
+defined_text = {
+	name = pww_ui_sl_r0_name
+	text = { trigger = { check_variable = { pww_ui_r0_res = 0 } } localization_key = pww_mkt_res_oil }
+	text = { trigger = { check_variable = { pww_ui_r0_res = 1 } } localization_key = pww_mkt_res_aluminium }
+	text = { trigger = { check_variable = { pww_ui_r0_res = 2 } } localization_key = pww_mkt_res_rubber }
+	text = { trigger = { check_variable = { pww_ui_r0_res = 3 } } localization_key = pww_mkt_res_tungsten }
+	text = { trigger = { check_variable = { pww_ui_r0_res = 4 } } localization_key = pww_mkt_res_steel }
+	text = { trigger = { check_variable = { pww_ui_r0_res = 5 } } localization_key = pww_mkt_res_chromium }
+	text = { trigger = { check_variable = { pww_ui_r0_res = 6 } } localization_key = pww_mkt_res_coal }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_r0_days
+	text = { trigger = { check_variable = { pww_ui_r0_days > 365 } } localization_key = pww_ui_rsv_year }
+	text = { localization_key = pww_ui_r0_days }
+}
+defined_text = {
+	name = pww_ui_sl_r0_trend
+	text = { trigger = { check_variable = { pww_ui_r0_out > 0.05 } } localization_key = pww_ui_r0_draw }
+	text = { trigger = { check_variable = { pww_ui_r0_in > 0.05 } } localization_key = pww_ui_r0_fill }
+	text = { trigger = { check_variable = { pww_ui_r0_fill > 94.999 } } localization_key = pww_ui_rsv_full }
+	text = { localization_key = pww_ui_rsv_hold }
+}
+defined_text = {
+	name = pww_ui_sl_r0_trend_tt
+	text = { trigger = { check_variable = { pww_ui_r0_out > 0.05 } } localization_key = pww_ui_r0_draw_tt }
+	text = { trigger = { check_variable = { pww_ui_r0_in > 0.05 } } localization_key = pww_ui_r0_fill_tt }
+	text = { trigger = { check_variable = { pww_ui_r0_fill > 94.999 } } localization_key = pww_ui_rsv_full_tt }
+	text = { localization_key = pww_ui_rsv_hold_tt }
+}
+defined_text = {
+	name = pww_ui_sl_r1_name
+	text = { trigger = { check_variable = { pww_ui_r1_res = 0 } } localization_key = pww_mkt_res_oil }
+	text = { trigger = { check_variable = { pww_ui_r1_res = 1 } } localization_key = pww_mkt_res_aluminium }
+	text = { trigger = { check_variable = { pww_ui_r1_res = 2 } } localization_key = pww_mkt_res_rubber }
+	text = { trigger = { check_variable = { pww_ui_r1_res = 3 } } localization_key = pww_mkt_res_tungsten }
+	text = { trigger = { check_variable = { pww_ui_r1_res = 4 } } localization_key = pww_mkt_res_steel }
+	text = { trigger = { check_variable = { pww_ui_r1_res = 5 } } localization_key = pww_mkt_res_chromium }
+	text = { trigger = { check_variable = { pww_ui_r1_res = 6 } } localization_key = pww_mkt_res_coal }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_r1_days
+	text = { trigger = { check_variable = { pww_ui_r1_days > 365 } } localization_key = pww_ui_rsv_year }
+	text = { localization_key = pww_ui_r1_days }
+}
+defined_text = {
+	name = pww_ui_sl_r1_trend
+	text = { trigger = { check_variable = { pww_ui_r1_out > 0.05 } } localization_key = pww_ui_r1_draw }
+	text = { trigger = { check_variable = { pww_ui_r1_in > 0.05 } } localization_key = pww_ui_r1_fill }
+	text = { trigger = { check_variable = { pww_ui_r1_fill > 94.999 } } localization_key = pww_ui_rsv_full }
+	text = { localization_key = pww_ui_rsv_hold }
+}
+defined_text = {
+	name = pww_ui_sl_r1_trend_tt
+	text = { trigger = { check_variable = { pww_ui_r1_out > 0.05 } } localization_key = pww_ui_r1_draw_tt }
+	text = { trigger = { check_variable = { pww_ui_r1_in > 0.05 } } localization_key = pww_ui_r1_fill_tt }
+	text = { trigger = { check_variable = { pww_ui_r1_fill > 94.999 } } localization_key = pww_ui_rsv_full_tt }
+	text = { localization_key = pww_ui_rsv_hold_tt }
+}
+defined_text = {
+	name = pww_ui_sl_r2_name
+	text = { trigger = { check_variable = { pww_ui_r2_res = 0 } } localization_key = pww_mkt_res_oil }
+	text = { trigger = { check_variable = { pww_ui_r2_res = 1 } } localization_key = pww_mkt_res_aluminium }
+	text = { trigger = { check_variable = { pww_ui_r2_res = 2 } } localization_key = pww_mkt_res_rubber }
+	text = { trigger = { check_variable = { pww_ui_r2_res = 3 } } localization_key = pww_mkt_res_tungsten }
+	text = { trigger = { check_variable = { pww_ui_r2_res = 4 } } localization_key = pww_mkt_res_steel }
+	text = { trigger = { check_variable = { pww_ui_r2_res = 5 } } localization_key = pww_mkt_res_chromium }
+	text = { trigger = { check_variable = { pww_ui_r2_res = 6 } } localization_key = pww_mkt_res_coal }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_r2_days
+	text = { trigger = { check_variable = { pww_ui_r2_days > 365 } } localization_key = pww_ui_rsv_year }
+	text = { localization_key = pww_ui_r2_days }
+}
+defined_text = {
+	name = pww_ui_sl_r2_trend
+	text = { trigger = { check_variable = { pww_ui_r2_out > 0.05 } } localization_key = pww_ui_r2_draw }
+	text = { trigger = { check_variable = { pww_ui_r2_in > 0.05 } } localization_key = pww_ui_r2_fill }
+	text = { trigger = { check_variable = { pww_ui_r2_fill > 94.999 } } localization_key = pww_ui_rsv_full }
+	text = { localization_key = pww_ui_rsv_hold }
+}
+defined_text = {
+	name = pww_ui_sl_r2_trend_tt
+	text = { trigger = { check_variable = { pww_ui_r2_out > 0.05 } } localization_key = pww_ui_r2_draw_tt }
+	text = { trigger = { check_variable = { pww_ui_r2_in > 0.05 } } localization_key = pww_ui_r2_fill_tt }
+	text = { trigger = { check_variable = { pww_ui_r2_fill > 94.999 } } localization_key = pww_ui_rsv_full_tt }
+	text = { localization_key = pww_ui_rsv_hold_tt }
+}
+defined_text = {
+	name = pww_ui_sl_r3_name
+	text = { trigger = { check_variable = { pww_ui_r3_res = 0 } } localization_key = pww_mkt_res_oil }
+	text = { trigger = { check_variable = { pww_ui_r3_res = 1 } } localization_key = pww_mkt_res_aluminium }
+	text = { trigger = { check_variable = { pww_ui_r3_res = 2 } } localization_key = pww_mkt_res_rubber }
+	text = { trigger = { check_variable = { pww_ui_r3_res = 3 } } localization_key = pww_mkt_res_tungsten }
+	text = { trigger = { check_variable = { pww_ui_r3_res = 4 } } localization_key = pww_mkt_res_steel }
+	text = { trigger = { check_variable = { pww_ui_r3_res = 5 } } localization_key = pww_mkt_res_chromium }
+	text = { trigger = { check_variable = { pww_ui_r3_res = 6 } } localization_key = pww_mkt_res_coal }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_r3_days
+	text = { trigger = { check_variable = { pww_ui_r3_days > 365 } } localization_key = pww_ui_rsv_year }
+	text = { localization_key = pww_ui_r3_days }
+}
+defined_text = {
+	name = pww_ui_sl_r3_trend
+	text = { trigger = { check_variable = { pww_ui_r3_out > 0.05 } } localization_key = pww_ui_r3_draw }
+	text = { trigger = { check_variable = { pww_ui_r3_in > 0.05 } } localization_key = pww_ui_r3_fill }
+	text = { trigger = { check_variable = { pww_ui_r3_fill > 94.999 } } localization_key = pww_ui_rsv_full }
+	text = { localization_key = pww_ui_rsv_hold }
+}
+defined_text = {
+	name = pww_ui_sl_r3_trend_tt
+	text = { trigger = { check_variable = { pww_ui_r3_out > 0.05 } } localization_key = pww_ui_r3_draw_tt }
+	text = { trigger = { check_variable = { pww_ui_r3_in > 0.05 } } localization_key = pww_ui_r3_fill_tt }
+	text = { trigger = { check_variable = { pww_ui_r3_fill > 94.999 } } localization_key = pww_ui_rsv_full_tt }
+	text = { localization_key = pww_ui_rsv_hold_tt }
+}
+defined_text = {
+	name = pww_ui_sl_r4_name
+	text = { trigger = { check_variable = { pww_ui_r4_res = 0 } } localization_key = pww_mkt_res_oil }
+	text = { trigger = { check_variable = { pww_ui_r4_res = 1 } } localization_key = pww_mkt_res_aluminium }
+	text = { trigger = { check_variable = { pww_ui_r4_res = 2 } } localization_key = pww_mkt_res_rubber }
+	text = { trigger = { check_variable = { pww_ui_r4_res = 3 } } localization_key = pww_mkt_res_tungsten }
+	text = { trigger = { check_variable = { pww_ui_r4_res = 4 } } localization_key = pww_mkt_res_steel }
+	text = { trigger = { check_variable = { pww_ui_r4_res = 5 } } localization_key = pww_mkt_res_chromium }
+	text = { trigger = { check_variable = { pww_ui_r4_res = 6 } } localization_key = pww_mkt_res_coal }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_r4_days
+	text = { trigger = { check_variable = { pww_ui_r4_days > 365 } } localization_key = pww_ui_rsv_year }
+	text = { localization_key = pww_ui_r4_days }
+}
+defined_text = {
+	name = pww_ui_sl_r4_trend
+	text = { trigger = { check_variable = { pww_ui_r4_out > 0.05 } } localization_key = pww_ui_r4_draw }
+	text = { trigger = { check_variable = { pww_ui_r4_in > 0.05 } } localization_key = pww_ui_r4_fill }
+	text = { trigger = { check_variable = { pww_ui_r4_fill > 94.999 } } localization_key = pww_ui_rsv_full }
+	text = { localization_key = pww_ui_rsv_hold }
+}
+defined_text = {
+	name = pww_ui_sl_r4_trend_tt
+	text = { trigger = { check_variable = { pww_ui_r4_out > 0.05 } } localization_key = pww_ui_r4_draw_tt }
+	text = { trigger = { check_variable = { pww_ui_r4_in > 0.05 } } localization_key = pww_ui_r4_fill_tt }
+	text = { trigger = { check_variable = { pww_ui_r4_fill > 94.999 } } localization_key = pww_ui_rsv_full_tt }
+	text = { localization_key = pww_ui_rsv_hold_tt }
+}
+defined_text = {
+	name = pww_ui_sl_r5_name
+	text = { trigger = { check_variable = { pww_ui_r5_res = 0 } } localization_key = pww_mkt_res_oil }
+	text = { trigger = { check_variable = { pww_ui_r5_res = 1 } } localization_key = pww_mkt_res_aluminium }
+	text = { trigger = { check_variable = { pww_ui_r5_res = 2 } } localization_key = pww_mkt_res_rubber }
+	text = { trigger = { check_variable = { pww_ui_r5_res = 3 } } localization_key = pww_mkt_res_tungsten }
+	text = { trigger = { check_variable = { pww_ui_r5_res = 4 } } localization_key = pww_mkt_res_steel }
+	text = { trigger = { check_variable = { pww_ui_r5_res = 5 } } localization_key = pww_mkt_res_chromium }
+	text = { trigger = { check_variable = { pww_ui_r5_res = 6 } } localization_key = pww_mkt_res_coal }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_r5_days
+	text = { trigger = { check_variable = { pww_ui_r5_days > 365 } } localization_key = pww_ui_rsv_year }
+	text = { localization_key = pww_ui_r5_days }
+}
+defined_text = {
+	name = pww_ui_sl_r5_trend
+	text = { trigger = { check_variable = { pww_ui_r5_out > 0.05 } } localization_key = pww_ui_r5_draw }
+	text = { trigger = { check_variable = { pww_ui_r5_in > 0.05 } } localization_key = pww_ui_r5_fill }
+	text = { trigger = { check_variable = { pww_ui_r5_fill > 94.999 } } localization_key = pww_ui_rsv_full }
+	text = { localization_key = pww_ui_rsv_hold }
+}
+defined_text = {
+	name = pww_ui_sl_r5_trend_tt
+	text = { trigger = { check_variable = { pww_ui_r5_out > 0.05 } } localization_key = pww_ui_r5_draw_tt }
+	text = { trigger = { check_variable = { pww_ui_r5_in > 0.05 } } localization_key = pww_ui_r5_fill_tt }
+	text = { trigger = { check_variable = { pww_ui_r5_fill > 94.999 } } localization_key = pww_ui_rsv_full_tt }
+	text = { localization_key = pww_ui_rsv_hold_tt }
+}
+defined_text = {
+	name = pww_ui_sl_rsv_foot
+	text = { trigger = { NOT = { has_global_flag = pww_stock_loaded } } localization_key = pww_ui_blank }
+	text = { trigger = { has_country_flag = pww_stock_depot_building } localization_key = pww_ui_rsv_foot_building }
+	text = { trigger = { check_variable = { pww_stock_depots > 3 } } localization_key = pww_ui_rsv_foot_max }
+	text = { localization_key = pww_ui_rsv_foot }
+}
+defined_text = {
 	name = pww_ui_sl_mkt_band_oil
 	text = { trigger = { check_variable = { global.pww_ui_mkt_band_oil = 0 } } localization_key = pww_mkt_band_glut }
 	text = { trigger = { check_variable = { global.pww_ui_mkt_band_oil = 1 } } localization_key = pww_mkt_band_slack }
@@ -770,17 +2024,28 @@ defined_text = {
 }
 defined_text = {
 	name = pww_ui_sl_mkt_c1_oil
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_oil = 1 } check_variable = { global.pww_ui_mkt_b1_oil = ROOT } } localization_key = pww_ui_mkt_ourbuy }
 	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_oil = 1 } } localization_key = pww_ui_mkt_buyer_oil }
 	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_oil = 2 } } localization_key = pww_ui_mkt_rivals_oil }
-	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_oil = 3 } } localization_key = pww_mkt_cause_quiet_season }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_oil = 3 } } localization_key = pww_ui_mkt_quiet }
 	text = { localization_key = pww_ui_blank }
 }
 defined_text = {
-	name = pww_ui_sl_mkt_oil
-	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_oil > 0 } check_variable = { global.pww_ui_mkt_c2_oil = 1 } } localization_key = pww_ui_mkt_line2_oil }
-	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_oil > 0 } } localization_key = pww_ui_mkt_line1_oil }
-	text = { trigger = { check_variable = { global.pww_ui_mkt_c2_oil = 1 } } localization_key = pww_ui_mkt_linec_oil }
-	text = { localization_key = pww_ui_mkt_line0_oil }
+	name = pww_ui_sl_mkt_c2_oil
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c2_oil = 1 } } localization_key = pww_ui_mkt_contested_oil }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_mkt_x1_oil
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_oil > 0 } check_variable = { global.pww_ui_mkt_c1_oil < 3 } } localization_key = pww_ui_mkt_g0_oil }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c2_oil = 1 } } localization_key = pww_ui_mkt_g1_oil }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_oil = 3 } } localization_key = pww_ui_mkt_quiet }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_mkt_x2_oil
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c2_oil = 1 } OR = { AND = { check_variable = { global.pww_ui_mkt_c1_oil > 0 } check_variable = { global.pww_ui_mkt_c1_oil < 3 } } } } localization_key = pww_ui_mkt_g1_oil }
+	text = { localization_key = pww_ui_blank }
 }
 defined_text = {
 	name = pww_ui_sl_mkt_band_aluminium
@@ -795,17 +2060,45 @@ defined_text = {
 }
 defined_text = {
 	name = pww_ui_sl_mkt_c1_aluminium
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_aluminium = 1 } check_variable = { global.pww_ui_mkt_b1_aluminium = ROOT } } localization_key = pww_ui_mkt_ourbuy }
 	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_aluminium = 1 } } localization_key = pww_ui_mkt_buyer_aluminium }
 	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_aluminium = 2 } } localization_key = pww_ui_mkt_rivals_aluminium }
-	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_aluminium = 3 } } localization_key = pww_mkt_cause_quiet_season }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_aluminium = 3 } } localization_key = pww_ui_mkt_quiet }
 	text = { localization_key = pww_ui_blank }
 }
 defined_text = {
-	name = pww_ui_sl_mkt_aluminium
-	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_aluminium > 0 } check_variable = { global.pww_ui_mkt_c2_aluminium = 1 } } localization_key = pww_ui_mkt_line2_aluminium }
-	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_aluminium > 0 } } localization_key = pww_ui_mkt_line1_aluminium }
-	text = { trigger = { check_variable = { global.pww_ui_mkt_c2_aluminium = 1 } } localization_key = pww_ui_mkt_linec_aluminium }
-	text = { localization_key = pww_ui_mkt_line0_aluminium }
+	name = pww_ui_sl_mkt_c2_aluminium
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c2_aluminium = 1 } } localization_key = pww_ui_mkt_contested_aluminium }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_mkt_x1_aluminium
+	text = { trigger = { OR = { check_variable = { pww_stock_out_aluminium > 0.05 } AND = { check_variable = { pww_desp_aluminium > 24.999 } check_variable = { pww_stock_aluminium > 0.999 } } } } localization_key = pww_ui_mkt_g0_aluminium }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c3_aluminium > 0 } } localization_key = pww_ui_mkt_g1_aluminium }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_aluminium > 0 } check_variable = { global.pww_ui_mkt_c1_aluminium < 3 } } localization_key = pww_ui_mkt_g2_aluminium }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c2_aluminium = 1 } } localization_key = pww_ui_mkt_g3_aluminium }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_aluminium = 3 } } localization_key = pww_ui_mkt_quiet }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_mkt_x2_aluminium
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c3_aluminium > 0 } OR = { AND = { OR = { check_variable = { pww_stock_out_aluminium > 0.05 } AND = { check_variable = { pww_desp_aluminium > 24.999 } check_variable = { pww_stock_aluminium > 0.999 } } } } } } localization_key = pww_ui_mkt_g1_aluminium }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_aluminium > 0 } check_variable = { global.pww_ui_mkt_c1_aluminium < 3 } OR = { AND = { OR = { check_variable = { pww_stock_out_aluminium > 0.05 } AND = { check_variable = { pww_desp_aluminium > 24.999 } check_variable = { pww_stock_aluminium > 0.999 } } } } AND = { check_variable = { global.pww_ui_mkt_c3_aluminium > 0 } } } } localization_key = pww_ui_mkt_g2_aluminium }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c2_aluminium = 1 } OR = { AND = { OR = { check_variable = { pww_stock_out_aluminium > 0.05 } AND = { check_variable = { pww_desp_aluminium > 24.999 } check_variable = { pww_stock_aluminium > 0.999 } } } } AND = { check_variable = { global.pww_ui_mkt_c3_aluminium > 0 } } AND = { check_variable = { global.pww_ui_mkt_c1_aluminium > 0 } check_variable = { global.pww_ui_mkt_c1_aluminium < 3 } } } } localization_key = pww_ui_mkt_g3_aluminium }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_mkt_c3_aluminium
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c3_aluminium = 1 } } localization_key = pww_ui_mkt_cart_1 }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c3_aluminium = 2 } } localization_key = pww_ui_mkt_cart_2 }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c3_aluminium = 3 } } localization_key = pww_ui_mkt_cart_3 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_mkt_c4_aluminium
+	text = { trigger = { check_variable = { pww_stock_out_aluminium > 0.05 } } localization_key = pww_ui_mkt_draw_aluminium }
+	text = { trigger = { check_variable = { pww_desp_aluminium > 24.999 } check_variable = { pww_stock_aluminium > 0.999 } } localization_key = pww_ui_mkt_hold_aluminium }
+	text = { localization_key = pww_ui_blank }
 }
 defined_text = {
 	name = pww_ui_sl_mkt_band_rubber
@@ -820,17 +2113,45 @@ defined_text = {
 }
 defined_text = {
 	name = pww_ui_sl_mkt_c1_rubber
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_rubber = 1 } check_variable = { global.pww_ui_mkt_b1_rubber = ROOT } } localization_key = pww_ui_mkt_ourbuy }
 	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_rubber = 1 } } localization_key = pww_ui_mkt_buyer_rubber }
 	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_rubber = 2 } } localization_key = pww_ui_mkt_rivals_rubber }
-	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_rubber = 3 } } localization_key = pww_mkt_cause_quiet_season }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_rubber = 3 } } localization_key = pww_ui_mkt_quiet }
 	text = { localization_key = pww_ui_blank }
 }
 defined_text = {
-	name = pww_ui_sl_mkt_rubber
-	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_rubber > 0 } check_variable = { global.pww_ui_mkt_c2_rubber = 1 } } localization_key = pww_ui_mkt_line2_rubber }
-	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_rubber > 0 } } localization_key = pww_ui_mkt_line1_rubber }
-	text = { trigger = { check_variable = { global.pww_ui_mkt_c2_rubber = 1 } } localization_key = pww_ui_mkt_linec_rubber }
-	text = { localization_key = pww_ui_mkt_line0_rubber }
+	name = pww_ui_sl_mkt_c2_rubber
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c2_rubber = 1 } } localization_key = pww_ui_mkt_contested_rubber }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_mkt_x1_rubber
+	text = { trigger = { OR = { check_variable = { pww_stock_out_rubber > 0.05 } AND = { check_variable = { pww_desp_rubber > 24.999 } check_variable = { pww_stock_rubber > 0.999 } } } } localization_key = pww_ui_mkt_g0_rubber }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c3_rubber > 0 } } localization_key = pww_ui_mkt_g1_rubber }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_rubber > 0 } check_variable = { global.pww_ui_mkt_c1_rubber < 3 } } localization_key = pww_ui_mkt_g2_rubber }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c2_rubber = 1 } } localization_key = pww_ui_mkt_g3_rubber }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_rubber = 3 } } localization_key = pww_ui_mkt_quiet }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_mkt_x2_rubber
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c3_rubber > 0 } OR = { AND = { OR = { check_variable = { pww_stock_out_rubber > 0.05 } AND = { check_variable = { pww_desp_rubber > 24.999 } check_variable = { pww_stock_rubber > 0.999 } } } } } } localization_key = pww_ui_mkt_g1_rubber }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_rubber > 0 } check_variable = { global.pww_ui_mkt_c1_rubber < 3 } OR = { AND = { OR = { check_variable = { pww_stock_out_rubber > 0.05 } AND = { check_variable = { pww_desp_rubber > 24.999 } check_variable = { pww_stock_rubber > 0.999 } } } } AND = { check_variable = { global.pww_ui_mkt_c3_rubber > 0 } } } } localization_key = pww_ui_mkt_g2_rubber }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c2_rubber = 1 } OR = { AND = { OR = { check_variable = { pww_stock_out_rubber > 0.05 } AND = { check_variable = { pww_desp_rubber > 24.999 } check_variable = { pww_stock_rubber > 0.999 } } } } AND = { check_variable = { global.pww_ui_mkt_c3_rubber > 0 } } AND = { check_variable = { global.pww_ui_mkt_c1_rubber > 0 } check_variable = { global.pww_ui_mkt_c1_rubber < 3 } } } } localization_key = pww_ui_mkt_g3_rubber }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_mkt_c3_rubber
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c3_rubber = 1 } } localization_key = pww_ui_mkt_cart_1 }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c3_rubber = 2 } } localization_key = pww_ui_mkt_cart_2 }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c3_rubber = 3 } } localization_key = pww_ui_mkt_cart_3 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_mkt_c4_rubber
+	text = { trigger = { check_variable = { pww_stock_out_rubber > 0.05 } } localization_key = pww_ui_mkt_draw_rubber }
+	text = { trigger = { check_variable = { pww_desp_rubber > 24.999 } check_variable = { pww_stock_rubber > 0.999 } } localization_key = pww_ui_mkt_hold_rubber }
+	text = { localization_key = pww_ui_blank }
 }
 defined_text = {
 	name = pww_ui_sl_mkt_band_tungsten
@@ -845,17 +2166,45 @@ defined_text = {
 }
 defined_text = {
 	name = pww_ui_sl_mkt_c1_tungsten
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_tungsten = 1 } check_variable = { global.pww_ui_mkt_b1_tungsten = ROOT } } localization_key = pww_ui_mkt_ourbuy }
 	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_tungsten = 1 } } localization_key = pww_ui_mkt_buyer_tungsten }
 	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_tungsten = 2 } } localization_key = pww_ui_mkt_rivals_tungsten }
-	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_tungsten = 3 } } localization_key = pww_mkt_cause_quiet_season }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_tungsten = 3 } } localization_key = pww_ui_mkt_quiet }
 	text = { localization_key = pww_ui_blank }
 }
 defined_text = {
-	name = pww_ui_sl_mkt_tungsten
-	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_tungsten > 0 } check_variable = { global.pww_ui_mkt_c2_tungsten = 1 } } localization_key = pww_ui_mkt_line2_tungsten }
-	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_tungsten > 0 } } localization_key = pww_ui_mkt_line1_tungsten }
-	text = { trigger = { check_variable = { global.pww_ui_mkt_c2_tungsten = 1 } } localization_key = pww_ui_mkt_linec_tungsten }
-	text = { localization_key = pww_ui_mkt_line0_tungsten }
+	name = pww_ui_sl_mkt_c2_tungsten
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c2_tungsten = 1 } } localization_key = pww_ui_mkt_contested_tungsten }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_mkt_x1_tungsten
+	text = { trigger = { OR = { check_variable = { pww_stock_out_tungsten > 0.05 } AND = { check_variable = { pww_desp_tungsten > 24.999 } check_variable = { pww_stock_tungsten > 0.999 } } } } localization_key = pww_ui_mkt_g0_tungsten }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c3_tungsten > 0 } } localization_key = pww_ui_mkt_g1_tungsten }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_tungsten > 0 } check_variable = { global.pww_ui_mkt_c1_tungsten < 3 } } localization_key = pww_ui_mkt_g2_tungsten }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c2_tungsten = 1 } } localization_key = pww_ui_mkt_g3_tungsten }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_tungsten = 3 } } localization_key = pww_ui_mkt_quiet }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_mkt_x2_tungsten
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c3_tungsten > 0 } OR = { AND = { OR = { check_variable = { pww_stock_out_tungsten > 0.05 } AND = { check_variable = { pww_desp_tungsten > 24.999 } check_variable = { pww_stock_tungsten > 0.999 } } } } } } localization_key = pww_ui_mkt_g1_tungsten }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_tungsten > 0 } check_variable = { global.pww_ui_mkt_c1_tungsten < 3 } OR = { AND = { OR = { check_variable = { pww_stock_out_tungsten > 0.05 } AND = { check_variable = { pww_desp_tungsten > 24.999 } check_variable = { pww_stock_tungsten > 0.999 } } } } AND = { check_variable = { global.pww_ui_mkt_c3_tungsten > 0 } } } } localization_key = pww_ui_mkt_g2_tungsten }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c2_tungsten = 1 } OR = { AND = { OR = { check_variable = { pww_stock_out_tungsten > 0.05 } AND = { check_variable = { pww_desp_tungsten > 24.999 } check_variable = { pww_stock_tungsten > 0.999 } } } } AND = { check_variable = { global.pww_ui_mkt_c3_tungsten > 0 } } AND = { check_variable = { global.pww_ui_mkt_c1_tungsten > 0 } check_variable = { global.pww_ui_mkt_c1_tungsten < 3 } } } } localization_key = pww_ui_mkt_g3_tungsten }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_mkt_c3_tungsten
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c3_tungsten = 1 } } localization_key = pww_ui_mkt_cart_1 }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c3_tungsten = 2 } } localization_key = pww_ui_mkt_cart_2 }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c3_tungsten = 3 } } localization_key = pww_ui_mkt_cart_3 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_mkt_c4_tungsten
+	text = { trigger = { check_variable = { pww_stock_out_tungsten > 0.05 } } localization_key = pww_ui_mkt_draw_tungsten }
+	text = { trigger = { check_variable = { pww_desp_tungsten > 24.999 } check_variable = { pww_stock_tungsten > 0.999 } } localization_key = pww_ui_mkt_hold_tungsten }
+	text = { localization_key = pww_ui_blank }
 }
 defined_text = {
 	name = pww_ui_sl_mkt_band_steel
@@ -870,17 +2219,45 @@ defined_text = {
 }
 defined_text = {
 	name = pww_ui_sl_mkt_c1_steel
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_steel = 1 } check_variable = { global.pww_ui_mkt_b1_steel = ROOT } } localization_key = pww_ui_mkt_ourbuy }
 	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_steel = 1 } } localization_key = pww_ui_mkt_buyer_steel }
 	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_steel = 2 } } localization_key = pww_ui_mkt_rivals_steel }
-	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_steel = 3 } } localization_key = pww_mkt_cause_quiet_season }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_steel = 3 } } localization_key = pww_ui_mkt_quiet }
 	text = { localization_key = pww_ui_blank }
 }
 defined_text = {
-	name = pww_ui_sl_mkt_steel
-	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_steel > 0 } check_variable = { global.pww_ui_mkt_c2_steel = 1 } } localization_key = pww_ui_mkt_line2_steel }
-	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_steel > 0 } } localization_key = pww_ui_mkt_line1_steel }
-	text = { trigger = { check_variable = { global.pww_ui_mkt_c2_steel = 1 } } localization_key = pww_ui_mkt_linec_steel }
-	text = { localization_key = pww_ui_mkt_line0_steel }
+	name = pww_ui_sl_mkt_c2_steel
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c2_steel = 1 } } localization_key = pww_ui_mkt_contested_steel }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_mkt_x1_steel
+	text = { trigger = { OR = { check_variable = { pww_stock_out_steel > 0.05 } AND = { check_variable = { pww_desp_steel > 24.999 } check_variable = { pww_stock_steel > 0.999 } } } } localization_key = pww_ui_mkt_g0_steel }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c3_steel > 0 } } localization_key = pww_ui_mkt_g1_steel }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_steel > 0 } check_variable = { global.pww_ui_mkt_c1_steel < 3 } } localization_key = pww_ui_mkt_g2_steel }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c2_steel = 1 } } localization_key = pww_ui_mkt_g3_steel }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_steel = 3 } } localization_key = pww_ui_mkt_quiet }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_mkt_x2_steel
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c3_steel > 0 } OR = { AND = { OR = { check_variable = { pww_stock_out_steel > 0.05 } AND = { check_variable = { pww_desp_steel > 24.999 } check_variable = { pww_stock_steel > 0.999 } } } } } } localization_key = pww_ui_mkt_g1_steel }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_steel > 0 } check_variable = { global.pww_ui_mkt_c1_steel < 3 } OR = { AND = { OR = { check_variable = { pww_stock_out_steel > 0.05 } AND = { check_variable = { pww_desp_steel > 24.999 } check_variable = { pww_stock_steel > 0.999 } } } } AND = { check_variable = { global.pww_ui_mkt_c3_steel > 0 } } } } localization_key = pww_ui_mkt_g2_steel }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c2_steel = 1 } OR = { AND = { OR = { check_variable = { pww_stock_out_steel > 0.05 } AND = { check_variable = { pww_desp_steel > 24.999 } check_variable = { pww_stock_steel > 0.999 } } } } AND = { check_variable = { global.pww_ui_mkt_c3_steel > 0 } } AND = { check_variable = { global.pww_ui_mkt_c1_steel > 0 } check_variable = { global.pww_ui_mkt_c1_steel < 3 } } } } localization_key = pww_ui_mkt_g3_steel }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_mkt_c3_steel
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c3_steel = 1 } } localization_key = pww_ui_mkt_cart_1 }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c3_steel = 2 } } localization_key = pww_ui_mkt_cart_2 }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c3_steel = 3 } } localization_key = pww_ui_mkt_cart_3 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_mkt_c4_steel
+	text = { trigger = { check_variable = { pww_stock_out_steel > 0.05 } } localization_key = pww_ui_mkt_draw_steel }
+	text = { trigger = { check_variable = { pww_desp_steel > 24.999 } check_variable = { pww_stock_steel > 0.999 } } localization_key = pww_ui_mkt_hold_steel }
+	text = { localization_key = pww_ui_blank }
 }
 defined_text = {
 	name = pww_ui_sl_mkt_band_chromium
@@ -895,17 +2272,45 @@ defined_text = {
 }
 defined_text = {
 	name = pww_ui_sl_mkt_c1_chromium
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_chromium = 1 } check_variable = { global.pww_ui_mkt_b1_chromium = ROOT } } localization_key = pww_ui_mkt_ourbuy }
 	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_chromium = 1 } } localization_key = pww_ui_mkt_buyer_chromium }
 	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_chromium = 2 } } localization_key = pww_ui_mkt_rivals_chromium }
-	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_chromium = 3 } } localization_key = pww_mkt_cause_quiet_season }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_chromium = 3 } } localization_key = pww_ui_mkt_quiet }
 	text = { localization_key = pww_ui_blank }
 }
 defined_text = {
-	name = pww_ui_sl_mkt_chromium
-	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_chromium > 0 } check_variable = { global.pww_ui_mkt_c2_chromium = 1 } } localization_key = pww_ui_mkt_line2_chromium }
-	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_chromium > 0 } } localization_key = pww_ui_mkt_line1_chromium }
-	text = { trigger = { check_variable = { global.pww_ui_mkt_c2_chromium = 1 } } localization_key = pww_ui_mkt_linec_chromium }
-	text = { localization_key = pww_ui_mkt_line0_chromium }
+	name = pww_ui_sl_mkt_c2_chromium
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c2_chromium = 1 } } localization_key = pww_ui_mkt_contested_chromium }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_mkt_x1_chromium
+	text = { trigger = { OR = { check_variable = { pww_stock_out_chromium > 0.05 } AND = { check_variable = { pww_desp_chromium > 24.999 } check_variable = { pww_stock_chromium > 0.999 } } } } localization_key = pww_ui_mkt_g0_chromium }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c3_chromium > 0 } } localization_key = pww_ui_mkt_g1_chromium }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_chromium > 0 } check_variable = { global.pww_ui_mkt_c1_chromium < 3 } } localization_key = pww_ui_mkt_g2_chromium }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c2_chromium = 1 } } localization_key = pww_ui_mkt_g3_chromium }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_chromium = 3 } } localization_key = pww_ui_mkt_quiet }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_mkt_x2_chromium
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c3_chromium > 0 } OR = { AND = { OR = { check_variable = { pww_stock_out_chromium > 0.05 } AND = { check_variable = { pww_desp_chromium > 24.999 } check_variable = { pww_stock_chromium > 0.999 } } } } } } localization_key = pww_ui_mkt_g1_chromium }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_chromium > 0 } check_variable = { global.pww_ui_mkt_c1_chromium < 3 } OR = { AND = { OR = { check_variable = { pww_stock_out_chromium > 0.05 } AND = { check_variable = { pww_desp_chromium > 24.999 } check_variable = { pww_stock_chromium > 0.999 } } } } AND = { check_variable = { global.pww_ui_mkt_c3_chromium > 0 } } } } localization_key = pww_ui_mkt_g2_chromium }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c2_chromium = 1 } OR = { AND = { OR = { check_variable = { pww_stock_out_chromium > 0.05 } AND = { check_variable = { pww_desp_chromium > 24.999 } check_variable = { pww_stock_chromium > 0.999 } } } } AND = { check_variable = { global.pww_ui_mkt_c3_chromium > 0 } } AND = { check_variable = { global.pww_ui_mkt_c1_chromium > 0 } check_variable = { global.pww_ui_mkt_c1_chromium < 3 } } } } localization_key = pww_ui_mkt_g3_chromium }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_mkt_c3_chromium
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c3_chromium = 1 } } localization_key = pww_ui_mkt_cart_1 }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c3_chromium = 2 } } localization_key = pww_ui_mkt_cart_2 }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c3_chromium = 3 } } localization_key = pww_ui_mkt_cart_3 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_mkt_c4_chromium
+	text = { trigger = { check_variable = { pww_stock_out_chromium > 0.05 } } localization_key = pww_ui_mkt_draw_chromium }
+	text = { trigger = { check_variable = { pww_desp_chromium > 24.999 } check_variable = { pww_stock_chromium > 0.999 } } localization_key = pww_ui_mkt_hold_chromium }
+	text = { localization_key = pww_ui_blank }
 }
 defined_text = {
 	name = pww_ui_sl_mkt_band_coal
@@ -920,17 +2325,45 @@ defined_text = {
 }
 defined_text = {
 	name = pww_ui_sl_mkt_c1_coal
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_coal = 1 } check_variable = { global.pww_ui_mkt_b1_coal = ROOT } } localization_key = pww_ui_mkt_ourbuy }
 	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_coal = 1 } } localization_key = pww_ui_mkt_buyer_coal }
 	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_coal = 2 } } localization_key = pww_ui_mkt_rivals_coal }
-	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_coal = 3 } } localization_key = pww_mkt_cause_quiet_season }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_coal = 3 } } localization_key = pww_ui_mkt_quiet }
 	text = { localization_key = pww_ui_blank }
 }
 defined_text = {
-	name = pww_ui_sl_mkt_coal
-	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_coal > 0 } check_variable = { global.pww_ui_mkt_c2_coal = 1 } } localization_key = pww_ui_mkt_line2_coal }
-	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_coal > 0 } } localization_key = pww_ui_mkt_line1_coal }
-	text = { trigger = { check_variable = { global.pww_ui_mkt_c2_coal = 1 } } localization_key = pww_ui_mkt_linec_coal }
-	text = { localization_key = pww_ui_mkt_line0_coal }
+	name = pww_ui_sl_mkt_c2_coal
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c2_coal = 1 } } localization_key = pww_ui_mkt_contested_coal }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_mkt_x1_coal
+	text = { trigger = { OR = { check_variable = { pww_stock_out_coal > 0.05 } AND = { check_variable = { pww_desp_coal > 24.999 } check_variable = { pww_stock_coal > 0.999 } } } } localization_key = pww_ui_mkt_g0_coal }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c3_coal > 0 } } localization_key = pww_ui_mkt_g1_coal }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_coal > 0 } check_variable = { global.pww_ui_mkt_c1_coal < 3 } } localization_key = pww_ui_mkt_g2_coal }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c2_coal = 1 } } localization_key = pww_ui_mkt_g3_coal }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_coal = 3 } } localization_key = pww_ui_mkt_quiet }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_mkt_x2_coal
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c3_coal > 0 } OR = { AND = { OR = { check_variable = { pww_stock_out_coal > 0.05 } AND = { check_variable = { pww_desp_coal > 24.999 } check_variable = { pww_stock_coal > 0.999 } } } } } } localization_key = pww_ui_mkt_g1_coal }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c1_coal > 0 } check_variable = { global.pww_ui_mkt_c1_coal < 3 } OR = { AND = { OR = { check_variable = { pww_stock_out_coal > 0.05 } AND = { check_variable = { pww_desp_coal > 24.999 } check_variable = { pww_stock_coal > 0.999 } } } } AND = { check_variable = { global.pww_ui_mkt_c3_coal > 0 } } } } localization_key = pww_ui_mkt_g2_coal }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c2_coal = 1 } OR = { AND = { OR = { check_variable = { pww_stock_out_coal > 0.05 } AND = { check_variable = { pww_desp_coal > 24.999 } check_variable = { pww_stock_coal > 0.999 } } } } AND = { check_variable = { global.pww_ui_mkt_c3_coal > 0 } } AND = { check_variable = { global.pww_ui_mkt_c1_coal > 0 } check_variable = { global.pww_ui_mkt_c1_coal < 3 } } } } localization_key = pww_ui_mkt_g3_coal }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_mkt_c3_coal
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c3_coal = 1 } } localization_key = pww_ui_mkt_cart_1 }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c3_coal = 2 } } localization_key = pww_ui_mkt_cart_2 }
+	text = { trigger = { check_variable = { global.pww_ui_mkt_c3_coal = 3 } } localization_key = pww_ui_mkt_cart_3 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_mkt_c4_coal
+	text = { trigger = { check_variable = { pww_stock_out_coal > 0.05 } } localization_key = pww_ui_mkt_draw_coal }
+	text = { trigger = { check_variable = { pww_desp_coal > 24.999 } check_variable = { pww_stock_coal > 0.999 } } localization_key = pww_ui_mkt_hold_coal }
+	text = { localization_key = pww_ui_blank }
 }
 defined_text = {
 	name = pww_ui_sl_al0
@@ -996,11 +2429,6 @@ defined_text = {
 	text = { localization_key = pww_ui_imp_0 }
 }
 defined_text = {
-	name = pww_ui_sl_dos_nag
-	text = { trigger = { check_variable = { pww_ui_nk_all > 0 } } localization_key = pww_ui_dos_nag_n }
-	text = { localization_key = pww_ui_dos_nag_0 }
-}
-defined_text = {
 	name = pww_ui_sl_short_oil
 	text = { trigger = { check_variable = { pww_desp_oil > 79 } } localization_key = pww_ui_short_4 }
 	text = { trigger = { check_variable = { pww_desp_oil > 59 } } localization_key = pww_ui_short_3 }
@@ -1057,6 +2485,140 @@ defined_text = {
 	text = { localization_key = pww_ui_short_0 }
 }
 defined_text = {
+	name = pww_ui_sl_dos_bondw
+	text = { trigger = { check_variable = { pww_ui_vb@ROOT = 0 } } localization_key = pww_ui_dos_bondw_0 }
+	text = { trigger = { check_variable = { pww_ui_vb@ROOT = 1 } } localization_key = pww_ui_dos_bondw_1 }
+	text = { trigger = { check_variable = { pww_ui_vb@ROOT = 2 } } localization_key = pww_ui_dos_bondw_2 }
+	text = { trigger = { check_variable = { pww_ui_vb@ROOT = 3 } } localization_key = pww_ui_dos_bondw_3 }
+	text = { trigger = { check_variable = { pww_ui_vb@ROOT = 4 } } localization_key = pww_ui_dos_bondw_4 }
+	text = { localization_key = pww_ui_dos_bondw_none }
+}
+defined_text = {
+	name = pww_ui_sl_dos_bond0
+	text = { trigger = { check_variable = { pww_ui_vb0@ROOT = 0 } } localization_key = pww_rel_band_0 }
+	text = { trigger = { check_variable = { pww_ui_vb0@ROOT = 1 } } localization_key = pww_rel_band_1 }
+	text = { trigger = { check_variable = { pww_ui_vb0@ROOT = 2 } } localization_key = pww_rel_band_2 }
+	text = { trigger = { check_variable = { pww_ui_vb0@ROOT = 3 } } localization_key = pww_rel_band_3 }
+	text = { trigger = { check_variable = { pww_ui_vb0@ROOT = 4 } } localization_key = pww_rel_band_4 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_dos_bond1
+	text = { trigger = { check_variable = { pww_ui_vb1@ROOT = 0 } } localization_key = pww_rel_band_0 }
+	text = { trigger = { check_variable = { pww_ui_vb1@ROOT = 1 } } localization_key = pww_rel_band_1 }
+	text = { trigger = { check_variable = { pww_ui_vb1@ROOT = 2 } } localization_key = pww_rel_band_2 }
+	text = { trigger = { check_variable = { pww_ui_vb1@ROOT = 3 } } localization_key = pww_rel_band_3 }
+	text = { trigger = { check_variable = { pww_ui_vb1@ROOT = 4 } } localization_key = pww_rel_band_4 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_rv0_b
+	text = { trigger = { check_variable = { pww_ui_rv0_b = 0 } } localization_key = pww_ui_rvb_0 }
+	text = { trigger = { check_variable = { pww_ui_rv0_b = 1 } } localization_key = pww_ui_rvb_1 }
+	text = { trigger = { check_variable = { pww_ui_rv0_b = 2 } } localization_key = pww_ui_rvb_2 }
+	text = { trigger = { check_variable = { pww_ui_rv0_b = 3 } } localization_key = pww_ui_rvb_3 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_rv0_r
+	text = { trigger = { check_variable = { pww_ui_rv0_res = 0 } } localization_key = pww_ui_res_lc_oil }
+	text = { trigger = { check_variable = { pww_ui_rv0_res = 1 } } localization_key = pww_ui_res_lc_aluminium }
+	text = { trigger = { check_variable = { pww_ui_rv0_res = 2 } } localization_key = pww_ui_res_lc_rubber }
+	text = { trigger = { check_variable = { pww_ui_rv0_res = 3 } } localization_key = pww_ui_res_lc_tungsten }
+	text = { trigger = { check_variable = { pww_ui_rv0_res = 4 } } localization_key = pww_ui_res_lc_steel }
+	text = { trigger = { check_variable = { pww_ui_rv0_res = 5 } } localization_key = pww_ui_res_lc_chromium }
+	text = { trigger = { check_variable = { pww_ui_rv0_res = 6 } } localization_key = pww_ui_res_lc_coal }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_rv1_b
+	text = { trigger = { check_variable = { pww_ui_rv1_b = 0 } } localization_key = pww_ui_rvb_0 }
+	text = { trigger = { check_variable = { pww_ui_rv1_b = 1 } } localization_key = pww_ui_rvb_1 }
+	text = { trigger = { check_variable = { pww_ui_rv1_b = 2 } } localization_key = pww_ui_rvb_2 }
+	text = { trigger = { check_variable = { pww_ui_rv1_b = 3 } } localization_key = pww_ui_rvb_3 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_rv1_r
+	text = { trigger = { check_variable = { pww_ui_rv1_res = 0 } } localization_key = pww_ui_res_lc_oil }
+	text = { trigger = { check_variable = { pww_ui_rv1_res = 1 } } localization_key = pww_ui_res_lc_aluminium }
+	text = { trigger = { check_variable = { pww_ui_rv1_res = 2 } } localization_key = pww_ui_res_lc_rubber }
+	text = { trigger = { check_variable = { pww_ui_rv1_res = 3 } } localization_key = pww_ui_res_lc_tungsten }
+	text = { trigger = { check_variable = { pww_ui_rv1_res = 4 } } localization_key = pww_ui_res_lc_steel }
+	text = { trigger = { check_variable = { pww_ui_rv1_res = 5 } } localization_key = pww_ui_res_lc_chromium }
+	text = { trigger = { check_variable = { pww_ui_rv1_res = 6 } } localization_key = pww_ui_res_lc_coal }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_rv2_b
+	text = { trigger = { check_variable = { pww_ui_rv2_b = 0 } } localization_key = pww_ui_rvb_0 }
+	text = { trigger = { check_variable = { pww_ui_rv2_b = 1 } } localization_key = pww_ui_rvb_1 }
+	text = { trigger = { check_variable = { pww_ui_rv2_b = 2 } } localization_key = pww_ui_rvb_2 }
+	text = { trigger = { check_variable = { pww_ui_rv2_b = 3 } } localization_key = pww_ui_rvb_3 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_rv2_r
+	text = { trigger = { check_variable = { pww_ui_rv2_res = 0 } } localization_key = pww_ui_res_lc_oil }
+	text = { trigger = { check_variable = { pww_ui_rv2_res = 1 } } localization_key = pww_ui_res_lc_aluminium }
+	text = { trigger = { check_variable = { pww_ui_rv2_res = 2 } } localization_key = pww_ui_res_lc_rubber }
+	text = { trigger = { check_variable = { pww_ui_rv2_res = 3 } } localization_key = pww_ui_res_lc_tungsten }
+	text = { trigger = { check_variable = { pww_ui_rv2_res = 4 } } localization_key = pww_ui_res_lc_steel }
+	text = { trigger = { check_variable = { pww_ui_rv2_res = 5 } } localization_key = pww_ui_res_lc_chromium }
+	text = { trigger = { check_variable = { pww_ui_rv2_res = 6 } } localization_key = pww_ui_res_lc_coal }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_dos_rsv
+	text = { trigger = { check_variable = { pww_ui_nrv = 3 } } localization_key = pww_ui_dos_rsv_3 }
+	text = { trigger = { check_variable = { pww_ui_nrv = 2 } } localization_key = pww_ui_dos_rsv_2 }
+	text = { trigger = { check_variable = { pww_ui_nrv = 1 } } localization_key = pww_ui_dos_rsv_1 }
+	text = { localization_key = pww_ui_dos_rsv_0 }
+}
+defined_text = {
+	name = pww_ui_sl_dos_x1
+	text = { trigger = { check_variable = { pww_ui_x1 = 0 } } localization_key = pww_ui_res_lc_oil }
+	text = { trigger = { check_variable = { pww_ui_x1 = 1 } } localization_key = pww_ui_res_lc_aluminium }
+	text = { trigger = { check_variable = { pww_ui_x1 = 2 } } localization_key = pww_ui_res_lc_rubber }
+	text = { trigger = { check_variable = { pww_ui_x1 = 3 } } localization_key = pww_ui_res_lc_tungsten }
+	text = { trigger = { check_variable = { pww_ui_x1 = 4 } } localization_key = pww_ui_res_lc_steel }
+	text = { trigger = { check_variable = { pww_ui_x1 = 5 } } localization_key = pww_ui_res_lc_chromium }
+	text = { trigger = { check_variable = { pww_ui_x1 = 6 } } localization_key = pww_ui_res_lc_coal }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_dos_x2
+	text = { trigger = { check_variable = { pww_ui_x2 = 0 } } localization_key = pww_ui_res_lc_oil }
+	text = { trigger = { check_variable = { pww_ui_x2 = 1 } } localization_key = pww_ui_res_lc_aluminium }
+	text = { trigger = { check_variable = { pww_ui_x2 = 2 } } localization_key = pww_ui_res_lc_rubber }
+	text = { trigger = { check_variable = { pww_ui_x2 = 3 } } localization_key = pww_ui_res_lc_tungsten }
+	text = { trigger = { check_variable = { pww_ui_x2 = 4 } } localization_key = pww_ui_res_lc_steel }
+	text = { trigger = { check_variable = { pww_ui_x2 = 5 } } localization_key = pww_ui_res_lc_chromium }
+	text = { trigger = { check_variable = { pww_ui_x2 = 6 } } localization_key = pww_ui_res_lc_coal }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_dos_exp
+	text = { trigger = { check_variable = { pww_ui_x2 > -1 } } localization_key = pww_ui_dos_exp_2 }
+	text = { trigger = { check_variable = { pww_ui_x1 > -1 } } localization_key = pww_ui_dos_exp_1 }
+	text = { localization_key = pww_ui_dos_exp_0 }
+}
+defined_text = {
+	name = pww_ui_sl_dos_cost
+	text = { trigger = { check_variable = { pww_ui_vc@ROOT = 0 } } localization_key = pww_ui_dos_cost_0 }
+	text = { trigger = { check_variable = { pww_ui_vc@ROOT = 1 } } localization_key = pww_ui_dos_cost_1 }
+	text = { trigger = { check_variable = { pww_ui_vc@ROOT = 2 } } localization_key = pww_ui_dos_cost_2 }
+	text = { trigger = { check_variable = { pww_ui_vc@ROOT = 3 } } localization_key = pww_ui_dos_cost_3 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_dos_route
+	text = { trigger = { check_variable = { pww_ui_vr@ROOT = 0 } } localization_key = pww_ui_dos_route_0 }
+	text = { trigger = { check_variable = { pww_ui_vr@ROOT = 1 } } localization_key = pww_ui_dos_route_1 }
+	text = { trigger = { check_variable = { pww_ui_vr@ROOT = 2 } } localization_key = pww_ui_dos_route_2 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
 	name = pww_ui_sl_k0_res_lc
 	text = { trigger = { check_variable = { pww_ui_k0_res = 0 } } localization_key = pww_ui_res_lc_oil }
 	text = { trigger = { check_variable = { pww_ui_k0_res = 1 } } localization_key = pww_ui_res_lc_aluminium }
@@ -1080,6 +2642,26 @@ defined_text = {
 	text = { trigger = { check_variable = { pww_ui_k0_st = 2 } } localization_key = pww_ag_status_suspended }
 	text = { trigger = { check_variable = { pww_ui_k0_st = 7 } } localization_key = pww_ag_status_reserved }
 	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_k0_lock
+	text = { trigger = { check_variable = { pww_ui_k0_com = 1 } } localization_key = pww_ui_lock_1 }
+	text = { localization_key = pww_ui_lock_0 }
+}
+defined_text = {
+	name = pww_ui_sl_k0_bondw
+	text = { trigger = { check_variable = { pww_ui_k0_bond = 0 } } localization_key = pww_rel_band_0 }
+	text = { trigger = { check_variable = { pww_ui_k0_bond = 1 } } localization_key = pww_rel_band_1 }
+	text = { trigger = { check_variable = { pww_ui_k0_bond = 2 } } localization_key = pww_rel_band_2 }
+	text = { trigger = { check_variable = { pww_ui_k0_bond = 3 } } localization_key = pww_rel_band_3 }
+	text = { trigger = { check_variable = { pww_ui_k0_bond = 4 } } localization_key = pww_rel_band_4 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_k0_term
+	text = { trigger = { check_variable = { pww_ui_k0_open = 1 } } localization_key = pww_ui_term_open }
+	text = { trigger = { check_variable = { pww_ui_k0_com = 1 } } localization_key = pww_ui_k0_locked }
+	text = { localization_key = pww_ui_k0_runs }
 }
 defined_text = {
 	name = pww_ui_sl_k1_res_lc
@@ -1107,6 +2689,26 @@ defined_text = {
 	text = { localization_key = pww_ui_blank }
 }
 defined_text = {
+	name = pww_ui_sl_k1_lock
+	text = { trigger = { check_variable = { pww_ui_k1_com = 1 } } localization_key = pww_ui_lock_1 }
+	text = { localization_key = pww_ui_lock_0 }
+}
+defined_text = {
+	name = pww_ui_sl_k1_bondw
+	text = { trigger = { check_variable = { pww_ui_k1_bond = 0 } } localization_key = pww_rel_band_0 }
+	text = { trigger = { check_variable = { pww_ui_k1_bond = 1 } } localization_key = pww_rel_band_1 }
+	text = { trigger = { check_variable = { pww_ui_k1_bond = 2 } } localization_key = pww_rel_band_2 }
+	text = { trigger = { check_variable = { pww_ui_k1_bond = 3 } } localization_key = pww_rel_band_3 }
+	text = { trigger = { check_variable = { pww_ui_k1_bond = 4 } } localization_key = pww_rel_band_4 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_k1_term
+	text = { trigger = { check_variable = { pww_ui_k1_open = 1 } } localization_key = pww_ui_term_open }
+	text = { trigger = { check_variable = { pww_ui_k1_com = 1 } } localization_key = pww_ui_k1_locked }
+	text = { localization_key = pww_ui_k1_runs }
+}
+defined_text = {
 	name = pww_ui_sl_k2_res_lc
 	text = { trigger = { check_variable = { pww_ui_k2_res = 0 } } localization_key = pww_ui_res_lc_oil }
 	text = { trigger = { check_variable = { pww_ui_k2_res = 1 } } localization_key = pww_ui_res_lc_aluminium }
@@ -1130,6 +2732,26 @@ defined_text = {
 	text = { trigger = { check_variable = { pww_ui_k2_st = 2 } } localization_key = pww_ag_status_suspended }
 	text = { trigger = { check_variable = { pww_ui_k2_st = 7 } } localization_key = pww_ag_status_reserved }
 	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_k2_lock
+	text = { trigger = { check_variable = { pww_ui_k2_com = 1 } } localization_key = pww_ui_lock_1 }
+	text = { localization_key = pww_ui_lock_0 }
+}
+defined_text = {
+	name = pww_ui_sl_k2_bondw
+	text = { trigger = { check_variable = { pww_ui_k2_bond = 0 } } localization_key = pww_rel_band_0 }
+	text = { trigger = { check_variable = { pww_ui_k2_bond = 1 } } localization_key = pww_rel_band_1 }
+	text = { trigger = { check_variable = { pww_ui_k2_bond = 2 } } localization_key = pww_rel_band_2 }
+	text = { trigger = { check_variable = { pww_ui_k2_bond = 3 } } localization_key = pww_rel_band_3 }
+	text = { trigger = { check_variable = { pww_ui_k2_bond = 4 } } localization_key = pww_rel_band_4 }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
+	name = pww_ui_sl_k2_term
+	text = { trigger = { check_variable = { pww_ui_k2_open = 1 } } localization_key = pww_ui_term_open }
+	text = { trigger = { check_variable = { pww_ui_k2_com = 1 } } localization_key = pww_ui_k2_locked }
+	text = { localization_key = pww_ui_k2_runs }
 }
 defined_text = {
 	name = pww_ui_sl_rd_type
@@ -1185,34 +2807,5 @@ defined_text = {
 	text = { trigger = { check_variable = { pww_ui_st_res = 4 } } localization_key = pww_mkt_res_steel }
 	text = { trigger = { check_variable = { pww_ui_st_res = 5 } } localization_key = pww_mkt_res_chromium }
 	text = { trigger = { check_variable = { pww_ui_st_res = 6 } } localization_key = pww_mkt_res_coal }
-	text = { localization_key = pww_ui_blank }
-}
-# Seat as a sentence for the desk rows ("You are the claimant.")
-defined_text = {
-	name = pww_ui_sl_s0_seatline
-	text = { trigger = { check_variable = { pww_ui_s0_seat = 0 } } localization_key = pww_seat_line_claimant }
-	text = { trigger = { check_variable = { pww_ui_s0_seat = 1 } } localization_key = pww_seat_line_holder }
-	text = { trigger = { check_variable = { pww_ui_s0_seat = 2 } } localization_key = pww_seat_line_patron }
-	text = { localization_key = pww_ui_blank }
-}
-defined_text = {
-	name = pww_ui_sl_s1_seatline
-	text = { trigger = { check_variable = { pww_ui_s1_seat = 0 } } localization_key = pww_seat_line_claimant }
-	text = { trigger = { check_variable = { pww_ui_s1_seat = 1 } } localization_key = pww_seat_line_holder }
-	text = { trigger = { check_variable = { pww_ui_s1_seat = 2 } } localization_key = pww_seat_line_patron }
-	text = { localization_key = pww_ui_blank }
-}
-defined_text = {
-	name = pww_ui_sl_s2_seatline
-	text = { trigger = { check_variable = { pww_ui_s2_seat = 0 } } localization_key = pww_seat_line_claimant }
-	text = { trigger = { check_variable = { pww_ui_s2_seat = 1 } } localization_key = pww_seat_line_holder }
-	text = { trigger = { check_variable = { pww_ui_s2_seat = 2 } } localization_key = pww_seat_line_patron }
-	text = { localization_key = pww_ui_blank }
-}
-defined_text = {
-	name = pww_ui_sl_s3_seatline
-	text = { trigger = { check_variable = { pww_ui_s3_seat = 0 } } localization_key = pww_seat_line_claimant }
-	text = { trigger = { check_variable = { pww_ui_s3_seat = 1 } } localization_key = pww_seat_line_holder }
-	text = { trigger = { check_variable = { pww_ui_s3_seat = 2 } } localization_key = pww_seat_line_patron }
 	text = { localization_key = pww_ui_blank }
 }
