@@ -80,6 +80,7 @@
   .menu div:hover { background: #22262b; }
   .menu small { color: var(--muted); }
   .menu .off { color: #555; }
+  .hint { color: var(--muted); font-size: 11px; }
   .terms {
     display: grid; grid-template-columns: auto 1fr auto 1fr; gap: 6px 12px; align-items: center;
     padding: 10px 18px; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
@@ -143,9 +144,17 @@
     </div>
     <div class="col">
       <h3>They give</h3>
-      <div class="item"><div class="ico steel"></div><div>Steel</div>
+      <div class="item"><div class="ico steel"></div><div>Steel<div class="hint">We're short 30 · they have 112 spare</div></div>
         <div class="step"><span>−</span><span class="amt">24</span><span>+</span></div><div class="x">×</div></div>
-      <button class="add">+ Ask for something</button>
+      <button class="add" onclick="document.getElementById('m2').hidden=!document.getElementById('m2').hidden">+ Ask for something</button>
+      <div class="menu" id="m2" hidden>
+        <div>Steel <small>we're short 30 · they have 112</small></div>
+        <div>Rubber <small class="need">we're short 18 · they have 0</small></div>
+        <div>Tungsten <small>we're short 6 · they have 4</small></div>
+        <div>Oil <small>we have enough · they have 0</small></div>
+        <div>Equipment shipment <small>what they've built</small></div>
+        <div>Resource rights <small>lease one of their mines</small></div>
+      </div>
     </div>
   </div>
 
