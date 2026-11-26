@@ -56,6 +56,7 @@ TESTS: list[Test] = [
     T("tests/diplomacy/diplo_haggle", ["--tag", "GER"]),
     T("tests/diplomacy/diplo_glut_sale", ["--tag", "ITA"]),
     T("tests/diplomacy/diplo_value_v2", ["--tag", "GER"]),
+    T("tests/diplomacy/diplo_compete", ["--tag", "GER"]),
     T("tests/diplomacy/diplo_seed_reload",
       ["--autosave", "MONTHLY", "--clear-saves"], ["--continue-last-save"]),
     T("tests/situations/sit_wolfram_ai", ["--tag", "HAI"]),

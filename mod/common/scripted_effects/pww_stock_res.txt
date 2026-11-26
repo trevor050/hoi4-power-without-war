@@ -135,6 +135,11 @@ pww_stock_cap_aluminium = {
 		subtract_from_temp_variable = { pww_stk_use = resource@aluminium }
 	}
 	set_temp_variable = { pww_stk_sc = pww_stk_use }
+	# Exporters hold stocks sized by output: scale = max(demand, c_prod_share
+	# x production, c_min_scale).
+	set_temp_variable = { pww_stk_ps = resource_produced@aluminium }
+	multiply_temp_variable = { pww_stk_ps = global.pww_stock_c_prod_share }
+	if = { limit = { check_variable = { pww_stk_sc < pww_stk_ps } } set_temp_variable = { pww_stk_sc = pww_stk_ps } }
 	if = { limit = { check_variable = { pww_stk_sc < global.pww_stock_c_min_scale } } set_temp_variable = { pww_stk_sc = global.pww_stock_c_min_scale } }
 	multiply_temp_variable = { pww_stk_sc = global.pww_stock_c_base_days }
 	set_temp_variable = { pww_stk_lv = pww_stock_depots }
@@ -302,6 +307,11 @@ pww_stock_cap_rubber = {
 		subtract_from_temp_variable = { pww_stk_use = resource@rubber }
 	}
 	set_temp_variable = { pww_stk_sc = pww_stk_use }
+	# Exporters hold stocks sized by output: scale = max(demand, c_prod_share
+	# x production, c_min_scale).
+	set_temp_variable = { pww_stk_ps = resource_produced@rubber }
+	multiply_temp_variable = { pww_stk_ps = global.pww_stock_c_prod_share }
+	if = { limit = { check_variable = { pww_stk_sc < pww_stk_ps } } set_temp_variable = { pww_stk_sc = pww_stk_ps } }
 	if = { limit = { check_variable = { pww_stk_sc < global.pww_stock_c_min_scale } } set_temp_variable = { pww_stk_sc = global.pww_stock_c_min_scale } }
 	multiply_temp_variable = { pww_stk_sc = global.pww_stock_c_base_days }
 	set_temp_variable = { pww_stk_lv = pww_stock_depots }
@@ -469,6 +479,11 @@ pww_stock_cap_tungsten = {
 		subtract_from_temp_variable = { pww_stk_use = resource@tungsten }
 	}
 	set_temp_variable = { pww_stk_sc = pww_stk_use }
+	# Exporters hold stocks sized by output: scale = max(demand, c_prod_share
+	# x production, c_min_scale).
+	set_temp_variable = { pww_stk_ps = resource_produced@tungsten }
+	multiply_temp_variable = { pww_stk_ps = global.pww_stock_c_prod_share }
+	if = { limit = { check_variable = { pww_stk_sc < pww_stk_ps } } set_temp_variable = { pww_stk_sc = pww_stk_ps } }
 	if = { limit = { check_variable = { pww_stk_sc < global.pww_stock_c_min_scale } } set_temp_variable = { pww_stk_sc = global.pww_stock_c_min_scale } }
 	multiply_temp_variable = { pww_stk_sc = global.pww_stock_c_base_days }
 	set_temp_variable = { pww_stk_lv = pww_stock_depots }
@@ -636,6 +651,11 @@ pww_stock_cap_steel = {
 		subtract_from_temp_variable = { pww_stk_use = resource@steel }
 	}
 	set_temp_variable = { pww_stk_sc = pww_stk_use }
+	# Exporters hold stocks sized by output: scale = max(demand, c_prod_share
+	# x production, c_min_scale).
+	set_temp_variable = { pww_stk_ps = resource_produced@steel }
+	multiply_temp_variable = { pww_stk_ps = global.pww_stock_c_prod_share }
+	if = { limit = { check_variable = { pww_stk_sc < pww_stk_ps } } set_temp_variable = { pww_stk_sc = pww_stk_ps } }
 	if = { limit = { check_variable = { pww_stk_sc < global.pww_stock_c_min_scale } } set_temp_variable = { pww_stk_sc = global.pww_stock_c_min_scale } }
 	multiply_temp_variable = { pww_stk_sc = global.pww_stock_c_base_days }
 	set_temp_variable = { pww_stk_lv = pww_stock_depots }
@@ -803,6 +823,11 @@ pww_stock_cap_chromium = {
 		subtract_from_temp_variable = { pww_stk_use = resource@chromium }
 	}
 	set_temp_variable = { pww_stk_sc = pww_stk_use }
+	# Exporters hold stocks sized by output: scale = max(demand, c_prod_share
+	# x production, c_min_scale).
+	set_temp_variable = { pww_stk_ps = resource_produced@chromium }
+	multiply_temp_variable = { pww_stk_ps = global.pww_stock_c_prod_share }
+	if = { limit = { check_variable = { pww_stk_sc < pww_stk_ps } } set_temp_variable = { pww_stk_sc = pww_stk_ps } }
 	if = { limit = { check_variable = { pww_stk_sc < global.pww_stock_c_min_scale } } set_temp_variable = { pww_stk_sc = global.pww_stock_c_min_scale } }
 	multiply_temp_variable = { pww_stk_sc = global.pww_stock_c_base_days }
 	set_temp_variable = { pww_stk_lv = pww_stock_depots }
@@ -970,6 +995,11 @@ pww_stock_cap_coal = {
 		subtract_from_temp_variable = { pww_stk_use = resource@coal }
 	}
 	set_temp_variable = { pww_stk_sc = pww_stk_use }
+	# Exporters hold stocks sized by output: scale = max(demand, c_prod_share
+	# x production, c_min_scale).
+	set_temp_variable = { pww_stk_ps = resource_produced@coal }
+	multiply_temp_variable = { pww_stk_ps = global.pww_stock_c_prod_share }
+	if = { limit = { check_variable = { pww_stk_sc < pww_stk_ps } } set_temp_variable = { pww_stk_sc = pww_stk_ps } }
 	if = { limit = { check_variable = { pww_stk_sc < global.pww_stock_c_min_scale } } set_temp_variable = { pww_stk_sc = global.pww_stock_c_min_scale } }
 	multiply_temp_variable = { pww_stk_sc = global.pww_stock_c_base_days }
 	set_temp_variable = { pww_stk_lv = pww_stock_depots }

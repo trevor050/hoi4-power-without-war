@@ -4,8 +4,9 @@
 #                     walk-away is its reserve value at every fill (~0.4 of
 #                     market at low tension when empty), falling smoothly to ~0
 #                     when full (fill 0 > 50 > 90 > 100, no jump). A price
-#                     between the two signs with full storage and is refused
-#                     with empty storage.
+#                     between the two acceptable prices (walk-away plus its
+#                     competitive share, COMPETITION) signs with full storage
+#                     and is refused with empty storage.
 #   W walk_curve      (INFO) the curve at fill 0/50/90/100 at peace (day 32)
 #                     and near war (day 41, world tension raised to the top on
 #                     day 40): near war it is ~3x the peace curve.
@@ -77,12 +78,13 @@ on_actions = {
 					pww_dtv_draft = yes
 					set_temp_variable = { pww_dtv_s_ap = pww_do_ap_pp }
 					pww_dtv_walk_curve = yes
-					set_temp_variable = { pww_dtv_s_re = pww_dtv_w0 }
-					set_temp_variable = { pww_dtv_s_rf = pww_dtv_w100 }
+					set_temp_variable = { pww_dtv_s_re = pww_dtv_a0 }
+					set_temp_variable = { pww_dtv_s_rf = pww_dtv_a100 }
 					set_variable = { global.pww_dtest_vv_tension0 = global.threat }
-					# A price halfway between the two walk-aways (to POR, at its
-					# political power appetite): the full seller takes it, the
-					# empty one (which values the tungsten more) refuses.
+					# A price halfway between the two acceptable prices (walk-away
+					# plus the same competitive share of Germany's surplus; to POR,
+					# at its political power appetite): the full seller takes it,
+					# the empty one (which values the tungsten more) refuses.
 					set_temp_variable = { pww_dtv_mid = pww_dtv_s_re }
 					add_to_temp_variable = { pww_dtv_mid = pww_dtv_s_rf }
 					divide_temp_variable = { pww_dtv_mid = 2 }
@@ -116,7 +118,7 @@ on_actions = {
 							check_variable = { pww_dtv_s_oke = 0 }
 							check_variable = { pww_dtv_s_okf = 1 }
 						}
-						log = "PWW_RESULT diplo_value_v2.S_storage_seller PASS POR sells [?pww_dtv_u|0] tungsten from a glut: walk-away falls smoothly with fill ([?pww_dtv_w0|2] empty, [?pww_dtv_w50|2] half, [?pww_dtv_w90|2] at 90%, [?pww_dtv_w100|2] full); at [?pww_dtv_mid|2] of market the full seller signs (terms [?pww_dtv_s_tf|0]) and the empty one refuses (terms [?pww_dtv_s_te|0])"
+						log = "PWW_RESULT diplo_value_v2.S_storage_seller PASS POR sells [?pww_dtv_u|0] tungsten from a glut: walk-away falls smoothly with fill ([?pww_dtv_w0|2] empty, [?pww_dtv_w50|2] half, [?pww_dtv_w90|2] at 90%, [?pww_dtv_w100|2] full); at [?pww_dtv_mid|2] of market the full seller signs (terms [?pww_dtv_s_tf|0]) and the empty one refuses (terms [?pww_dtv_s_te|0]); acceptable empty/full [?pww_dtv_a0|2]/[?pww_dtv_a100|2]"
 					}
 					else = {
 						log = "PWW_RESULT diplo_value_v2.S_storage_seller FAIL walk 0/50/90/100=[?pww_dtv_w0|3]/[?pww_dtv_w50|3]/[?pww_dtv_w90|3]/[?pww_dtv_w100|3] ok empty=[?pww_dtv_s_oke|0] full=[?pww_dtv_s_okf|0] terms [?pww_dtv_s_te|0]/[?pww_dtv_s_tf|0] units=[?pww_dtv_u|0]"

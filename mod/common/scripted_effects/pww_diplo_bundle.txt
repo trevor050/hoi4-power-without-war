@@ -81,10 +81,25 @@
 #   jump and no floor (a full warehouse is the cheapest seller). Oil and no
 #   stockpiles lane (or a country that keeps none) use the glut rate (1 - 0.3
 #   x min(spare / output / 0.4, 1): 0.7 once 40% of its output finds no
-#   buyer). The hidden asking margin (reserve) still applies on top, and the
-#   AI sale draft asks well above it (pww_diplo_ai_build_sale). The open
+#   buyer). That walk-away is only the bottom of what it accepts: see
+#   COMPETITION. The hidden asking margin (reserve) still applies on top,
+#   and the AI sale draft opens above it (pww_diplo_ai_build_sale). The open
 #   market is the reference: an at-market offer for output it can spare
-#   signs.
+#   signs unless the buyer is desperate and nobody else can supply it.
+# COMPETITION (pww_diplo_compete in pww_diplo_core.txt; no fixed price floor):
+#   a spare unit is worth acc = walk + share x (bv - walk) to the seller.
+#   bv is the buyer's value as the seller can see it (shortages are
+#   visible): units within its demand at market x (1 + desperation / 50), the
+#   rest at its reserve value, less the shipping it pays. share =
+#   c_comp_top (0.9) / (1 + c_comp_k (0.5) x rivals), where a rival is
+#   another seller not at war with or embargoed by the buyer, with spare
+#   output of at least half the units, delivering at no more than our
+#   shipping share + 0.1 of market; the seller's own cartel does not count,
+#   another cartel counts once. Alone: about 0.9 of the buyer's value (near
+#   market, above it for a desperate buyer); four rivals 0.3; eight 0.18
+#   (with a full warehouse, walk ~0, that is the price). The same acc prices
+#   acceptance of buyer proposals (this file), AI sale drafts and AI sale
+#   counters.
 # BUYER VALUE (Valuation v2): resource units the target receives within its
 #   demand (imports plus open shortfall; a desperate buyer counts up to
 #   desperation / 50 of the units as needed) count at market x (1 +
@@ -965,15 +980,19 @@ pww_diplo_bundle_balance = {
 # MARKET FLOOR helpers for pww_diplo_eval_bundle (sender scope; temps only).
 #
 # pww_diplo_eval_glut: one resource the target sells. in: pww_dvb_a (units a
-#   day), pww_dg_prod / _unsold / _exp (pww_diplo_read_market on the target).
-#   Units split three ways: from spare output (worth its walk-away: the
-#   reserve value with stockpiles, else the glut rate 1 - 0.3 x min(unsold /
-#   production / 0.4, 1)), from what it already exports (market value:
-#   it loses that sale), and beyond both, out of its own use (x 1.25).
+#   day), pww_dg_res / _prod / _unsold / _exp (pww_diplo_read_market and
+#   pww_diplo_read_reserve on the seller), pww_dvg_seller, pww_dvg_buyer.
+#   Units split three ways: from spare output (worth the seller's acceptable
+#   price, pww_diplo_compete: its walk-away (the reserve value with
+#   stockpiles, else the glut rate 1 - 0.3 x min(unsold / production / 0.4,
+#   1)) plus its share of the buyer's surplus, by competition), from what it
+#   already exports (market value: it loses that sale), and beyond both, out
+#   of its own use (x 1.25).
 #   out: pww_dvb_wu (weighted units), pww_dvb_ng (share of the units not
 #   covered by unsold output, 0..1), pww_dvb_sover (share taken from its own
-#   use); pww_do_glut_rate / pww_do_unsold / pww_do_exported (last seller
-#   item, for tests and logs).
+#   use); pww_do_glut_rate (the bare walk-away) / pww_do_unsold /
+#   pww_do_exported and pww_do_comp_* (pww_diplo_compete) for the last seller
+#   item, for tests and logs.
 ###############################################################################
 pww_diplo_eval_glut = {
 	# Spare = unsold output plus what storage takes of it (pww_dg_spare).
@@ -1001,6 +1020,16 @@ pww_diplo_eval_glut = {
 		limit = { check_variable = { pww_dg_stocked = 1 } }
 		set_temp_variable = { pww_dvg_g = pww_dg_wrate }
 	}
+	set_variable = { pww_do_glut_rate = pww_dvg_g }
+	# COMPETITION: spare units are worth the walk-away plus the seller's share
+	# of the buyer's surplus (pww_diplo_compete), not the bare walk-away.
+	set_temp_variable = { pww_dcp_s = pww_dvg_seller }
+	set_temp_variable = { pww_dcp_b = pww_dvg_buyer }
+	set_temp_variable = { pww_dcp_r = pww_dg_res }
+	set_temp_variable = { pww_dcp_u = pww_dvb_a }
+	set_temp_variable = { pww_dcp_walk = pww_dvg_g }
+	pww_diplo_compete = yes
+	set_temp_variable = { pww_dvg_g = pww_dcp_acc }
 	set_temp_variable = { pww_dvg_ug = pww_dvb_a }
 	if = {
 		limit = { check_variable = { pww_dvg_ug > pww_dvg_u } }
@@ -1026,7 +1055,6 @@ pww_diplo_eval_glut = {
 	set_temp_variable = { pww_dvb_sover = pww_dvg_uo }
 	divide_temp_variable = { pww_dvb_sover = pww_dvb_a }
 	clamp_temp_variable = { var = pww_dvb_sover min = 0 max = 1 }
-	set_variable = { pww_do_glut_rate = pww_dvg_g }
 	set_variable = { pww_do_unsold = pww_dvg_u }
 	set_variable = { pww_do_exported = pww_dg_exp }
 	set_variable = { pww_do_s_room = pww_dg_room }
@@ -1586,7 +1614,10 @@ pww_diplo_eval_bundle = {
 					set_temp_variable = { pww_dvb_sover = 0 }
 					if = {
 						limit = { check_variable = { pww_dvb_goods = 1 } }
-						# Unsold output earns them nothing (see MARKET FLOOR).
+						# Spare output: walk-away plus their share of our surplus
+						# (MARKET FLOOR, COMPETITION).
+						set_temp_variable = { pww_dvg_seller = pww_dv_t }
+						set_temp_variable = { pww_dvg_buyer = THIS }
 						pww_diplo_eval_glut = yes
 						set_temp_variable = { pww_dvb_w = pww_dvb_wu }
 						divide_temp_variable = { pww_dvb_w = 8 }
@@ -2416,7 +2447,7 @@ pww_diplo_sign_bundle = {
 			pww_diplo_read_reserve = yes
 			pww_diplo_eval_glut_rate = yes
 		}
-		log = "[GetDateText] PWW_DIPLO sign bundle [THIS.GetTag]->[?pww_do_target.GetTag] act=[?pww_do_act|0] main=[?pww_do_main|0] res=[?pww_do_res|0] n0=[?pww_do_n0|0] n1=[?pww_do_n1|0] term=[?pww_do_term|0] bind=[?pww_do_bind|0] civ=[?pww_dsb_civ|0] pp=[?pww_dsb_pp|2] agreements=[?pww_dsb_ids^num|0] ok=[?pww_dsd_ok|0] ag=[?pww_dsd_ag|0] fail=[?pww_dsd_fail|0] valid=[?pww_do_valid|0] sale=[?pww_diplo_ai_offer_sell|0] seller=[?pww_dsb_seller.GetTag] m0=[?pww_do_mk_m0|3] m1=[?pww_do_mk_m1|3] pf=[?pww_dsb_pf|3] walk=[?pww_dvg_g|3] stocked=[?pww_dg_stocked|0] fill=[?pww_dg_fill|0] spare=[?pww_dg_spare|0] prod=[?pww_dg_prod|0]"
+		log = "[GetDateText] PWW_DIPLO sign bundle [THIS.GetTag]->[?pww_do_target.GetTag] act=[?pww_do_act|0] main=[?pww_do_main|0] res=[?pww_do_res|0] n0=[?pww_do_n0|0] n1=[?pww_do_n1|0] term=[?pww_do_term|0] bind=[?pww_do_bind|0] civ=[?pww_dsb_civ|0] pp=[?pww_dsb_pp|2] agreements=[?pww_dsb_ids^num|0] ok=[?pww_dsd_ok|0] ag=[?pww_dsd_ag|0] fail=[?pww_dsd_fail|0] valid=[?pww_do_valid|0] sale=[?pww_diplo_ai_offer_sell|0] seller=[?pww_dsb_seller.GetTag] m0=[?pww_do_mk_m0|3] m1=[?pww_do_mk_m1|3] pf=[?pww_dsb_pf|3] walk=[?pww_dvg_g|3] stocked=[?pww_dg_stocked|0] fill=[?pww_dg_fill|0] spare=[?pww_dg_spare|0] prod=[?pww_dg_prod|0] comp=[?pww_do_comp_n|0] share=[?pww_do_comp_share|2] bv=[?pww_do_comp_bv|2] acc=[?pww_do_comp_acc|2]"
 	}
 }
 
@@ -2745,6 +2776,38 @@ pww_diplo_ai_build_buy = {
 		limit = { check_variable = { pww_dab_pf > 1.4 } }
 		set_temp_variable = { pww_dab_pf = 1.4 }
 	}
+	# COMPETITION: when the seller's acceptable price, as we can estimate it
+	# (pww_diplo_compete: its walk-away plus its share of our surplus, by the
+	# rivals it has), is above that schedule (we are desperate and few others
+	# can supply us), we offer it: never above our own value of the units.
+	if = {
+		limit = {
+			check_variable = { pww_do_act = 0 }
+			check_variable = { pww_dab_amt > 0 }
+		}
+		set_temp_variable = { pww_dg_res = pww_do_res }
+		var:pww_do_target = {
+			pww_diplo_read_market = yes
+			pww_diplo_read_reserve = yes
+			pww_diplo_eval_glut_rate = yes
+		}
+		set_temp_variable = { pww_dcp_s = pww_do_target }
+		set_temp_variable = { pww_dcp_b = THIS }
+		set_temp_variable = { pww_dcp_r = pww_do_res }
+		set_temp_variable = { pww_dcp_u = pww_dab_amt }
+		set_temp_variable = { pww_dcp_walk = pww_dvg_g }
+		pww_diplo_compete = yes
+		set_temp_variable = { pww_dab_cacc = pww_dcp_acc }
+		add_to_temp_variable = { pww_dab_cacc = 0.02 }
+		if = {
+			limit = { check_variable = { pww_dab_cacc > pww_dcp_bv } }
+			set_temp_variable = { pww_dab_cacc = pww_dcp_bv }
+		}
+		if = {
+			limit = { check_variable = { pww_dab_cacc > pww_dab_pf } }
+			set_temp_variable = { pww_dab_pf = pww_dab_cacc }
+		}
+	}
 	# A fixed contract without the trust for it must be clearly generous.
 	if = {
 		limit = {
@@ -3052,11 +3115,14 @@ pww_diplo_ai_build_buy = {
 ###############################################################################
 # AI sale draft (AI sender scope; SALES in the header of pww_diplo_ticks.txt).
 # Sells pww_do_res from our spare output (unsold plus storage intake), up to
-# the target's demand (imports plus open shortfall, pww_diplo_read_market),
-# at 95% of market (90% when 40% or more of our output is spare), 5% less
-# each round (round 0 is the first draft), less the buyer's shipping share
-# (delivered cost: the buyer pays it), never under our own walk-away (the
-# reserve value with stockpiles, else the glut rate) + 0.05, nor 0.5.
+# the target's demand (imports plus open shortfall, pww_diplo_read_market).
+# Price (COMPETITION, pww_diplo_compete): our acceptable price for this buyer
+# (walk-away plus our share of its surplus, which shrinks with every rival
+# who could sell it the same; the buyer's value is net of the shipping it
+# pays) plus an opening margin (global.pww_diplo_c_sale_open, 0.1 of market)
+# that comes down 0.05 a round (round 0 is the first draft), never above the
+# buyer's own value and never under the acceptable price. No fixed floor:
+# with many glutted rivals the price is genuinely low.
 # Cartel member (pww_cartel_sale_limits): at or above the cartel price and
 # within the quota room, unless it deliberately cheats (pww_dsl_cheat:
 # global.pww_cartel_c_ai_cheat on and its temptation 30+ or cohesion under
@@ -3101,16 +3167,9 @@ pww_diplo_ai_build_sale = {
 	pww_diplo_read_market = yes
 	pww_diplo_read_reserve = yes
 	set_temp_variable = { pww_dsl_u = pww_dg_spare }
-	set_temp_variable = { pww_dsl_q = pww_dg_spare }
 	pww_diplo_eval_glut_rate = yes
 	set_temp_variable = { pww_dsl_walk = pww_dvg_g }
 	pww_diplo_sale_cartel = yes
-	set_temp_variable = { pww_dsl_p = pww_dg_prod }
-	if = {
-		limit = { check_variable = { pww_dsl_p < 1 } }
-		set_temp_variable = { pww_dsl_p = 1 }
-	}
-	divide_temp_variable = { pww_dsl_q = pww_dsl_p }
 	var:pww_do_target = { pww_diplo_read_market = yes }
 	set_temp_variable = { pww_dsl_sh = pww_dg_demand }
 	if = {
@@ -3143,40 +3202,39 @@ pww_diplo_ai_build_sale = {
 		set_variable = { pww_dob_a^pww_dba_new = pww_dsl_u }
 	}
 	pww_diplo_eval_bundle = yes
-	# Price
-	set_temp_variable = { pww_dsl_pf = 0.95 }
-	if = {
-		limit = { check_variable = { pww_dsl_q > 0.399 } }
-		set_temp_variable = { pww_dsl_pf = 0.9 }
-	}
+	# Price (COMPETITION): what we accept from this buyer (our walk-away plus
+	# our share of its surplus, net of the shipping it pays), plus an opening
+	# margin of global.pww_diplo_c_sale_open of market that comes down 0.05 a
+	# round, never above the buyer's own value of the units.
+	set_temp_variable = { pww_dcp_s = THIS }
+	set_temp_variable = { pww_dcp_b = pww_do_target }
+	set_temp_variable = { pww_dcp_r = pww_do_res }
+	set_temp_variable = { pww_dcp_u = pww_dsl_u }
+	set_temp_variable = { pww_dcp_walk = pww_dsl_walk }
+	pww_diplo_compete = yes
+	set_temp_variable = { pww_dsl_floor = pww_dcp_acc }
 	set_temp_variable = { pww_dsl_b = pww_dsl_round }
-	multiply_temp_variable = { pww_dsl_b = 0.05 }
-	subtract_from_temp_variable = { pww_dsl_pf = pww_dsl_b }
-	# Delivered cost: the buyer pays the shipping, so the ask makes room.
-	set_temp_variable = { pww_dsh_s = THIS }
-	set_temp_variable = { pww_dsh_b = pww_do_target }
-	set_temp_variable = { pww_dsh_r = pww_do_res }
-	pww_diplo_ship = yes
-	subtract_from_temp_variable = { pww_dsl_pf = pww_dsh_share }
-	# Floor: our own walk-away (+0.05), at least 0.5; a price war: bare.
-	set_temp_variable = { pww_dsl_floor = pww_dsl_walk }
-	add_to_temp_variable = { pww_dsl_floor = 0.05 }
+	multiply_temp_variable = { pww_dsl_b = -0.05 }
+	add_to_temp_variable = { pww_dsl_b = global.pww_diplo_c_sale_open }
+	if = {
+		limit = { check_variable = { pww_dsl_b < 0 } }
+		set_temp_variable = { pww_dsl_b = 0 }
+	}
+	set_temp_variable = { pww_dsl_pf = pww_dcp_acc }
+	add_to_temp_variable = { pww_dsl_pf = pww_dsl_b }
+	if = {
+		limit = { check_variable = { pww_dsl_pf > pww_dcp_bv } }
+		set_temp_variable = { pww_dsl_pf = pww_dcp_bv }
+	}
+	# A price war: 10% cheaper, down to the bare walk-away.
 	if = {
 		limit = { check_variable = { pww_dsl_pw = 1 } }
 		subtract_from_temp_variable = { pww_dsl_pf = 0.1 }
-		subtract_from_temp_variable = { pww_dsl_floor = 0.05 }
-	}
-	if = {
-		limit = { check_variable = { pww_dsl_floor < 0.5 } }
-		set_temp_variable = { pww_dsl_floor = 0.5 }
+		set_temp_variable = { pww_dsl_floor = pww_dsl_walk }
 	}
 	if = {
 		limit = { check_variable = { pww_dsl_pf < pww_dsl_floor } }
 		set_temp_variable = { pww_dsl_pf = pww_dsl_floor }
-	}
-	if = {
-		limit = { check_variable = { pww_dsl_pf > 1 } }
-		set_temp_variable = { pww_dsl_pf = 1 }
 	}
 	# Cartel price (a factor of market) unless cheating.
 	if = {
@@ -3480,8 +3538,9 @@ pww_diplo_ai_counter_buy_own = {
 }
 
 # The AI's own balance as a glut seller: the payment it gets at market against
-# the goods valued at its glut rate (unsold output earns it nothing), as a
-# percentage of the goods' market value. It takes anything above that floor.
+# the goods valued at its acceptable price (pww_diplo_eval_glut: walk-away
+# plus its share of the buyer's surplus, by competition), as a percentage of
+# the goods' market value. It takes anything above that.
 pww_diplo_ai_counter_sale_own = {
 	set_temp_variable = { pww_dac_own = pww_do_mk_m1 }
 	set_temp_variable = { pww_dac_gv = 0 }
@@ -3495,6 +3554,8 @@ pww_diplo_ai_counter_sale_own = {
 			pww_diplo_read_market = yes
 			pww_diplo_read_reserve = yes
 			set_temp_variable = { pww_dvb_a = pww_dob_a^pww_dac_i }
+			set_temp_variable = { pww_dvg_seller = THIS }
+			set_temp_variable = { pww_dvg_buyer = pww_do_target }
 			pww_diplo_eval_glut = yes
 			divide_temp_variable = { pww_dvb_wu = 8 }
 			add_to_temp_variable = { pww_dac_gv = pww_dvb_wu }

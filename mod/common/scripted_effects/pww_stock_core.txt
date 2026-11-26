@@ -42,8 +42,10 @@
 #        Part of a draw leaks into exports under the country's trade law
 #        (engine: received resources count as production).
 #     Fill and draw never run together for one resource.
-#   Capacity: cap = max(demand, c_min_scale) x c_base_days x
-#     (1 + depots x c_depot_mult). Base 30 days of use, minimum 300.
+#   Capacity: cap = max(demand, c_prod_share x production, c_min_scale) x
+#     c_base_days x (1 + depots x c_depot_mult). Base 30 days of use or of a
+#     quarter of output (exporters hold meaningful stocks, so the reserve
+#     value curve prices their spare output), minimum 300.
 #     demand = resource_consumed (met use only) + shortfall.
 #   Depots: decision pww_stock_build_depot (category pww_stock_category):
 #     locks c_depot_civs (3) civilian factories for 120 days, then depots += 1
@@ -91,6 +93,7 @@ pww_stock_init = {
 	set_variable = { global.pww_stock_c_period = 10 }
 	set_variable = { global.pww_stock_c_base_days = 30 }
 	set_variable = { global.pww_stock_c_min_scale = 10 }
+	set_variable = { global.pww_stock_c_prod_share = 0.25 }
 	set_variable = { global.pww_stock_c_fill_share = 0.5 }
 	set_variable = { global.pww_stock_c_fill_rate = 0.034 }
 	set_variable = { global.pww_stock_c_draw_rate = 0.02 }

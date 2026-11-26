@@ -4,8 +4,10 @@
 
 Reads "PWW_DIPLO sign bundle" lines (ok=1): price factor pf = payment market
 value / goods market value (1 = at market), the seller's walk-away, storage
-fill and spare. Prints the distribution overall, by kind (AI sale draft vs
-buyer's proposal) and by resource, and the cheapest deals.
+fill and spare, and the competition the seller faced (rivals, its surplus
+share, the buyer's value bv and the acceptable price acc, factors of market).
+Prints the distribution overall, by kind (AI sale draft vs buyer's proposal),
+by resource and by rival count, and the cheapest deals.
 """
 import re
 import statistics
@@ -49,11 +51,17 @@ def main(path):
         xs = [float(d["pf"]) for d in deals if d.get("res") == str(i)]
         if xs:
             print(row("  " + r, xs))
+    if any("comp" in d for d in deals):
+        print("by rival sellers (competition count at signing):")
+        for lo, hi, name in ((0, 0, "no rival"), (1, 2, "1-2 rivals"), (3, 5, "3-5 rivals"), (6, 999, "6+ rivals")):
+            xs = [float(d["pf"]) for d in deals if "comp" in d and lo <= int(d["comp"]) <= hi]
+            print(row("  " + name, xs))
     print("cheapest:")
     for d in sorted(deals, key=lambda d: float(d["pf"]))[:12]:
         print(f"  {d['date']} {d['a']}->{d['b']} seller={d.get('seller')} res={RES[int(d.get('res', 0))]} sale={d.get('sale')} "
               f"pf={d['pf']} m0={d.get('m0')} m1={d.get('m1')} walk={d.get('walk')} stocked={d.get('stocked')} "
-              f"fill={d.get('fill')} spare={d.get('spare')} prod={d.get('prod')}")
+              f"fill={d.get('fill')} spare={d.get('spare')} prod={d.get('prod')} rivals={d.get('comp', '-')} "
+              f"share={d.get('share', '-')} bv={d.get('bv', '-')} acc={d.get('acc', '-')}")
 
 
 if __name__ == "__main__":

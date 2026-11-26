@@ -138,12 +138,15 @@ pww_dtv_best_price = {
 
 # Sender scope, after pww_dtv_draft (we buy resource pww_dtv_sr from
 # pww_dtv_tgt). The seller's walk-away (pww_do_glut_rate) at storage fill 0,
-# 50, 90 and 100. out: pww_dtv_w0 / _w50 / _w90 / _w100. Leaves fill 0.
+# 50, 90 and 100. out: pww_dtv_w0 / _w50 / _w90 / _w100, and the seller's
+# acceptable price (walk-away plus its competitive share, pww_do_comp_acc) at
+# fill 0 and 100: pww_dtv_a0 / _a100. Leaves fill 0.
 pww_dtv_walk_curve = {
 	set_temp_variable = { pww_dtv_fill = 0 }
 	var:pww_dtv_tgt = { pww_dtv_fill = yes }
 	pww_diplo_offer_changed = yes
 	set_temp_variable = { pww_dtv_w0 = pww_do_glut_rate }
+	set_temp_variable = { pww_dtv_a0 = pww_do_comp_acc }
 	set_temp_variable = { pww_dtv_fill = 50 }
 	var:pww_dtv_tgt = { pww_dtv_fill = yes }
 	pww_diplo_offer_changed = yes
@@ -156,6 +159,7 @@ pww_dtv_walk_curve = {
 	var:pww_dtv_tgt = { pww_dtv_fill = yes }
 	pww_diplo_offer_changed = yes
 	set_temp_variable = { pww_dtv_w100 = pww_do_glut_rate }
+	set_temp_variable = { pww_dtv_a100 = pww_do_comp_acc }
 	set_temp_variable = { pww_dtv_fill = 0 }
 	var:pww_dtv_tgt = { pww_dtv_fill = yes }
 	pww_diplo_offer_changed = yes

@@ -174,6 +174,11 @@ pww_stock_cap_{r} = {{
 		subtract_from_temp_variable = {{ pww_stk_use = resource@{r} }}
 	}}
 	set_temp_variable = {{ pww_stk_sc = pww_stk_use }}
+	# Exporters hold stocks sized by output: scale = max(demand, c_prod_share
+	# x production, c_min_scale).
+	set_temp_variable = {{ pww_stk_ps = resource_produced@{r} }}
+	multiply_temp_variable = {{ pww_stk_ps = global.pww_stock_c_prod_share }}
+	if = {{ limit = {{ check_variable = {{ pww_stk_sc < pww_stk_ps }} }} set_temp_variable = {{ pww_stk_sc = pww_stk_ps }} }}
 	if = {{ limit = {{ check_variable = {{ pww_stk_sc < global.pww_stock_c_min_scale }} }} set_temp_variable = {{ pww_stk_sc = global.pww_stock_c_min_scale }} }}
 	multiply_temp_variable = {{ pww_stk_sc = global.pww_stock_c_base_days }}
 	set_temp_variable = {{ pww_stk_lv = pww_stock_depots }}

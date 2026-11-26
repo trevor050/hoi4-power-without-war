@@ -1,0 +1,119 @@
+# Diplomacy test: competition-based pricing (pww_diplo_compete; COMPETITION in
+# the header of pww_diplo_bundle.txt). Run with --tag GER. Day 32.
+# The same buyer (Germany, needing 20 tungsten a day, not desperate) buys
+# from the same seller (Portugal: a large unsold glut, storage full, so its
+# bare walk-away is ~0) in two markets:
+#   A one_supplier   nobody else has spare tungsten (test hook: every other
+#                    country's unsold set to 0). Portugal sees no rival, keeps
+#                    0.9 of Germany's surplus: the lowest price it accepts is
+#                    near market, and its own AI sale draft asks near market.
+#   B many_rivals    eleven of Germany's overland neighbours sit on a large
+#                    tungsten glut (unsold 200 a day each). Portugal counts
+#                    them as rivals and accepts a genuinely low price; its
+#                    AI sale draft is cheap too.
+#   PASS: A rivals 0, lowest accepted (as Portugal weighs political power)
+#   >= 0.7 of market, sale draft >= 0.75; B rivals >= 6, lowest accepted
+#   <= 0.45, sale draft <= 0.5; A at least 0.3 of market dearer than B.
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = GER }
+				add_to_variable = { global.pww_dtest_cp_day = 1 }
+				if = {
+					limit = { check_variable = { global.pww_dtest_cp_day = 32 } }
+					set_global_flag = pww_diplo_debug
+					# The trust gate on fixed contracts is tested in diplo_value_v2.
+					set_variable = { global.pww_rel_c_lock = 0 }
+					GER = { set_temp_variable = { pww_dtq_ger = THIS } }
+					POR = { set_temp_variable = { pww_dtq_por = THIS } }
+					set_temp_variable = { pww_dtq_r = 3 }
+					set_temp_variable = { pww_dtq_u = 20 }
+					GER = {
+						set_variable = { pww_desp_tungsten = 0 }
+						set_variable = { pww_diplo_test_res = 3 }
+						set_variable = { pww_diplo_test_demand = 20 }
+					}
+					POR = {
+						set_variable = { pww_desp_tungsten = 0 }
+						set_variable = { pww_diplo_test_res = 3 }
+						set_variable = { pww_diplo_test_unsold = 999 }
+						set_variable = { pww_diplo_test_exported = 0 }
+						set_country_flag = pww_stock_active
+						set_variable = { pww_stock_fill_tungsten = 100 }
+					}
+
+					# --- A: Portugal is the only supplier ----------------------
+					every_country = {
+						limit = { NOT = { tag = POR } NOT = { tag = GER } }
+						set_variable = { pww_diplo_test_res = 3 }
+						set_variable = { pww_diplo_test_unsold = 0 }
+						set_variable = { pww_diplo_test_exported = 0 }
+					}
+					set_temp_variable = { pww_dtq_case = 1 }
+					set_temp_variable = { pww_dtq_tgt = pww_dtq_por }
+					pww_dtq_draft = yes
+					pww_dtq_lowest = yes
+					set_temp_variable = { pww_dtq_a_low = pww_dtq_low }
+					set_temp_variable = { pww_dtq_a_eff = pww_dtq_eff }
+					set_temp_variable = { pww_dtq_a_n = pww_dtq_n }
+					set_temp_variable = { pww_dtq_a_acc = pww_dtq_acc }
+					pww_dtq_close = yes
+					set_temp_variable = { pww_dtq_buyer = pww_dtq_ger }
+					POR = { pww_dtq_sale_draft = yes }
+					set_temp_variable = { pww_dtq_a_sale = pww_dtq_sale }
+
+					# --- B: eleven glutted rivals next door -------------------
+					FRA = { pww_dtq_glut = yes }
+					BEL = { pww_dtq_glut = yes }
+					HOL = { pww_dtq_glut = yes }
+					LUX = { pww_dtq_glut = yes }
+					SWI = { pww_dtq_glut = yes }
+					AUS = { pww_dtq_glut = yes }
+					CZE = { pww_dtq_glut = yes }
+					POL = { pww_dtq_glut = yes }
+					DEN = { pww_dtq_glut = yes }
+					ITA = { pww_dtq_glut = yes }
+					HUN = { pww_dtq_glut = yes }
+					set_temp_variable = { pww_dtq_case = 2 }
+					pww_dtq_draft = yes
+					pww_dtq_lowest = yes
+					set_temp_variable = { pww_dtq_b_low = pww_dtq_low }
+					set_temp_variable = { pww_dtq_b_eff = pww_dtq_eff }
+					set_temp_variable = { pww_dtq_b_n = pww_dtq_n }
+					set_temp_variable = { pww_dtq_b_acc = pww_dtq_acc }
+					pww_dtq_close = yes
+					POR = { pww_dtq_sale_draft = yes }
+					set_temp_variable = { pww_dtq_b_sale = pww_dtq_sale }
+
+					set_temp_variable = { pww_dtq_gap = pww_dtq_a_eff }
+					subtract_from_temp_variable = { pww_dtq_gap = pww_dtq_b_eff }
+					if = {
+						limit = {
+							check_variable = { pww_dtq_a_n = 0 }
+							check_variable = { pww_dtq_a_eff > 0.699 }
+							check_variable = { pww_dtq_a_sale > 0.749 }
+							check_variable = { pww_dtq_b_n > 5 }
+							check_variable = { pww_dtq_b_low > 0.01 }
+							check_variable = { pww_dtq_b_eff < 0.451 }
+							check_variable = { pww_dtq_b_sale < 0.501 }
+							check_variable = { pww_dtq_gap > 0.299 }
+						}
+						log = "PWW_RESULT diplo_compete.price_by_competition PASS Germany buys 20 tungsten from Portugal: sole supplier, Portugal accepts no less than [?pww_dtq_a_eff|2] of market (acceptable [?pww_dtq_a_acc|2], sale draft [?pww_dtq_a_sale|2]); with [?pww_dtq_b_n|0] glutted rivals it takes [?pww_dtq_b_eff|2] (acceptable [?pww_dtq_b_acc|2], sale draft [?pww_dtq_b_sale|2])"
+					}
+					else = {
+						log = "PWW_RESULT diplo_compete.price_by_competition FAIL A rivals=[?pww_dtq_a_n|0] low=[?pww_dtq_a_low|2] eff=[?pww_dtq_a_eff|2] acc=[?pww_dtq_a_acc|2] sale=[?pww_dtq_a_sale|2] | B rivals=[?pww_dtq_b_n|0] low=[?pww_dtq_b_low|2] eff=[?pww_dtq_b_eff|2] acc=[?pww_dtq_b_acc|2] sale=[?pww_dtq_b_sale|2] | gap=[?pww_dtq_gap|2]"
+					}
+
+					every_country = {
+						clear_variable = pww_diplo_test_res
+						clear_variable = pww_diplo_test_unsold
+						clear_variable = pww_diplo_test_exported
+						clear_variable = pww_diplo_test_demand
+					}
+					log = "PWW_DONE diplo_compete"
+				}
+			}
+		}
+	}
+}

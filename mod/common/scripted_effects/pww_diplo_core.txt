@@ -248,6 +248,7 @@ pww_diplo_init = {
 		set_variable = { global.pww_diplo_c_pledge_days = 365 }
 		set_variable = { global.pww_diplo_c_pledge_cap = 2 }
 		set_variable = { global.pww_diplo_c_embargo_days = 30 }
+		pww_diplo_comp_defaults = yes
 		if = {
 			limit = { has_global_flag = pww_diplo_debug }
 			log = "[GetDateText] PWW_DIPLO init salt=[?global.pww_diplo_salt|0]"
@@ -574,6 +575,246 @@ pww_diplo_read_reserve = {
 			set_temp_variable = { pww_dg_rrate = pww_dg_wrate }
 		}
 	}
+}
+
+###############################################################################
+# Competition for one sale (any scope; COMPETITION in the header of
+# pww_diplo_bundle.txt). What a seller will accept for spare units depends on
+# what the buyer would otherwise pay and on how many others could sell to it.
+# in : pww_dcp_s (seller), pww_dcp_b (buyer), pww_dcp_r (resource 0..6),
+#      pww_dcp_u (units a day on the table), pww_dcp_walk (the seller's
+#      walk-away for a spare unit, a factor of market: pww_dvg_g)
+# out: pww_dcp_n      rival sellers. A rival is another country (not the
+#                     buyer) that is not at war with the buyer nor embargoed
+#                     by it, has spare output of the resource (spare from
+#                     pww_diplo_read_market, unsold plus storage intake) of
+#                     at least max(1, c_comp_spare x units), and delivers to
+#                     the buyer at no more than our shipping share +
+#                     c_comp_ship (a share of market). Members of the
+#                     seller's own cartel do not count; a cartel the seller
+#                     is not in counts once.
+#      pww_dcp_share  the seller's share of the buyer's surplus:
+#                     c_comp_top / (1 + c_comp_k x rivals) (0.9 alone, 0.6
+#                     with one rival, 0.3 with four, 0.18 with eight)
+#      pww_dcp_bv     the buyer's value of the units as the seller sees it, a
+#                     factor of market, net of the buyer's shipping: units it
+#                     is short of (its demand; a desperate buyer counts up to
+#                     desperation / 50 of the units) at 1 + desperation / 50,
+#                     the rest at its reserve value (BUYER VALUE: 0 once its
+#                     storage is full; 1 for oil or without stockpiles)
+#      pww_dcp_acc    the acceptable price, a factor of market: walk +
+#                     share x (bv - walk), never under the walk-away
+#      pww_dcp_ship   our shipping share to the buyer (pww_dsh_share)
+#      pww_dcp_route  our route (pww_dsh_route; 2 = undeliverable)
+# Every pww_dg_* read of the caller is kept. Uses pww_dsh_* temps.
+###############################################################################
+pww_diplo_comp_defaults = {
+	set_variable = { global.pww_diplo_c_comp_top = 0.9 }
+	set_variable = { global.pww_diplo_c_comp_k = 0.25 }
+	set_variable = { global.pww_diplo_c_comp_ship = 0.05 }
+	set_variable = { global.pww_diplo_c_comp_spare = 1 }
+	set_variable = { global.pww_diplo_c_sale_open = 0.1 }
+}
+
+pww_diplo_compete = {
+	# Saves from before the competition model lack the tunables.
+	if = {
+		limit = { check_variable = { global.pww_diplo_c_comp_top = 0 } }
+		pww_diplo_comp_defaults = yes
+	}
+	set_temp_variable = { pww_dcp_k_res = pww_dg_res }
+	set_temp_variable = { pww_dcp_k_prod = pww_dg_prod }
+	set_temp_variable = { pww_dcp_k_net = pww_dg_net }
+	set_temp_variable = { pww_dcp_k_desp = pww_dg_desp }
+	set_temp_variable = { pww_dcp_k_exp = pww_dg_exp }
+	set_temp_variable = { pww_dcp_k_imp = pww_dg_imp }
+	set_temp_variable = { pww_dcp_k_unsold = pww_dg_unsold }
+	set_temp_variable = { pww_dcp_k_stin = pww_dg_stin }
+	set_temp_variable = { pww_dcp_k_spare = pww_dg_spare }
+	set_temp_variable = { pww_dcp_k_demand = pww_dg_demand }
+	set_temp_variable = { pww_dcp_k_room = pww_dg_room }
+	set_temp_variable = { pww_dcp_k_rrate = pww_dg_rrate }
+	set_temp_variable = { pww_dcp_k_fill = pww_dg_fill }
+	set_temp_variable = { pww_dcp_k_stocked = pww_dg_stocked }
+	set_temp_variable = { pww_dcp_k_wrate = pww_dg_wrate }
+	set_temp_variable = { pww_dg_res = pww_dcp_r }
+	if = {
+		limit = { check_variable = { pww_dcp_u < 1 } }
+		set_temp_variable = { pww_dcp_u = 1 }
+	}
+
+	# The buyer's value per unit (BUYER VALUE, as the seller can see it).
+	var:pww_dcp_b = {
+		pww_diplo_read_market = yes
+		pww_diplo_read_reserve = yes
+	}
+	set_temp_variable = { pww_dcp_f = pww_dg_desp }
+	divide_temp_variable = { pww_dcp_f = 50 }
+	add_to_temp_variable = { pww_dcp_f = 1 }
+	set_temp_variable = { pww_dcp_in = pww_dcp_u }
+	multiply_temp_variable = { pww_dcp_in = pww_dg_desp }
+	divide_temp_variable = { pww_dcp_in = 50 }
+	if = {
+		limit = { check_variable = { pww_dg_demand > pww_dcp_in } }
+		set_temp_variable = { pww_dcp_in = pww_dg_demand }
+	}
+	if = {
+		limit = { check_variable = { pww_dcp_in > pww_dcp_u } }
+		set_temp_variable = { pww_dcp_in = pww_dcp_u }
+	}
+	set_temp_variable = { pww_dcp_br = 1 }
+	if = {
+		limit = {
+			has_global_flag = pww_stock_loaded
+			check_variable = { pww_dcp_r > 0 }
+		}
+		set_temp_variable = { pww_dcp_br = pww_dg_rrate }
+	}
+	set_temp_variable = { pww_dcp_bv = pww_dcp_u }
+	subtract_from_temp_variable = { pww_dcp_bv = pww_dcp_in }
+	multiply_temp_variable = { pww_dcp_bv = pww_dcp_br }
+	multiply_temp_variable = { pww_dcp_in = pww_dcp_f }
+	add_to_temp_variable = { pww_dcp_bv = pww_dcp_in }
+	divide_temp_variable = { pww_dcp_bv = pww_dcp_u }
+	# The buyer pays the shipping.
+	set_temp_variable = { pww_dsh_s = pww_dcp_s }
+	set_temp_variable = { pww_dsh_b = pww_dcp_b }
+	set_temp_variable = { pww_dsh_r = pww_dcp_r }
+	pww_diplo_ship = yes
+	set_temp_variable = { pww_dcp_ship = pww_dsh_share }
+	set_temp_variable = { pww_dcp_route = pww_dsh_route }
+	subtract_from_temp_variable = { pww_dcp_bv = pww_dcp_ship }
+	clamp_temp_variable = { var = pww_dcp_bv min = 0 max = 10 }
+
+	# Rivals
+	set_temp_variable = { pww_dcp_n = 0 }
+	set_temp_variable = { pww_dcp_cart = 0 }
+	set_temp_variable = { pww_dcp_mine = 0 }
+	var:pww_dcp_s = {
+		if = {
+			limit = {
+				OR = {
+					AND = { check_variable = { pww_dcp_r = 1 } has_country_flag = pww_cartel_mem_aluminium }
+					AND = { check_variable = { pww_dcp_r = 2 } has_country_flag = pww_cartel_mem_rubber }
+					AND = { check_variable = { pww_dcp_r = 3 } has_country_flag = pww_cartel_mem_tungsten }
+					AND = { check_variable = { pww_dcp_r = 4 } has_country_flag = pww_cartel_mem_steel }
+					AND = { check_variable = { pww_dcp_r = 5 } has_country_flag = pww_cartel_mem_chromium }
+					AND = { check_variable = { pww_dcp_r = 6 } has_country_flag = pww_cartel_mem_coal }
+				}
+			}
+			set_temp_variable = { pww_dcp_mine = 1 }
+		}
+	}
+	set_temp_variable = { pww_dcp_min = pww_dcp_u }
+	multiply_temp_variable = { pww_dcp_min = global.pww_diplo_c_comp_spare }
+	if = {
+		limit = { check_variable = { pww_dcp_min < 1 } }
+		set_temp_variable = { pww_dcp_min = 1 }
+	}
+	set_temp_variable = { pww_dcp_maxsh = pww_dcp_ship }
+	add_to_temp_variable = { pww_dcp_maxsh = global.pww_diplo_c_comp_ship }
+	every_country = {
+		limit = {
+			OR = {
+				has_variable = pww_diplo_test_unsold
+				AND = { check_variable = { pww_dcp_r = 0 } check_variable = { resource@oil > 0.999 } }
+				AND = { check_variable = { pww_dcp_r = 1 } check_variable = { resource@aluminium > 0.999 } }
+				AND = { check_variable = { pww_dcp_r = 2 } check_variable = { resource@rubber > 0.999 } }
+				AND = { check_variable = { pww_dcp_r = 3 } check_variable = { resource@tungsten > 0.999 } }
+				AND = { check_variable = { pww_dcp_r = 4 } check_variable = { resource@steel > 0.999 } }
+				AND = { check_variable = { pww_dcp_r = 5 } check_variable = { resource@chromium > 0.999 } }
+				AND = { check_variable = { pww_dcp_r = 6 } check_variable = { resource@coal > 0.999 } }
+			}
+		}
+		set_temp_variable = { pww_dcp_c = THIS }
+		set_temp_variable = { pww_dcp_cm = 0 }
+		if = {
+			limit = {
+				OR = {
+					AND = { check_variable = { pww_dcp_r = 1 } has_country_flag = pww_cartel_mem_aluminium }
+					AND = { check_variable = { pww_dcp_r = 2 } has_country_flag = pww_cartel_mem_rubber }
+					AND = { check_variable = { pww_dcp_r = 3 } has_country_flag = pww_cartel_mem_tungsten }
+					AND = { check_variable = { pww_dcp_r = 4 } has_country_flag = pww_cartel_mem_steel }
+					AND = { check_variable = { pww_dcp_r = 5 } has_country_flag = pww_cartel_mem_chromium }
+					AND = { check_variable = { pww_dcp_r = 6 } has_country_flag = pww_cartel_mem_coal }
+				}
+			}
+			set_temp_variable = { pww_dcp_cm = 1 }
+		}
+		if = {
+			limit = {
+				NOT = { check_variable = { pww_dcp_c = pww_dcp_s } }
+				NOT = { check_variable = { pww_dcp_c = pww_dcp_b } }
+				# A fellow member of the seller's cartel, or a cartel counted already.
+				NOT = {
+					AND = {
+						check_variable = { pww_dcp_cm = 1 }
+						OR = {
+							check_variable = { pww_dcp_mine = 1 }
+							check_variable = { pww_dcp_cart = 1 }
+						}
+					}
+				}
+				var:pww_dcp_b = {
+					NOT = { has_war_with = PREV }
+					NOT = { is_embargoing = PREV }
+				}
+			}
+			set_temp_variable = { pww_dg_res = pww_dcp_r }
+			pww_diplo_read_market = yes
+			if = {
+				limit = { NOT = { check_variable = { pww_dg_spare < pww_dcp_min } } }
+				set_temp_variable = { pww_dsh_s = pww_dcp_c }
+				set_temp_variable = { pww_dsh_b = pww_dcp_b }
+				set_temp_variable = { pww_dsh_r = pww_dcp_r }
+				pww_diplo_ship = yes
+				if = {
+					limit = {
+						NOT = { check_variable = { pww_dsh_route = 2 } }
+						NOT = { check_variable = { pww_dsh_share > pww_dcp_maxsh } }
+					}
+					add_to_temp_variable = { pww_dcp_n = 1 }
+					if = {
+						limit = { check_variable = { pww_dcp_cm = 1 } }
+						set_temp_variable = { pww_dcp_cart = 1 }
+					}
+				}
+			}
+		}
+	}
+	set_temp_variable = { pww_dcp_share = pww_dcp_n }
+	multiply_temp_variable = { pww_dcp_share = global.pww_diplo_c_comp_k }
+	add_to_temp_variable = { pww_dcp_share = 1 }
+	set_temp_variable = { pww_dcp_tmp = global.pww_diplo_c_comp_top }
+	divide_temp_variable = { pww_dcp_tmp = pww_dcp_share }
+	set_temp_variable = { pww_dcp_share = pww_dcp_tmp }
+	set_temp_variable = { pww_dcp_acc = pww_dcp_bv }
+	subtract_from_temp_variable = { pww_dcp_acc = pww_dcp_walk }
+	clamp_temp_variable = { var = pww_dcp_acc min = 0 max = 10 }
+	multiply_temp_variable = { pww_dcp_acc = pww_dcp_share }
+	add_to_temp_variable = { pww_dcp_acc = pww_dcp_walk }
+	# Kept for tests, the screen and the debug log.
+	set_variable = { pww_do_comp_n = pww_dcp_n }
+	set_variable = { pww_do_comp_share = pww_dcp_share }
+	set_variable = { pww_do_comp_bv = pww_dcp_bv }
+	set_variable = { pww_do_comp_acc = pww_dcp_acc }
+	set_variable = { pww_do_comp_walk = pww_dcp_walk }
+
+	set_temp_variable = { pww_dg_res = pww_dcp_k_res }
+	set_temp_variable = { pww_dg_prod = pww_dcp_k_prod }
+	set_temp_variable = { pww_dg_net = pww_dcp_k_net }
+	set_temp_variable = { pww_dg_desp = pww_dcp_k_desp }
+	set_temp_variable = { pww_dg_exp = pww_dcp_k_exp }
+	set_temp_variable = { pww_dg_imp = pww_dcp_k_imp }
+	set_temp_variable = { pww_dg_unsold = pww_dcp_k_unsold }
+	set_temp_variable = { pww_dg_stin = pww_dcp_k_stin }
+	set_temp_variable = { pww_dg_spare = pww_dcp_k_spare }
+	set_temp_variable = { pww_dg_demand = pww_dcp_k_demand }
+	set_temp_variable = { pww_dg_room = pww_dcp_k_room }
+	set_temp_variable = { pww_dg_rrate = pww_dcp_k_rrate }
+	set_temp_variable = { pww_dg_fill = pww_dcp_k_fill }
+	set_temp_variable = { pww_dg_stocked = pww_dcp_k_stocked }
+	set_temp_variable = { pww_dg_wrate = pww_dcp_k_wrate }
 }
 
 ###############################################################################

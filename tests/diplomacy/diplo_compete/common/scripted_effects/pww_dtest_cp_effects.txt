@@ -1,0 +1,108 @@
+# Diplomacy test helpers: competition-based pricing (pww_diplo_compete).
+# Bundles are scored by the same evaluation the target's ai_acceptance reads
+# (pww_do_e_* on the sender).
+
+# Sender scope (the buyer). Opens (or resumes) Propose Trade Deal talks with
+# pww_dtq_tgt and tables a one-year bundle: we buy pww_dtq_u units of
+# resource pww_dtq_r for political power a day. Reserve 2 and relations 0
+# (frozen talk values), so both scenarios compare like with like.
+pww_dtq_draft = {
+	set_temp_variable = { pww_dk_target = pww_dtq_tgt }
+	set_temp_variable = { pww_dk_act = 0 }
+	pww_diplo_offer_begin = yes
+	pww_diplo_bundle_clear = yes
+	set_variable = { pww_do_len = 1 }
+	set_variable = { pww_do_bind = 0 }
+	set_temp_variable = { pww_dba_kind = 3 }
+	set_temp_variable = { pww_dba_x = pww_dtq_r }
+	set_temp_variable = { pww_dba_side = 1 }
+	pww_diplo_bundle_add = yes
+	set_variable = { pww_dob_a^pww_dba_new = pww_dtq_u }
+	set_temp_variable = { pww_dba_kind = 2 }
+	set_temp_variable = { pww_dba_x = 0 }
+	set_temp_variable = { pww_dba_side = 0 }
+	pww_diplo_bundle_add = yes
+	set_variable = { pww_dob_a^pww_dba_new = 0.1 }
+	pww_diplo_offer_changed = yes
+	set_temp_variable = { pww_dtq_t = pww_do_talk }
+	set_variable = { global.pww_dt_reserve^pww_dtq_t = 2 }
+	set_variable = { global.pww_dt_rel^pww_dtq_t = 0 }
+	pww_diplo_offer_changed = yes
+}
+
+# Sender scope, after pww_dtq_draft. The lowest price factor (0.10 up to 1.20
+# in 0.05 steps, political power at the form rate) the seller accepts.
+# out: pww_dtq_low (0 none), pww_dtq_eff (pww_dtq_low x the seller's
+# political power appetite: the price as the seller weighs it), pww_dtq_n /
+# _acc / _bv / _share (competition at that evaluation).
+pww_dtq_lowest = {
+	set_temp_variable = { pww_dtq_low = 0 }
+	for_loop_effect = {
+		start = 0
+		end = 23
+		value = pww_dtq_k
+		if = {
+			limit = { check_variable = { pww_dtq_low < 0.01 } }
+			set_temp_variable = { pww_dtq_pf = pww_dtq_k }
+			multiply_temp_variable = { pww_dtq_pf = 0.05 }
+			add_to_temp_variable = { pww_dtq_pf = 0.1 }
+			set_temp_variable = { pww_dtq_pp = pww_dtq_u }
+			divide_temp_variable = { pww_dtq_pp = 8 }
+			multiply_temp_variable = { pww_dtq_pp = pww_dtq_pf }
+			divide_temp_variable = { pww_dtq_pp = 9 }
+			set_variable = { pww_dob_a^0 = pww_dtq_pp }
+			pww_diplo_offer_changed = yes
+			if = {
+				limit = { check_variable = { pww_do_ok = 1 } }
+				set_temp_variable = { pww_dtq_low = pww_dtq_pf }
+			}
+		}
+	}
+	set_temp_variable = { pww_dtq_eff = pww_dtq_low }
+	multiply_temp_variable = { pww_dtq_eff = pww_do_ap_pp }
+	set_temp_variable = { pww_dtq_n = pww_do_comp_n }
+	set_temp_variable = { pww_dtq_acc = pww_do_comp_acc }
+	set_temp_variable = { pww_dtq_bv = pww_do_comp_bv }
+	set_temp_variable = { pww_dtq_share = pww_do_comp_share }
+	log = "PWW_RESULT diplo_compete.values INFO case=[?pww_dtq_case|0] [THIS.GetTag] buys [?pww_dtq_u|0] from [?pww_do_target.GetTag]: lowest accepted [?pww_dtq_low|2] of market (x appetite [?pww_do_ap_pp|2] = [?pww_dtq_eff|2]) | rivals=[?pww_dtq_n|0] share=[?pww_dtq_share|2] buyer_value=[?pww_dtq_bv|2] walk=[?pww_do_glut_rate|3] acceptable=[?pww_dtq_acc|2] | total=[?pww_do_e_total|0] terms=[?pww_do_e_terms|0] reserve=[?pww_do_e_reserve|0] fair=[?pww_do_e_fair|0] bond=[?pww_do_e_bond|0] scar=[?pww_do_scar|2]"
+}
+
+# Sender scope. Closes the open Propose talk with the current target (status
+# 4 superseded: no cooldown) so the next draft opens a fresh one.
+pww_dtq_close = {
+	set_temp_variable = { pww_dtc_t = pww_do_talk }
+	set_temp_variable = { pww_dtc_status = 4 }
+	if = {
+		limit = {
+			check_variable = { pww_dtc_t > -1 }
+			check_variable = { global.pww_dt_status^pww_dtc_t = 0 }
+		}
+		pww_diplo_talk_close = yes
+	}
+}
+
+# Seller scope (AI). Drafts an AI sale of resource pww_dtq_r to pww_dtq_buyer
+# (pww_diplo_ai_build_sale). out: pww_dtq_sale (price factor), pww_dtq_sale_n
+# (rivals it saw), pww_dtq_sale_u (units).
+pww_dtq_sale_draft = {
+	set_temp_variable = { pww_dk_target = pww_dtq_buyer }
+	set_temp_variable = { pww_dk_act = 0 }
+	set_variable = { pww_diplo_ai_offer_sell = 1 }
+	set_variable = { pww_diplo_ai_offer_to = pww_dtq_buyer }
+	pww_diplo_offer_begin = yes
+	set_variable = { pww_do_res = pww_dtq_r }
+	pww_diplo_ai_build_sale = yes
+	set_temp_variable = { pww_dtq_sale = pww_do_sale_pf }
+	set_temp_variable = { pww_dtq_sale_n = pww_do_comp_n }
+	set_temp_variable = { pww_dtq_sale_u = pww_dob_a^0 }
+	log = "PWW_RESULT diplo_compete.sale INFO case=[?pww_dtq_case|0] [THIS.GetTag] AI sale draft to [?pww_dtq_buyer.GetTag]: [?pww_dtq_sale_u|0] units at [?pww_dtq_sale|2] of market (rivals [?pww_dtq_sale_n|0], acceptable [?pww_do_comp_acc|2], buyer value [?pww_do_comp_bv|2])"
+	pww_dtq_close = yes
+	set_variable = { pww_diplo_ai_offer_sell = 0 }
+}
+
+# Country scope: a would-be rival with a large tungsten glut (test hook).
+pww_dtq_glut = {
+	set_variable = { pww_diplo_test_res = 3 }
+	set_variable = { pww_diplo_test_unsold = 200 }
+	set_variable = { pww_diplo_test_exported = 0 }
+}
