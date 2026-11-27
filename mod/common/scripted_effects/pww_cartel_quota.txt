@@ -282,6 +282,9 @@ pww_cartel_apply_quota = {
 	set_variable = { global.pww_cm_held^pww_kt_cm2 = pww_kaq_held }
 	set_variable = { global.pww_cm_unsold^pww_kt_cm2 = pww_kr_unsold }
 	set_variable = { global.pww_cm_last_tick^pww_kt_cm2 = global.num_days }
+	# The Court offer outsiders see in the decision list (pww_cartel_outsiders.txt)
+	set_temp_variable = { pww_kct_cm = pww_kt_cm2 }
+	pww_cartel_court_terms = yes
 }
 
 # Country scope (an AI member). in: pww_kt_cm, pww_kt_cid, pww_kt_res and the
@@ -368,7 +371,7 @@ pww_cartel_ai_side_sale = {
 				NOT = { check_variable = { pww_kss_me = THIS } }
 				pww_cartel_is_member_res = no
 				NOT = { has_war_with = PREV }
-				num_of_available_civilian_factories > 2
+				num_of_civilian_factories_available_for_projects > 2
 			}
 			set_temp_variable = { pww_kr_res = pww_kx_res }
 			pww_cartel_read_res = yes

@@ -132,6 +132,30 @@ pww_dtest_hg_sweep = {
 	pww_diplo_offer_changed = yes
 }
 
+# GER scope. Like pww_dtest_hg_sweep, but counts the reserves at which the
+# draft would sign if the seller were not bound by a producers' agreement
+# (total minus the cartel part above zero). out: pww_dtest_hg_n.
+pww_dtest_hg_sweep_rest = {
+	set_temp_variable = { pww_dtest_hg_t = pww_do_talk }
+	set_temp_variable = { pww_dtest_hg_keep = global.pww_dt_reserve^pww_dtest_hg_t }
+	set_temp_variable = { pww_dtest_hg_n = 0 }
+	for_loop_effect = {
+		start = 2
+		end = 26
+		value = pww_dtest_hg_r
+		set_variable = { global.pww_dt_reserve^pww_dtest_hg_t = pww_dtest_hg_r }
+		pww_diplo_eval_bundle = yes
+		set_temp_variable = { pww_dtest_hg_rt = pww_do_e_total }
+		subtract_from_temp_variable = { pww_dtest_hg_rt = pww_do_e_cartel }
+		if = {
+			limit = { check_variable = { pww_dtest_hg_rt > 0 } }
+			add_to_temp_variable = { pww_dtest_hg_n = 1 }
+		}
+	}
+	set_variable = { global.pww_dt_reserve^pww_dtest_hg_t = pww_dtest_hg_keep }
+	pww_diplo_offer_changed = yes
+}
+
 # GER scope. Closes the open Propose talk with the current target so the next
 # draft opens a fresh one (status 4 superseded: no cooldown).
 pww_dtest_hg_close_talk = {

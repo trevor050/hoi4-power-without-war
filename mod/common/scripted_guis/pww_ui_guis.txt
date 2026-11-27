@@ -13,32 +13,205 @@ scripted_gui = {
 				clr_country_flag = pww_ui_desk_open
 				clr_country_flag = pww_ui_desk_float
 				set_variable = { pww_ui_focus = -1 }
+				clear_variable = pww_ui_end_arm
 				add_to_variable = { pww_ui_dirty = 1 }
 			}
 			pww_ui_tab0_click = {
 				set_variable = { pww_ui_tab = 0 }
+				clear_variable = pww_ui_end_arm
 				pww_ui_refresh = yes
 			}
 			pww_ui_tab1_click = {
 				set_variable = { pww_ui_tab = 1 }
+				clear_variable = pww_ui_end_arm
 				pww_ui_refresh = yes
 			}
 			pww_ui_tab2_click = {
 				set_variable = { pww_ui_tab = 2 }
+				clear_variable = pww_ui_end_arm
 				pww_ui_refresh = yes
 			}
 			pww_ui_desk_pg_next_click = {
 				add_to_variable = { pww_ui_page = 1 }
 				if = { limit = { NOT = { check_variable = { pww_ui_page < pww_ui_npages } } } set_variable = { pww_ui_page = 0 } }
+				clear_variable = pww_ui_end_arm
 				pww_ui_refresh = yes
 			}
 			pww_ui_desk_pg_prev_click = {
 				subtract_from_variable = { pww_ui_page = 1 }
 				if = { limit = { check_variable = { pww_ui_page < 0 } } set_variable = { pww_ui_page = pww_ui_npages } subtract_from_variable = { pww_ui_page = 1 } }
+				clear_variable = pww_ui_end_arm
+				pww_ui_refresh = yes
+			}
+			pww_ui_dl0_end_click = {
+				if = {
+					limit = { has_variable = pww_ui_end_arm check_variable = { pww_ui_end_arm = pww_ui_l0_id } }
+					set_temp_variable = { pww_l_ag = pww_ui_l0_id }
+					set_temp_variable = { pww_l_by = THIS }
+					set_temp_variable = { pww_l_cause = 0 }
+					pww_ledger_withdraw = yes
+					log = "[GetDateText] PWW_UI end [THIS.GetTag] agreement [?pww_ui_l0_id|0]"
+					clear_variable = pww_ui_end_arm
+				}
+				else = {
+					set_variable = { pww_ui_end_arm = pww_ui_l0_id }
+				}
+				pww_ui_refresh = yes
+			}
+			pww_ui_dl1_end_click = {
+				if = {
+					limit = { has_variable = pww_ui_end_arm check_variable = { pww_ui_end_arm = pww_ui_l1_id } }
+					set_temp_variable = { pww_l_ag = pww_ui_l1_id }
+					set_temp_variable = { pww_l_by = THIS }
+					set_temp_variable = { pww_l_cause = 0 }
+					pww_ledger_withdraw = yes
+					log = "[GetDateText] PWW_UI end [THIS.GetTag] agreement [?pww_ui_l1_id|0]"
+					clear_variable = pww_ui_end_arm
+				}
+				else = {
+					set_variable = { pww_ui_end_arm = pww_ui_l1_id }
+				}
+				pww_ui_refresh = yes
+			}
+			pww_ui_dl2_end_click = {
+				if = {
+					limit = { has_variable = pww_ui_end_arm check_variable = { pww_ui_end_arm = pww_ui_l2_id } }
+					set_temp_variable = { pww_l_ag = pww_ui_l2_id }
+					set_temp_variable = { pww_l_by = THIS }
+					set_temp_variable = { pww_l_cause = 0 }
+					pww_ledger_withdraw = yes
+					log = "[GetDateText] PWW_UI end [THIS.GetTag] agreement [?pww_ui_l2_id|0]"
+					clear_variable = pww_ui_end_arm
+				}
+				else = {
+					set_variable = { pww_ui_end_arm = pww_ui_l2_id }
+				}
+				pww_ui_refresh = yes
+			}
+			pww_ui_dl3_end_click = {
+				if = {
+					limit = { has_variable = pww_ui_end_arm check_variable = { pww_ui_end_arm = pww_ui_l3_id } }
+					set_temp_variable = { pww_l_ag = pww_ui_l3_id }
+					set_temp_variable = { pww_l_by = THIS }
+					set_temp_variable = { pww_l_cause = 0 }
+					pww_ledger_withdraw = yes
+					log = "[GetDateText] PWW_UI end [THIS.GetTag] agreement [?pww_ui_l3_id|0]"
+					clear_variable = pww_ui_end_arm
+				}
+				else = {
+					set_variable = { pww_ui_end_arm = pww_ui_l3_id }
+				}
+				pww_ui_refresh = yes
+			}
+			pww_ui_dl4_end_click = {
+				if = {
+					limit = { has_variable = pww_ui_end_arm check_variable = { pww_ui_end_arm = pww_ui_l4_id } }
+					set_temp_variable = { pww_l_ag = pww_ui_l4_id }
+					set_temp_variable = { pww_l_by = THIS }
+					set_temp_variable = { pww_l_cause = 0 }
+					pww_ledger_withdraw = yes
+					log = "[GetDateText] PWW_UI end [THIS.GetTag] agreement [?pww_ui_l4_id|0]"
+					clear_variable = pww_ui_end_arm
+				}
+				else = {
+					set_variable = { pww_ui_end_arm = pww_ui_l4_id }
+				}
+				pww_ui_refresh = yes
+			}
+			pww_ui_dl5_end_click = {
+				if = {
+					limit = { has_variable = pww_ui_end_arm check_variable = { pww_ui_end_arm = pww_ui_l5_id } }
+					set_temp_variable = { pww_l_ag = pww_ui_l5_id }
+					set_temp_variable = { pww_l_by = THIS }
+					set_temp_variable = { pww_l_cause = 0 }
+					pww_ledger_withdraw = yes
+					log = "[GetDateText] PWW_UI end [THIS.GetTag] agreement [?pww_ui_l5_id|0]"
+					clear_variable = pww_ui_end_arm
+				}
+				else = {
+					set_variable = { pww_ui_end_arm = pww_ui_l5_id }
+				}
+				pww_ui_refresh = yes
+			}
+			pww_ui_dl6_end_click = {
+				if = {
+					limit = { has_variable = pww_ui_end_arm check_variable = { pww_ui_end_arm = pww_ui_l6_id } }
+					set_temp_variable = { pww_l_ag = pww_ui_l6_id }
+					set_temp_variable = { pww_l_by = THIS }
+					set_temp_variable = { pww_l_cause = 0 }
+					pww_ledger_withdraw = yes
+					log = "[GetDateText] PWW_UI end [THIS.GetTag] agreement [?pww_ui_l6_id|0]"
+					clear_variable = pww_ui_end_arm
+				}
+				else = {
+					set_variable = { pww_ui_end_arm = pww_ui_l6_id }
+				}
+				pww_ui_refresh = yes
+			}
+			pww_ui_dl7_end_click = {
+				if = {
+					limit = { has_variable = pww_ui_end_arm check_variable = { pww_ui_end_arm = pww_ui_l7_id } }
+					set_temp_variable = { pww_l_ag = pww_ui_l7_id }
+					set_temp_variable = { pww_l_by = THIS }
+					set_temp_variable = { pww_l_cause = 0 }
+					pww_ledger_withdraw = yes
+					log = "[GetDateText] PWW_UI end [THIS.GetTag] agreement [?pww_ui_l7_id|0]"
+					clear_variable = pww_ui_end_arm
+				}
+				else = {
+					set_variable = { pww_ui_end_arm = pww_ui_l7_id }
+				}
+				pww_ui_refresh = yes
+			}
+			pww_ui_dl8_end_click = {
+				if = {
+					limit = { has_variable = pww_ui_end_arm check_variable = { pww_ui_end_arm = pww_ui_l8_id } }
+					set_temp_variable = { pww_l_ag = pww_ui_l8_id }
+					set_temp_variable = { pww_l_by = THIS }
+					set_temp_variable = { pww_l_cause = 0 }
+					pww_ledger_withdraw = yes
+					log = "[GetDateText] PWW_UI end [THIS.GetTag] agreement [?pww_ui_l8_id|0]"
+					clear_variable = pww_ui_end_arm
+				}
+				else = {
+					set_variable = { pww_ui_end_arm = pww_ui_l8_id }
+				}
+				pww_ui_refresh = yes
+			}
+			pww_ui_dl9_end_click = {
+				if = {
+					limit = { has_variable = pww_ui_end_arm check_variable = { pww_ui_end_arm = pww_ui_l9_id } }
+					set_temp_variable = { pww_l_ag = pww_ui_l9_id }
+					set_temp_variable = { pww_l_by = THIS }
+					set_temp_variable = { pww_l_cause = 0 }
+					pww_ledger_withdraw = yes
+					log = "[GetDateText] PWW_UI end [THIS.GetTag] agreement [?pww_ui_l9_id|0]"
+					clear_variable = pww_ui_end_arm
+				}
+				else = {
+					set_variable = { pww_ui_end_arm = pww_ui_l9_id }
+				}
 				pww_ui_refresh = yes
 			}
 		}
 		triggers = {
+			pww_ui_desk_bg_240_visible = { check_variable = { pww_ui_desk_h = 240 } }
+			pww_ui_desk_bg_280_visible = { check_variable = { pww_ui_desk_h = 280 } }
+			pww_ui_desk_bg_320_visible = { check_variable = { pww_ui_desk_h = 320 } }
+			pww_ui_desk_bg_360_visible = { check_variable = { pww_ui_desk_h = 360 } }
+			pww_ui_desk_bg_400_visible = { check_variable = { pww_ui_desk_h = 400 } }
+			pww_ui_desk_bg_440_visible = { check_variable = { pww_ui_desk_h = 440 } }
+			pww_ui_desk_bg_480_visible = { check_variable = { pww_ui_desk_h = 480 } }
+			pww_ui_desk_bg_520_visible = { check_variable = { pww_ui_desk_h = 520 } }
+			pww_ui_desk_bg_560_visible = { check_variable = { pww_ui_desk_h = 560 } }
+			pww_ui_desk_bg_600_visible = { check_variable = { pww_ui_desk_h = 600 } }
+			pww_ui_desk_bg_640_visible = { check_variable = { pww_ui_desk_h = 640 } }
+			pww_ui_desk_bg_680_visible = { check_variable = { pww_ui_desk_h = 680 } }
+			pww_ui_desk_bg_720_visible = { check_variable = { pww_ui_desk_h = 720 } }
+			pww_ui_desk_bg_760_visible = { check_variable = { pww_ui_desk_h = 760 } }
+			pww_ui_desk_bg_800_visible = { check_variable = { pww_ui_desk_h = 800 } }
+			pww_ui_desk_bg_840_visible = { check_variable = { pww_ui_desk_h = 840 } }
+			pww_ui_desk_bg_880_visible = { OR = { check_variable = { pww_ui_desk_h = 880 } NOT = { has_variable = pww_ui_desk_h } } }
 			pww_ui_desk_sit_hdr_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_ns > 0 } }
 			pww_ui_ds0_hl_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_ns > 0 } check_variable = { pww_ui_focus = 0 } }
 			pww_ui_ds0_l1_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_ns > 0 } }
@@ -56,7 +229,27 @@ scripted_gui = {
 			pww_ui_ds3_l1_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_ns > 3 } }
 			pww_ui_ds3_date_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_ns > 3 } }
 			pww_ui_ds3_l2_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_ns > 3 } }
-			pww_ui_desk_div_cart_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_nc > 0 } check_variable = { pww_ui_ns > 0 } }
+			pww_ui_desk_div_news_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_nn > 0 } check_variable = { pww_ui_ns > 0 } }
+			pww_ui_desk_news_hdr_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_nn > 0 } }
+			pww_ui_dn0_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_nn > 0 } }
+			pww_ui_dn1_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_nn > 1 } }
+			pww_ui_dn2_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_nn > 2 } }
+			pww_ui_dn3_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_nn > 3 } }
+			pww_ui_desk_div_opp_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_no > 0 } OR = { check_variable = { pww_ui_ns > 0 } check_variable = { pww_ui_nn > 0 } } }
+			pww_ui_desk_opp_hdr_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_no > 0 } }
+			pww_ui_do0_icon_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_no > 0 } }
+			pww_ui_do0_l1_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_no > 0 } }
+			pww_ui_do0_l2_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_no > 0 } }
+			pww_ui_do1_icon_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_no > 1 } }
+			pww_ui_do1_l1_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_no > 1 } }
+			pww_ui_do1_l2_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_no > 1 } }
+			pww_ui_do2_icon_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_no > 2 } }
+			pww_ui_do2_l1_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_no > 2 } }
+			pww_ui_do2_l2_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_no > 2 } }
+			pww_ui_do3_icon_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_no > 3 } }
+			pww_ui_do3_l1_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_no > 3 } }
+			pww_ui_do3_l2_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_no > 3 } }
+			pww_ui_desk_div_cart_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_nc > 0 } OR = { check_variable = { pww_ui_ns > 0 } check_variable = { pww_ui_no > 0 } } }
 			pww_ui_desk_cart_hdr_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_nc > 0 } }
 			pww_ui_dc0_icon_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_nc > 0 } }
 			pww_ui_dc0_l1_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_nc > 0 } }
@@ -70,7 +263,7 @@ scripted_gui = {
 			pww_ui_dc2_l1_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_nc > 2 } }
 			pww_ui_dc2_price_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_nc > 2 } }
 			pww_ui_dc2_l2_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_nc > 2 } }
-			pww_ui_desk_div_mkt_visible = { check_variable = { pww_ui_tab = 0 } OR = { check_variable = { pww_ui_ns > 0 } check_variable = { pww_ui_nc > 0 } } }
+			pww_ui_desk_div_mkt_visible = { check_variable = { pww_ui_tab = 0 } OR = { check_variable = { pww_ui_ns > 0 } check_variable = { pww_ui_nc > 0 } check_variable = { pww_ui_no > 0 } } }
 			pww_ui_desk_mkt_hdr_visible = { check_variable = { pww_ui_tab = 0 } }
 			pww_ui_desk_mkt_date_visible = { check_variable = { pww_ui_tab = 0 } has_global_flag = pww_ui_mkt_ready }
 			pww_ui_desk_mkt_empty_visible = { check_variable = { pww_ui_tab = 0 } NOT = { has_global_flag = pww_ui_mkt_ready } }
@@ -97,42 +290,52 @@ scripted_gui = {
 			pww_ui_dl0_terms_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l0_on = 1 } }
 			pww_ui_dl0_st_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l0_on = 1 } }
 			pww_ui_dl0_l2_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l0_on = 1 } }
+			pww_ui_dl0_end_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l0_on = 1 } OR = { check_variable = { pww_ui_l0_st = 1 } check_variable = { pww_ui_l0_st = 2 } } }
 			pww_ui_dl1_cp_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l1_on = 1 } }
 			pww_ui_dl1_terms_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l1_on = 1 } }
 			pww_ui_dl1_st_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l1_on = 1 } }
 			pww_ui_dl1_l2_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l1_on = 1 } }
+			pww_ui_dl1_end_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l1_on = 1 } OR = { check_variable = { pww_ui_l1_st = 1 } check_variable = { pww_ui_l1_st = 2 } } }
 			pww_ui_dl2_cp_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l2_on = 1 } }
 			pww_ui_dl2_terms_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l2_on = 1 } }
 			pww_ui_dl2_st_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l2_on = 1 } }
 			pww_ui_dl2_l2_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l2_on = 1 } }
+			pww_ui_dl2_end_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l2_on = 1 } OR = { check_variable = { pww_ui_l2_st = 1 } check_variable = { pww_ui_l2_st = 2 } } }
 			pww_ui_dl3_cp_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l3_on = 1 } }
 			pww_ui_dl3_terms_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l3_on = 1 } }
 			pww_ui_dl3_st_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l3_on = 1 } }
 			pww_ui_dl3_l2_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l3_on = 1 } }
+			pww_ui_dl3_end_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l3_on = 1 } OR = { check_variable = { pww_ui_l3_st = 1 } check_variable = { pww_ui_l3_st = 2 } } }
 			pww_ui_dl4_cp_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l4_on = 1 } }
 			pww_ui_dl4_terms_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l4_on = 1 } }
 			pww_ui_dl4_st_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l4_on = 1 } }
 			pww_ui_dl4_l2_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l4_on = 1 } }
+			pww_ui_dl4_end_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l4_on = 1 } OR = { check_variable = { pww_ui_l4_st = 1 } check_variable = { pww_ui_l4_st = 2 } } }
 			pww_ui_dl5_cp_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l5_on = 1 } }
 			pww_ui_dl5_terms_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l5_on = 1 } }
 			pww_ui_dl5_st_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l5_on = 1 } }
 			pww_ui_dl5_l2_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l5_on = 1 } }
+			pww_ui_dl5_end_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l5_on = 1 } OR = { check_variable = { pww_ui_l5_st = 1 } check_variable = { pww_ui_l5_st = 2 } } }
 			pww_ui_dl6_cp_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l6_on = 1 } }
 			pww_ui_dl6_terms_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l6_on = 1 } }
 			pww_ui_dl6_st_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l6_on = 1 } }
 			pww_ui_dl6_l2_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l6_on = 1 } }
+			pww_ui_dl6_end_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l6_on = 1 } OR = { check_variable = { pww_ui_l6_st = 1 } check_variable = { pww_ui_l6_st = 2 } } }
 			pww_ui_dl7_cp_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l7_on = 1 } }
 			pww_ui_dl7_terms_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l7_on = 1 } }
 			pww_ui_dl7_st_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l7_on = 1 } }
 			pww_ui_dl7_l2_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l7_on = 1 } }
+			pww_ui_dl7_end_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l7_on = 1 } OR = { check_variable = { pww_ui_l7_st = 1 } check_variable = { pww_ui_l7_st = 2 } } }
 			pww_ui_dl8_cp_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l8_on = 1 } }
 			pww_ui_dl8_terms_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l8_on = 1 } }
 			pww_ui_dl8_st_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l8_on = 1 } }
 			pww_ui_dl8_l2_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l8_on = 1 } }
+			pww_ui_dl8_end_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l8_on = 1 } OR = { check_variable = { pww_ui_l8_st = 1 } check_variable = { pww_ui_l8_st = 2 } } }
 			pww_ui_dl9_cp_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l9_on = 1 } }
 			pww_ui_dl9_terms_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l9_on = 1 } }
 			pww_ui_dl9_st_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l9_on = 1 } }
 			pww_ui_dl9_l2_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l9_on = 1 } }
+			pww_ui_dl9_end_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l9_on = 1 } OR = { check_variable = { pww_ui_l9_st = 1 } check_variable = { pww_ui_l9_st = 2 } } }
 			pww_ui_desk_rsv_hdr_visible = { check_variable = { pww_ui_tab = 2 } }
 			pww_ui_desk_rsv_empty_visible = { check_variable = { pww_ui_tab = 2 } check_variable = { pww_ui_nr = 0 } }
 			pww_ui_dr0_icon_visible = { check_variable = { pww_ui_tab = 2 } check_variable = { pww_ui_nr > 0 } }
@@ -186,6 +389,10 @@ scripted_gui = {
 			pww_ui_dc0_icon = { frame = ROOT.pww_ui_c0_frame y = ROOT.pww_uy_dc0_icon }
 			pww_ui_dc1_icon = { frame = ROOT.pww_ui_c1_frame y = ROOT.pww_uy_dc1_icon }
 			pww_ui_dc2_icon = { frame = ROOT.pww_ui_c2_frame y = ROOT.pww_uy_dc2_icon }
+			pww_ui_do0_icon = { frame = ROOT.pww_ui_o0_frame y = ROOT.pww_uy_do0_icon }
+			pww_ui_do1_icon = { frame = ROOT.pww_ui_o1_frame y = ROOT.pww_uy_do1_icon }
+			pww_ui_do2_icon = { frame = ROOT.pww_ui_o2_frame y = ROOT.pww_uy_do2_icon }
+			pww_ui_do3_icon = { frame = ROOT.pww_ui_o3_frame y = ROOT.pww_uy_do3_icon }
 			pww_ui_dr0_icon = { frame = ROOT.pww_ui_r0_frame }
 			pww_ui_dr0_fill = { x = ROOT.pww_ui_r0_fx }
 			pww_ui_dr1_icon = { frame = ROOT.pww_ui_r1_frame }
@@ -215,6 +422,22 @@ scripted_gui = {
 			pww_ui_ds3_l1 = { y = ROOT.pww_uy_ds3_l1 }
 			pww_ui_ds3_date = { y = ROOT.pww_uy_ds3_date }
 			pww_ui_ds3_l2 = { y = ROOT.pww_uy_ds3_l2 }
+			pww_ui_desk_div_news = { y = ROOT.pww_uy_desk_div_news }
+			pww_ui_desk_news_hdr = { y = ROOT.pww_uy_desk_news_hdr }
+			pww_ui_dn0 = { y = ROOT.pww_uy_dn0 }
+			pww_ui_dn1 = { y = ROOT.pww_uy_dn1 }
+			pww_ui_dn2 = { y = ROOT.pww_uy_dn2 }
+			pww_ui_dn3 = { y = ROOT.pww_uy_dn3 }
+			pww_ui_desk_div_opp = { y = ROOT.pww_uy_desk_div_opp }
+			pww_ui_desk_opp_hdr = { y = ROOT.pww_uy_desk_opp_hdr }
+			pww_ui_do0_l1 = { y = ROOT.pww_uy_do0_l1 }
+			pww_ui_do0_l2 = { y = ROOT.pww_uy_do0_l2 }
+			pww_ui_do1_l1 = { y = ROOT.pww_uy_do1_l1 }
+			pww_ui_do1_l2 = { y = ROOT.pww_uy_do1_l2 }
+			pww_ui_do2_l1 = { y = ROOT.pww_uy_do2_l1 }
+			pww_ui_do2_l2 = { y = ROOT.pww_uy_do2_l2 }
+			pww_ui_do3_l1 = { y = ROOT.pww_uy_do3_l1 }
+			pww_ui_do3_l2 = { y = ROOT.pww_uy_do3_l2 }
 			pww_ui_desk_div_cart = { y = ROOT.pww_uy_desk_div_cart }
 			pww_ui_desk_cart_hdr = { y = ROOT.pww_uy_desk_cart_hdr }
 			pww_ui_dc0_l1 = { y = ROOT.pww_uy_dc0_l1 }
@@ -258,32 +481,205 @@ scripted_gui = {
 				clr_country_flag = pww_ui_desk_open
 				clr_country_flag = pww_ui_desk_float
 				set_variable = { pww_ui_focus = -1 }
+				clear_variable = pww_ui_end_arm
 				add_to_variable = { pww_ui_dirty = 1 }
 			}
 			pww_ui_tab0_click = {
 				set_variable = { pww_ui_tab = 0 }
+				clear_variable = pww_ui_end_arm
 				pww_ui_refresh = yes
 			}
 			pww_ui_tab1_click = {
 				set_variable = { pww_ui_tab = 1 }
+				clear_variable = pww_ui_end_arm
 				pww_ui_refresh = yes
 			}
 			pww_ui_tab2_click = {
 				set_variable = { pww_ui_tab = 2 }
+				clear_variable = pww_ui_end_arm
 				pww_ui_refresh = yes
 			}
 			pww_ui_desk_pg_next_click = {
 				add_to_variable = { pww_ui_page = 1 }
 				if = { limit = { NOT = { check_variable = { pww_ui_page < pww_ui_npages } } } set_variable = { pww_ui_page = 0 } }
+				clear_variable = pww_ui_end_arm
 				pww_ui_refresh = yes
 			}
 			pww_ui_desk_pg_prev_click = {
 				subtract_from_variable = { pww_ui_page = 1 }
 				if = { limit = { check_variable = { pww_ui_page < 0 } } set_variable = { pww_ui_page = pww_ui_npages } subtract_from_variable = { pww_ui_page = 1 } }
+				clear_variable = pww_ui_end_arm
+				pww_ui_refresh = yes
+			}
+			pww_ui_dl0_end_click = {
+				if = {
+					limit = { has_variable = pww_ui_end_arm check_variable = { pww_ui_end_arm = pww_ui_l0_id } }
+					set_temp_variable = { pww_l_ag = pww_ui_l0_id }
+					set_temp_variable = { pww_l_by = THIS }
+					set_temp_variable = { pww_l_cause = 0 }
+					pww_ledger_withdraw = yes
+					log = "[GetDateText] PWW_UI end [THIS.GetTag] agreement [?pww_ui_l0_id|0]"
+					clear_variable = pww_ui_end_arm
+				}
+				else = {
+					set_variable = { pww_ui_end_arm = pww_ui_l0_id }
+				}
+				pww_ui_refresh = yes
+			}
+			pww_ui_dl1_end_click = {
+				if = {
+					limit = { has_variable = pww_ui_end_arm check_variable = { pww_ui_end_arm = pww_ui_l1_id } }
+					set_temp_variable = { pww_l_ag = pww_ui_l1_id }
+					set_temp_variable = { pww_l_by = THIS }
+					set_temp_variable = { pww_l_cause = 0 }
+					pww_ledger_withdraw = yes
+					log = "[GetDateText] PWW_UI end [THIS.GetTag] agreement [?pww_ui_l1_id|0]"
+					clear_variable = pww_ui_end_arm
+				}
+				else = {
+					set_variable = { pww_ui_end_arm = pww_ui_l1_id }
+				}
+				pww_ui_refresh = yes
+			}
+			pww_ui_dl2_end_click = {
+				if = {
+					limit = { has_variable = pww_ui_end_arm check_variable = { pww_ui_end_arm = pww_ui_l2_id } }
+					set_temp_variable = { pww_l_ag = pww_ui_l2_id }
+					set_temp_variable = { pww_l_by = THIS }
+					set_temp_variable = { pww_l_cause = 0 }
+					pww_ledger_withdraw = yes
+					log = "[GetDateText] PWW_UI end [THIS.GetTag] agreement [?pww_ui_l2_id|0]"
+					clear_variable = pww_ui_end_arm
+				}
+				else = {
+					set_variable = { pww_ui_end_arm = pww_ui_l2_id }
+				}
+				pww_ui_refresh = yes
+			}
+			pww_ui_dl3_end_click = {
+				if = {
+					limit = { has_variable = pww_ui_end_arm check_variable = { pww_ui_end_arm = pww_ui_l3_id } }
+					set_temp_variable = { pww_l_ag = pww_ui_l3_id }
+					set_temp_variable = { pww_l_by = THIS }
+					set_temp_variable = { pww_l_cause = 0 }
+					pww_ledger_withdraw = yes
+					log = "[GetDateText] PWW_UI end [THIS.GetTag] agreement [?pww_ui_l3_id|0]"
+					clear_variable = pww_ui_end_arm
+				}
+				else = {
+					set_variable = { pww_ui_end_arm = pww_ui_l3_id }
+				}
+				pww_ui_refresh = yes
+			}
+			pww_ui_dl4_end_click = {
+				if = {
+					limit = { has_variable = pww_ui_end_arm check_variable = { pww_ui_end_arm = pww_ui_l4_id } }
+					set_temp_variable = { pww_l_ag = pww_ui_l4_id }
+					set_temp_variable = { pww_l_by = THIS }
+					set_temp_variable = { pww_l_cause = 0 }
+					pww_ledger_withdraw = yes
+					log = "[GetDateText] PWW_UI end [THIS.GetTag] agreement [?pww_ui_l4_id|0]"
+					clear_variable = pww_ui_end_arm
+				}
+				else = {
+					set_variable = { pww_ui_end_arm = pww_ui_l4_id }
+				}
+				pww_ui_refresh = yes
+			}
+			pww_ui_dl5_end_click = {
+				if = {
+					limit = { has_variable = pww_ui_end_arm check_variable = { pww_ui_end_arm = pww_ui_l5_id } }
+					set_temp_variable = { pww_l_ag = pww_ui_l5_id }
+					set_temp_variable = { pww_l_by = THIS }
+					set_temp_variable = { pww_l_cause = 0 }
+					pww_ledger_withdraw = yes
+					log = "[GetDateText] PWW_UI end [THIS.GetTag] agreement [?pww_ui_l5_id|0]"
+					clear_variable = pww_ui_end_arm
+				}
+				else = {
+					set_variable = { pww_ui_end_arm = pww_ui_l5_id }
+				}
+				pww_ui_refresh = yes
+			}
+			pww_ui_dl6_end_click = {
+				if = {
+					limit = { has_variable = pww_ui_end_arm check_variable = { pww_ui_end_arm = pww_ui_l6_id } }
+					set_temp_variable = { pww_l_ag = pww_ui_l6_id }
+					set_temp_variable = { pww_l_by = THIS }
+					set_temp_variable = { pww_l_cause = 0 }
+					pww_ledger_withdraw = yes
+					log = "[GetDateText] PWW_UI end [THIS.GetTag] agreement [?pww_ui_l6_id|0]"
+					clear_variable = pww_ui_end_arm
+				}
+				else = {
+					set_variable = { pww_ui_end_arm = pww_ui_l6_id }
+				}
+				pww_ui_refresh = yes
+			}
+			pww_ui_dl7_end_click = {
+				if = {
+					limit = { has_variable = pww_ui_end_arm check_variable = { pww_ui_end_arm = pww_ui_l7_id } }
+					set_temp_variable = { pww_l_ag = pww_ui_l7_id }
+					set_temp_variable = { pww_l_by = THIS }
+					set_temp_variable = { pww_l_cause = 0 }
+					pww_ledger_withdraw = yes
+					log = "[GetDateText] PWW_UI end [THIS.GetTag] agreement [?pww_ui_l7_id|0]"
+					clear_variable = pww_ui_end_arm
+				}
+				else = {
+					set_variable = { pww_ui_end_arm = pww_ui_l7_id }
+				}
+				pww_ui_refresh = yes
+			}
+			pww_ui_dl8_end_click = {
+				if = {
+					limit = { has_variable = pww_ui_end_arm check_variable = { pww_ui_end_arm = pww_ui_l8_id } }
+					set_temp_variable = { pww_l_ag = pww_ui_l8_id }
+					set_temp_variable = { pww_l_by = THIS }
+					set_temp_variable = { pww_l_cause = 0 }
+					pww_ledger_withdraw = yes
+					log = "[GetDateText] PWW_UI end [THIS.GetTag] agreement [?pww_ui_l8_id|0]"
+					clear_variable = pww_ui_end_arm
+				}
+				else = {
+					set_variable = { pww_ui_end_arm = pww_ui_l8_id }
+				}
+				pww_ui_refresh = yes
+			}
+			pww_ui_dl9_end_click = {
+				if = {
+					limit = { has_variable = pww_ui_end_arm check_variable = { pww_ui_end_arm = pww_ui_l9_id } }
+					set_temp_variable = { pww_l_ag = pww_ui_l9_id }
+					set_temp_variable = { pww_l_by = THIS }
+					set_temp_variable = { pww_l_cause = 0 }
+					pww_ledger_withdraw = yes
+					log = "[GetDateText] PWW_UI end [THIS.GetTag] agreement [?pww_ui_l9_id|0]"
+					clear_variable = pww_ui_end_arm
+				}
+				else = {
+					set_variable = { pww_ui_end_arm = pww_ui_l9_id }
+				}
 				pww_ui_refresh = yes
 			}
 		}
 		triggers = {
+			pww_ui_desk_bg_240_visible = { check_variable = { pww_ui_desk_h = 240 } }
+			pww_ui_desk_bg_280_visible = { check_variable = { pww_ui_desk_h = 280 } }
+			pww_ui_desk_bg_320_visible = { check_variable = { pww_ui_desk_h = 320 } }
+			pww_ui_desk_bg_360_visible = { check_variable = { pww_ui_desk_h = 360 } }
+			pww_ui_desk_bg_400_visible = { check_variable = { pww_ui_desk_h = 400 } }
+			pww_ui_desk_bg_440_visible = { check_variable = { pww_ui_desk_h = 440 } }
+			pww_ui_desk_bg_480_visible = { check_variable = { pww_ui_desk_h = 480 } }
+			pww_ui_desk_bg_520_visible = { check_variable = { pww_ui_desk_h = 520 } }
+			pww_ui_desk_bg_560_visible = { check_variable = { pww_ui_desk_h = 560 } }
+			pww_ui_desk_bg_600_visible = { check_variable = { pww_ui_desk_h = 600 } }
+			pww_ui_desk_bg_640_visible = { check_variable = { pww_ui_desk_h = 640 } }
+			pww_ui_desk_bg_680_visible = { check_variable = { pww_ui_desk_h = 680 } }
+			pww_ui_desk_bg_720_visible = { check_variable = { pww_ui_desk_h = 720 } }
+			pww_ui_desk_bg_760_visible = { check_variable = { pww_ui_desk_h = 760 } }
+			pww_ui_desk_bg_800_visible = { check_variable = { pww_ui_desk_h = 800 } }
+			pww_ui_desk_bg_840_visible = { check_variable = { pww_ui_desk_h = 840 } }
+			pww_ui_desk_bg_880_visible = { OR = { check_variable = { pww_ui_desk_h = 880 } NOT = { has_variable = pww_ui_desk_h } } }
 			pww_ui_desk_sit_hdr_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_ns > 0 } }
 			pww_ui_ds0_hl_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_ns > 0 } check_variable = { pww_ui_focus = 0 } }
 			pww_ui_ds0_l1_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_ns > 0 } }
@@ -301,7 +697,27 @@ scripted_gui = {
 			pww_ui_ds3_l1_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_ns > 3 } }
 			pww_ui_ds3_date_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_ns > 3 } }
 			pww_ui_ds3_l2_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_ns > 3 } }
-			pww_ui_desk_div_cart_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_nc > 0 } check_variable = { pww_ui_ns > 0 } }
+			pww_ui_desk_div_news_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_nn > 0 } check_variable = { pww_ui_ns > 0 } }
+			pww_ui_desk_news_hdr_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_nn > 0 } }
+			pww_ui_dn0_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_nn > 0 } }
+			pww_ui_dn1_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_nn > 1 } }
+			pww_ui_dn2_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_nn > 2 } }
+			pww_ui_dn3_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_nn > 3 } }
+			pww_ui_desk_div_opp_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_no > 0 } OR = { check_variable = { pww_ui_ns > 0 } check_variable = { pww_ui_nn > 0 } } }
+			pww_ui_desk_opp_hdr_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_no > 0 } }
+			pww_ui_do0_icon_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_no > 0 } }
+			pww_ui_do0_l1_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_no > 0 } }
+			pww_ui_do0_l2_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_no > 0 } }
+			pww_ui_do1_icon_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_no > 1 } }
+			pww_ui_do1_l1_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_no > 1 } }
+			pww_ui_do1_l2_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_no > 1 } }
+			pww_ui_do2_icon_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_no > 2 } }
+			pww_ui_do2_l1_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_no > 2 } }
+			pww_ui_do2_l2_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_no > 2 } }
+			pww_ui_do3_icon_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_no > 3 } }
+			pww_ui_do3_l1_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_no > 3 } }
+			pww_ui_do3_l2_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_no > 3 } }
+			pww_ui_desk_div_cart_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_nc > 0 } OR = { check_variable = { pww_ui_ns > 0 } check_variable = { pww_ui_no > 0 } } }
 			pww_ui_desk_cart_hdr_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_nc > 0 } }
 			pww_ui_dc0_icon_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_nc > 0 } }
 			pww_ui_dc0_l1_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_nc > 0 } }
@@ -315,7 +731,7 @@ scripted_gui = {
 			pww_ui_dc2_l1_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_nc > 2 } }
 			pww_ui_dc2_price_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_nc > 2 } }
 			pww_ui_dc2_l2_visible = { check_variable = { pww_ui_tab = 0 } check_variable = { pww_ui_nc > 2 } }
-			pww_ui_desk_div_mkt_visible = { check_variable = { pww_ui_tab = 0 } OR = { check_variable = { pww_ui_ns > 0 } check_variable = { pww_ui_nc > 0 } } }
+			pww_ui_desk_div_mkt_visible = { check_variable = { pww_ui_tab = 0 } OR = { check_variable = { pww_ui_ns > 0 } check_variable = { pww_ui_nc > 0 } check_variable = { pww_ui_no > 0 } } }
 			pww_ui_desk_mkt_hdr_visible = { check_variable = { pww_ui_tab = 0 } }
 			pww_ui_desk_mkt_date_visible = { check_variable = { pww_ui_tab = 0 } has_global_flag = pww_ui_mkt_ready }
 			pww_ui_desk_mkt_empty_visible = { check_variable = { pww_ui_tab = 0 } NOT = { has_global_flag = pww_ui_mkt_ready } }
@@ -342,42 +758,52 @@ scripted_gui = {
 			pww_ui_dl0_terms_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l0_on = 1 } }
 			pww_ui_dl0_st_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l0_on = 1 } }
 			pww_ui_dl0_l2_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l0_on = 1 } }
+			pww_ui_dl0_end_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l0_on = 1 } OR = { check_variable = { pww_ui_l0_st = 1 } check_variable = { pww_ui_l0_st = 2 } } }
 			pww_ui_dl1_cp_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l1_on = 1 } }
 			pww_ui_dl1_terms_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l1_on = 1 } }
 			pww_ui_dl1_st_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l1_on = 1 } }
 			pww_ui_dl1_l2_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l1_on = 1 } }
+			pww_ui_dl1_end_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l1_on = 1 } OR = { check_variable = { pww_ui_l1_st = 1 } check_variable = { pww_ui_l1_st = 2 } } }
 			pww_ui_dl2_cp_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l2_on = 1 } }
 			pww_ui_dl2_terms_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l2_on = 1 } }
 			pww_ui_dl2_st_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l2_on = 1 } }
 			pww_ui_dl2_l2_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l2_on = 1 } }
+			pww_ui_dl2_end_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l2_on = 1 } OR = { check_variable = { pww_ui_l2_st = 1 } check_variable = { pww_ui_l2_st = 2 } } }
 			pww_ui_dl3_cp_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l3_on = 1 } }
 			pww_ui_dl3_terms_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l3_on = 1 } }
 			pww_ui_dl3_st_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l3_on = 1 } }
 			pww_ui_dl3_l2_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l3_on = 1 } }
+			pww_ui_dl3_end_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l3_on = 1 } OR = { check_variable = { pww_ui_l3_st = 1 } check_variable = { pww_ui_l3_st = 2 } } }
 			pww_ui_dl4_cp_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l4_on = 1 } }
 			pww_ui_dl4_terms_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l4_on = 1 } }
 			pww_ui_dl4_st_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l4_on = 1 } }
 			pww_ui_dl4_l2_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l4_on = 1 } }
+			pww_ui_dl4_end_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l4_on = 1 } OR = { check_variable = { pww_ui_l4_st = 1 } check_variable = { pww_ui_l4_st = 2 } } }
 			pww_ui_dl5_cp_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l5_on = 1 } }
 			pww_ui_dl5_terms_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l5_on = 1 } }
 			pww_ui_dl5_st_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l5_on = 1 } }
 			pww_ui_dl5_l2_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l5_on = 1 } }
+			pww_ui_dl5_end_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l5_on = 1 } OR = { check_variable = { pww_ui_l5_st = 1 } check_variable = { pww_ui_l5_st = 2 } } }
 			pww_ui_dl6_cp_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l6_on = 1 } }
 			pww_ui_dl6_terms_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l6_on = 1 } }
 			pww_ui_dl6_st_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l6_on = 1 } }
 			pww_ui_dl6_l2_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l6_on = 1 } }
+			pww_ui_dl6_end_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l6_on = 1 } OR = { check_variable = { pww_ui_l6_st = 1 } check_variable = { pww_ui_l6_st = 2 } } }
 			pww_ui_dl7_cp_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l7_on = 1 } }
 			pww_ui_dl7_terms_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l7_on = 1 } }
 			pww_ui_dl7_st_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l7_on = 1 } }
 			pww_ui_dl7_l2_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l7_on = 1 } }
+			pww_ui_dl7_end_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l7_on = 1 } OR = { check_variable = { pww_ui_l7_st = 1 } check_variable = { pww_ui_l7_st = 2 } } }
 			pww_ui_dl8_cp_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l8_on = 1 } }
 			pww_ui_dl8_terms_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l8_on = 1 } }
 			pww_ui_dl8_st_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l8_on = 1 } }
 			pww_ui_dl8_l2_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l8_on = 1 } }
+			pww_ui_dl8_end_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l8_on = 1 } OR = { check_variable = { pww_ui_l8_st = 1 } check_variable = { pww_ui_l8_st = 2 } } }
 			pww_ui_dl9_cp_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l9_on = 1 } }
 			pww_ui_dl9_terms_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l9_on = 1 } }
 			pww_ui_dl9_st_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l9_on = 1 } }
 			pww_ui_dl9_l2_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l9_on = 1 } }
+			pww_ui_dl9_end_visible = { check_variable = { pww_ui_tab = 1 } check_variable = { pww_ui_l9_on = 1 } OR = { check_variable = { pww_ui_l9_st = 1 } check_variable = { pww_ui_l9_st = 2 } } }
 			pww_ui_desk_rsv_hdr_visible = { check_variable = { pww_ui_tab = 2 } }
 			pww_ui_desk_rsv_empty_visible = { check_variable = { pww_ui_tab = 2 } check_variable = { pww_ui_nr = 0 } }
 			pww_ui_dr0_icon_visible = { check_variable = { pww_ui_tab = 2 } check_variable = { pww_ui_nr > 0 } }
@@ -431,6 +857,10 @@ scripted_gui = {
 			pww_ui_dc0_icon = { frame = ROOT.pww_ui_c0_frame y = ROOT.pww_uy_dc0_icon }
 			pww_ui_dc1_icon = { frame = ROOT.pww_ui_c1_frame y = ROOT.pww_uy_dc1_icon }
 			pww_ui_dc2_icon = { frame = ROOT.pww_ui_c2_frame y = ROOT.pww_uy_dc2_icon }
+			pww_ui_do0_icon = { frame = ROOT.pww_ui_o0_frame y = ROOT.pww_uy_do0_icon }
+			pww_ui_do1_icon = { frame = ROOT.pww_ui_o1_frame y = ROOT.pww_uy_do1_icon }
+			pww_ui_do2_icon = { frame = ROOT.pww_ui_o2_frame y = ROOT.pww_uy_do2_icon }
+			pww_ui_do3_icon = { frame = ROOT.pww_ui_o3_frame y = ROOT.pww_uy_do3_icon }
 			pww_ui_dr0_icon = { frame = ROOT.pww_ui_r0_frame }
 			pww_ui_dr0_fill = { x = ROOT.pww_ui_r0_fx }
 			pww_ui_dr1_icon = { frame = ROOT.pww_ui_r1_frame }
@@ -460,6 +890,22 @@ scripted_gui = {
 			pww_ui_ds3_l1 = { y = ROOT.pww_uy_ds3_l1 }
 			pww_ui_ds3_date = { y = ROOT.pww_uy_ds3_date }
 			pww_ui_ds3_l2 = { y = ROOT.pww_uy_ds3_l2 }
+			pww_ui_desk_div_news = { y = ROOT.pww_uy_desk_div_news }
+			pww_ui_desk_news_hdr = { y = ROOT.pww_uy_desk_news_hdr }
+			pww_ui_dn0 = { y = ROOT.pww_uy_dn0 }
+			pww_ui_dn1 = { y = ROOT.pww_uy_dn1 }
+			pww_ui_dn2 = { y = ROOT.pww_uy_dn2 }
+			pww_ui_dn3 = { y = ROOT.pww_uy_dn3 }
+			pww_ui_desk_div_opp = { y = ROOT.pww_uy_desk_div_opp }
+			pww_ui_desk_opp_hdr = { y = ROOT.pww_uy_desk_opp_hdr }
+			pww_ui_do0_l1 = { y = ROOT.pww_uy_do0_l1 }
+			pww_ui_do0_l2 = { y = ROOT.pww_uy_do0_l2 }
+			pww_ui_do1_l1 = { y = ROOT.pww_uy_do1_l1 }
+			pww_ui_do1_l2 = { y = ROOT.pww_uy_do1_l2 }
+			pww_ui_do2_l1 = { y = ROOT.pww_uy_do2_l1 }
+			pww_ui_do2_l2 = { y = ROOT.pww_uy_do2_l2 }
+			pww_ui_do3_l1 = { y = ROOT.pww_uy_do3_l1 }
+			pww_ui_do3_l2 = { y = ROOT.pww_uy_do3_l2 }
 			pww_ui_desk_div_cart = { y = ROOT.pww_uy_desk_div_cart }
 			pww_ui_desk_cart_hdr = { y = ROOT.pww_uy_desk_cart_hdr }
 			pww_ui_dc0_l1 = { y = ROOT.pww_uy_dc0_l1 }
@@ -508,6 +954,7 @@ scripted_gui = {
 				}
 				else = {
 					set_country_flag = pww_ui_desk_open
+					set_variable = { pww_ui_news_ack = global.num_days }
 					pww_ui_refresh = yes
 				}
 				add_to_variable = { pww_ui_dirty = 1 }
@@ -519,7 +966,7 @@ scripted_gui = {
 		context_type = player_context
 		window_name = "pww_ui_alerts"
 		parent_window_token = top_bar
-		visible = { check_variable = { pww_ui_ns > 0 } }
+		visible = { OR = { check_variable = { pww_ui_ns > 0 } check_variable = { pww_ui_nfresh > 0 } } }
 		dirty = pww_ui_dirty
 		effects = {
 			pww_ui_al0_btn_click = {
@@ -550,6 +997,20 @@ scripted_gui = {
 				set_variable = { pww_ui_tab = 0 }
 				pww_ui_refresh = yes
 			}
+			pww_ui_na0_btn_click = {
+				clr_country_flag = pww_ui_desk_open
+				set_country_flag = pww_ui_desk_float
+				set_variable = { pww_ui_tab = 0 }
+				set_variable = { pww_ui_news_ack = global.num_days }
+				pww_ui_refresh = yes
+			}
+			pww_ui_na1_btn_click = {
+				clr_country_flag = pww_ui_desk_open
+				set_country_flag = pww_ui_desk_float
+				set_variable = { pww_ui_tab = 0 }
+				set_variable = { pww_ui_news_ack = global.num_days }
+				pww_ui_refresh = yes
+			}
 		}
 		triggers = {
 			pww_ui_al0_btn_visible = { check_variable = { pww_ui_ns > 0 } }
@@ -564,6 +1025,16 @@ scripted_gui = {
 			pww_ui_al3_btn_visible = { check_variable = { pww_ui_ns > 3 } }
 			pww_ui_al3_txt_visible = { check_variable = { pww_ui_ns > 3 } }
 			pww_ui_al3_date_visible = { check_variable = { pww_ui_ns > 3 } }
+			pww_ui_na0_btn_visible = { check_variable = { pww_ui_nfresh > 0 } }
+			pww_ui_na0_txt_visible = { check_variable = { pww_ui_nfresh > 0 } }
+			pww_ui_na1_btn_visible = { check_variable = { pww_ui_nfresh > 1 } }
+			pww_ui_na1_txt_visible = { check_variable = { pww_ui_nfresh > 1 } }
+		}
+		properties = {
+			pww_ui_na0_btn = { y = ROOT.pww_uy_na0 }
+			pww_ui_na0_txt = { y = ROOT.pww_uy_na0_t }
+			pww_ui_na1_btn = { y = ROOT.pww_uy_na1 }
+			pww_ui_na1_txt = { y = ROOT.pww_uy_na1_t }
 		}
 		ai_enabled = { always = no }
 	}
@@ -574,6 +1045,13 @@ scripted_gui = {
 		visible = { NOT = { tag = ROOT } ROOT = { is_ai = no } ROOT = { has_country_flag = pww_ui_dos_open } }
 		dirty = pww_ui_dirty
 		effects = {
+			pww_ui_dos_close_click = {
+				ROOT = {
+					clr_country_flag = pww_ui_dos_open
+					add_to_variable = { pww_ui_dirty = 1 }
+				}
+				add_to_variable = { pww_ui_dirty = 1 }
+			}
 			pww_ui_dos_k0_poach_click = {
 				set_temp_variable = { pww_ui_pk = pww_ui_k0_id }
 				set_temp_variable = { pww_ui_pt = THIS }
@@ -610,19 +1088,24 @@ scripted_gui = {
 		}
 		triggers = {
 			pww_ui_dos_nag0_visible = { check_variable = { pww_ui_nk = 0 } }
-			pww_ui_dos_count_visible = { check_variable = { pww_ui_nk_all > 1 } }
+			pww_ui_dos_kmore_visible = { check_variable = { pww_ui_nk_more > 0 } }
 			pww_ui_dos_k0_visible = { check_variable = { pww_ui_nk > 0 } }
-			pww_ui_dos_k0_lock_visible = { check_variable = { pww_ui_nk > 0 } check_variable = { pww_ui_k0_kind = 0 } }
 			pww_ui_dos_k0_st_visible = { check_variable = { pww_ui_nk > 0 } NOT = { AND = { check_variable = { pww_ui_nk > 0 } check_variable = { pww_ui_k0_side = 1 } check_variable = { pww_ui_k0_kind = 0 } check_variable = { pww_ui_k0_st = 1 } check_variable = { pww_ui_k0_com = 0 } NOT = { check_variable = { pww_ui_k0_cp = ROOT } } OR = { AND = { check_variable = { pww_ui_k0_res = 1 } ROOT = { pww_core_produces_aluminium = yes } } AND = { check_variable = { pww_ui_k0_res = 2 } ROOT = { pww_core_produces_rubber = yes } } AND = { check_variable = { pww_ui_k0_res = 3 } ROOT = { pww_core_produces_tungsten = yes } } AND = { check_variable = { pww_ui_k0_res = 4 } ROOT = { pww_core_produces_steel = yes } } AND = { check_variable = { pww_ui_k0_res = 5 } ROOT = { pww_core_produces_chromium = yes } } AND = { check_variable = { pww_ui_k0_res = 6 } ROOT = { pww_core_produces_coal = yes } } } } } }
 			pww_ui_dos_k0_poach_visible = { check_variable = { pww_ui_nk > 0 } check_variable = { pww_ui_k0_side = 1 } check_variable = { pww_ui_k0_kind = 0 } check_variable = { pww_ui_k0_st = 1 } check_variable = { pww_ui_k0_com = 0 } NOT = { check_variable = { pww_ui_k0_cp = ROOT } } OR = { AND = { check_variable = { pww_ui_k0_res = 1 } ROOT = { pww_core_produces_aluminium = yes } } AND = { check_variable = { pww_ui_k0_res = 2 } ROOT = { pww_core_produces_rubber = yes } } AND = { check_variable = { pww_ui_k0_res = 3 } ROOT = { pww_core_produces_tungsten = yes } } AND = { check_variable = { pww_ui_k0_res = 4 } ROOT = { pww_core_produces_steel = yes } } AND = { check_variable = { pww_ui_k0_res = 5 } ROOT = { pww_core_produces_chromium = yes } } AND = { check_variable = { pww_ui_k0_res = 6 } ROOT = { pww_core_produces_coal = yes } } } }
 			pww_ui_dos_k1_visible = { check_variable = { pww_ui_nk > 1 } }
-			pww_ui_dos_k1_lock_visible = { check_variable = { pww_ui_nk > 1 } check_variable = { pww_ui_k1_kind = 0 } }
 			pww_ui_dos_k1_st_visible = { check_variable = { pww_ui_nk > 1 } NOT = { AND = { check_variable = { pww_ui_nk > 1 } check_variable = { pww_ui_k1_side = 1 } check_variable = { pww_ui_k1_kind = 0 } check_variable = { pww_ui_k1_st = 1 } check_variable = { pww_ui_k1_com = 0 } NOT = { check_variable = { pww_ui_k1_cp = ROOT } } OR = { AND = { check_variable = { pww_ui_k1_res = 1 } ROOT = { pww_core_produces_aluminium = yes } } AND = { check_variable = { pww_ui_k1_res = 2 } ROOT = { pww_core_produces_rubber = yes } } AND = { check_variable = { pww_ui_k1_res = 3 } ROOT = { pww_core_produces_tungsten = yes } } AND = { check_variable = { pww_ui_k1_res = 4 } ROOT = { pww_core_produces_steel = yes } } AND = { check_variable = { pww_ui_k1_res = 5 } ROOT = { pww_core_produces_chromium = yes } } AND = { check_variable = { pww_ui_k1_res = 6 } ROOT = { pww_core_produces_coal = yes } } } } } }
 			pww_ui_dos_k1_poach_visible = { check_variable = { pww_ui_nk > 1 } check_variable = { pww_ui_k1_side = 1 } check_variable = { pww_ui_k1_kind = 0 } check_variable = { pww_ui_k1_st = 1 } check_variable = { pww_ui_k1_com = 0 } NOT = { check_variable = { pww_ui_k1_cp = ROOT } } OR = { AND = { check_variable = { pww_ui_k1_res = 1 } ROOT = { pww_core_produces_aluminium = yes } } AND = { check_variable = { pww_ui_k1_res = 2 } ROOT = { pww_core_produces_rubber = yes } } AND = { check_variable = { pww_ui_k1_res = 3 } ROOT = { pww_core_produces_tungsten = yes } } AND = { check_variable = { pww_ui_k1_res = 4 } ROOT = { pww_core_produces_steel = yes } } AND = { check_variable = { pww_ui_k1_res = 5 } ROOT = { pww_core_produces_chromium = yes } } AND = { check_variable = { pww_ui_k1_res = 6 } ROOT = { pww_core_produces_coal = yes } } } }
 			pww_ui_dos_k2_visible = { check_variable = { pww_ui_nk > 2 } }
-			pww_ui_dos_k2_lock_visible = { check_variable = { pww_ui_nk > 2 } check_variable = { pww_ui_k2_kind = 0 } }
 			pww_ui_dos_k2_st_visible = { check_variable = { pww_ui_nk > 2 } NOT = { AND = { check_variable = { pww_ui_nk > 2 } check_variable = { pww_ui_k2_side = 1 } check_variable = { pww_ui_k2_kind = 0 } check_variable = { pww_ui_k2_st = 1 } check_variable = { pww_ui_k2_com = 0 } NOT = { check_variable = { pww_ui_k2_cp = ROOT } } OR = { AND = { check_variable = { pww_ui_k2_res = 1 } ROOT = { pww_core_produces_aluminium = yes } } AND = { check_variable = { pww_ui_k2_res = 2 } ROOT = { pww_core_produces_rubber = yes } } AND = { check_variable = { pww_ui_k2_res = 3 } ROOT = { pww_core_produces_tungsten = yes } } AND = { check_variable = { pww_ui_k2_res = 4 } ROOT = { pww_core_produces_steel = yes } } AND = { check_variable = { pww_ui_k2_res = 5 } ROOT = { pww_core_produces_chromium = yes } } AND = { check_variable = { pww_ui_k2_res = 6 } ROOT = { pww_core_produces_coal = yes } } } } } }
 			pww_ui_dos_k2_poach_visible = { check_variable = { pww_ui_nk > 2 } check_variable = { pww_ui_k2_side = 1 } check_variable = { pww_ui_k2_kind = 0 } check_variable = { pww_ui_k2_st = 1 } check_variable = { pww_ui_k2_com = 0 } NOT = { check_variable = { pww_ui_k2_cp = ROOT } } OR = { AND = { check_variable = { pww_ui_k2_res = 1 } ROOT = { pww_core_produces_aluminium = yes } } AND = { check_variable = { pww_ui_k2_res = 2 } ROOT = { pww_core_produces_rubber = yes } } AND = { check_variable = { pww_ui_k2_res = 3 } ROOT = { pww_core_produces_tungsten = yes } } AND = { check_variable = { pww_ui_k2_res = 4 } ROOT = { pww_core_produces_steel = yes } } AND = { check_variable = { pww_ui_k2_res = 5 } ROOT = { pww_core_produces_chromium = yes } } AND = { check_variable = { pww_ui_k2_res = 6 } ROOT = { pww_core_produces_coal = yes } } } }
+			pww_ui_dos_bg_1_0_visible = { check_variable = { pww_ui_dos_rows = 1 } NOT = { check_variable = { pww_ui_rd_viewer = ROOT } } NOT = { check_variable = { pww_ui_pr_viewer = ROOT } } NOT = { check_variable = { pww_ui_st_viewer = ROOT } } }
+			pww_ui_dos_bg_1_1_visible = { check_variable = { pww_ui_dos_rows = 1 } OR = { check_variable = { pww_ui_rd_viewer = ROOT } check_variable = { pww_ui_pr_viewer = ROOT } check_variable = { pww_ui_st_viewer = ROOT } } }
+			pww_ui_dos_bg_2_0_visible = { check_variable = { pww_ui_dos_rows = 2 } NOT = { check_variable = { pww_ui_rd_viewer = ROOT } } NOT = { check_variable = { pww_ui_pr_viewer = ROOT } } NOT = { check_variable = { pww_ui_st_viewer = ROOT } } }
+			pww_ui_dos_bg_2_1_visible = { check_variable = { pww_ui_dos_rows = 2 } OR = { check_variable = { pww_ui_rd_viewer = ROOT } check_variable = { pww_ui_pr_viewer = ROOT } check_variable = { pww_ui_st_viewer = ROOT } } }
+			pww_ui_dos_bg_3_0_visible = { check_variable = { pww_ui_dos_rows = 3 } NOT = { check_variable = { pww_ui_rd_viewer = ROOT } } NOT = { check_variable = { pww_ui_pr_viewer = ROOT } } NOT = { check_variable = { pww_ui_st_viewer = ROOT } } }
+			pww_ui_dos_bg_3_1_visible = { check_variable = { pww_ui_dos_rows = 3 } OR = { check_variable = { pww_ui_rd_viewer = ROOT } check_variable = { pww_ui_pr_viewer = ROOT } check_variable = { pww_ui_st_viewer = ROOT } } }
+			pww_ui_dos_bg_4_0_visible = { check_variable = { pww_ui_dos_rows = 4 } NOT = { check_variable = { pww_ui_rd_viewer = ROOT } } NOT = { check_variable = { pww_ui_pr_viewer = ROOT } } NOT = { check_variable = { pww_ui_st_viewer = ROOT } } }
+			pww_ui_dos_bg_4_1_visible = { check_variable = { pww_ui_dos_rows = 4 } OR = { check_variable = { pww_ui_rd_viewer = ROOT } check_variable = { pww_ui_pr_viewer = ROOT } check_variable = { pww_ui_st_viewer = ROOT } } }
 			pww_ui_dos_rd_head_visible = { check_variable = { pww_ui_rd_viewer = ROOT } }
 			pww_ui_dos_rd_for_visible = { check_variable = { pww_ui_rd_viewer = ROOT } }
 			pww_ui_dos_rd_hold_visible = { check_variable = { pww_ui_rd_viewer = ROOT } }
@@ -632,6 +1115,7 @@ scripted_gui = {
 			pww_ui_dos_quiet_visible = { NOT = { check_variable = { pww_ui_rd_viewer = ROOT } } NOT = { check_variable = { pww_ui_pr_viewer = ROOT } } NOT = { check_variable = { pww_ui_st_viewer = ROOT } } }
 		}
 		properties = {
+			pww_ui_dos_kmore = { y = pww_uy_dos_kmore }
 			pww_ui_dos_div = { y = pww_uy_dos_div }
 			pww_ui_dos_rd_head = { y = pww_uy_dos_rd_head }
 			pww_ui_dos_rd_for = { y = pww_uy_dos_rd_for }
@@ -651,14 +1135,20 @@ scripted_gui = {
 		dirty = pww_ui_dirty
 		effects = {
 			pww_ui_dos_toggle_click = {
+				if = {
+					limit = { ROOT = { has_country_flag = pww_ui_dos_open } }
 				ROOT = {
-					if = {
-						limit = { has_country_flag = pww_ui_dos_open }
-						clr_country_flag = pww_ui_dos_open
-					}
-					else = {
+					clr_country_flag = pww_ui_dos_open
+					add_to_variable = { pww_ui_dirty = 1 }
+				}
+				add_to_variable = { pww_ui_dirty = 1 }
+				}
+				else = {
+					pww_ui_country_summary = yes
+					ROOT = {
 						set_country_flag = pww_ui_dos_open
 						pww_ui_refresh = yes
+						add_to_variable = { pww_ui_dirty = 1 }
 					}
 					add_to_variable = { pww_ui_dirty = 1 }
 				}

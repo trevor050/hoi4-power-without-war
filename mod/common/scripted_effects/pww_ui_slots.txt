@@ -377,6 +377,7 @@ pww_ui_store_cart_slot = {
 		set_variable = { pww_ui_c0_over = pww_ui_t_over }
 		set_variable = { pww_ui_c0_sb = pww_ui_t_sb }
 		set_variable = { pww_ui_c0_conf = pww_ui_t_conf }
+		set_variable = { pww_ui_c0_short = pww_ui_t_short }
 		set_variable = { pww_ui_c0_m0 = pww_ui_t_m0 }
 		set_variable = { pww_ui_c0_m1 = pww_ui_t_m1 }
 		set_variable = { pww_ui_c0_m2 = pww_ui_t_m2 }
@@ -403,6 +404,7 @@ pww_ui_store_cart_slot = {
 		set_variable = { pww_ui_c1_over = pww_ui_t_over }
 		set_variable = { pww_ui_c1_sb = pww_ui_t_sb }
 		set_variable = { pww_ui_c1_conf = pww_ui_t_conf }
+		set_variable = { pww_ui_c1_short = pww_ui_t_short }
 		set_variable = { pww_ui_c1_m0 = pww_ui_t_m0 }
 		set_variable = { pww_ui_c1_m1 = pww_ui_t_m1 }
 		set_variable = { pww_ui_c1_m2 = pww_ui_t_m2 }
@@ -429,6 +431,7 @@ pww_ui_store_cart_slot = {
 		set_variable = { pww_ui_c2_over = pww_ui_t_over }
 		set_variable = { pww_ui_c2_sb = pww_ui_t_sb }
 		set_variable = { pww_ui_c2_conf = pww_ui_t_conf }
+		set_variable = { pww_ui_c2_short = pww_ui_t_short }
 		set_variable = { pww_ui_c2_m0 = pww_ui_t_m0 }
 		set_variable = { pww_ui_c2_m1 = pww_ui_t_m1 }
 		set_variable = { pww_ui_c2_m2 = pww_ui_t_m2 }
@@ -436,6 +439,388 @@ pww_ui_store_cart_slot = {
 		set_variable = { pww_ui_c2_m4 = pww_ui_t_m4 }
 		set_variable = { pww_ui_c2_m5 = pww_ui_t_m5 }
 	}
+}
+
+# Viewer scope. In temps pww_ui_t_* (pww_ui_load_ag) plus pww_ui_t_nk, _date,
+# _day. Shifts the news slots down one and writes slot 0 (newest first).
+pww_ui_news_insert = {
+	set_variable = { pww_ui_n3_nk = pww_ui_n2_nk }
+	set_variable = { pww_ui_n3_res = pww_ui_n2_res }
+	set_variable = { pww_ui_n3_amt = pww_ui_n2_amt }
+	set_variable = { pww_ui_n3_cp = pww_ui_n2_cp }
+	set_variable = { pww_ui_n3_side = pww_ui_n2_side }
+	set_variable = { pww_ui_n3_civ = pww_ui_n2_civ }
+	set_variable = { pww_ui_n3_pay = pww_ui_n2_pay }
+	set_variable = { pww_ui_n3_wepay = pww_ui_n2_wepay }
+	set_variable = { pww_ui_n3_kind = pww_ui_n2_kind }
+	set_variable = { pww_ui_n3_state = pww_ui_n2_state }
+	set_variable = { pww_ui_n3_end = pww_ui_n2_end }
+	set_variable = { pww_ui_n3_com = pww_ui_n2_com }
+	set_variable = { pww_ui_n3_date = pww_ui_n2_date }
+	set_variable = { pww_ui_n3_day = pww_ui_n2_day }
+	set_variable = { pww_ui_n2_nk = pww_ui_n1_nk }
+	set_variable = { pww_ui_n2_res = pww_ui_n1_res }
+	set_variable = { pww_ui_n2_amt = pww_ui_n1_amt }
+	set_variable = { pww_ui_n2_cp = pww_ui_n1_cp }
+	set_variable = { pww_ui_n2_side = pww_ui_n1_side }
+	set_variable = { pww_ui_n2_civ = pww_ui_n1_civ }
+	set_variable = { pww_ui_n2_pay = pww_ui_n1_pay }
+	set_variable = { pww_ui_n2_wepay = pww_ui_n1_wepay }
+	set_variable = { pww_ui_n2_kind = pww_ui_n1_kind }
+	set_variable = { pww_ui_n2_state = pww_ui_n1_state }
+	set_variable = { pww_ui_n2_end = pww_ui_n1_end }
+	set_variable = { pww_ui_n2_com = pww_ui_n1_com }
+	set_variable = { pww_ui_n2_date = pww_ui_n1_date }
+	set_variable = { pww_ui_n2_day = pww_ui_n1_day }
+	set_variable = { pww_ui_n1_nk = pww_ui_n0_nk }
+	set_variable = { pww_ui_n1_res = pww_ui_n0_res }
+	set_variable = { pww_ui_n1_amt = pww_ui_n0_amt }
+	set_variable = { pww_ui_n1_cp = pww_ui_n0_cp }
+	set_variable = { pww_ui_n1_side = pww_ui_n0_side }
+	set_variable = { pww_ui_n1_civ = pww_ui_n0_civ }
+	set_variable = { pww_ui_n1_pay = pww_ui_n0_pay }
+	set_variable = { pww_ui_n1_wepay = pww_ui_n0_wepay }
+	set_variable = { pww_ui_n1_kind = pww_ui_n0_kind }
+	set_variable = { pww_ui_n1_state = pww_ui_n0_state }
+	set_variable = { pww_ui_n1_end = pww_ui_n0_end }
+	set_variable = { pww_ui_n1_com = pww_ui_n0_com }
+	set_variable = { pww_ui_n1_date = pww_ui_n0_date }
+	set_variable = { pww_ui_n1_day = pww_ui_n0_day }
+	set_variable = { pww_ui_n0_nk = pww_ui_t_nk }
+	set_variable = { pww_ui_n0_res = pww_ui_t_res }
+	set_variable = { pww_ui_n0_amt = pww_ui_t_amt }
+	set_variable = { pww_ui_n0_cp = pww_ui_t_cp }
+	set_variable = { pww_ui_n0_side = pww_ui_t_side }
+	set_variable = { pww_ui_n0_civ = pww_ui_t_civ }
+	set_variable = { pww_ui_n0_pay = pww_ui_t_pay }
+	set_variable = { pww_ui_n0_wepay = pww_ui_t_wepay }
+	set_variable = { pww_ui_n0_kind = pww_ui_t_kind }
+	set_variable = { pww_ui_n0_state = pww_ui_t_state }
+	set_variable = { pww_ui_n0_end = pww_ui_t_end }
+	set_variable = { pww_ui_n0_com = pww_ui_t_com }
+	set_variable = { pww_ui_n0_date = pww_ui_t_date }
+	set_variable = { pww_ui_n0_day = pww_ui_t_day }
+	add_to_variable = { pww_ui_nn = 1 }
+	clamp_variable = { var = pww_ui_nn min = 0 max = 4 }
+}
+
+# Viewer scope. pww_ui_nfresh = news rows newer than the last look at the desk
+# (pww_ui_news_ack) and at most ten days old (newest first, so a prefix);
+# pww_uy_na<r> places the alert rows under the situation rows.
+pww_ui_news_fresh = {
+	set_variable = { pww_ui_nfresh = 0 }
+	set_temp_variable = { pww_ui_old = global.num_days }
+	subtract_from_temp_variable = { pww_ui_old = 10 }
+	if = {
+		limit = { check_variable = { pww_ui_nn > 0 } check_variable = { pww_ui_n0_day > pww_ui_news_ack } check_variable = { pww_ui_n0_day > pww_ui_old } }
+		add_to_variable = { pww_ui_nfresh = 1 }
+	}
+	if = {
+		limit = { check_variable = { pww_ui_nn > 1 } check_variable = { pww_ui_nfresh = 1 } check_variable = { pww_ui_n1_day > pww_ui_news_ack } check_variable = { pww_ui_n1_day > pww_ui_old } }
+		add_to_variable = { pww_ui_nfresh = 1 }
+	}
+	set_variable = { pww_uy_na0 = pww_ui_ns }
+	add_to_variable = { pww_uy_na0 = 0 }
+	multiply_variable = { pww_uy_na0 = 26 }
+	set_variable = { pww_uy_na0_t = pww_uy_na0 }
+	add_to_variable = { pww_uy_na0_t = 4 }
+	set_variable = { pww_uy_na1 = pww_ui_ns }
+	add_to_variable = { pww_uy_na1 = 1 }
+	multiply_variable = { pww_uy_na1 = 26 }
+	set_variable = { pww_uy_na1_t = pww_uy_na1 }
+	add_to_variable = { pww_uy_na1_t = 4 }
+}
+
+pww_ui_store_opp_slot = {
+	if = {
+		limit = { check_variable = { pww_ui_no = 0 } }
+		set_variable = { pww_ui_o0_res = pww_ui_t_res }
+		set_variable = { pww_ui_o0_kind = pww_ui_t_kind }
+		set_variable = { pww_ui_o0_amt = pww_ui_t_amt }
+		set_variable = { pww_ui_o0_c1 = pww_ui_t_c1 }
+		set_variable = { pww_ui_o0_a1 = pww_ui_t_a1 }
+		set_variable = { pww_ui_o0_c2 = pww_ui_t_c2 }
+		set_variable = { pww_ui_o0_a2 = pww_ui_t_a2 }
+		set_variable = { pww_ui_o0_n = pww_ui_t_n }
+		set_variable = { pww_ui_o0_frame = pww_ui_t_res }
+		add_to_variable = { pww_ui_o0_frame = 1 }
+	}
+	else_if = {
+		limit = { check_variable = { pww_ui_no = 1 } }
+		set_variable = { pww_ui_o1_res = pww_ui_t_res }
+		set_variable = { pww_ui_o1_kind = pww_ui_t_kind }
+		set_variable = { pww_ui_o1_amt = pww_ui_t_amt }
+		set_variable = { pww_ui_o1_c1 = pww_ui_t_c1 }
+		set_variable = { pww_ui_o1_a1 = pww_ui_t_a1 }
+		set_variable = { pww_ui_o1_c2 = pww_ui_t_c2 }
+		set_variable = { pww_ui_o1_a2 = pww_ui_t_a2 }
+		set_variable = { pww_ui_o1_n = pww_ui_t_n }
+		set_variable = { pww_ui_o1_frame = pww_ui_t_res }
+		add_to_variable = { pww_ui_o1_frame = 1 }
+	}
+	else_if = {
+		limit = { check_variable = { pww_ui_no = 2 } }
+		set_variable = { pww_ui_o2_res = pww_ui_t_res }
+		set_variable = { pww_ui_o2_kind = pww_ui_t_kind }
+		set_variable = { pww_ui_o2_amt = pww_ui_t_amt }
+		set_variable = { pww_ui_o2_c1 = pww_ui_t_c1 }
+		set_variable = { pww_ui_o2_a1 = pww_ui_t_a1 }
+		set_variable = { pww_ui_o2_c2 = pww_ui_t_c2 }
+		set_variable = { pww_ui_o2_a2 = pww_ui_t_a2 }
+		set_variable = { pww_ui_o2_n = pww_ui_t_n }
+		set_variable = { pww_ui_o2_frame = pww_ui_t_res }
+		add_to_variable = { pww_ui_o2_frame = 1 }
+	}
+	else_if = {
+		limit = { check_variable = { pww_ui_no = 3 } }
+		set_variable = { pww_ui_o3_res = pww_ui_t_res }
+		set_variable = { pww_ui_o3_kind = pww_ui_t_kind }
+		set_variable = { pww_ui_o3_amt = pww_ui_t_amt }
+		set_variable = { pww_ui_o3_c1 = pww_ui_t_c1 }
+		set_variable = { pww_ui_o3_a1 = pww_ui_t_a1 }
+		set_variable = { pww_ui_o3_c2 = pww_ui_t_c2 }
+		set_variable = { pww_ui_o3_a2 = pww_ui_t_a2 }
+		set_variable = { pww_ui_o3_n = pww_ui_t_n }
+		set_variable = { pww_ui_o3_frame = pww_ui_t_res }
+		add_to_variable = { pww_ui_o3_frame = 1 }
+	}
+}
+
+# Viewer scope. Opportunities slots pww_ui_o<k>_* (see the loc header); count pww_ui_no.
+pww_ui_load_opps = {
+	set_variable = { pww_ui_no = 0 }
+	if = {
+		limit = { check_variable = { pww_ui_no < 4 } check_variable = { resource@oil < -0.5 } }
+		set_temp_variable = { pww_ui_t_res = 0 }
+		set_temp_variable = { pww_ui_t_kind = 0 }
+		set_temp_variable = { pww_ui_t_amt = resource@oil }
+		multiply_temp_variable = { pww_ui_t_amt = -1 }
+		pww_ui_opp_clear = yes
+		every_country = {
+			limit = { exists = yes NOT = { tag = PREV } NOT = { has_war_with = PREV } check_variable = { resource@oil > 0.999 } }
+			set_temp_variable = { pww_ui_t_v = resource@oil }
+			pww_ui_opp_insert = yes
+		}
+		pww_ui_store_opp_slot = yes
+		add_to_variable = { pww_ui_no = 1 }
+	}
+	if = {
+		limit = { check_variable = { pww_ui_no < 4 } check_variable = { resource@aluminium < -0.5 } }
+		set_temp_variable = { pww_ui_t_res = 1 }
+		set_temp_variable = { pww_ui_t_kind = 0 }
+		set_temp_variable = { pww_ui_t_amt = resource@aluminium }
+		multiply_temp_variable = { pww_ui_t_amt = -1 }
+		pww_ui_opp_clear = yes
+		every_country = {
+			limit = { exists = yes NOT = { tag = PREV } NOT = { has_war_with = PREV } check_variable = { resource@aluminium > 0.999 } }
+			set_temp_variable = { pww_ui_t_v = resource@aluminium }
+			pww_ui_opp_insert = yes
+		}
+		pww_ui_store_opp_slot = yes
+		add_to_variable = { pww_ui_no = 1 }
+	}
+	if = {
+		limit = { check_variable = { pww_ui_no < 4 } check_variable = { resource@rubber < -0.5 } }
+		set_temp_variable = { pww_ui_t_res = 2 }
+		set_temp_variable = { pww_ui_t_kind = 0 }
+		set_temp_variable = { pww_ui_t_amt = resource@rubber }
+		multiply_temp_variable = { pww_ui_t_amt = -1 }
+		pww_ui_opp_clear = yes
+		every_country = {
+			limit = { exists = yes NOT = { tag = PREV } NOT = { has_war_with = PREV } check_variable = { resource@rubber > 0.999 } }
+			set_temp_variable = { pww_ui_t_v = resource@rubber }
+			pww_ui_opp_insert = yes
+		}
+		pww_ui_store_opp_slot = yes
+		add_to_variable = { pww_ui_no = 1 }
+	}
+	if = {
+		limit = { check_variable = { pww_ui_no < 4 } check_variable = { resource@tungsten < -0.5 } }
+		set_temp_variable = { pww_ui_t_res = 3 }
+		set_temp_variable = { pww_ui_t_kind = 0 }
+		set_temp_variable = { pww_ui_t_amt = resource@tungsten }
+		multiply_temp_variable = { pww_ui_t_amt = -1 }
+		pww_ui_opp_clear = yes
+		every_country = {
+			limit = { exists = yes NOT = { tag = PREV } NOT = { has_war_with = PREV } check_variable = { resource@tungsten > 0.999 } }
+			set_temp_variable = { pww_ui_t_v = resource@tungsten }
+			pww_ui_opp_insert = yes
+		}
+		pww_ui_store_opp_slot = yes
+		add_to_variable = { pww_ui_no = 1 }
+	}
+	if = {
+		limit = { check_variable = { pww_ui_no < 4 } check_variable = { resource@steel < -0.5 } }
+		set_temp_variable = { pww_ui_t_res = 4 }
+		set_temp_variable = { pww_ui_t_kind = 0 }
+		set_temp_variable = { pww_ui_t_amt = resource@steel }
+		multiply_temp_variable = { pww_ui_t_amt = -1 }
+		pww_ui_opp_clear = yes
+		every_country = {
+			limit = { exists = yes NOT = { tag = PREV } NOT = { has_war_with = PREV } check_variable = { resource@steel > 0.999 } }
+			set_temp_variable = { pww_ui_t_v = resource@steel }
+			pww_ui_opp_insert = yes
+		}
+		pww_ui_store_opp_slot = yes
+		add_to_variable = { pww_ui_no = 1 }
+	}
+	if = {
+		limit = { check_variable = { pww_ui_no < 4 } check_variable = { resource@chromium < -0.5 } }
+		set_temp_variable = { pww_ui_t_res = 5 }
+		set_temp_variable = { pww_ui_t_kind = 0 }
+		set_temp_variable = { pww_ui_t_amt = resource@chromium }
+		multiply_temp_variable = { pww_ui_t_amt = -1 }
+		pww_ui_opp_clear = yes
+		every_country = {
+			limit = { exists = yes NOT = { tag = PREV } NOT = { has_war_with = PREV } check_variable = { resource@chromium > 0.999 } }
+			set_temp_variable = { pww_ui_t_v = resource@chromium }
+			pww_ui_opp_insert = yes
+		}
+		pww_ui_store_opp_slot = yes
+		add_to_variable = { pww_ui_no = 1 }
+	}
+	if = {
+		limit = { check_variable = { pww_ui_no < 4 } check_variable = { resource@coal < -0.5 } }
+		set_temp_variable = { pww_ui_t_res = 6 }
+		set_temp_variable = { pww_ui_t_kind = 0 }
+		set_temp_variable = { pww_ui_t_amt = resource@coal }
+		multiply_temp_variable = { pww_ui_t_amt = -1 }
+		pww_ui_opp_clear = yes
+		every_country = {
+			limit = { exists = yes NOT = { tag = PREV } NOT = { has_war_with = PREV } check_variable = { resource@coal > 0.999 } }
+			set_temp_variable = { pww_ui_t_v = resource@coal }
+			pww_ui_opp_insert = yes
+		}
+		pww_ui_store_opp_slot = yes
+		add_to_variable = { pww_ui_no = 1 }
+	}
+	if = {
+		limit = { check_variable = { pww_ui_no < 4 } check_variable = { resource@aluminium > 4.999 } }
+		set_temp_variable = { pww_ui_t_res = 1 }
+		set_temp_variable = { pww_ui_t_kind = 1 }
+		set_temp_variable = { pww_ui_t_amt = resource@aluminium }
+		pww_ui_opp_clear = yes
+		every_country = {
+			limit = { exists = yes NOT = { tag = PREV } NOT = { has_war_with = PREV } }
+			set_temp_variable = { pww_ui_t_v = resource_imported@aluminium }
+			if = { limit = { check_variable = { resource@aluminium < 0 } } subtract_from_temp_variable = { pww_ui_t_v = resource@aluminium } }
+			if = { limit = { check_variable = { pww_ui_t_v > 0.999 } } pww_ui_opp_insert = yes }
+		}
+		pww_ui_store_opp_slot = yes
+		add_to_variable = { pww_ui_no = 1 }
+	}
+	if = {
+		limit = { check_variable = { pww_ui_no < 4 } check_variable = { resource@rubber > 4.999 } }
+		set_temp_variable = { pww_ui_t_res = 2 }
+		set_temp_variable = { pww_ui_t_kind = 1 }
+		set_temp_variable = { pww_ui_t_amt = resource@rubber }
+		pww_ui_opp_clear = yes
+		every_country = {
+			limit = { exists = yes NOT = { tag = PREV } NOT = { has_war_with = PREV } }
+			set_temp_variable = { pww_ui_t_v = resource_imported@rubber }
+			if = { limit = { check_variable = { resource@rubber < 0 } } subtract_from_temp_variable = { pww_ui_t_v = resource@rubber } }
+			if = { limit = { check_variable = { pww_ui_t_v > 0.999 } } pww_ui_opp_insert = yes }
+		}
+		pww_ui_store_opp_slot = yes
+		add_to_variable = { pww_ui_no = 1 }
+	}
+	if = {
+		limit = { check_variable = { pww_ui_no < 4 } check_variable = { resource@tungsten > 4.999 } }
+		set_temp_variable = { pww_ui_t_res = 3 }
+		set_temp_variable = { pww_ui_t_kind = 1 }
+		set_temp_variable = { pww_ui_t_amt = resource@tungsten }
+		pww_ui_opp_clear = yes
+		every_country = {
+			limit = { exists = yes NOT = { tag = PREV } NOT = { has_war_with = PREV } }
+			set_temp_variable = { pww_ui_t_v = resource_imported@tungsten }
+			if = { limit = { check_variable = { resource@tungsten < 0 } } subtract_from_temp_variable = { pww_ui_t_v = resource@tungsten } }
+			if = { limit = { check_variable = { pww_ui_t_v > 0.999 } } pww_ui_opp_insert = yes }
+		}
+		pww_ui_store_opp_slot = yes
+		add_to_variable = { pww_ui_no = 1 }
+	}
+	if = {
+		limit = { check_variable = { pww_ui_no < 4 } check_variable = { resource@steel > 4.999 } }
+		set_temp_variable = { pww_ui_t_res = 4 }
+		set_temp_variable = { pww_ui_t_kind = 1 }
+		set_temp_variable = { pww_ui_t_amt = resource@steel }
+		pww_ui_opp_clear = yes
+		every_country = {
+			limit = { exists = yes NOT = { tag = PREV } NOT = { has_war_with = PREV } }
+			set_temp_variable = { pww_ui_t_v = resource_imported@steel }
+			if = { limit = { check_variable = { resource@steel < 0 } } subtract_from_temp_variable = { pww_ui_t_v = resource@steel } }
+			if = { limit = { check_variable = { pww_ui_t_v > 0.999 } } pww_ui_opp_insert = yes }
+		}
+		pww_ui_store_opp_slot = yes
+		add_to_variable = { pww_ui_no = 1 }
+	}
+	if = {
+		limit = { check_variable = { pww_ui_no < 4 } check_variable = { resource@chromium > 4.999 } }
+		set_temp_variable = { pww_ui_t_res = 5 }
+		set_temp_variable = { pww_ui_t_kind = 1 }
+		set_temp_variable = { pww_ui_t_amt = resource@chromium }
+		pww_ui_opp_clear = yes
+		every_country = {
+			limit = { exists = yes NOT = { tag = PREV } NOT = { has_war_with = PREV } }
+			set_temp_variable = { pww_ui_t_v = resource_imported@chromium }
+			if = { limit = { check_variable = { resource@chromium < 0 } } subtract_from_temp_variable = { pww_ui_t_v = resource@chromium } }
+			if = { limit = { check_variable = { pww_ui_t_v > 0.999 } } pww_ui_opp_insert = yes }
+		}
+		pww_ui_store_opp_slot = yes
+		add_to_variable = { pww_ui_no = 1 }
+	}
+	if = {
+		limit = { check_variable = { pww_ui_no < 4 } check_variable = { resource@coal > 4.999 } }
+		set_temp_variable = { pww_ui_t_res = 6 }
+		set_temp_variable = { pww_ui_t_kind = 1 }
+		set_temp_variable = { pww_ui_t_amt = resource@coal }
+		pww_ui_opp_clear = yes
+		every_country = {
+			limit = { exists = yes NOT = { tag = PREV } NOT = { has_war_with = PREV } }
+			set_temp_variable = { pww_ui_t_v = resource_imported@coal }
+			if = { limit = { check_variable = { resource@coal < 0 } } subtract_from_temp_variable = { pww_ui_t_v = resource@coal } }
+			if = { limit = { check_variable = { pww_ui_t_v > 0.999 } } pww_ui_opp_insert = yes }
+		}
+		pww_ui_store_opp_slot = yes
+		add_to_variable = { pww_ui_no = 1 }
+	}
+}
+
+pww_ui_opp_clear = {
+	set_temp_variable = { pww_ui_t_n = 0 }
+	set_temp_variable = { pww_ui_t_a1 = 0 }
+	set_temp_variable = { pww_ui_t_a2 = 0 }
+	set_temp_variable = { pww_ui_t_c1 = 0 }
+	set_temp_variable = { pww_ui_t_c2 = 0 }
+}
+
+# Country scope (a candidate). In temp pww_ui_t_v; keeps the top two in
+# pww_ui_t_c1/_a1 and _c2/_a2, count in pww_ui_t_n (max 2).
+pww_ui_opp_insert = {
+	if = {
+		limit = { check_variable = { pww_ui_t_v > pww_ui_t_a1 } }
+		set_temp_variable = { pww_ui_t_c2 = pww_ui_t_c1 }
+		set_temp_variable = { pww_ui_t_a2 = pww_ui_t_a1 }
+		set_temp_variable = { pww_ui_t_c1 = THIS }
+		set_temp_variable = { pww_ui_t_a1 = pww_ui_t_v }
+	}
+	else_if = {
+		limit = { check_variable = { pww_ui_t_v > pww_ui_t_a2 } }
+		set_temp_variable = { pww_ui_t_c2 = THIS }
+		set_temp_variable = { pww_ui_t_a2 = pww_ui_t_v }
+	}
+	if = { limit = { check_variable = { pww_ui_t_n < 2 } } add_to_temp_variable = { pww_ui_t_n = 1 } }
+}
+
+# Country scope. In temp pww_ui_t_res (1..6). Out pww_ui_t_prod (1 = we produce it).
+pww_ui_produces = {
+	set_temp_variable = { pww_ui_t_prod = 0 }
+	if = { limit = { check_variable = { pww_ui_t_res = 1 } pww_core_produces_aluminium = yes } set_temp_variable = { pww_ui_t_prod = 1 } }
+	if = { limit = { check_variable = { pww_ui_t_res = 2 } pww_core_produces_rubber = yes } set_temp_variable = { pww_ui_t_prod = 1 } }
+	if = { limit = { check_variable = { pww_ui_t_res = 3 } pww_core_produces_tungsten = yes } set_temp_variable = { pww_ui_t_prod = 1 } }
+	if = { limit = { check_variable = { pww_ui_t_res = 4 } pww_core_produces_steel = yes } set_temp_variable = { pww_ui_t_prod = 1 } }
+	if = { limit = { check_variable = { pww_ui_t_res = 5 } pww_core_produces_chromium = yes } set_temp_variable = { pww_ui_t_prod = 1 } }
+	if = { limit = { check_variable = { pww_ui_t_res = 6 } pww_core_produces_coal = yes } set_temp_variable = { pww_ui_t_prod = 1 } }
 }
 
 pww_ui_clear_ag_slots = {
@@ -968,6 +1353,22 @@ pww_ui_layout = {
 		add_to_temp_variable = { pww_ui_yh = 36 }
 		add_to_temp_variable = { pww_ui_yy = pww_ui_yh }
 	}
+	set_temp_variable = { pww_ui_yb_news = pww_ui_yy }
+	if = {
+		limit = { check_variable = { pww_ui_nn > 0 } }
+		set_temp_variable = { pww_ui_yh = pww_ui_nn }
+		multiply_temp_variable = { pww_ui_yh = 18 }
+		add_to_temp_variable = { pww_ui_yh = 36 }
+		add_to_temp_variable = { pww_ui_yy = pww_ui_yh }
+	}
+	set_temp_variable = { pww_ui_yb_opp = pww_ui_yy }
+	if = {
+		limit = { check_variable = { pww_ui_no > 0 } }
+		set_temp_variable = { pww_ui_yh = pww_ui_no }
+		multiply_temp_variable = { pww_ui_yh = 38 }
+		add_to_temp_variable = { pww_ui_yh = 36 }
+		add_to_temp_variable = { pww_ui_yy = pww_ui_yh }
+	}
 	set_temp_variable = { pww_ui_yb_cart = pww_ui_yy }
 	if = {
 		limit = { check_variable = { pww_ui_nc > 0 } }
@@ -1014,6 +1415,44 @@ pww_ui_layout = {
 	add_to_variable = { pww_uy_ds3_date = 139 }
 	set_variable = { pww_uy_ds3_l2 = pww_ui_yb_sit }
 	add_to_variable = { pww_uy_ds3_l2 = 157 }
+	set_variable = { pww_uy_desk_div_news = pww_ui_yb_news }
+	add_to_variable = { pww_uy_desk_div_news = -10 }
+	set_variable = { pww_uy_desk_news_hdr = pww_ui_yb_news }
+	set_variable = { pww_uy_dn0 = pww_ui_yb_news }
+	add_to_variable = { pww_uy_dn0 = 24 }
+	set_variable = { pww_uy_dn1 = pww_ui_yb_news }
+	add_to_variable = { pww_uy_dn1 = 42 }
+	set_variable = { pww_uy_dn2 = pww_ui_yb_news }
+	add_to_variable = { pww_uy_dn2 = 60 }
+	set_variable = { pww_uy_dn3 = pww_ui_yb_news }
+	add_to_variable = { pww_uy_dn3 = 78 }
+	set_variable = { pww_uy_desk_div_opp = pww_ui_yb_opp }
+	add_to_variable = { pww_uy_desk_div_opp = -10 }
+	set_variable = { pww_uy_desk_opp_hdr = pww_ui_yb_opp }
+	set_variable = { pww_uy_do0_icon = pww_ui_yb_opp }
+	add_to_variable = { pww_uy_do0_icon = 24 }
+	set_variable = { pww_uy_do0_l1 = pww_ui_yb_opp }
+	add_to_variable = { pww_uy_do0_l1 = 25 }
+	set_variable = { pww_uy_do0_l2 = pww_ui_yb_opp }
+	add_to_variable = { pww_uy_do0_l2 = 43 }
+	set_variable = { pww_uy_do1_icon = pww_ui_yb_opp }
+	add_to_variable = { pww_uy_do1_icon = 62 }
+	set_variable = { pww_uy_do1_l1 = pww_ui_yb_opp }
+	add_to_variable = { pww_uy_do1_l1 = 63 }
+	set_variable = { pww_uy_do1_l2 = pww_ui_yb_opp }
+	add_to_variable = { pww_uy_do1_l2 = 81 }
+	set_variable = { pww_uy_do2_icon = pww_ui_yb_opp }
+	add_to_variable = { pww_uy_do2_icon = 100 }
+	set_variable = { pww_uy_do2_l1 = pww_ui_yb_opp }
+	add_to_variable = { pww_uy_do2_l1 = 101 }
+	set_variable = { pww_uy_do2_l2 = pww_ui_yb_opp }
+	add_to_variable = { pww_uy_do2_l2 = 119 }
+	set_variable = { pww_uy_do3_icon = pww_ui_yb_opp }
+	add_to_variable = { pww_uy_do3_icon = 138 }
+	set_variable = { pww_uy_do3_l1 = pww_ui_yb_opp }
+	add_to_variable = { pww_uy_do3_l1 = 139 }
+	set_variable = { pww_uy_do3_l2 = pww_ui_yb_opp }
+	add_to_variable = { pww_uy_do3_l2 = 157 }
 	set_variable = { pww_uy_desk_div_cart = pww_ui_yb_cart }
 	add_to_variable = { pww_uy_desk_div_cart = -10 }
 	set_variable = { pww_uy_desk_cart_hdr = pww_ui_yb_cart }
@@ -1077,15 +1516,66 @@ pww_ui_layout = {
 	set_variable = { pww_uy_dm_coal = pww_ui_yb_mkt }
 	add_to_variable = { pww_uy_dm_coal = 134 }
 	set_variable = { pww_uy_desk_rsv_foot = pww_ui_yb_rsv }
+	# desk height for the open tab (pww_ui_desk_h, one of the background steps)
+	if = {
+		limit = { check_variable = { pww_ui_tab = 1 } }
+		set_temp_variable = { pww_ui_rows = 0 }
+		if = { limit = { check_variable = { pww_ui_l0_on = 1 } } add_to_temp_variable = { pww_ui_rows = 1 } }
+		if = { limit = { check_variable = { pww_ui_l1_on = 1 } } add_to_temp_variable = { pww_ui_rows = 1 } }
+		if = { limit = { check_variable = { pww_ui_l2_on = 1 } } add_to_temp_variable = { pww_ui_rows = 1 } }
+		if = { limit = { check_variable = { pww_ui_l3_on = 1 } } add_to_temp_variable = { pww_ui_rows = 1 } }
+		if = { limit = { check_variable = { pww_ui_l4_on = 1 } } add_to_temp_variable = { pww_ui_rows = 1 } }
+		if = { limit = { check_variable = { pww_ui_l5_on = 1 } } add_to_temp_variable = { pww_ui_rows = 1 } }
+		if = { limit = { check_variable = { pww_ui_l6_on = 1 } } add_to_temp_variable = { pww_ui_rows = 1 } }
+		if = { limit = { check_variable = { pww_ui_l7_on = 1 } } add_to_temp_variable = { pww_ui_rows = 1 } }
+		if = { limit = { check_variable = { pww_ui_l8_on = 1 } } add_to_temp_variable = { pww_ui_rows = 1 } }
+		if = { limit = { check_variable = { pww_ui_l9_on = 1 } } add_to_temp_variable = { pww_ui_rows = 1 } }
+		set_temp_variable = { pww_ui_need = pww_ui_rows }
+		multiply_temp_variable = { pww_ui_need = 38 }
+		add_to_temp_variable = { pww_ui_need = 126 }
+		if = { limit = { check_variable = { pww_ui_rows = 0 } } set_temp_variable = { pww_ui_need = 166 } }
+	}
+	else_if = {
+		limit = { check_variable = { pww_ui_tab = 2 } }
+		set_temp_variable = { pww_ui_need = pww_ui_yb_rsv }
+		add_to_temp_variable = { pww_ui_need = 52 }
+	}
+	else = {
+		set_temp_variable = { pww_ui_need = pww_ui_yb_mkt }
+		add_to_temp_variable = { pww_ui_need = 168 }
+		if = { limit = { NOT = { has_global_flag = pww_ui_mkt_ready } } set_temp_variable = { pww_ui_need = pww_ui_yb_mkt } add_to_temp_variable = { pww_ui_need = 80 } }
+	}
+	set_variable = { pww_ui_desk_h = 880 }
+	if = { limit = { NOT = { check_variable = { pww_ui_need > 840 } } } set_variable = { pww_ui_desk_h = 840 } }
+	if = { limit = { NOT = { check_variable = { pww_ui_need > 800 } } } set_variable = { pww_ui_desk_h = 800 } }
+	if = { limit = { NOT = { check_variable = { pww_ui_need > 760 } } } set_variable = { pww_ui_desk_h = 760 } }
+	if = { limit = { NOT = { check_variable = { pww_ui_need > 720 } } } set_variable = { pww_ui_desk_h = 720 } }
+	if = { limit = { NOT = { check_variable = { pww_ui_need > 680 } } } set_variable = { pww_ui_desk_h = 680 } }
+	if = { limit = { NOT = { check_variable = { pww_ui_need > 640 } } } set_variable = { pww_ui_desk_h = 640 } }
+	if = { limit = { NOT = { check_variable = { pww_ui_need > 600 } } } set_variable = { pww_ui_desk_h = 600 } }
+	if = { limit = { NOT = { check_variable = { pww_ui_need > 560 } } } set_variable = { pww_ui_desk_h = 560 } }
+	if = { limit = { NOT = { check_variable = { pww_ui_need > 520 } } } set_variable = { pww_ui_desk_h = 520 } }
+	if = { limit = { NOT = { check_variable = { pww_ui_need > 480 } } } set_variable = { pww_ui_desk_h = 480 } }
+	if = { limit = { NOT = { check_variable = { pww_ui_need > 440 } } } set_variable = { pww_ui_desk_h = 440 } }
+	if = { limit = { NOT = { check_variable = { pww_ui_need > 400 } } } set_variable = { pww_ui_desk_h = 400 } }
+	if = { limit = { NOT = { check_variable = { pww_ui_need > 360 } } } set_variable = { pww_ui_desk_h = 360 } }
+	if = { limit = { NOT = { check_variable = { pww_ui_need > 320 } } } set_variable = { pww_ui_desk_h = 320 } }
+	if = { limit = { NOT = { check_variable = { pww_ui_need > 280 } } } set_variable = { pww_ui_desk_h = 280 } }
+	if = { limit = { NOT = { check_variable = { pww_ui_need > 240 } } } set_variable = { pww_ui_desk_h = 240 } }
 }
 
 # Country scope (a dossier target, viewer independent). The demand block
-# sits under the last agreement row (one row when there are none).
+# sits under the last agreement row (one row when there are none, plus the
+# '...and N more' row). pww_ui_dos_rows picks the background height.
 pww_ui_dossier_layout = {
-	set_temp_variable = { pww_ui_yd = pww_ui_nk }
-	if = { limit = { check_variable = { pww_ui_yd < 1 } } set_temp_variable = { pww_ui_yd = 1 } }
+	set_variable = { pww_ui_dos_rows = pww_ui_nk }
+	if = { limit = { check_variable = { pww_ui_dos_rows < 1 } } set_variable = { pww_ui_dos_rows = 1 } }
+	if = { limit = { check_variable = { pww_ui_nk_more > 0 } } add_to_variable = { pww_ui_dos_rows = 1 } }
+	set_temp_variable = { pww_ui_yd = pww_ui_dos_rows }
 	multiply_temp_variable = { pww_ui_yd = 18 }
-	add_to_temp_variable = { pww_ui_yd = 138 }
+	add_to_temp_variable = { pww_ui_yd = 174 }
+	set_variable = { pww_uy_dos_kmore = pww_ui_yd }
+	add_to_variable = { pww_uy_dos_kmore = -20 }
 	set_variable = { pww_uy_dos_div = pww_ui_yd }
 	set_variable = { pww_uy_dos_rd_head = pww_ui_yd }
 	add_to_variable = { pww_uy_dos_rd_head = 8 }
@@ -1633,6 +2123,153 @@ pww_ui_market_report = {
 			limit = { any_country = { pww_cartel_pricewar_coal = yes } }
 			set_variable = { global.pww_ui_mkt_c3_coal = 3 }
 		}
+	}
+}
+
+# Country scope (a dossier target, viewer independent). Per resource r, daily
+# units: pww_ui_rs_<r>_prod / _imp / _exp / _bal (balance: + unsold, - short),
+# _use (prod + imp - exp - bal), _net (bal + exp - imp: spare before any
+# trade), _short (-bal when short, else 0).
+pww_ui_country_res_lines = {
+	set_variable = { pww_ui_rs_oil_prod = resource_produced@oil }
+	set_variable = { pww_ui_rs_oil_imp = resource_imported@oil }
+	set_variable = { pww_ui_rs_oil_exp = resource_exported@oil }
+	set_variable = { pww_ui_rs_oil_bal = resource@oil }
+	set_variable = { pww_ui_rs_oil_use = pww_ui_rs_oil_prod }
+	add_to_variable = { pww_ui_rs_oil_use = pww_ui_rs_oil_imp }
+	subtract_from_variable = { pww_ui_rs_oil_use = pww_ui_rs_oil_exp }
+	subtract_from_variable = { pww_ui_rs_oil_use = pww_ui_rs_oil_bal }
+	set_variable = { pww_ui_rs_oil_net = pww_ui_rs_oil_bal }
+	add_to_variable = { pww_ui_rs_oil_net = pww_ui_rs_oil_exp }
+	subtract_from_variable = { pww_ui_rs_oil_net = pww_ui_rs_oil_imp }
+	set_variable = { pww_ui_rs_oil_short = 0 }
+	if = { limit = { check_variable = { pww_ui_rs_oil_bal < 0 } } subtract_from_variable = { pww_ui_rs_oil_short = pww_ui_rs_oil_bal } }
+	# what an importer holds over is what it bought, not output it could sell:
+	# unsold counts only output beyond its own use (bal capped at net)
+	if = {
+		limit = { check_variable = { pww_ui_rs_oil_bal > pww_ui_rs_oil_net } }
+		set_variable = { pww_ui_rs_oil_bal = pww_ui_rs_oil_net }
+		if = { limit = { check_variable = { pww_ui_rs_oil_bal < 0 } } set_variable = { pww_ui_rs_oil_bal = 0 } }
+	}
+	set_variable = { pww_ui_rs_aluminium_prod = resource_produced@aluminium }
+	set_variable = { pww_ui_rs_aluminium_imp = resource_imported@aluminium }
+	set_variable = { pww_ui_rs_aluminium_exp = resource_exported@aluminium }
+	set_variable = { pww_ui_rs_aluminium_bal = resource@aluminium }
+	set_variable = { pww_ui_rs_aluminium_use = pww_ui_rs_aluminium_prod }
+	add_to_variable = { pww_ui_rs_aluminium_use = pww_ui_rs_aluminium_imp }
+	subtract_from_variable = { pww_ui_rs_aluminium_use = pww_ui_rs_aluminium_exp }
+	subtract_from_variable = { pww_ui_rs_aluminium_use = pww_ui_rs_aluminium_bal }
+	set_variable = { pww_ui_rs_aluminium_net = pww_ui_rs_aluminium_bal }
+	add_to_variable = { pww_ui_rs_aluminium_net = pww_ui_rs_aluminium_exp }
+	subtract_from_variable = { pww_ui_rs_aluminium_net = pww_ui_rs_aluminium_imp }
+	set_variable = { pww_ui_rs_aluminium_short = 0 }
+	if = { limit = { check_variable = { pww_ui_rs_aluminium_bal < 0 } } subtract_from_variable = { pww_ui_rs_aluminium_short = pww_ui_rs_aluminium_bal } }
+	# what an importer holds over is what it bought, not output it could sell:
+	# unsold counts only output beyond its own use (bal capped at net)
+	if = {
+		limit = { check_variable = { pww_ui_rs_aluminium_bal > pww_ui_rs_aluminium_net } }
+		set_variable = { pww_ui_rs_aluminium_bal = pww_ui_rs_aluminium_net }
+		if = { limit = { check_variable = { pww_ui_rs_aluminium_bal < 0 } } set_variable = { pww_ui_rs_aluminium_bal = 0 } }
+	}
+	set_variable = { pww_ui_rs_rubber_prod = resource_produced@rubber }
+	set_variable = { pww_ui_rs_rubber_imp = resource_imported@rubber }
+	set_variable = { pww_ui_rs_rubber_exp = resource_exported@rubber }
+	set_variable = { pww_ui_rs_rubber_bal = resource@rubber }
+	set_variable = { pww_ui_rs_rubber_use = pww_ui_rs_rubber_prod }
+	add_to_variable = { pww_ui_rs_rubber_use = pww_ui_rs_rubber_imp }
+	subtract_from_variable = { pww_ui_rs_rubber_use = pww_ui_rs_rubber_exp }
+	subtract_from_variable = { pww_ui_rs_rubber_use = pww_ui_rs_rubber_bal }
+	set_variable = { pww_ui_rs_rubber_net = pww_ui_rs_rubber_bal }
+	add_to_variable = { pww_ui_rs_rubber_net = pww_ui_rs_rubber_exp }
+	subtract_from_variable = { pww_ui_rs_rubber_net = pww_ui_rs_rubber_imp }
+	set_variable = { pww_ui_rs_rubber_short = 0 }
+	if = { limit = { check_variable = { pww_ui_rs_rubber_bal < 0 } } subtract_from_variable = { pww_ui_rs_rubber_short = pww_ui_rs_rubber_bal } }
+	# what an importer holds over is what it bought, not output it could sell:
+	# unsold counts only output beyond its own use (bal capped at net)
+	if = {
+		limit = { check_variable = { pww_ui_rs_rubber_bal > pww_ui_rs_rubber_net } }
+		set_variable = { pww_ui_rs_rubber_bal = pww_ui_rs_rubber_net }
+		if = { limit = { check_variable = { pww_ui_rs_rubber_bal < 0 } } set_variable = { pww_ui_rs_rubber_bal = 0 } }
+	}
+	set_variable = { pww_ui_rs_tungsten_prod = resource_produced@tungsten }
+	set_variable = { pww_ui_rs_tungsten_imp = resource_imported@tungsten }
+	set_variable = { pww_ui_rs_tungsten_exp = resource_exported@tungsten }
+	set_variable = { pww_ui_rs_tungsten_bal = resource@tungsten }
+	set_variable = { pww_ui_rs_tungsten_use = pww_ui_rs_tungsten_prod }
+	add_to_variable = { pww_ui_rs_tungsten_use = pww_ui_rs_tungsten_imp }
+	subtract_from_variable = { pww_ui_rs_tungsten_use = pww_ui_rs_tungsten_exp }
+	subtract_from_variable = { pww_ui_rs_tungsten_use = pww_ui_rs_tungsten_bal }
+	set_variable = { pww_ui_rs_tungsten_net = pww_ui_rs_tungsten_bal }
+	add_to_variable = { pww_ui_rs_tungsten_net = pww_ui_rs_tungsten_exp }
+	subtract_from_variable = { pww_ui_rs_tungsten_net = pww_ui_rs_tungsten_imp }
+	set_variable = { pww_ui_rs_tungsten_short = 0 }
+	if = { limit = { check_variable = { pww_ui_rs_tungsten_bal < 0 } } subtract_from_variable = { pww_ui_rs_tungsten_short = pww_ui_rs_tungsten_bal } }
+	# what an importer holds over is what it bought, not output it could sell:
+	# unsold counts only output beyond its own use (bal capped at net)
+	if = {
+		limit = { check_variable = { pww_ui_rs_tungsten_bal > pww_ui_rs_tungsten_net } }
+		set_variable = { pww_ui_rs_tungsten_bal = pww_ui_rs_tungsten_net }
+		if = { limit = { check_variable = { pww_ui_rs_tungsten_bal < 0 } } set_variable = { pww_ui_rs_tungsten_bal = 0 } }
+	}
+	set_variable = { pww_ui_rs_steel_prod = resource_produced@steel }
+	set_variable = { pww_ui_rs_steel_imp = resource_imported@steel }
+	set_variable = { pww_ui_rs_steel_exp = resource_exported@steel }
+	set_variable = { pww_ui_rs_steel_bal = resource@steel }
+	set_variable = { pww_ui_rs_steel_use = pww_ui_rs_steel_prod }
+	add_to_variable = { pww_ui_rs_steel_use = pww_ui_rs_steel_imp }
+	subtract_from_variable = { pww_ui_rs_steel_use = pww_ui_rs_steel_exp }
+	subtract_from_variable = { pww_ui_rs_steel_use = pww_ui_rs_steel_bal }
+	set_variable = { pww_ui_rs_steel_net = pww_ui_rs_steel_bal }
+	add_to_variable = { pww_ui_rs_steel_net = pww_ui_rs_steel_exp }
+	subtract_from_variable = { pww_ui_rs_steel_net = pww_ui_rs_steel_imp }
+	set_variable = { pww_ui_rs_steel_short = 0 }
+	if = { limit = { check_variable = { pww_ui_rs_steel_bal < 0 } } subtract_from_variable = { pww_ui_rs_steel_short = pww_ui_rs_steel_bal } }
+	# what an importer holds over is what it bought, not output it could sell:
+	# unsold counts only output beyond its own use (bal capped at net)
+	if = {
+		limit = { check_variable = { pww_ui_rs_steel_bal > pww_ui_rs_steel_net } }
+		set_variable = { pww_ui_rs_steel_bal = pww_ui_rs_steel_net }
+		if = { limit = { check_variable = { pww_ui_rs_steel_bal < 0 } } set_variable = { pww_ui_rs_steel_bal = 0 } }
+	}
+	set_variable = { pww_ui_rs_chromium_prod = resource_produced@chromium }
+	set_variable = { pww_ui_rs_chromium_imp = resource_imported@chromium }
+	set_variable = { pww_ui_rs_chromium_exp = resource_exported@chromium }
+	set_variable = { pww_ui_rs_chromium_bal = resource@chromium }
+	set_variable = { pww_ui_rs_chromium_use = pww_ui_rs_chromium_prod }
+	add_to_variable = { pww_ui_rs_chromium_use = pww_ui_rs_chromium_imp }
+	subtract_from_variable = { pww_ui_rs_chromium_use = pww_ui_rs_chromium_exp }
+	subtract_from_variable = { pww_ui_rs_chromium_use = pww_ui_rs_chromium_bal }
+	set_variable = { pww_ui_rs_chromium_net = pww_ui_rs_chromium_bal }
+	add_to_variable = { pww_ui_rs_chromium_net = pww_ui_rs_chromium_exp }
+	subtract_from_variable = { pww_ui_rs_chromium_net = pww_ui_rs_chromium_imp }
+	set_variable = { pww_ui_rs_chromium_short = 0 }
+	if = { limit = { check_variable = { pww_ui_rs_chromium_bal < 0 } } subtract_from_variable = { pww_ui_rs_chromium_short = pww_ui_rs_chromium_bal } }
+	# what an importer holds over is what it bought, not output it could sell:
+	# unsold counts only output beyond its own use (bal capped at net)
+	if = {
+		limit = { check_variable = { pww_ui_rs_chromium_bal > pww_ui_rs_chromium_net } }
+		set_variable = { pww_ui_rs_chromium_bal = pww_ui_rs_chromium_net }
+		if = { limit = { check_variable = { pww_ui_rs_chromium_bal < 0 } } set_variable = { pww_ui_rs_chromium_bal = 0 } }
+	}
+	set_variable = { pww_ui_rs_coal_prod = resource_produced@coal }
+	set_variable = { pww_ui_rs_coal_imp = resource_imported@coal }
+	set_variable = { pww_ui_rs_coal_exp = resource_exported@coal }
+	set_variable = { pww_ui_rs_coal_bal = resource@coal }
+	set_variable = { pww_ui_rs_coal_use = pww_ui_rs_coal_prod }
+	add_to_variable = { pww_ui_rs_coal_use = pww_ui_rs_coal_imp }
+	subtract_from_variable = { pww_ui_rs_coal_use = pww_ui_rs_coal_exp }
+	subtract_from_variable = { pww_ui_rs_coal_use = pww_ui_rs_coal_bal }
+	set_variable = { pww_ui_rs_coal_net = pww_ui_rs_coal_bal }
+	add_to_variable = { pww_ui_rs_coal_net = pww_ui_rs_coal_exp }
+	subtract_from_variable = { pww_ui_rs_coal_net = pww_ui_rs_coal_imp }
+	set_variable = { pww_ui_rs_coal_short = 0 }
+	if = { limit = { check_variable = { pww_ui_rs_coal_bal < 0 } } subtract_from_variable = { pww_ui_rs_coal_short = pww_ui_rs_coal_bal } }
+	# what an importer holds over is what it bought, not output it could sell:
+	# unsold counts only output beyond its own use (bal capped at net)
+	if = {
+		limit = { check_variable = { pww_ui_rs_coal_bal > pww_ui_rs_coal_net } }
+		set_variable = { pww_ui_rs_coal_bal = pww_ui_rs_coal_net }
+		if = { limit = { check_variable = { pww_ui_rs_coal_bal < 0 } } set_variable = { pww_ui_rs_coal_bal = 0 } }
 	}
 }
 

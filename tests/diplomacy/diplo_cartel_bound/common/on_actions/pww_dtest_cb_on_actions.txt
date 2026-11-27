@@ -1,0 +1,215 @@
+# Diplomacy test: a member of a producers' agreement honours the agreed
+# price and its quota in deals a player proposes (CARTELS in
+# pww_diplo_bundle.txt). Start tag GER (human). GER asks British Malaya, a
+# member of the rubber agreement (IRRA, formed on day 1), for 16 rubber a
+# day. Reserve 2, relations 0, AI cheating off unless a case turns it on.
+# Run: python tools/run_hoi4.py --tag GER --test tests/diplomacy/diplo_cartel_bound
+#   (day 5)
+#   A below    16 rubber for 2 factories (market): refused by the agreement
+#              alone (pww_do_cartfail 1, the rest of the evaluation would
+#              sign), verdict row data: rubber, the agreed price in units
+#              per factory (the most that, times the price, stays within 8)
+#   B under    just under the agreed price (2 factories + political power
+#              worth 0.02 less than 16 x price / 8): refused
+#   C at       just over it (0.02 more): signs (cartfail 0, ok 1)
+#   D above    16 rubber for 3 factories: signs
+#   E quota    Malaya's quota room cut to 5: 16 for 3 factories refused
+#              (cartfail 2, room 5)
+#   F reply    the reply to the refused market draft is line 121
+#   G cheat    Malaya tempted (temptation 50, AI cheating on): the market
+#              draft signs; the cartel's own scan of Malaya's sales then
+#              counts the 16 units as under price and its suspicion rises
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = GER }
+				add_to_variable = { global.pww_dtcb_day = 1 }
+				if = {
+					limit = { check_variable = { global.pww_dtcb_day = 1 } }
+					set_global_flag = pww_cartel_debug
+					set_variable = { global.pww_cartel_c_ai_cheat = 0 }
+					set_variable = { global.pww_cartel_c_ai_poach = 0 }
+					set_variable = { global.pww_cartel_c_ai_form = 0 }
+				}
+				if = {
+					limit = { check_variable = { global.pww_dtcb_day = 5 } }
+					set_temp_variable = { pww_dtcb_cid = global.pww_cart_by_res^2 }
+					MAL = {
+						set_temp_variable = { pww_in_res = 2 }
+						pww_cartel_find_member = yes
+					}
+					set_temp_variable = { pww_dtcb_cm = pww_out_cm }
+					set_temp_variable = { pww_dtcb_cp = global.pww_cart_price^pww_dtcb_cid }
+					log = "PWW_RESULT diplo_cartel_bound.setup INFO IRRA [?pww_dtcb_cid] status [?global.pww_cart_status^pww_dtcb_cid] MAL entry [?pww_dtcb_cm] status [?global.pww_cm_status^pww_dtcb_cm] quota [?global.pww_cm_quota^pww_dtcb_cm|1] sold [?global.pww_cm_sold^pww_dtcb_cm|1] price [?pww_dtcb_cp|2]"
+					# 16 x price / 8 in factory equivalents
+					set_temp_variable = { pww_dtcb_req = pww_dtcb_cp }
+					multiply_temp_variable = { pww_dtcb_req = 2 }
+
+					# --- A: at market --------------------------------------
+					set_temp_variable = { pww_dtcb_case = 1 }
+					set_temp_variable = { pww_dtcb_u = 16 }
+					set_temp_variable = { pww_dtcb_civ = 2 }
+					set_temp_variable = { pww_dtcb_pp = 0 }
+					pww_dtcb_draft = yes
+					pww_dtcb_log = yes
+					# Most units per factory at the agreed price: upf x price <= 8 < (upf + 0.1) x price
+					set_temp_variable = { pww_dtcb_x1 = pww_do_cart_upf }
+					multiply_temp_variable = { pww_dtcb_x1 = pww_dtcb_cp }
+					set_temp_variable = { pww_dtcb_x2 = pww_do_cart_upf }
+					add_to_temp_variable = { pww_dtcb_x2 = 0.1 }
+					multiply_temp_variable = { pww_dtcb_x2 = pww_dtcb_cp }
+					if = {
+						limit = {
+							check_variable = { pww_do_cartfail = 1 }
+							check_variable = { pww_do_e_cartel < -999 }
+							check_variable = { pww_do_ok = 0 }
+							check_variable = { pww_dtcb_rest > 0 }
+							check_variable = { pww_do_cart_res = 2 }
+							check_variable = { pww_dtcb_x1 < 8.001 }
+							check_variable = { pww_dtcb_x2 > 8 }
+						}
+						log = "PWW_RESULT diplo_cartel_bound.A_below PASS Malaya refuses 16 rubber for 2 factories because of the agreement (without it the total would be [?pww_dtcb_rest|0]); no more than [?pww_do_cart_upf|1] per factory"
+					}
+					else = {
+						log = "PWW_RESULT diplo_cartel_bound.A_below FAIL see values case 1"
+					}
+
+					# --- B: just under the agreed price --------------------
+					set_temp_variable = { pww_dtcb_case = 2 }
+					set_temp_variable = { pww_dtcb_pp = pww_dtcb_req }
+					subtract_from_temp_variable = { pww_dtcb_pp = 2.02 }
+					divide_temp_variable = { pww_dtcb_pp = 9 }
+					pww_dtcb_draft = yes
+					pww_dtcb_log = yes
+					if = {
+						limit = {
+							check_variable = { pww_do_cartfail = 1 }
+							check_variable = { pww_do_ok = 0 }
+						}
+						log = "PWW_RESULT diplo_cartel_bound.B_under PASS refused just under the agreed price (we give [?pww_do_mk_m0|3], the price asks [?pww_dtcb_req|3])"
+					}
+					else = {
+						log = "PWW_RESULT diplo_cartel_bound.B_under FAIL see values case 2"
+					}
+
+					# --- C: just over the agreed price ---------------------
+					set_temp_variable = { pww_dtcb_case = 3 }
+					set_temp_variable = { pww_dtcb_pp = pww_dtcb_req }
+					subtract_from_temp_variable = { pww_dtcb_pp = 1.98 }
+					divide_temp_variable = { pww_dtcb_pp = 9 }
+					pww_dtcb_draft = yes
+					pww_dtcb_log = yes
+					if = {
+						limit = {
+							check_variable = { pww_do_cartfail = 0 }
+							check_variable = { pww_do_e_cartel = 0 }
+							check_variable = { pww_do_ok = 1 }
+						}
+						log = "PWW_RESULT diplo_cartel_bound.C_at PASS signs at the agreed price (we give [?pww_do_mk_m0|3], the price asks [?pww_dtcb_req|3])"
+					}
+					else = {
+						log = "PWW_RESULT diplo_cartel_bound.C_at FAIL see values case 3"
+					}
+
+					# --- D: above it ---------------------------------------
+					set_temp_variable = { pww_dtcb_case = 4 }
+					set_temp_variable = { pww_dtcb_civ = 3 }
+					set_temp_variable = { pww_dtcb_pp = 0 }
+					pww_dtcb_draft = yes
+					pww_dtcb_log = yes
+					if = {
+						limit = {
+							check_variable = { pww_do_cartfail = 0 }
+							check_variable = { pww_do_ok = 1 }
+						}
+						log = "PWW_RESULT diplo_cartel_bound.D_above PASS signs 16 rubber for 3 factories"
+					}
+					else = {
+						log = "PWW_RESULT diplo_cartel_bound.D_above FAIL see values case 4"
+					}
+
+					# --- E: quota room 5 -----------------------------------
+					set_temp_variable = { pww_dtcb_case = 5 }
+					set_temp_variable = { pww_dtcb_q0 = global.pww_cm_quota^pww_dtcb_cm }
+					set_temp_variable = { pww_dtcb_q = global.pww_cm_sold^pww_dtcb_cm }
+					add_to_temp_variable = { pww_dtcb_q = 5 }
+					set_variable = { global.pww_cm_quota^pww_dtcb_cm = pww_dtcb_q }
+					pww_dtcb_draft = yes
+					pww_dtcb_log = yes
+					if = {
+						limit = {
+							check_variable = { pww_do_cartfail = 2 }
+							check_variable = { pww_do_cart_room = 5 }
+							check_variable = { pww_do_ok = 0 }
+						}
+						log = "PWW_RESULT diplo_cartel_bound.E_quota PASS refused beyond the quota (room [?pww_do_cart_room|0] a day)"
+					}
+					else = {
+						log = "PWW_RESULT diplo_cartel_bound.E_quota FAIL see values case 5"
+					}
+					set_variable = { global.pww_cm_quota^pww_dtcb_cm = pww_dtcb_q0 }
+
+					# --- F: the reply to the market draft ------------------
+					set_temp_variable = { pww_dtcb_case = 6 }
+					set_temp_variable = { pww_dtcb_civ = 2 }
+					pww_dtcb_draft = yes
+					pww_diplo_talk_reply = yes
+					set_temp_variable = { pww_dtcb_t = pww_do_talk }
+					set_temp_variable = { pww_dtcb_line = global.pww_dt_line^pww_dtcb_t }
+					if = {
+						limit = { check_variable = { pww_dtcb_line = 121 } }
+						log = "PWW_RESULT diplo_cartel_bound.F_reply PASS reply line 121 (bound by the agreement)"
+					}
+					else = {
+						log = "PWW_RESULT diplo_cartel_bound.F_reply FAIL line [?pww_dtcb_line]"
+					}
+					# Fresh talks for the cheat case
+					set_temp_variable = { pww_dtc_t = pww_do_talk }
+					set_temp_variable = { pww_dtc_status = 4 }
+					pww_diplo_talk_close = yes
+
+					# --- G: a tempted member cheats ------------------------
+					set_temp_variable = { pww_dtcb_case = 7 }
+					set_variable = { global.pww_cartel_c_ai_cheat = 1 }
+					set_variable = { global.pww_cm_tempt^pww_dtcb_cm = 50 }
+					set_variable = { global.pww_cm_susp^pww_dtcb_cm = 0 }
+					set_variable = { global.pww_cartel_c_detect_force = 0 }
+					pww_dtcb_draft = yes
+					pww_dtcb_log = yes
+					set_temp_variable = { pww_dtcb_g_ok = pww_do_ok }
+					set_temp_variable = { pww_dtcb_g_cf = pww_do_cartfail }
+					set_temp_variable = { pww_dtcb_g_ag = -1 }
+					if = {
+						limit = { check_variable = { pww_dtcb_g_ok = 1 } }
+						pww_diplo_sign_bundle = yes
+						set_temp_variable = { pww_dtcb_g_ag = pww_dsd_ag }
+					}
+					set_temp_variable = { pww_kt_cm = pww_dtcb_cm }
+					MAL = { pww_cartel_member_tick = yes }
+					set_temp_variable = { pww_dtcb_g_under = global.pww_cm_under^pww_dtcb_cm }
+					set_temp_variable = { pww_dtcb_g_cheat = global.pww_cm_cheat^pww_dtcb_cm }
+					set_temp_variable = { pww_dtcb_g_susp = global.pww_cm_susp^pww_dtcb_cm }
+					log = "PWW_RESULT diplo_cartel_bound.G_values INFO ok=[?pww_dtcb_g_ok] cartfail=[?pww_dtcb_g_cf] agreement=[?pww_dtcb_g_ag] amount=[?global.pww_ag_amount^pww_dtcb_g_ag|0] civ=[?global.pww_ag_civ^pww_dtcb_g_ag|0] under=[?pww_dtcb_g_under|1] cheat=[?pww_dtcb_g_cheat|1] suspicion=[?pww_dtcb_g_susp|0] warnings=[?global.pww_cm_warns^pww_dtcb_cm]"
+					if = {
+						limit = {
+							check_variable = { pww_dtcb_g_ok = 1 }
+							check_variable = { pww_dtcb_g_cf = 0 }
+							check_variable = { pww_dtcb_g_ag > -1 }
+							check_variable = { global.pww_ag_status^pww_dtcb_g_ag = 1 }
+							check_variable = { pww_dtcb_g_under > 15.9 }
+							check_variable = { pww_dtcb_g_cheat > 15.9 }
+							check_variable = { pww_dtcb_g_susp > 0 }
+						}
+						log = "PWW_RESULT diplo_cartel_bound.G_cheat PASS a tempted Malaya signs at market; the cartel counts [?pww_dtcb_g_under|0] units under price, suspicion [?pww_dtcb_g_susp|0]"
+					}
+					else = {
+						log = "PWW_RESULT diplo_cartel_bound.G_cheat FAIL see G_values"
+					}
+					set_variable = { global.pww_cartel_c_ai_cheat = 0 }
+					log = "PWW_DONE diplo_cartel_bound"
+				}
+			}
+		}
+	}
+}

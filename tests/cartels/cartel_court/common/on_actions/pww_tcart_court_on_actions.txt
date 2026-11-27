@@ -1,0 +1,254 @@
+# Cartels test: Court a Producer. Start tag GER (human, outside the rubber
+# agreement). AI cheating, AI poaching and new conferences are off.
+# Run: python tools/run_hoi4.py --tag GER --test tests/cartels/cartel_court
+#   day 2   shown       every rubber member carries the Court offer the
+#                       decision shows (pww_cartel_ct_*_rubber), priced at
+#                       or above the agreed price + 0.15
+#   day 12  zero_idle   an AI major with every civilian factory busy
+#                       building (num_of_available_civilian_factories 0)
+#                       but factories free for projects courts Siam (forced
+#                       to accept): the contract is signed with exactly the
+#                       terms Siam showed (units, factories, fixed, one
+#                       year); the old idle-factory gate would have failed
+#   day 12  decided     GER runs the Court decision's effect on the
+#                       Netherlands East Indies (forced to accept): the shown terms are signed, the Indies
+#                       leave, GER's event variables carry the terms and
+#                       the end date
+#   day 14  refused     GER runs it on British Malaya (forced to refuse):
+#                       Malaya stays, its temptation rises 15, GER's event
+#                       variables carry a refusal reason
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = GER }
+				add_to_variable = { global.pww_tcc_day = 1 }
+				if = {
+					limit = { check_variable = { global.pww_tcc_day = 1 } }
+					set_global_flag = pww_cartel_debug
+					set_variable = { global.pww_cartel_c_ai_cheat = 0 }
+					set_variable = { global.pww_cartel_c_ai_poach = 0 }
+					set_variable = { global.pww_cartel_c_ai_form = 0 }
+				}
+
+				# --- shown: the offer is on every member ------------------
+				if = {
+					limit = { check_variable = { global.pww_tcc_day = 2 } }
+					set_temp_variable = { pww_tcc_cid = global.pww_cart_by_res^2 }
+					set_temp_variable = { pww_tcc_floor = global.pww_cart_price^pww_tcc_cid }
+					add_to_temp_variable = { pww_tcc_floor = 0.149 }
+					set_temp_variable = { pww_tcc_n = 0 }
+					set_temp_variable = { pww_tcc_good = 0 }
+					every_country = {
+						limit = { has_country_flag = pww_cartel_mem_rubber }
+						add_to_temp_variable = { pww_tcc_n = 1 }
+						if = {
+							limit = {
+								has_variable = pww_cartel_ct_amt_rubber
+								check_variable = { pww_cartel_ct_civ_rubber > 0.999 }
+								check_variable = { pww_cartel_ct_amt_rubber > 0.999 }
+							}
+							set_temp_variable = { pww_tcc_pf = pww_cartel_ct_civ_rubber }
+							multiply_temp_variable = { pww_tcc_pf = 8 }
+							divide_temp_variable = { pww_tcc_pf = pww_cartel_ct_amt_rubber }
+							if = {
+								limit = { check_variable = { pww_tcc_pf > pww_tcc_floor } }
+								add_to_temp_variable = { pww_tcc_good = 1 }
+							}
+							log = "PWW_RESULT cartel_court.shown_values INFO [?THIS.GetTag]: [?pww_cartel_ct_amt_rubber|0] rubber for [?pww_cartel_ct_civ_rubber|0] factories ([?pww_cartel_ct_upf_rubber|1] per factory, agreed [?pww_cartel_ct_cupf_rubber|1]), price factor [?pww_tcc_pf|3]"
+						}
+					}
+					if = {
+						limit = {
+							check_variable = { pww_tcc_n > 1 }
+							check_variable = { pww_tcc_good = pww_tcc_n }
+						}
+						log = "PWW_RESULT cartel_court.shown PASS all [?pww_tcc_n] members carry a Court offer at or above the agreed price + 0.15; cohesion mirror [?global.pww_cart_coh_res^2|0], agreed [?global.pww_cart_upf_res^2|1] per factory"
+					}
+					else = {
+						log = "PWW_RESULT cartel_court.shown FAIL [?pww_tcc_good] of [?pww_tcc_n] members carry a valid offer"
+					}
+				}
+
+				if = {
+					limit = { check_variable = { global.pww_tcc_day = 12 } }
+					set_temp_variable = { pww_tcc_cid = global.pww_cart_by_res^2 }
+
+					# --- zero_idle: an AI major building with every factory -
+					set_temp_variable = { pww_tcc_t = -1 }
+					every_country = {
+						limit = {
+							exists = yes
+							is_ai = yes
+							is_major = yes
+							NOT = { has_country_flag = pww_cartel_mem_rubber }
+						}
+						set_temp_variable = { pww_tcc_av = num_of_available_civilian_factories }
+						set_temp_variable = { pww_tcc_fp = num_of_civilian_factories_available_for_projects }
+						log = "PWW_RESULT cartel_court.zero_idle_scan INFO [?THIS.GetTag] idle [?pww_tcc_av|0] free for projects [?pww_tcc_fp|0]"
+						if = {
+							limit = {
+								check_variable = { pww_tcc_t = -1 }
+								check_variable = { pww_tcc_av < 0.5 }
+								check_variable = { pww_tcc_fp > 6.5 }
+							}
+							set_temp_variable = { pww_tcc_t = THIS }
+						}
+					}
+					SIA = {
+						set_temp_variable = { pww_in_res = 2 }
+						pww_cartel_find_member = yes
+					}
+					set_temp_variable = { pww_tcc_scm = pww_out_cm }
+					SIA = {
+						set_variable = { pww_cartel_test_res = 2 }
+						set_variable = { pww_cartel_test_unsold = 40 }
+					}
+					set_variable = { global.pww_cm_unsold^pww_tcc_scm = 40 }
+					set_temp_variable = { pww_kct_cm = pww_tcc_scm }
+					SIA = { pww_cartel_court_terms = yes }
+					SIA = {
+						set_temp_variable = { pww_tcc_samt = pww_cartel_ct_amt_rubber }
+						set_temp_variable = { pww_tcc_sciv = pww_cartel_ct_civ_rubber }
+					}
+					set_variable = { global.pww_cm_tempt^pww_tcc_scm = 300 }
+					if = {
+						limit = { check_variable = { pww_tcc_t > -1 } }
+						var:pww_tcc_t = {
+							set_temp_variable = { pww_tcc_av = num_of_available_civilian_factories }
+							set_temp_variable = { pww_tcc_fp = num_of_civilian_factories_available_for_projects }
+						}
+						set_temp_variable = { pww_in_cm = pww_tcc_scm }
+						set_temp_variable = { pww_in_tempter = pww_tcc_t }
+						set_temp_variable = { pww_in_premium = 0 }
+						pww_cartel_tempt = yes
+						set_temp_variable = { pww_tcc_r = pww_out_result }
+						set_temp_variable = { pww_tcc_ag = pww_ktp_ag }
+						if = {
+							limit = {
+								check_variable = { pww_tcc_r = 1 }
+								check_variable = { pww_tcc_ag > -1 }
+								check_variable = { global.pww_ag_status^pww_tcc_ag = 1 }
+								check_variable = { global.pww_ag_res^pww_tcc_ag = 2 }
+								check_variable = { global.pww_ag_committal^pww_tcc_ag = 1 }
+								check_variable = { global.pww_ag_amount^pww_tcc_ag = pww_tcc_samt }
+								check_variable = { global.pww_ag_civ^pww_tcc_ag = pww_tcc_sciv }
+								check_variable = { global.pww_ag_buyer^pww_tcc_ag = pww_tcc_t }
+								check_variable = { global.pww_cm_status^pww_tcc_scm = 4 }
+							}
+							log = "PWW_RESULT cartel_court.zero_idle PASS [?pww_tcc_t.GetTag] (idle factories [?pww_tcc_av|0], free for projects [?pww_tcc_fp|0]) signs the shown terms with Siam: [?global.pww_ag_amount^pww_tcc_ag|0] rubber for [?global.pww_ag_civ^pww_tcc_ag|0] factories, fixed (agreement [?pww_tcc_ag])"
+						}
+						else = {
+							log = "PWW_RESULT cartel_court.zero_idle FAIL tempter [?pww_tcc_t.GetTag] result [?pww_tcc_r] fail [?pww_out_fail] ag [?pww_tcc_ag] amount [?global.pww_ag_amount^pww_tcc_ag|0] (shown [?pww_tcc_samt|0]) civ [?global.pww_ag_civ^pww_tcc_ag|0] (shown [?pww_tcc_sciv|0]) status [?global.pww_cm_status^pww_tcc_scm]"
+						}
+					}
+					else = {
+						log = "PWW_RESULT cartel_court.zero_idle FAIL no AI major with every civilian factory building and 7+ free for projects (see zero_idle_scan)"
+					}
+
+					# --- decided: GER takes the decision on the Indies --------
+					INS = {
+						set_temp_variable = { pww_in_res = 2 }
+						pww_cartel_find_member = yes
+					}
+					set_variable = { global.pww_tcc_icm = pww_out_cm }
+					set_variable = { global.pww_cm_tempt^pww_out_cm = 300 }
+					set_variable = { global.pww_tcc_had = 0 }
+					INS = {
+						if = {
+							limit = { has_variable = pww_cartel_ct_amt_rubber }
+							set_variable = { global.pww_tcc_had = 1 }
+						}
+						set_variable = { global.pww_tcc_iamt = pww_cartel_ct_amt_rubber }
+						set_variable = { global.pww_tcc_iciv = pww_cartel_ct_civ_rubber }
+					}
+					set_variable = { global.pww_tcc_ag0 = global.pww_next_agreement_id }
+					set_variable = { global.pww_tcc_pp0 = political_power }
+					# The decision's complete effect (activate_targeted_decision
+					# does not run a non-timed targeted decision: verified, no
+					# political power charged, nothing happened).
+					INS = {
+						set_temp_variable = { pww_in_res = 2 }
+						pww_cartel_find_member = yes
+					}
+					set_temp_variable = { pww_in_cm = pww_out_cm }
+					set_temp_variable = { pww_in_tempter = ROOT }
+					set_temp_variable = { pww_in_premium = 0 }
+					pww_cartel_tempt = yes
+				}
+
+				if = {
+					limit = { check_variable = { global.pww_tcc_day = 13 } }
+					set_temp_variable = { pww_tcc_i_cm = global.pww_tcc_icm }
+					# The new agreement: INS sells to GER
+					set_temp_variable = { pww_tcc_iag = -1 }
+					for_each_loop = {
+						array = global.pww_ag_buyer
+						value = pww_tcc_b
+						index = pww_tcc_i
+						if = {
+							limit = {
+								NOT = { check_variable = { pww_tcc_i < global.pww_tcc_ag0 } }
+								check_variable = { pww_tcc_b = ROOT }
+								check_variable = { global.pww_ag_res^pww_tcc_i = 2 }
+							}
+							set_temp_variable = { pww_tcc_iag = pww_tcc_i }
+						}
+					}
+					log = "PWW_RESULT cartel_court.decided_values INFO stored before=[?global.pww_tcc_had] shown [?global.pww_tcc_iamt|0] for [?global.pww_tcc_iciv|0]; agreement [?pww_tcc_iag] amount [?global.pww_ag_amount^pww_tcc_iag|0] civ [?global.pww_ag_civ^pww_tcc_iag|0] committal [?global.pww_ag_committal^pww_tcc_iag] INS status [?global.pww_cm_status^pww_tcc_i_cm]; event vars amt [?pww_cartel_ev_amt|0] civ [?pww_cartel_ev_civ|0] until [?pww_cartel_ev_until.GetDateStringNoHourLong]; political power [?global.pww_tcc_pp0|0] -> [?political_power|0]"
+					if = {
+						limit = {
+							check_variable = { global.pww_tcc_had = 1 }
+							check_variable = { pww_tcc_iag > -1 }
+							check_variable = { global.pww_ag_amount^pww_tcc_iag = global.pww_tcc_iamt }
+							check_variable = { global.pww_ag_civ^pww_tcc_iag = global.pww_tcc_iciv }
+							check_variable = { global.pww_ag_committal^pww_tcc_iag = 1 }
+							check_variable = { global.pww_cm_status^pww_tcc_i_cm = 4 }
+							check_variable = { pww_cartel_ev_amt = global.pww_tcc_iamt }
+							check_variable = { pww_cartel_ev_civ = global.pww_tcc_iciv }
+							check_variable = { pww_cartel_ev_until > global.date }
+						}
+						log = "PWW_RESULT cartel_court.decided PASS the decision signs the shown terms with the Indies ([?global.pww_tcc_iamt|0] rubber for [?global.pww_tcc_iciv|0] factories, fixed until [?pww_cartel_ev_until.GetDateStringNoHourLong])"
+					}
+					else = {
+						log = "PWW_RESULT cartel_court.decided FAIL see decided_values"
+					}
+				}
+
+				# --- refused: GER takes the decision on Malaya ----------------
+				if = {
+					limit = { check_variable = { global.pww_tcc_day = 14 } }
+					MAL = {
+						set_temp_variable = { pww_in_res = 2 }
+						pww_cartel_find_member = yes
+					}
+					set_variable = { global.pww_tcc_mcm = pww_out_cm }
+					set_variable = { global.pww_cm_tempt^pww_out_cm = -300 }
+					set_variable = { pww_cartel_ev_why = 0 }
+					set_temp_variable = { pww_in_cm = global.pww_tcc_mcm }
+					set_temp_variable = { pww_in_tempter = ROOT }
+					set_temp_variable = { pww_in_premium = 0 }
+					pww_cartel_tempt = yes
+				}
+				if = {
+					limit = { check_variable = { global.pww_tcc_day = 15 } }
+					set_temp_variable = { pww_tcc_m_cm = global.pww_tcc_mcm }
+					if = {
+						limit = {
+							check_variable = { global.pww_cm_status^pww_tcc_m_cm = 1 }
+							check_variable = { global.pww_cm_tempt^pww_tcc_m_cm > -286 }
+							check_variable = { global.pww_cm_tempt^pww_tcc_m_cm < -100 }
+							check_variable = { pww_cartel_ev_why > 0 }
+							MAL = { has_country_flag = pww_cartel_mem_rubber }
+						}
+						log = "PWW_RESULT cartel_court.refused PASS Malaya refuses and stays (temptation [?global.pww_cm_tempt^pww_tcc_m_cm|0], reason [?pww_cartel_ev_why])"
+					}
+					else = {
+						log = "PWW_RESULT cartel_court.refused FAIL status [?global.pww_cm_status^pww_tcc_m_cm] temptation [?global.pww_cm_tempt^pww_tcc_m_cm|0] reason [?pww_cartel_ev_why]"
+					}
+					log = "PWW_DONE cartel_court"
+				}
+			}
+		}
+	}
+}

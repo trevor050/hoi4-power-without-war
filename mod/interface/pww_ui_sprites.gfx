@@ -25,4 +25,179 @@ spriteTypes = {
 		borderSize = { x = 0 y = 0 }
 		tilingCenter = no
 	}
+	corneredTileSpriteType = {
+		name = "GFX_pww_ui_dos_bg_1_0"
+		size = { x = 514 y = 232 }
+		textureFile = "gfx//interface//tiles//tiled_window_1b_border.dds"
+		borderSize = { x = 64 y = 64 }
+		tilingCenter = yes
+	}
+	corneredTileSpriteType = {
+		name = "GFX_pww_ui_dos_bg_1_1"
+		size = { x = 514 y = 286 }
+		textureFile = "gfx//interface//tiles//tiled_window_1b_border.dds"
+		borderSize = { x = 64 y = 64 }
+		tilingCenter = yes
+	}
+	corneredTileSpriteType = {
+		name = "GFX_pww_ui_dos_bg_2_0"
+		size = { x = 514 y = 250 }
+		textureFile = "gfx//interface//tiles//tiled_window_1b_border.dds"
+		borderSize = { x = 64 y = 64 }
+		tilingCenter = yes
+	}
+	corneredTileSpriteType = {
+		name = "GFX_pww_ui_dos_bg_2_1"
+		size = { x = 514 y = 304 }
+		textureFile = "gfx//interface//tiles//tiled_window_1b_border.dds"
+		borderSize = { x = 64 y = 64 }
+		tilingCenter = yes
+	}
+	corneredTileSpriteType = {
+		name = "GFX_pww_ui_dos_bg_3_0"
+		size = { x = 514 y = 268 }
+		textureFile = "gfx//interface//tiles//tiled_window_1b_border.dds"
+		borderSize = { x = 64 y = 64 }
+		tilingCenter = yes
+	}
+	corneredTileSpriteType = {
+		name = "GFX_pww_ui_dos_bg_3_1"
+		size = { x = 514 y = 322 }
+		textureFile = "gfx//interface//tiles//tiled_window_1b_border.dds"
+		borderSize = { x = 64 y = 64 }
+		tilingCenter = yes
+	}
+	corneredTileSpriteType = {
+		name = "GFX_pww_ui_dos_bg_4_0"
+		size = { x = 514 y = 286 }
+		textureFile = "gfx//interface//tiles//tiled_window_1b_border.dds"
+		borderSize = { x = 64 y = 64 }
+		tilingCenter = yes
+	}
+	corneredTileSpriteType = {
+		name = "GFX_pww_ui_dos_bg_4_1"
+		size = { x = 514 y = 340 }
+		textureFile = "gfx//interface//tiles//tiled_window_1b_border.dds"
+		borderSize = { x = 64 y = 64 }
+		tilingCenter = yes
+	}
+	corneredTileSpriteType = {
+		name = "GFX_pww_ui_desk_bg_240"
+		size = { x = 500 y = 240 }
+		textureFile = "gfx//interface//tiles//tiled_window_1b_border.dds"
+		borderSize = { x = 64 y = 64 }
+		tilingCenter = yes
+	}
+	corneredTileSpriteType = {
+		name = "GFX_pww_ui_desk_bg_280"
+		size = { x = 500 y = 280 }
+		textureFile = "gfx//interface//tiles//tiled_window_1b_border.dds"
+		borderSize = { x = 64 y = 64 }
+		tilingCenter = yes
+	}
+	corneredTileSpriteType = {
+		name = "GFX_pww_ui_desk_bg_320"
+		size = { x = 500 y = 320 }
+		textureFile = "gfx//interface//tiles//tiled_window_1b_border.dds"
+		borderSize = { x = 64 y = 64 }
+		tilingCenter = yes
+	}
+	corneredTileSpriteType = {
+		name = "GFX_pww_ui_desk_bg_360"
+		size = { x = 500 y = 360 }
+		textureFile = "gfx//interface//tiles//tiled_window_1b_border.dds"
+		borderSize = { x = 64 y = 64 }
+		tilingCenter = yes
+	}
+	corneredTileSpriteType = {
+		name = "GFX_pww_ui_desk_bg_400"
+		size = { x = 500 y = 400 }
+		textureFile = "gfx//interface//tiles//tiled_window_1b_border.dds"
+		borderSize = { x = 64 y = 64 }
+		tilingCenter = yes
+	}
+	corneredTileSpriteType = {
+		name = "GFX_pww_ui_desk_bg_440"
+		size = { x = 500 y = 440 }
+		textureFile = "gfx//interface//tiles//tiled_window_1b_border.dds"
+		borderSize = { x = 64 y = 64 }
+		tilingCenter = yes
+	}
+	corneredTileSpriteType = {
+		name = "GFX_pww_ui_desk_bg_480"
+		size = { x = 500 y = 480 }
+		textureFile = "gfx//interface//tiles//tiled_window_1b_border.dds"
+		borderSize = { x = 64 y = 64 }
+		tilingCenter = yes
+	}
+	corneredTileSpriteType = {
+		name = "GFX_pww_ui_desk_bg_520"
+		size = { x = 500 y = 520 }
+		textureFile = "gfx//interface//tiles//tiled_window_1b_border.dds"
+		borderSize = { x = 64 y = 64 }
+		tilingCenter = yes
+	}
+	corneredTileSpriteType = {
+		name = "GFX_pww_ui_desk_bg_560"
+		size = { x = 500 y = 560 }
+		textureFile = "gfx//interface//tiles//tiled_window_1b_border.dds"
+		borderSize = { x = 64 y = 64 }
+		tilingCenter = yes
+	}
+	corneredTileSpriteType = {
+		name = "GFX_pww_ui_desk_bg_600"
+		size = { x = 500 y = 600 }
+		textureFile = "gfx//interface//tiles//tiled_window_1b_border.dds"
+		borderSize = { x = 64 y = 64 }
+		tilingCenter = yes
+	}
+	corneredTileSpriteType = {
+		name = "GFX_pww_ui_desk_bg_640"
+		size = { x = 500 y = 640 }
+		textureFile = "gfx//interface//tiles//tiled_window_1b_border.dds"
+		borderSize = { x = 64 y = 64 }
+		tilingCenter = yes
+	}
+	corneredTileSpriteType = {
+		name = "GFX_pww_ui_desk_bg_680"
+		size = { x = 500 y = 680 }
+		textureFile = "gfx//interface//tiles//tiled_window_1b_border.dds"
+		borderSize = { x = 64 y = 64 }
+		tilingCenter = yes
+	}
+	corneredTileSpriteType = {
+		name = "GFX_pww_ui_desk_bg_720"
+		size = { x = 500 y = 720 }
+		textureFile = "gfx//interface//tiles//tiled_window_1b_border.dds"
+		borderSize = { x = 64 y = 64 }
+		tilingCenter = yes
+	}
+	corneredTileSpriteType = {
+		name = "GFX_pww_ui_desk_bg_760"
+		size = { x = 500 y = 760 }
+		textureFile = "gfx//interface//tiles//tiled_window_1b_border.dds"
+		borderSize = { x = 64 y = 64 }
+		tilingCenter = yes
+	}
+	corneredTileSpriteType = {
+		name = "GFX_pww_ui_desk_bg_800"
+		size = { x = 500 y = 800 }
+		textureFile = "gfx//interface//tiles//tiled_window_1b_border.dds"
+		borderSize = { x = 64 y = 64 }
+		tilingCenter = yes
+	}
+	corneredTileSpriteType = {
+		name = "GFX_pww_ui_desk_bg_840"
+		size = { x = 500 y = 840 }
+		textureFile = "gfx//interface//tiles//tiled_window_1b_border.dds"
+		borderSize = { x = 64 y = 64 }
+		tilingCenter = yes
+	}
+	corneredTileSpriteType = {
+		name = "GFX_pww_ui_desk_bg_880"
+		size = { x = 500 y = 880 }
+		textureFile = "gfx//interface//tiles//tiled_window_1b_border.dds"
+		borderSize = { x = 64 y = 64 }
+		tilingCenter = yes
+	}
 }

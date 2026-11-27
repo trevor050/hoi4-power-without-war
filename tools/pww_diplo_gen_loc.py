@@ -124,6 +124,7 @@ ui = {
     "pww_diplo_acc_need": "How badly they need it",
     "pww_diplo_acc_bond": "Our trading history",
     "pww_diplo_acc_lock": "Too little trust for a fixed contract",
+    "pww_diplo_acc_cartel": "Bound by a producers' agreement",
     "pww_diplo_acc_want": "Something they quietly want",
     "pww_diplo_acc_sweeteners": "Sweeteners and face-saving",
     "pww_diplo_acc_red_line": "A clause they cannot sign",
@@ -268,6 +269,8 @@ ui = {
     "pww_diplo_line_auction": "[THIS.GetCapitalName] has opened its output to all bidders. Our draft is set aside; submit a bid instead.",
     "pww_diplo_line_opening": "Talks are open. Their delegation awaits our first draft.",
     "pww_diplo_line_expired": "The talks have lapsed without a signature.",
+    "pww_diplo_line_cartel_price": "We have signed a producers' agreement. We will not sell below the price we agreed with our partners, and they would hear of it if we did.",
+    "pww_diplo_line_cartel_quota": "Our quota under the producers' agreement will not stretch that far. Ask for less, or come back when we are free of it.",
     # Auction lots (generic)
     "pww_diplo_lot_kind_0": "Lease: [?pww_db_state_s.GetName]",
     "pww_diplo_lot_kind_1": "Split half: [?pww_db_state_s.GetName]",

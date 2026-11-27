@@ -25,7 +25,7 @@ pww_cartel_category = {
 			NOT = { check_variable = { global.pww_cart_cd_res^1 > global.num_days } }
 		}
 		complete_effect = {
-			custom_effect_tooltip = pww_cartel_call_tt
+			custom_effect_tooltip = pww_cartel_call_aluminium_tt
 			hidden_effect = {
 				set_temp_variable = { pww_in_res = 1 }
 				set_temp_variable = { pww_in_leader = ROOT }
@@ -51,7 +51,7 @@ pww_cartel_category = {
 			has_war = no
 		}
 		complete_effect = {
-			custom_effect_tooltip = pww_cartel_join_tt
+			custom_effect_tooltip = pww_cartel_join_aluminium_tt
 			hidden_effect = {
 				set_temp_variable = { pww_in_cartel_id = global.pww_cart_by_res^1 }
 				set_temp_variable = { pww_in_country = ROOT }
@@ -70,7 +70,7 @@ pww_cartel_category = {
 			has_country_flag = pww_cartel_mem_aluminium
 		}
 		complete_effect = {
-			custom_effect_tooltip = pww_cartel_leave_tt
+			custom_effect_tooltip = pww_cartel_leave_aluminium_tt
 			hidden_effect = {
 				set_temp_variable = { pww_in_res = 1 }
 				pww_cartel_find_member = yes
@@ -102,11 +102,18 @@ pww_cartel_category = {
 			}
 		}
 		available = {
-			num_of_available_civilian_factories > 0
 			NOT = { has_war_with = FROM }
+			# Factories free for new projects, as Trade Talks counts them:
+			# the contract takes its factories off construction like any trade.
+			custom_trigger_tooltip = {
+				tooltip = pww_cartel_poach_aluminium_afford
+				NOT = { check_variable = { num_of_civilian_factories_available_for_projects < FROM.pww_cartel_ct_civ_aluminium } }
+			}
 		}
 		complete_effect = {
-			custom_effect_tooltip = pww_cartel_poach_tt
+			custom_effect_tooltip = pww_cartel_poach_aluminium_tt
+			custom_effect_tooltip = pww_cartel_poach_aluminium_tt2
+			custom_effect_tooltip = pww_cartel_poach_aluminium_tt3
 			hidden_effect = {
 				FROM = {
 					set_temp_variable = { pww_in_res = 1 }
@@ -142,7 +149,7 @@ pww_cartel_category = {
 			NOT = { has_country_flag = pww_cartel_press_cd }
 		}
 		complete_effect = {
-			custom_effect_tooltip = pww_cartel_press_tt
+			custom_effect_tooltip = pww_cartel_press_aluminium_tt
 			hidden_effect = {
 				FROM = {
 					set_temp_variable = { pww_in_res = 1 }
@@ -174,7 +181,7 @@ pww_cartel_category = {
 			NOT = { has_country_flag = pww_cartel_flooding_aluminium }
 		}
 		complete_effect = {
-			custom_effect_tooltip = pww_cartel_flood_tt
+			custom_effect_tooltip = pww_cartel_flood_aluminium_tt
 			hidden_effect = {
 				set_temp_variable = { pww_in_res = 1 }
 				set_temp_variable = { pww_in_flooder = ROOT }
@@ -199,7 +206,7 @@ pww_cartel_category = {
 			NOT = { check_variable = { global.pww_cart_cd_res^2 > global.num_days } }
 		}
 		complete_effect = {
-			custom_effect_tooltip = pww_cartel_call_tt
+			custom_effect_tooltip = pww_cartel_call_rubber_tt
 			hidden_effect = {
 				set_temp_variable = { pww_in_res = 2 }
 				set_temp_variable = { pww_in_leader = ROOT }
@@ -225,7 +232,7 @@ pww_cartel_category = {
 			has_war = no
 		}
 		complete_effect = {
-			custom_effect_tooltip = pww_cartel_join_tt
+			custom_effect_tooltip = pww_cartel_join_rubber_tt
 			hidden_effect = {
 				set_temp_variable = { pww_in_cartel_id = global.pww_cart_by_res^2 }
 				set_temp_variable = { pww_in_country = ROOT }
@@ -244,7 +251,7 @@ pww_cartel_category = {
 			has_country_flag = pww_cartel_mem_rubber
 		}
 		complete_effect = {
-			custom_effect_tooltip = pww_cartel_leave_tt
+			custom_effect_tooltip = pww_cartel_leave_rubber_tt
 			hidden_effect = {
 				set_temp_variable = { pww_in_res = 2 }
 				pww_cartel_find_member = yes
@@ -276,11 +283,18 @@ pww_cartel_category = {
 			}
 		}
 		available = {
-			num_of_available_civilian_factories > 0
 			NOT = { has_war_with = FROM }
+			# Factories free for new projects, as Trade Talks counts them:
+			# the contract takes its factories off construction like any trade.
+			custom_trigger_tooltip = {
+				tooltip = pww_cartel_poach_rubber_afford
+				NOT = { check_variable = { num_of_civilian_factories_available_for_projects < FROM.pww_cartel_ct_civ_rubber } }
+			}
 		}
 		complete_effect = {
-			custom_effect_tooltip = pww_cartel_poach_tt
+			custom_effect_tooltip = pww_cartel_poach_rubber_tt
+			custom_effect_tooltip = pww_cartel_poach_rubber_tt2
+			custom_effect_tooltip = pww_cartel_poach_rubber_tt3
 			hidden_effect = {
 				FROM = {
 					set_temp_variable = { pww_in_res = 2 }
@@ -316,7 +330,7 @@ pww_cartel_category = {
 			NOT = { has_country_flag = pww_cartel_press_cd }
 		}
 		complete_effect = {
-			custom_effect_tooltip = pww_cartel_press_tt
+			custom_effect_tooltip = pww_cartel_press_rubber_tt
 			hidden_effect = {
 				FROM = {
 					set_temp_variable = { pww_in_res = 2 }
@@ -348,7 +362,7 @@ pww_cartel_category = {
 			NOT = { has_country_flag = pww_cartel_flooding_rubber }
 		}
 		complete_effect = {
-			custom_effect_tooltip = pww_cartel_flood_tt
+			custom_effect_tooltip = pww_cartel_flood_rubber_tt
 			hidden_effect = {
 				set_temp_variable = { pww_in_res = 2 }
 				set_temp_variable = { pww_in_flooder = ROOT }
@@ -373,7 +387,7 @@ pww_cartel_category = {
 			NOT = { check_variable = { global.pww_cart_cd_res^3 > global.num_days } }
 		}
 		complete_effect = {
-			custom_effect_tooltip = pww_cartel_call_tt
+			custom_effect_tooltip = pww_cartel_call_tungsten_tt
 			hidden_effect = {
 				set_temp_variable = { pww_in_res = 3 }
 				set_temp_variable = { pww_in_leader = ROOT }
@@ -399,7 +413,7 @@ pww_cartel_category = {
 			has_war = no
 		}
 		complete_effect = {
-			custom_effect_tooltip = pww_cartel_join_tt
+			custom_effect_tooltip = pww_cartel_join_tungsten_tt
 			hidden_effect = {
 				set_temp_variable = { pww_in_cartel_id = global.pww_cart_by_res^3 }
 				set_temp_variable = { pww_in_country = ROOT }
@@ -418,7 +432,7 @@ pww_cartel_category = {
 			has_country_flag = pww_cartel_mem_tungsten
 		}
 		complete_effect = {
-			custom_effect_tooltip = pww_cartel_leave_tt
+			custom_effect_tooltip = pww_cartel_leave_tungsten_tt
 			hidden_effect = {
 				set_temp_variable = { pww_in_res = 3 }
 				pww_cartel_find_member = yes
@@ -450,11 +464,18 @@ pww_cartel_category = {
 			}
 		}
 		available = {
-			num_of_available_civilian_factories > 0
 			NOT = { has_war_with = FROM }
+			# Factories free for new projects, as Trade Talks counts them:
+			# the contract takes its factories off construction like any trade.
+			custom_trigger_tooltip = {
+				tooltip = pww_cartel_poach_tungsten_afford
+				NOT = { check_variable = { num_of_civilian_factories_available_for_projects < FROM.pww_cartel_ct_civ_tungsten } }
+			}
 		}
 		complete_effect = {
-			custom_effect_tooltip = pww_cartel_poach_tt
+			custom_effect_tooltip = pww_cartel_poach_tungsten_tt
+			custom_effect_tooltip = pww_cartel_poach_tungsten_tt2
+			custom_effect_tooltip = pww_cartel_poach_tungsten_tt3
 			hidden_effect = {
 				FROM = {
 					set_temp_variable = { pww_in_res = 3 }
@@ -490,7 +511,7 @@ pww_cartel_category = {
 			NOT = { has_country_flag = pww_cartel_press_cd }
 		}
 		complete_effect = {
-			custom_effect_tooltip = pww_cartel_press_tt
+			custom_effect_tooltip = pww_cartel_press_tungsten_tt
 			hidden_effect = {
 				FROM = {
 					set_temp_variable = { pww_in_res = 3 }
@@ -522,7 +543,7 @@ pww_cartel_category = {
 			NOT = { has_country_flag = pww_cartel_flooding_tungsten }
 		}
 		complete_effect = {
-			custom_effect_tooltip = pww_cartel_flood_tt
+			custom_effect_tooltip = pww_cartel_flood_tungsten_tt
 			hidden_effect = {
 				set_temp_variable = { pww_in_res = 3 }
 				set_temp_variable = { pww_in_flooder = ROOT }
@@ -547,7 +568,7 @@ pww_cartel_category = {
 			NOT = { check_variable = { global.pww_cart_cd_res^4 > global.num_days } }
 		}
 		complete_effect = {
-			custom_effect_tooltip = pww_cartel_call_tt
+			custom_effect_tooltip = pww_cartel_call_steel_tt
 			hidden_effect = {
 				set_temp_variable = { pww_in_res = 4 }
 				set_temp_variable = { pww_in_leader = ROOT }
@@ -573,7 +594,7 @@ pww_cartel_category = {
 			has_war = no
 		}
 		complete_effect = {
-			custom_effect_tooltip = pww_cartel_join_tt
+			custom_effect_tooltip = pww_cartel_join_steel_tt
 			hidden_effect = {
 				set_temp_variable = { pww_in_cartel_id = global.pww_cart_by_res^4 }
 				set_temp_variable = { pww_in_country = ROOT }
@@ -592,7 +613,7 @@ pww_cartel_category = {
 			has_country_flag = pww_cartel_mem_steel
 		}
 		complete_effect = {
-			custom_effect_tooltip = pww_cartel_leave_tt
+			custom_effect_tooltip = pww_cartel_leave_steel_tt
 			hidden_effect = {
 				set_temp_variable = { pww_in_res = 4 }
 				pww_cartel_find_member = yes
@@ -624,11 +645,18 @@ pww_cartel_category = {
 			}
 		}
 		available = {
-			num_of_available_civilian_factories > 0
 			NOT = { has_war_with = FROM }
+			# Factories free for new projects, as Trade Talks counts them:
+			# the contract takes its factories off construction like any trade.
+			custom_trigger_tooltip = {
+				tooltip = pww_cartel_poach_steel_afford
+				NOT = { check_variable = { num_of_civilian_factories_available_for_projects < FROM.pww_cartel_ct_civ_steel } }
+			}
 		}
 		complete_effect = {
-			custom_effect_tooltip = pww_cartel_poach_tt
+			custom_effect_tooltip = pww_cartel_poach_steel_tt
+			custom_effect_tooltip = pww_cartel_poach_steel_tt2
+			custom_effect_tooltip = pww_cartel_poach_steel_tt3
 			hidden_effect = {
 				FROM = {
 					set_temp_variable = { pww_in_res = 4 }
@@ -664,7 +692,7 @@ pww_cartel_category = {
 			NOT = { has_country_flag = pww_cartel_press_cd }
 		}
 		complete_effect = {
-			custom_effect_tooltip = pww_cartel_press_tt
+			custom_effect_tooltip = pww_cartel_press_steel_tt
 			hidden_effect = {
 				FROM = {
 					set_temp_variable = { pww_in_res = 4 }
@@ -696,7 +724,7 @@ pww_cartel_category = {
 			NOT = { has_country_flag = pww_cartel_flooding_steel }
 		}
 		complete_effect = {
-			custom_effect_tooltip = pww_cartel_flood_tt
+			custom_effect_tooltip = pww_cartel_flood_steel_tt
 			hidden_effect = {
 				set_temp_variable = { pww_in_res = 4 }
 				set_temp_variable = { pww_in_flooder = ROOT }
@@ -721,7 +749,7 @@ pww_cartel_category = {
 			NOT = { check_variable = { global.pww_cart_cd_res^5 > global.num_days } }
 		}
 		complete_effect = {
-			custom_effect_tooltip = pww_cartel_call_tt
+			custom_effect_tooltip = pww_cartel_call_chromium_tt
 			hidden_effect = {
 				set_temp_variable = { pww_in_res = 5 }
 				set_temp_variable = { pww_in_leader = ROOT }
@@ -747,7 +775,7 @@ pww_cartel_category = {
 			has_war = no
 		}
 		complete_effect = {
-			custom_effect_tooltip = pww_cartel_join_tt
+			custom_effect_tooltip = pww_cartel_join_chromium_tt
 			hidden_effect = {
 				set_temp_variable = { pww_in_cartel_id = global.pww_cart_by_res^5 }
 				set_temp_variable = { pww_in_country = ROOT }
@@ -766,7 +794,7 @@ pww_cartel_category = {
 			has_country_flag = pww_cartel_mem_chromium
 		}
 		complete_effect = {
-			custom_effect_tooltip = pww_cartel_leave_tt
+			custom_effect_tooltip = pww_cartel_leave_chromium_tt
 			hidden_effect = {
 				set_temp_variable = { pww_in_res = 5 }
 				pww_cartel_find_member = yes
@@ -798,11 +826,18 @@ pww_cartel_category = {
 			}
 		}
 		available = {
-			num_of_available_civilian_factories > 0
 			NOT = { has_war_with = FROM }
+			# Factories free for new projects, as Trade Talks counts them:
+			# the contract takes its factories off construction like any trade.
+			custom_trigger_tooltip = {
+				tooltip = pww_cartel_poach_chromium_afford
+				NOT = { check_variable = { num_of_civilian_factories_available_for_projects < FROM.pww_cartel_ct_civ_chromium } }
+			}
 		}
 		complete_effect = {
-			custom_effect_tooltip = pww_cartel_poach_tt
+			custom_effect_tooltip = pww_cartel_poach_chromium_tt
+			custom_effect_tooltip = pww_cartel_poach_chromium_tt2
+			custom_effect_tooltip = pww_cartel_poach_chromium_tt3
 			hidden_effect = {
 				FROM = {
 					set_temp_variable = { pww_in_res = 5 }
@@ -838,7 +873,7 @@ pww_cartel_category = {
 			NOT = { has_country_flag = pww_cartel_press_cd }
 		}
 		complete_effect = {
-			custom_effect_tooltip = pww_cartel_press_tt
+			custom_effect_tooltip = pww_cartel_press_chromium_tt
 			hidden_effect = {
 				FROM = {
 					set_temp_variable = { pww_in_res = 5 }
@@ -870,7 +905,7 @@ pww_cartel_category = {
 			NOT = { has_country_flag = pww_cartel_flooding_chromium }
 		}
 		complete_effect = {
-			custom_effect_tooltip = pww_cartel_flood_tt
+			custom_effect_tooltip = pww_cartel_flood_chromium_tt
 			hidden_effect = {
 				set_temp_variable = { pww_in_res = 5 }
 				set_temp_variable = { pww_in_flooder = ROOT }
@@ -895,7 +930,7 @@ pww_cartel_category = {
 			NOT = { check_variable = { global.pww_cart_cd_res^6 > global.num_days } }
 		}
 		complete_effect = {
-			custom_effect_tooltip = pww_cartel_call_tt
+			custom_effect_tooltip = pww_cartel_call_coal_tt
 			hidden_effect = {
 				set_temp_variable = { pww_in_res = 6 }
 				set_temp_variable = { pww_in_leader = ROOT }
@@ -921,7 +956,7 @@ pww_cartel_category = {
 			has_war = no
 		}
 		complete_effect = {
-			custom_effect_tooltip = pww_cartel_join_tt
+			custom_effect_tooltip = pww_cartel_join_coal_tt
 			hidden_effect = {
 				set_temp_variable = { pww_in_cartel_id = global.pww_cart_by_res^6 }
 				set_temp_variable = { pww_in_country = ROOT }
@@ -940,7 +975,7 @@ pww_cartel_category = {
 			has_country_flag = pww_cartel_mem_coal
 		}
 		complete_effect = {
-			custom_effect_tooltip = pww_cartel_leave_tt
+			custom_effect_tooltip = pww_cartel_leave_coal_tt
 			hidden_effect = {
 				set_temp_variable = { pww_in_res = 6 }
 				pww_cartel_find_member = yes
@@ -972,11 +1007,18 @@ pww_cartel_category = {
 			}
 		}
 		available = {
-			num_of_available_civilian_factories > 0
 			NOT = { has_war_with = FROM }
+			# Factories free for new projects, as Trade Talks counts them:
+			# the contract takes its factories off construction like any trade.
+			custom_trigger_tooltip = {
+				tooltip = pww_cartel_poach_coal_afford
+				NOT = { check_variable = { num_of_civilian_factories_available_for_projects < FROM.pww_cartel_ct_civ_coal } }
+			}
 		}
 		complete_effect = {
-			custom_effect_tooltip = pww_cartel_poach_tt
+			custom_effect_tooltip = pww_cartel_poach_coal_tt
+			custom_effect_tooltip = pww_cartel_poach_coal_tt2
+			custom_effect_tooltip = pww_cartel_poach_coal_tt3
 			hidden_effect = {
 				FROM = {
 					set_temp_variable = { pww_in_res = 6 }
@@ -1012,7 +1054,7 @@ pww_cartel_category = {
 			NOT = { has_country_flag = pww_cartel_press_cd }
 		}
 		complete_effect = {
-			custom_effect_tooltip = pww_cartel_press_tt
+			custom_effect_tooltip = pww_cartel_press_coal_tt
 			hidden_effect = {
 				FROM = {
 					set_temp_variable = { pww_in_res = 6 }
@@ -1044,7 +1086,7 @@ pww_cartel_category = {
 			NOT = { has_country_flag = pww_cartel_flooding_coal }
 		}
 		complete_effect = {
-			custom_effect_tooltip = pww_cartel_flood_tt
+			custom_effect_tooltip = pww_cartel_flood_coal_tt
 			hidden_effect = {
 				set_temp_variable = { pww_in_res = 6 }
 				set_temp_variable = { pww_in_flooder = ROOT }

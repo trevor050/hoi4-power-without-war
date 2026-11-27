@@ -1,0 +1,12 @@
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = GER NOT = { has_global_flag = pww_probe_logged } }
+				set_global_flag = pww_probe_logged
+				log = "PWW_PROBE ready"
+				log = "PWW_DONE trade_rate_probe"
+			}
+		}
+	}
+}

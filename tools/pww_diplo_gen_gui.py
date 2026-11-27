@@ -491,6 +491,8 @@ for i in range(1, 7):
     LINES[80 + i] = f"pww_envoy_stall_{i}"
 for i in range(1, 4):
     LINES[110 + i] = f"pww_envoy_trust_lock_{i}"
+LINES[121] = "pww_diplo_line_cartel_price"
+LINES[122] = "pww_diplo_line_cartel_quota"
 LINES.update({90: "pww_diplo_line_signed", 91: "pww_diplo_line_failed", 92: "pww_diplo_line_closed",
               93: "pww_diplo_line_auction", 94: "pww_diplo_line_opening", 95: "pww_diplo_line_expired"})
 dt("pww_diplo_sl_o_line", [(f"ROOT = {{ check_variable = {{ pww_dd_line = {c} }} }}", k) for c, k in sorted(LINES.items())],

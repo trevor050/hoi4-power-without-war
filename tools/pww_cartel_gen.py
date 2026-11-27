@@ -21,6 +21,7 @@ MOD = REPO / "mod"
 RES = {1: "aluminium", 2: "rubber", 3: "tungsten", 4: "steel", 5: "chromium", 6: "coal"}
 NAME = {1: "Aluminium", 2: "Rubber", 3: "Tungsten", 4: "Steel", 5: "Chromium", 6: "Coal"}
 LOWER = {1: "aluminium", 2: "rubber", 3: "tungsten", 4: "steel", 5: "chromium", 6: "coal"}
+ART = {1: "an", 2: "a", 3: "a", 4: "a", 5: "a", 6: "a"}
 
 HEADER = """###############################################################################
 # Power Without War: producer cartel decisions
@@ -59,7 +60,7 @@ def decisions() -> str:
 			NOT = {{ check_variable = {{ global.pww_cart_cd_res^{i} > global.num_days }} }}
 		}}
 		complete_effect = {{
-			custom_effect_tooltip = pww_cartel_call_tt
+			custom_effect_tooltip = pww_cartel_call_{r}_tt
 			hidden_effect = {{
 				set_temp_variable = {{ pww_in_res = {i} }}
 				set_temp_variable = {{ pww_in_leader = ROOT }}
@@ -85,7 +86,7 @@ def decisions() -> str:
 			has_war = no
 		}}
 		complete_effect = {{
-			custom_effect_tooltip = pww_cartel_join_tt
+			custom_effect_tooltip = pww_cartel_join_{r}_tt
 			hidden_effect = {{
 				set_temp_variable = {{ pww_in_cartel_id = global.pww_cart_by_res^{i} }}
 				set_temp_variable = {{ pww_in_country = ROOT }}
@@ -104,7 +105,7 @@ def decisions() -> str:
 			has_country_flag = pww_cartel_mem_{r}
 		}}
 		complete_effect = {{
-			custom_effect_tooltip = pww_cartel_leave_tt
+			custom_effect_tooltip = pww_cartel_leave_{r}_tt
 			hidden_effect = {{
 				set_temp_variable = {{ pww_in_res = {i} }}
 				pww_cartel_find_member = yes
@@ -136,11 +137,18 @@ def decisions() -> str:
 			}}
 		}}
 		available = {{
-			num_of_available_civilian_factories > 0
 			NOT = {{ has_war_with = FROM }}
+			# Factories free for new projects, as Trade Talks counts them:
+			# the contract takes its factories off construction like any trade.
+			custom_trigger_tooltip = {{
+				tooltip = pww_cartel_poach_{r}_afford
+				NOT = {{ check_variable = {{ num_of_civilian_factories_available_for_projects < FROM.pww_cartel_ct_civ_{r} }} }}
+			}}
 		}}
 		complete_effect = {{
-			custom_effect_tooltip = pww_cartel_poach_tt
+			custom_effect_tooltip = pww_cartel_poach_{r}_tt
+			custom_effect_tooltip = pww_cartel_poach_{r}_tt2
+			custom_effect_tooltip = pww_cartel_poach_{r}_tt3
 			hidden_effect = {{
 				FROM = {{
 					set_temp_variable = {{ pww_in_res = {i} }}
@@ -176,7 +184,7 @@ def decisions() -> str:
 			NOT = {{ has_country_flag = pww_cartel_press_cd }}
 		}}
 		complete_effect = {{
-			custom_effect_tooltip = pww_cartel_press_tt
+			custom_effect_tooltip = pww_cartel_press_{r}_tt
 			hidden_effect = {{
 				FROM = {{
 					set_temp_variable = {{ pww_in_res = {i} }}
@@ -208,7 +216,7 @@ def decisions() -> str:
 			NOT = {{ has_country_flag = pww_cartel_flooding_{r} }}
 		}}
 		complete_effect = {{
-			custom_effect_tooltip = pww_cartel_flood_tt
+			custom_effect_tooltip = pww_cartel_flood_{r}_tt
 			hidden_effect = {{
 				set_temp_variable = {{ pww_in_res = {i} }}
 				set_temp_variable = {{ pww_in_flooder = ROOT }}
@@ -245,33 +253,83 @@ pww_cartel_category = {
 
 
 def loc() -> str:
+    """Player text. Figures that depend on the live agreement come from
+    per-resource mirrors (global.pww_cart_coh_res / _upf_res / _qpct_res,
+    pww_cartel_sync_coh) and, for Court, the offer stored on the member
+    (pww_cartel_ct_*_<res>, pww_cartel_court_terms). No em dashes."""
+    nl = "\\n"
     lines = ["l_english:",
              ' pww_cartel_category: "Producers\' Agreements"',
              ' pww_cartel_category_desc: "Where too many mines and plantations chase too few buyers, producers can agree to sell less and hold the price. Members keep their surplus off the market. Those who break ranks risk being found out."',
-             ' pww_cartel_call_tt: "Invite every producer with unsold output to a conference. In 30 days it sits; with two or more signatories the agreement takes effect and sets each member\'s export quota."',
-             ' pww_cartel_join_tt: "Sign the agreement. You receive an export quota: your present deals plus a share of your unsold output. The rest is kept off the market, and your deals must not undercut the agreed price."',
-             ' pww_cartel_leave_tt: "Withdraw from the agreement. Your quota ends and the remaining members lose confidence in the scheme."',
-             ' pww_cartel_poach_tt: "Offer this member a year\'s contract above the agreed price if it leaves the agreement. It weighs the premium, its unsold stocks and the strength of the scheme. A refusal still plants doubt."',
-             ' pww_cartel_press_tt: "Remind this member how much it needs your custom. It grows more tempted to sell outside the quota, and the agreement weakens."',
-             ' pww_cartel_flood_tt: "Push your own output onto the market for four months. The agreement weakens each month and its members grow tempted to sell outside it. They will not thank you."',
              ]
     for i, r in RES.items():
-        n, lo = NAME[i], LOWER[i]
+        n, lo, a = NAME[i], LOWER[i], ART[i]
+        coh = f"[?global.pww_cart_coh_res^{i}|0]"
+        upf = f"[?global.pww_cart_upf_res^{i}|1]"
+        qp = f"[?global.pww_cart_qpct_res^{i}|0]"
+        brk = (f"If its cohesion falls below [?global.pww_cartel_c_collapse|0], or fewer than two members remain, "
+               f"the agreement breaks up: a price war follows and {lo} is cheap for everyone for six months.")
+        tt = {
+            "call": (
+                f"Costs 25 political power.{nl}"
+                f"Every country with {lo} it cannot sell is invited to a conference that sits in 30 days. "
+                f"If at least two producers sign, the agreement takes effect with us in the chair.{nl}"
+                f"Each member may then sell, through its own contracts, no more than its quota (its present contracts "
+                f"plus [?global.pww_cartel_c_quota_pct|0]% of its unsold {lo}), and none below the agreed price: 10% above "
+                f"the open market, at most 7.2 {lo} per civilian factory instead of 8. "
+                f"Members stop undercutting one another, so what we sell fetches more.{nl}"
+                f"If fewer than two sign, the conference fails and no {lo} conference can meet for six months."),
+            "join": (
+                f"Costs 10 political power.{nl}"
+                f"We sign the {n} Agreement. Our quota is our present {lo} contracts plus {qp}% of our unsold {lo}; "
+                f"the rest is kept off the market (in our reserve if we keep one, otherwise left unextracted). "
+                f"Our contracts may not go below the agreed price: at most {upf} {lo} per civilian factory.{nl}"
+                f"In return the other members stop competing with us for buyers, so our sales fetch more. "
+                f"Selling beyond the quota or under the price risks a warning, then expulsion."),
+            "leave": (
+                f"Costs nothing.{nl}"
+                f"Our quota ends and we may sell {lo} to anyone at any price. "
+                f"The agreement loses 15 cohesion (10 more if we chair it); it stands at {coh}. {brk}"),
+            "press": (
+                f"Costs 15 political power. We can lean on one member every 90 days.{nl}"
+                f"[FROM.GetNameDef] will think less of us and grow more tempted to sell {lo} outside its quota and "
+                f"below the agreed price, to us as well. The agreement loses 5 cohesion; it stands at {coh}. {brk}"),
+            "flood": (
+                f"Costs 50 political power.{nl}"
+                f"For four months the {n} Agreement loses 6 cohesion a month (it stands at {coh}) and every member "
+                f"grows more tempted to sell outside its quota. The members will resent us. {brk}"),
+        }
+        for k, t in tt.items():
+            lines.append(f' pww_cartel_{k}_{r}_tt: "{t}"')
+
+        def ct(v, d=0):
+            return f"[?FROM.pww_cartel_ct_{v}_{r}|{d}]"
         lines += [
-            f' pww_cartel_call_{r}: "Call a {n} Producers\' Conference"',
+            f' pww_cartel_poach_{r}_afford: "At least {ct("civ")} civilian factories free for new projects. Factories building now count: the contract takes them off construction, as any trade does."',
+            f' pww_cartel_poach_{r}_tt: "Costs 25 political power. If they sign, it also costs {ct("civ")} civilian factories for a year.{nl}'
+            f'Our offer to [FROM.GetNameDef]: {ct("amt")} {lo} a day for {ct("civ")} civilian factories, a fixed contract for one year that neither side may end early. '
+            f'That is {ct("upf", 1)} {lo} per factory, against 8 on the open market and {ct("cupf", 1)} under the agreement."',
+            f' pww_cartel_poach_{r}_tt2: "If they sign, they leave the agreement, which loses 25 cohesion (it stands at {coh}), and the remaining members resent us. {brk}"',
+            f' pww_cartel_poach_{r}_tt3: "If they refuse, they stay in, but they grow more tempted to sell outside it and the agreement loses 3 cohesion. '
+            f'Whether they sign depends on how much {lo} they cannot sell, how firm the agreement is, and how they regard us."',
+        ]
+        lines += [
+            f' pww_cartel_call_{r}: "Call {a} {n} Producers\' Conference"',
             f' pww_cartel_call_{r}_desc: "Our {lo} piles up unsold, and so does everyone else\'s. Let the producers meet and agree to restrict exports before the price falls further."',
             f' pww_cartel_join_{r}: "Join the {n} Agreement"',
             f' pww_cartel_join_{r}_desc: "The {lo} producers have an agreement. Signing it means a quota and a better price for what we do sell."',
             f' pww_cartel_leave_{r}: "Leave the {n} Agreement"',
             f' pww_cartel_leave_{r}_desc: "The quota costs us sales we could make. We can sell freely outside it."',
-            f' pww_cartel_poach_{r}: "Court a {n} Producer"',
-            f' pww_cartel_poach_{r}_desc: "Offer [FROM.GetNameDef] a better contract than the agreement allows."',
-            f' pww_cartel_press_{r}: "Lean on a {n} Producer"',
+            f' pww_cartel_poach_{r}: "Court {a} {n} Producer"',
+            f' pww_cartel_poach_{r}_desc: "Offer [FROM.GetNameDef] a better contract than the agreement allows, on condition that it leaves."',
+            f' pww_cartel_press_{r}: "Lean on {a} {n} Producer"',
             f' pww_cartel_press_{r}_desc: "We are a large buyer of {lo}. [FROM.GetNameDef] should remember it."',
             f' pww_cartel_flood_{r}: "Flood the {n} Market"',
             f' pww_cartel_flood_{r}_desc: "Sell our {lo} at whatever the market will bear and let the agreement\'s members watch their customers go."',
         ]
-    return "\n".join(lines) + "\n"
+    text = "\n".join(lines) + "\n"
+    assert "—" not in text
+    return text
 
 
 def write(path: Path, text: str, bom: bool = False) -> None:

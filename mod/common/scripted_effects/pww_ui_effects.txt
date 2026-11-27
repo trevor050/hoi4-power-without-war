@@ -104,6 +104,10 @@ pww_ui_on_daily = {
 			limit = { NOT = { has_global_flag = pww_ui_view_ready } }
 			pww_ui_views = yes
 		}
+		if = {
+			limit = { has_variable = global.pww_lq_next_seq }
+			pww_ui_news_poll = yes
+		}
 		pww_ui_refresh = yes
 	}
 }
@@ -162,6 +166,7 @@ pww_ui_summaries = {
 
 pww_ui_country_summary = {
 	pww_ui_import_sums = yes
+	pww_ui_country_res_lines = yes
 	set_variable = { pww_ui_nk = 0 }
 	set_variable = { pww_ui_nk_all = 0 }
 	for_each_loop = {
@@ -361,6 +366,77 @@ pww_ui_load_ag = {
 }
 
 # ---------------------------------------------------------------------------
+# News (country scope: a human player). Reads the ledger event queue past the
+# player's last seen sequence (pww_ui_news_seen) and turns events on the
+# player's own agreements into news rows (pww_ui_news_insert, newest first):
+# created and now active (1 signed) or reserved (2 pledge), status changes to
+# completed (3), terminated (4), defaulted (5), nationalized (6), suspended
+# (7), and renewal notices (9). The first poll starts at the end of the queue,
+# so a loaded game does not replay old events.
+pww_ui_news_poll = {
+	if = {
+		limit = { NOT = { has_variable = pww_ui_news_seen } }
+		set_variable = { pww_ui_news_seen = global.pww_lq_next_seq }
+		subtract_from_variable = { pww_ui_news_seen = 1 }
+		set_variable = { pww_ui_news_ack = 0 }
+		set_variable = { pww_ui_nn = 0 }
+	}
+	set_temp_variable = { pww_ui_want_route = 0 }
+	for_each_loop = {
+		array = global.pww_lq_seq
+		value = pww_ui_qs
+		index = pww_ui_qi
+		if = {
+			limit = { check_variable = { pww_ui_qs > pww_ui_news_seen } }
+			set_variable = { pww_ui_news_seen = pww_ui_qs }
+			set_temp_variable = { pww_ui_v = global.pww_lq_ag^pww_ui_qi }
+			set_temp_variable = { pww_ui_qk = global.pww_lq_kind^pww_ui_qi }
+			set_temp_variable = { pww_ui_qst = global.pww_lq_status^pww_ui_qi }
+			set_temp_variable = { pww_ui_t_nk = 0 }
+			if = {
+				limit = { check_variable = { pww_ui_qk = 5 } }
+				if = {
+					limit = { check_variable = { global.pww_ag_status^pww_ui_v = 1 } }
+					set_temp_variable = { pww_ui_t_nk = 1 }
+				}
+				else_if = {
+					limit = { check_variable = { global.pww_ag_status^pww_ui_v = 7 } }
+					set_temp_variable = { pww_ui_t_nk = 2 }
+				}
+			}
+			else_if = {
+				limit = { check_variable = { pww_ui_qk = 1 } }
+				if = { limit = { check_variable = { pww_ui_qst = 3 } } set_temp_variable = { pww_ui_t_nk = 3 } }
+				else_if = { limit = { check_variable = { pww_ui_qst = 4 } } set_temp_variable = { pww_ui_t_nk = 4 } }
+				else_if = { limit = { check_variable = { pww_ui_qst = 5 } } set_temp_variable = { pww_ui_t_nk = 5 } }
+				else_if = { limit = { check_variable = { pww_ui_qst = 6 } } set_temp_variable = { pww_ui_t_nk = 6 } }
+				else_if = { limit = { check_variable = { pww_ui_qst = 2 } } set_temp_variable = { pww_ui_t_nk = 7 } }
+			}
+			else_if = {
+				limit = { check_variable = { pww_ui_qk = 2 } }
+				set_temp_variable = { pww_ui_t_nk = 9 }
+			}
+			if = {
+				limit = {
+					check_variable = { pww_ui_t_nk > 0 }
+					OR = {
+						check_variable = { global.pww_ag_buyer^pww_ui_v = THIS }
+						check_variable = { global.pww_ag_seller^pww_ui_v = THIS }
+					}
+				}
+				pww_ui_load_ag = yes
+				set_temp_variable = { pww_ui_t_day = global.pww_lq_day^pww_ui_qi }
+				set_temp_variable = { pww_ui_t_date = pww_ui_t_day }
+				subtract_from_temp_variable = { pww_ui_t_date = global.num_days }
+				multiply_temp_variable = { pww_ui_t_date = 0.00024 }
+				add_to_temp_variable = { pww_ui_t_date = global.date }
+				pww_ui_news_insert = yes
+			}
+		}
+	}
+}
+
+# ---------------------------------------------------------------------------
 # Per-player refresh (country scope: a human player).
 pww_ui_refresh = {
 	if = {
@@ -447,6 +523,10 @@ pww_ui_refresh = {
 	set_temp_variable = { pww_ui_want_route = 0 }
 	pww_ui_load_cartels = yes
 	pww_ui_load_reserves = yes
+	pww_ui_load_opps = yes
+	if = { limit = { NOT = { has_variable = pww_ui_nn } } set_variable = { pww_ui_nn = 0 } }
+	if = { limit = { NOT = { has_variable = pww_ui_news_ack } } set_variable = { pww_ui_news_ack = 0 } }
+	pww_ui_news_fresh = yes
 	pww_ui_layout = yes
 	pww_ui_mark_counterparts = yes
 	add_to_variable = { pww_ui_dirty = 1 }
@@ -470,6 +550,7 @@ pww_ui_load_cartels = {
 						OR = {
 							check_variable = { pww_ui_t_me > 0 }
 							check_variable = { pww_ui_t_short = 1 }
+							check_variable = { pww_ui_t_prod = 1 }
 						}
 					}
 					pww_ui_store_cart_slot = yes
@@ -503,6 +584,7 @@ pww_ui_load_cartel = {
 	multiply_temp_variable = { pww_ui_t_conf = 0.00024 }
 	add_to_temp_variable = { pww_ui_t_conf = global.date }
 	pww_ui_short_of = yes
+	pww_ui_produces = yes
 	# members: chair first, then the others in entry order (status 1)
 	set_temp_variable = { pww_ui_t_nm = 0 }
 	set_temp_variable = { pww_ui_mv = pww_ui_t_leader }

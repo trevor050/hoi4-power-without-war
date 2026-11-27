@@ -1,0 +1,21 @@
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = GER }
+				add_to_variable = { global.pww_mq_day = 1 }
+				set_temp_variable = { pww_mq_m = global.pww_mq_day }
+				modulo_temp_variable = { pww_mq_m = 91 }
+				if = {
+					limit = { check_variable = { pww_mq_m = 1 } }
+					pww_mkt_log_quarter = yes
+				}
+				if = {
+					limit = { check_variable = { global.pww_mq_day = 1640 } }
+					pww_mkt_log_quarter = yes
+					log = "PWW_DONE mkt_baseline"
+				}
+			}
+		}
+	}
+}

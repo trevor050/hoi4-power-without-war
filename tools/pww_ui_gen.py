@@ -90,7 +90,8 @@ def btn(name, x, y, sprite, text=None, font=F16, size=None, tip=None, transparen
     return s + "\t\t}\n"
 
 
-def icon(name, x, y, sprite, frame=None, scale=None, tip=None):
+def icon(name, x, y, sprite, frame=None, scale=None, tip=None, solid=False):
+    """solid: takes the mouse (a panel background over vanilla buttons)."""
     s = f'\t\ticonType = {{\n\t\t\tname = "{name}"\n\t\t\tposition = {{ x = {x} y = {y} }}\n\t\t\tspriteType = "{sprite}"\n'
     if frame:
         s += f"\t\t\tframe = {frame}\n"
@@ -98,6 +99,8 @@ def icon(name, x, y, sprite, frame=None, scale=None, tip=None):
         s += f"\t\t\tscale = {scale}\n"
     if tip:
         s += f'\t\t\tpdx_tooltip = "{tip}"\n'
+        return s + "\t\t}\n"
+    if solid:
         return s + "\t\t}\n"
     return s + "\t\t\talwaystransparent = yes\n\t\t}\n"
 
@@ -140,7 +143,7 @@ L("pww_seat_lc_2", "patron")
 STATE_KEYS = ["pww_state_defiant", "pww_state_strained", "pww_state_wavering", "pww_state_cornered",
               "pww_state_ready_to_fold"]
 for i, r in enumerate(RES):
-    L(f"pww_ui_res_lc_{r}", RES_NAME[i].lower())
+    L(f"pww_ui_res_lc_{r}", RES_NAME[i])     # capitalised like vanilla; lowercase "steel" is a loc key in Road to 56
 REL_BANDS = 5
 SEP = "  ·  "
 
@@ -165,7 +168,7 @@ def bond_dt(name, var):
 # Element registry: every desk element has a visibility condition (its tab
 # plus its own) and optionally a flow slot (section, offset): its y is then
 # ROOT.pww_uy_<suffix>, written by the generated pww_ui_layout effect.
-DW, DH = 500, 586
+DW, DH = 500, 880             # DH: tallest step; the background follows the content
 X0 = 20                       # left content edge
 XR = DW - 20                  # right content edge
 CW = XR - X0                  # content width
@@ -173,6 +176,9 @@ CY = 84                       # content top (below the tabs)
 TAB_Y, TAB_W = 42, 116        # GFX_tab_small_116 (116 x 36, frame 2 = raised, selected)
 TABS = ["pww_ui_tab_overview", "pww_ui_tab_deals", "pww_ui_tab_reserves"]
 SIT_ROW, CART_ROW, MKT_ROW, GAP = 38, 38, 18, 12
+OPP_ROW, NO = 38, 4          # Opportunities rows
+NEWS_ROW, NN = 18, 4         # Recent (news) rows on the Overview
+NNA = 2                      # news rows on the top-bar alert strip
 HDR = 24                      # section header height before the first row
 LED_Y, LED_ROW = CY + 26, 38
 LED_CP, LED_ST = 168, 70      # counterparty and status columns
@@ -208,7 +214,7 @@ L("pww_ui_tab_overview", "Overview")
 L("pww_ui_tab_deals", "Deals")
 L("pww_ui_tab_reserves", "Reserves")
 L("pww_ui_tab_overview_tt", "Situations in our seats, cartels that set our prices, and the monthly market report.")
-L("pww_ui_tab_deals_tt", "Every mod agreement we are party to: terms, how long it is locked, our bond with the other side and the delivery route.")
+L("pww_ui_tab_deals_tt", "Every trade agreement we are party to: terms, how long it is locked, our bond with the other side and the delivery route.")
 L("pww_ui_tab_reserves_tt", "Our strategic reserves: days of use in store, how full each one is, and whether it is filling or being drawn.")
 L("pww_desk_sec_situations", "Active Situations")
 L("pww_desk_sec_cartels", "Cartels")
@@ -226,11 +232,18 @@ L("pww_ui_page_prev_tt", "Previous page")
 L("pww_ui_page_next_tt", "Next page")
 
 ON_TAB = "check_variable = {{ pww_ui_tab = {t} }}"
+# The desk's height follows its content (pww_ui_layout picks pww_ui_desk_h):
+# one background per height step, so no tab shows a half-empty window.
+DESK_HS = list(range(240, DH, 40)) + [DH]
 
 
 def desk_body():
     DESK.clear()
     CLIPS.clear()
+    for h in DESK_HS:
+        D(-1, f"pww_ui_desk_bg_{h}", icon(f"pww_ui_desk_bg_{h}", 0, 0, f"GFX_pww_ui_desk_bg_{h}", solid=True),
+          cv("pww_ui_desk_h", "=", h) if h != DH else
+          f"OR = {{ {cv('pww_ui_desk_h', '=', h)} NOT = {{ has_variable = pww_ui_desk_h }} }}")
     D(-1, "pww_ui_desk_title", tb("pww_ui_desk_title", X0, 10, "pww_desk_title", 300, h=28, font=F24))
     D(-1, "pww_ui_desk_close", btn("pww_ui_desk_close", DW - 37, 9, "GFX_closebutton", tip="pww_ui_desk_close_tt",
                                    click="click_close"))
@@ -252,10 +265,37 @@ def desk_body():
                                       fmt="right", tip="pww_ui_date_tt"), on, ("sit", o + 1))
         D(0, f"pww_ui_ds{k}_l2", tb(f"pww_ui_ds{k}_l2", X0, fy("sit", o + 19), f"pww_ui_s{k}_line2", CW,
                                     tip=f"pww_ui_s{k}_tt"), on, ("sit", o + 19))
+    # recent: what happened to our agreements (pww_ui_news_poll)
+    D(0, "pww_ui_desk_div_news", icon("pww_ui_desk_div_news", X0 - 6, fy("news", -10), "GFX_pww_ui_divider",
+                                      scale=f"{(CW + 12) / 514:.3f}"),
+      "check_variable = { pww_ui_nn > 0 } check_variable = { pww_ui_ns > 0 }", ("news", -10))
+    D(0, "pww_ui_desk_news_hdr", tb("pww_ui_desk_news_hdr", X0, fy("news", 0), "pww_desk_sec_news", CW, h=20,
+                                    font=F18), "check_variable = { pww_ui_nn > 0 }", ("news", 0))
+    for j in range(NN):
+        o = HDR + j * NEWS_ROW
+        D(0, f"pww_ui_dn{j}", tb(f"pww_ui_dn{j}", X0, fy("news", o), f"[pww_ui_sl_n{j}]", CW, tip=f"pww_ui_n{j}_tt"),
+          f"check_variable = {{ pww_ui_nn > {j} }}", ("news", o))
+    # opportunities: what we lack and who sells it, what we cannot sell and who lacks it
+    D(0, "pww_ui_desk_div_opp", icon("pww_ui_desk_div_opp", X0 - 6, fy("opp", -10), "GFX_pww_ui_divider",
+                                     scale=f"{(CW + 12) / 514:.3f}"),
+      "check_variable = { pww_ui_no > 0 } OR = { check_variable = { pww_ui_ns > 0 } check_variable = { pww_ui_nn > 0 } }",
+      ("opp", -10))
+    D(0, "pww_ui_desk_opp_hdr", tb("pww_ui_desk_opp_hdr", X0, fy("opp", 0), "pww_desk_sec_opps", CW, h=20, font=F18,
+                                   tip="pww_desk_sec_opps_tt"), "check_variable = { pww_ui_no > 0 }", ("opp", 0))
+    for k in range(NO):
+        o = HDR + k * OPP_ROW
+        on = f"check_variable = {{ pww_ui_no > {k} }}"
+        D(0, f"pww_ui_do{k}_icon", icon(f"pww_ui_do{k}_icon", X0, fy("opp", o), "GFX_resources_strip", frame=1,
+                                        scale="0.6"), on, ("opp", o))
+        D(0, f"pww_ui_do{k}_l1", tb(f"pww_ui_do{k}_l1", X0 + 22, fy("opp", o + 1), f"[pww_ui_sl_o{k}_l1]", CW - 22,
+                                    tip=f"pww_ui_o{k}_tt"), on, ("opp", o + 1))
+        D(0, f"pww_ui_do{k}_l2", tb(f"pww_ui_do{k}_l2", X0 + 22, fy("opp", o + 19), f"[pww_ui_sl_o{k}_l2]", CW - 22,
+                                    tip=f"pww_ui_o{k}_tt"), on, ("opp", o + 19))
     # cartels
     D(0, "pww_ui_desk_div_cart", icon("pww_ui_desk_div_cart", X0 - 6, fy("cart", -10), "GFX_pww_ui_divider",
                                       scale=f"{(CW + 12) / 514:.3f}"),
-      "check_variable = { pww_ui_nc > 0 } check_variable = { pww_ui_ns > 0 }", ("cart", -10))
+      "check_variable = { pww_ui_nc > 0 } OR = { check_variable = { pww_ui_ns > 0 } check_variable = { pww_ui_no > 0 } }",
+      ("cart", -10))
     D(0, "pww_ui_desk_cart_hdr", tb("pww_ui_desk_cart_hdr", X0, fy("cart", 0), "pww_desk_sec_cartels", CW, h=20,
                                     font=F18), "check_variable = { pww_ui_nc > 0 }", ("cart", 0))
     for k in range(NC):
@@ -272,7 +312,8 @@ def desk_body():
     # market report
     D(0, "pww_ui_desk_div_mkt", icon("pww_ui_desk_div_mkt", X0 - 6, fy("mkt", -10), "GFX_pww_ui_divider",
                                      scale=f"{(CW + 12) / 514:.3f}"),
-      "OR = { check_variable = { pww_ui_ns > 0 } check_variable = { pww_ui_nc > 0 } }", ("mkt", -10))
+      "OR = { check_variable = { pww_ui_ns > 0 } check_variable = { pww_ui_nc > 0 } check_variable = { pww_ui_no > 0 } }",
+      ("mkt", -10))
     D(0, "pww_ui_desk_mkt_hdr", tb("pww_ui_desk_mkt_hdr", X0, fy("mkt", 0), "pww_desk_sec_market", 300, h=20,
                                    font=F18), None, ("mkt", 0))
     D(0, "pww_ui_desk_mkt_date", tb("pww_ui_desk_mkt_date", XR - 170, fy("mkt", 2), "pww_ui_mkt_dated", 170,
@@ -303,8 +344,13 @@ def desk_body():
                                        CW - LED_CP - 6 - LED_ST - 4, tip=f"pww_ui_l{k}_tt"), on)
         D(1, f"pww_ui_dl{k}_st", tb(f"pww_ui_dl{k}_st", XR - LED_ST, y, f"[pww_ui_sl_l{k}_status]", LED_ST, fmt="right",
                                     tip=f"pww_ui_l{k}_tt"), on)
-        D(1, f"pww_ui_dl{k}_l2", tb(f"pww_ui_dl{k}_l2", X0 + 22, y + 17, f"pww_ui_l{k}_line2", CW - 22,
+        D(1, f"pww_ui_dl{k}_l2", tb(f"pww_ui_dl{k}_l2", X0 + 22, y + 17, f"pww_ui_l{k}_line2", CW - 22 - 76,
                                     tip=f"pww_ui_l{k}_tt"), on)
+        # End: first click arms (label turns to Confirm), second click ends it
+        D(1, f"pww_ui_dl{k}_end", btn(f"pww_ui_dl{k}_end", XR - 70, y + 15, "GFX_pww_ui_alert_row",
+                                      text=f"[pww_ui_sl_l{k}_endb]", size=(70, 20), tip=f"pww_ui_l{k}_end_tt",
+                                      click="click_default"),
+          f"{on} OR = {{ {cv(f'pww_ui_l{k}_st', '=', 1)} {cv(f'pww_ui_l{k}_st', '=', 2)} }}")
     assert LED_Y + NAG * LED_ROW <= DH - 10
     # ----------------------------------------------------------- Reserves (tab 2)
     D(2, "pww_ui_desk_rsv_hdr", tb("pww_ui_desk_rsv_hdr", X0, CY, "pww_desk_sec_reserves", 300, h=20, font=F18))
@@ -361,14 +407,86 @@ for k in range(NSIT):
     for i, key in enumerate(STATE_KEYS):
         L(f"pww_ui_s{k}_ts_{i}", f"[?{v}_ho.GetName] is ${key}$.")
     L(f"pww_ui_s{k}_tt", f"§H[pww_ui_sl_s{k}_title]§!\\n[pww_ui_sl_s{k}_dev]\\n\\nOur seat: [pww_ui_sl_s{k}_seat]\\n"
-                         f"Claimant: [?{v}_cl.GetNameWithFlag]\\nHolder: [?{v}_ho.GetNameWithFlag]\\n"
+                         f"Claimant: [?{v}_cl.GetFlag] [?{v}_cl.GetName]\\nHolder: [?{v}_ho.GetFlag] [?{v}_ho.GetName]\\n"
                          f"[pww_ui_sl_s{k}_patron]\\nDecision date: [?{v}_date.GetDateStringNoHourLong]")
     dt(f"pww_ui_sl_s{k}_patron", [(cv(f"{v}_hasp", "=", 1), f"pww_ui_s{k}_patron")], "pww_ui_no_patron")
-    L(f"pww_ui_s{k}_patron", f"Patron: [?{v}_pa.GetNameWithFlag]")
+    L(f"pww_ui_s{k}_patron", f"Patron: [?{v}_pa.GetFlag] [?{v}_pa.GetName]")
     # seat as a sentence ("You are the claimant."; keys from the situations lane)
     dt(f"pww_ui_sl_s{k}_seatline", [(cv(f"{v}_seat", "=", i), f"pww_seat_line_{n}")
                                     for i, n in enumerate(["claimant", "holder", "patron"])], "pww_ui_blank")
 L("pww_ui_no_patron", "Patron: none")
+
+
+# ---------------------------------------------------------------- news slot loc
+# Slots pww_ui_n<j>_* (newest first, pww_ui_nn rows): nk (1 signed, 2 pledge
+# signed, 3 expired, 4 ended, 5 broken, 6 nationalized, 7 suspended, 9 renewal
+# due), the agreement fields of pww_ui_load_ag (res amt cp side civ pay wepay
+# kind state end com) and date / day of the event. Built by pww_ui_news_poll.
+NEWS_KINDS = {1: "§GSigned§!", 2: "§HPledge signed§!", 3: "Expired", 4: "§YEnded§!", 5: "§RContract broken§!",
+              6: "§RNationalized§!", 7: "§YSuspended§!", 9: "§HRenewal due§!"}
+NEWS_TT = {1: "The agreement is in force.", 2: "It takes force only if its condition fires.",
+           3: "It ran its full term.", 4: "One side ended it, or events (war, a lost state) did.",
+           5: "A party broke a locked contract early: trust between the two suffers.",
+           6: "The host government seized the concession.",
+           7: "Deliveries are paused by a quarantine, an interdiction or a truce.",
+           9: "It ends soon. Renew it through new talks before it lapses."}
+L("pww_desk_sec_news", "Recent")
+for j in range(NN):
+    v = f"pww_ui_n{j}"
+    res_dt(f"pww_ui_sl_n{j}_res", f"{v}_res")
+    dt(f"pww_ui_sl_n{j}_head", [(cv(v + "_nk", "=", n), f"pww_ui_news_k{n}") for n in NEWS_KINDS], "pww_ui_blank")
+    dt(f"pww_ui_sl_n{j}_deal", [
+        (f"{cv(v + '_kind', '>', 0)} {cv(v + '_side', '=', 1)}", f"pww_ui_n{j}_lease_in"),
+        (cv(v + "_kind", ">", 0), f"pww_ui_n{j}_lease_out"),
+        (cv(v + "_side", "=", 1), f"pww_ui_n{j}_buy"),
+    ], f"pww_ui_n{j}_sell")
+    cp = f"[?{v}_cp.GetFlag] [?{v}_cp.GetName]"
+    L(f"pww_ui_n{j}_lease_in", f"our lease of [?{v}_state.GetName] from {cp}")
+    L(f"pww_ui_n{j}_lease_out", f"{cp}'s lease of [?{v}_state.GetName]")
+    L(f"pww_ui_n{j}_buy", f"we buy [?{v}_amt|0] [pww_ui_sl_n{j}_res] from {cp}")
+    L(f"pww_ui_n{j}_sell", f"we sell [?{v}_amt|0] [pww_ui_sl_n{j}_res] to {cp}")
+    dt(f"pww_ui_sl_n{j}", [(cv(v + "_nk", ">", 0), f"pww_ui_n{j}_line")], "pww_ui_blank")
+    L(f"pww_ui_n{j}_line", f"[pww_ui_sl_n{j}_head]: [pww_ui_sl_n{j}_deal]")
+    dt(f"pww_ui_sl_n{j}_why", [(cv(v + "_nk", "=", n), f"pww_ui_news_tt{n}") for n in NEWS_TT], "pww_ui_blank")
+    L(f"pww_ui_n{j}_tt", f"§H[?{v}_date.GetDateStringNoHourLong]§!\\n[pww_ui_sl_n{j}_head]: [pww_ui_sl_n{j}_deal].\\n"
+                         f"[pww_ui_sl_n{j}_why]\\n\\nThe Deals tab lists everything in force.")
+for n, t in NEWS_KINDS.items():
+    L(f"pww_ui_news_k{n}", t)
+for n, t in NEWS_TT.items():
+    L(f"pww_ui_news_tt{n}", t)
+L("pww_ui_news_alert_tt", "Click to open the Trade Desk. Alerts clear when you open it, or after ten days.")
+
+# ---------------------------------------------------------------- opportunity slot loc
+# Slots pww_ui_o<k>_*: res kind (0 we are short, 1 our output finds no buyer)
+# amt (a day) c1 a1 c2 a2 (the two countries with the most unsold / the
+# largest shortfall, a day) n (0..2 named) frame. Built by pww_ui_load_opps.
+L("pww_desk_sec_opps", "Opportunities")
+L("pww_desk_sec_opps_tt", "Where to buy what we lack, and who lacks what we cannot sell. To trade, open the country's diplomacy panel (click its territory) and choose Propose Trade Deal.")
+for k in range(NO):
+    v = f"pww_ui_o{k}"
+    res_dt(f"pww_ui_sl_o{k}_res", f"{v}_res")
+    dt(f"pww_ui_sl_o{k}_l1", [(cv(v + "_kind", "=", 0), f"pww_ui_o{k}_short")], f"pww_ui_o{k}_spare")
+    L(f"pww_ui_o{k}_short", f"§H[pww_ui_sl_o{k}_res]§!: we are short §R[?{v}_amt|0]§! a day.")
+    L(f"pww_ui_o{k}_spare", f"§H[pww_ui_sl_o{k}_res]§!: §G[?{v}_amt|0]§! a day of ours finds no buyer.")
+    c1 = f"[?{v}_c1.GetFlag] [?{v}_c1.GetName] [?{v}_a1|0]"
+    c2 = f"[?{v}_c2.GetFlag] [?{v}_c2.GetName] [?{v}_a2|0]"
+    dt(f"pww_ui_sl_o{k}_l2", [
+        (f"{cv(v + '_kind', '=', 0)} {cv(v + '_n', '>', 1)}", f"pww_ui_o{k}_sell2"),
+        (f"{cv(v + '_kind', '=', 0)} {cv(v + '_n', '>', 0)}", f"pww_ui_o{k}_sell1"),
+        (cv(v + "_kind", "=", 0), "pww_ui_opp_nosell"),
+        (cv(v + "_n", ">", 1), f"pww_ui_o{k}_buy2"),
+        (cv(v + "_n", ">", 0), f"pww_ui_o{k}_buy1"),
+    ], "pww_ui_opp_nobuy")
+    L(f"pww_ui_o{k}_sell2", f"§gUnsold:§! {c1}{SEP}{c2}")
+    L(f"pww_ui_o{k}_sell1", f"§gUnsold:§! {c1}")
+    L(f"pww_ui_o{k}_buy2", f"§gBuyers:§! {c1}{SEP}{c2}")
+    L(f"pww_ui_o{k}_buy1", f"§gBuyers:§! {c1}")
+    dt(f"pww_ui_sl_o{k}_tt", [(cv(v + "_kind", "=", 0), "pww_ui_opp_tt_short")], "pww_ui_opp_tt_spare")
+    L(f"pww_ui_o{k}_tt", f"[pww_ui_sl_o{k}_l1]\\n[pww_ui_sl_o{k}_l2]\\n\\n[pww_ui_sl_o{k}_tt]")
+L("pww_ui_opp_nosell", "§gNo country has any to spare.§!")
+L("pww_ui_opp_nobuy", "§gNobody imports it. Our surplus goes to storage.§!")
+L("pww_ui_opp_tt_short", "Figures are a day of output nobody buys. A seller sitting on unsold output usually takes less than the market rate. Open its diplomacy panel and choose Propose Trade Deal.")
+L("pww_ui_opp_tt_spare", "Figures are what each country imports a day, plus anything it still lacks. They buy on the open market today; a better offer can win them over, and a buyer that is badly short pays above the market rate. Open its diplomacy panel and choose Propose Trade Deal.")
 
 # ---------------------------------------------------------------- cartel slot loc
 # Slots pww_ui_c<k>_*: id res status anchor pct (price over market, %), cb
@@ -400,6 +518,7 @@ for k in range(NC):
         (f"{cv(v + '_me', '=', 1)} {cv(v + '_room', '<', 0)}", f"pww_ui_c{k}_l2_over"),
         (cv(v + "_me", "=", 1), f"pww_ui_c{k}_l2_member"),
         (cv(v + "_status", "=", 0), f"pww_ui_c{k}_l2_conf"),
+        (cv(v + "_short", "=", 0), f"pww_ui_c{k}_l2_prod"),
     ], f"pww_ui_c{k}_l2_short")
     coh = f"Cohesion [pww_ui_sl_c{k}_coh]"
     L(f"pww_ui_c{k}_l2_member", f"§g{coh}{SEP}our quota [?{v}_quota|0]/day, [?{v}_room|0] to spare{SEP}"
@@ -411,21 +530,24 @@ for k in range(NC):
     L(f"pww_ui_c{k}_l2_conf", f"§gConference decides on [?{v}_conf.GetDateStringNoHourLong]{SEP}"
                               f"[?{v}_n|0] signed so far§!")
     L(f"pww_ui_c{k}_l2_short", f"§g{coh}{SEP}we are short of [pww_ui_sl_c{k}_res_lc] and pay their price§!")
+    L(f"pww_ui_c{k}_l2_prod", f"§g{coh}{SEP}we produce [pww_ui_sl_c{k}_res_lc] but are not a member§!")
     dt(f"pww_ui_sl_c{k}_status", [(cv(f"{v}_status", "=", s), f"pww_cartel_status_{s}") for s in range(4)],
        "pww_ui_blank")
     dt(f"pww_ui_sl_c{k}_mine", [
         (cv(v + "_me", "=", 1), f"pww_ui_c{k}_tt_member"),
         (cv(v + "_me", "=", 2), "pww_ui_cart_tt_invited"),
+        (cv(v + "_short", "=", 0), "pww_ui_cart_tt_producer"),
     ], "pww_ui_cart_tt_outsider")
-    L(f"pww_ui_c{k}_tt_member", f"We are a member. Quota: [?{v}_quota|0] a day through mod deals; we sell "
+    L(f"pww_ui_c{k}_tt_member", f"We are a member. Quota: [?{v}_quota|0] a day through trade agreements; we sell "
                                 f"[?{v}_sold|0]. Suspicion of cheating: [pww_ui_sl_c{k}_susp].")
     L(f"pww_ui_c{k}_tt", f"§H[pww_ui_sl_c{k}_name]§!: [pww_ui_sl_c{k}_status]\\n"
-                         f"Chair: [?{v}_leader.GetNameWithFlag]\\nMembers: [?{v}_n|0]\\n"
+                         f"Chair: [?{v}_leader.GetFlag] [?{v}_leader.GetName]\\nMembers: [?{v}_n|0]\\n"
                          f"Cartel price: [pww_ui_sl_c{k}_price]\\nCohesion: [pww_ui_sl_c{k}_coh]\\n\\n"
                          f"[pww_ui_sl_c{k}_mine]")
 L("pww_ui_cart_conf", "§gin conference§!")
 L("pww_ui_cart_at_market", "at market")
 L("pww_ui_cart_tt_invited", "We are invited to join. Members sell less and hold the price; join or refuse through the decisions.")
+L("pww_ui_cart_tt_producer", "We produce what it sells but are not a member. We can sell below its price and take its customers, or join it under Producers' Agreements in Decisions.")
 L("pww_ui_cart_tt_outsider", "We are not a member. We are short of what it sells, so its price is ours to pay, or to break by courting a member.")
 
 # ---------------------------------------------------------------- ledger slot loc
@@ -452,7 +574,7 @@ L("pww_ui_term_open", "Open-ended")
 L("pww_ui_bond_tt_line", "Bond between the two sides: ")
 for k in range(NAG):
     v = f"pww_ui_l{k}"
-    L(f"pww_ui_l{k}_cp", f"[?{v}_cp.GetNameWithFlag]")
+    L(f"pww_ui_l{k}_cp", f"[?{v}_cp.GetFlag] [?{v}_cp.GetName]")  # GetNameWithFlag ignores cosmetic names
     res_dt(f"pww_ui_sl_l{k}_res", f"{v}_res")
     res_lc_dt(f"pww_ui_sl_l{k}_res_lc", f"{v}_res", f"pww_ui_l{k}_allres")
     L(f"pww_ui_l{k}_allres", "all output")
@@ -492,8 +614,8 @@ for k in range(NAG):
     dt(f"pww_ui_sl_l{k}_term", [(cv(v + "_st", "=", 7), "pww_ui_term_reserved"),
                                 (cv(v + "_open", "=", 1), "pww_ui_term_open"),
                                 (cv(v + "_com", "=", 1), f"pww_ui_l{k}_locked")], f"pww_ui_l{k}_runs")
-    L(f"pww_ui_l{k}_locked", f"Locked until [?{v}_end.GetDateStringNoHourLong]")
-    L(f"pww_ui_l{k}_runs", f"Runs until [?{v}_end.GetDateStringNoHourLong]")
+    L(f"pww_ui_l{k}_locked", f"Locked to [?{v}_end.GetDateStringNoHourLong]")
+    L(f"pww_ui_l{k}_runs", f"Until [?{v}_end.GetDateStringNoHourLong]")
     bond_dt(f"pww_ui_sl_l{k}_bondw", f"{v}_bond")
     dt(f"pww_ui_sl_l{k}_bond", [(cv(v + "_bond", ">", -1), f"pww_ui_l{k}_bond")], "pww_ui_blank")
     L(f"pww_ui_l{k}_bond", f"{SEP}[pww_ui_sl_l{k}_bondw]")
@@ -504,7 +626,7 @@ for k in range(NAG):
         (cv(v + "_route", "=", 2), f"pww_ui_l{k}_route_2"),
     ], "pww_ui_blank")
     L(f"pww_ui_l{k}_route_0", f"{SEP}$pww_ui_route_0$")
-    L(f"pww_ui_l{k}_route_1", f"{SEP}by sea, +[?{v}_dsh|0]% delivery")
+    L(f"pww_ui_l{k}_route_1", f"{SEP}sea, +[?{v}_dsh|0]%")
     L(f"pww_ui_l{k}_route_2", f"{SEP}§R$pww_ui_route_2$§!")
     L(f"pww_ui_l{k}_line2", f"§g[pww_ui_sl_l{k}_term][pww_ui_sl_l{k}_bond][pww_ui_sl_l{k}_route]§!")
     dt(f"pww_ui_sl_l{k}_bondtt", [(cv(v + "_bond", ">", -1), f"pww_ui_l{k}_bondtt")], "pww_ui_blank")
@@ -514,12 +636,33 @@ for k in range(NAG):
     L(f"pww_ui_l{k}_tt", f"§H[pww_ui_sl_l{k}_vehicle]§!, [pww_ui_sl_l{k}_type] with [?{v}_cp.GetName]\\n"
                          f"[pww_ui_sl_l{k}_terms].\\n[pww_ui_sl_l{k}_end][pww_ui_sl_l{k}_bondtt]\\n\\n"
                          f"[pww_ui_sl_l{k}_status]: [pww_ui_sl_l{k}_sttt]")
+    # End button: label and consequences (pww_ledger_withdraw: open deals end
+    # cleanly, a small bond loss; locked ones are a breach: default, bond cut,
+    # our contract reputation falls)
+    armed = f"has_variable = pww_ui_end_arm {cv('pww_ui_end_arm', '=', v + '_id')}"
+    dt(f"pww_ui_sl_l{k}_endb", [(armed, "pww_ui_end_confirm"), (cv(v + "_com", "=", 1), "pww_ui_end_break")],
+       "pww_ui_end")
+    dt(f"pww_ui_sl_l{k}_endtt", [(armed, "pww_ui_end_tt_armed"),
+                                 (cv(v + "_com", "=", 1), f"pww_ui_l{k}_end_tt_locked")], f"pww_ui_l{k}_end_tt_open")
+    L(f"pww_ui_l{k}_end_tt", f"[pww_ui_sl_l{k}_endtt]")
+    L(f"pww_ui_l{k}_end_tt_open", f"§HEnd this agreement§!\\nDeliveries and payments stop at once. It is open-ended, "
+                                  f"so ending it breaks no promise, though [?{v}_cp.GetName] will trust us a little "
+                                  f"less as a partner.\\n\\nClick, then click again to confirm.")
+    L(f"pww_ui_l{k}_end_tt_locked", f"§HBreak this contract§!\\nIt is locked until "
+                                    f"[?{v}_end.GetDateStringNoHourLong]. Ending it now is a §Rbreach§!: deliveries "
+                                    f"and payments stop, our trade bond with [?{v}_cp.GetName] is cut by half or more, "
+                                    f"and every country will trust our contracts less in future talks.\\n\\n"
+                                    f"Click, then click again to confirm.")
 L("pww_ui_factory", "factory")
 L("pww_ui_factories", "factories")
 L("pww_ui_pay_pp", " for political power")
 L("pww_ui_pay_pp_we", ", and we pay political power")
 L("pww_ui_pay_pp_they", ", and they pay political power")
 L("pww_ui_open_ended", "Open-ended; either side may end it.")
+L("pww_ui_end", "End")
+L("pww_ui_end_break", "Break")
+L("pww_ui_end_confirm", "§RConfirm§!")
+L("pww_ui_end_tt_armed", "§RClick again to end this agreement.§! Switching tabs or pages cancels.")
 
 # ---------------------------------------------------------------- reserve slot loc
 # Slots pww_ui_r<k>_*: res stock cap fill days in out fx (fill bar x offset).
@@ -652,35 +795,73 @@ def alert_body():
                  click="click_default")
         b += tb(f"pww_ui_al{k}_txt", 10, y + 4, f"[pww_ui_sl_al{k}]", AW - 128)
         b += tb(f"pww_ui_al{k}_date", AW - 116, y + 4, f"pww_ui_s{k}_date", 106, fmt="right")
+    for r in range(NNA):
+        y = (NSIT + r) * AROW          # moved up to (pww_ui_ns + r) rows by pww_ui_layout
+        b += btn(f"pww_ui_na{r}_btn", 0, y, "GFX_pww_ui_alert_row", size=(AW, AROW - 2), tip="pww_ui_news_alert_tt",
+                 click="click_default")
+        b += tb(f"pww_ui_na{r}_txt", 10, y + 4, f"[pww_ui_sl_n{r}]", AW - 20)
     return b
 
 
 # =========================================================================== Dossier
-OW, OH = 514, 280
-OX, OY = 8, 110                      # in the diplomacy tab's coordinates
-TOGGLE = (OX + OW - 106, OY + 6)     # dossier toggle: party box corner, dossier header when open
+# A card over the diplomacy tab body, starting below the party box so the
+# toggle (party box corner) is never covered. Children placed outside the
+# diplomacy view's bounds are clipped (tried: x 534 did not render), so it
+# stays inside. Its own close button; its background takes the mouse so
+# clicks never reach the vanilla actions underneath.
+OW = 514
+OX, OY = 8, 152                      # parent (diplomacy view) coordinates
+TOGGLE = (416, 116)                  # dossier toggle: party box corner
 L("pww_ui_dos_btn", "[pww_ui_sl_dos_btn]")
 L("pww_ui_dos_btn_plain", "Dossier")
 L("pww_ui_dos_btn_hot", "§YDossier§!")
 L("pww_ui_dos_btn_close", "Close")
-L("pww_ui_dos_btn_tt", "Commercial dossier on [FROM.GetName]: shortages, reserves, our trade bond, their exports, known agreements and leases, and the state of any demand or Situation between us.")
-L("pww_dossier_title", "Commercial Dossier")
+L("pww_ui_dos_btn_tt", "Commercial dossier on [FROM.GetName]: what they produce and need, reserves, our trade bond, their exports, their agreements, and any demand or Situation between us.")
+L("pww_ui_dos_close_tt", "Close the dossier.")
+L("pww_dossier_title", "Commercial Dossier: [FROM.GetName]")
 L("pww_ui_dos_imports", "Import reliance: [pww_ui_sl_dos_imp]")
 IMP = ["Self-sufficient", "Light", "Moderate", "§YHeavy§!", "§ODependent§!"]
 for i, t in enumerate(IMP):
     L(f"pww_ui_imp_{i}", t)
-L("pww_ui_imp_tt", "Share of their resource consumption met by imports and mod supply agreements, last month.")
-SHORT = ["§gample§!", "tight", "§Yshort§!", "§Osevere§!", "§Rdesperate§!"]
-for i, t in enumerate(SHORT):
-    L(f"pww_ui_short_{i}", t)
-L("pww_ui_short_tt", "How hard [FROM.GetName] is pressed for each resource, judged from deficits, fuel runway and idle mills. Bands only; the ministries guard the figures.")
+L("pww_ui_imp_tt", "Share of their resource use met by imports and supply agreements.")
+PRESS = ["§gnone§!", "tight", "§Yshort§!", "§Osevere§!", "§Rdesperate§!"]
+for i, t in enumerate(PRESS):
+    L(f"pww_ui_press_{i}", t)
 dt("pww_ui_sl_dos_btn", [("ROOT = { has_country_flag = pww_ui_dos_open }", "pww_ui_dos_btn_close"),
                          (f"OR = {{ check_variable = {{ pww_ui_rd_viewer = ROOT }} check_variable = {{ pww_ui_pr_viewer = ROOT }} check_variable = {{ pww_ui_st_viewer = ROOT }} }}",
                           "pww_ui_dos_btn_hot")], "pww_ui_dos_btn_plain")
 dt("pww_ui_sl_dos_imp", [(cv("pww_ui_imp_band", "=", i), f"pww_ui_imp_{i}") for i in range(5)], "pww_ui_imp_0")
+# Resource cells (viewer independent, pww_ui_country_res_lines): net = output
+# beyond their own use before any trade (bal + exports - imports), unsold =
+# positive balance, short = negative balance. Line 1 the net, line 2 what
+# happens to it.
 for i, r in enumerate(RES):
-    dt(f"pww_ui_sl_short_{r}", [(cv(f"pww_desp_{r}", ">", t), f"pww_ui_short_{j}") for j, t in
-                                [(4, 79), (3, 59), (2, 39), (1, 19)]], "pww_ui_short_0")
+    v = f"pww_ui_rs_{r}"
+    dt(f"pww_ui_sl_rn_{r}", [(cv(f"{v}_net", ">", 0.5), f"pww_ui_rn_pos_{r}"),
+                             (cv(f"{v}_net", "<", -0.5), f"pww_ui_rn_neg_{r}")], "pww_ui_rn_zero")
+    L(f"pww_ui_rn_pos_{r}", f"§G+[?{v}_net|0]§!")
+    L(f"pww_ui_rn_neg_{r}", f"§O[?{v}_net|0]§!")
+    dt(f"pww_ui_sl_rw_{r}", [
+        (f"{cv(v + '_bal', '<', -0.5)}", f"pww_ui_rw_short_{r}"),
+        (f"{cv(v + '_net', '>', 0.5)} {cv(v + '_bal', '>', 0.5)}", f"pww_ui_rw_unsold_{r}"),
+        (cv(v + "_net", ">", 0.5), "pww_ui_rw_sold"),
+        (cv(v + "_net", "<", -0.5), "pww_ui_rw_imports"),
+    ], "pww_ui_blank")
+    L(f"pww_ui_rw_short_{r}", f"§Rshort [?{v}_short|0]§!")
+    L(f"pww_ui_rw_unsold_{r}", f"§g[?{v}_bal|0] unsold§!")
+    dt(f"pww_ui_sl_press_{r}", [(cv(f"pww_desp_{r}", ">", t), f"pww_ui_press_{j}") for j, t in
+                                [(4, 79), (3, 59), (2, 39), (1, 19)]], "pww_ui_press_0")
+    dt(f"pww_ui_sl_rtt_{r}", [(f"{cv(v + '_bal', '>', 0.5)}", f"pww_ui_rtt_unsold_{r}"),
+                              (f"{cv(v + '_bal', '<', -0.5)}", f"pww_ui_rtt_short_{r}")], "pww_ui_rtt_even")
+    L(f"pww_ui_rtt_unsold_{r}", f"[?{v}_bal|0] a day finds no buyer.")
+    L(f"pww_ui_rtt_short_{r}", f"§RShort [?{v}_short|0] a day§! even after imports.")
+    L(f"pww_ui_rs_{r}_tt", f"§H{RES_NAME[i]}§!: [FROM.GetName]\\nOutput [?{v}_prod|0] a day, own use [?{v}_use|0].\\n"
+                           f"Imports [?{v}_imp|0], exports [?{v}_exp|0].\\n[pww_ui_sl_rtt_{r}]\\n"
+                           f"How hard pressed for it: [pww_ui_sl_press_{r}].")
+L("pww_ui_rn_zero", "§g·§!")
+L("pww_ui_rw_sold", "§gall sold§!")
+L("pww_ui_rw_imports", "§gimported§!")
+L("pww_ui_rtt_even", "Supply and use balance.")
 # bond (viewer dependent, stored on the target as var@viewer by pww_ui_views)
 L("pww_ui_dos_bond", "Trade bond: [pww_ui_sl_dos_bondw]")
 dt("pww_ui_sl_dos_bondw", [(cv("pww_ui_vb@ROOT", "=", i), f"pww_ui_dos_bondw_{i}") for i in range(REL_BANDS)],
@@ -725,10 +906,10 @@ L("pww_ui_dos_route_2", "§RNo safe route to us.§!")
 dt("pww_ui_sl_dos_route", [(cv("pww_ui_vr@ROOT", "=", i), f"pww_ui_dos_route_{i}") for i in range(3)], "pww_ui_blank")
 L("pww_ui_dos_exp_tt", "Their largest sales abroad, and how a shipment from them would reach us: delivery cost on top of the price, from distance, convoys and raiding.")
 # known agreement rows (target perspective: "they")
-L("pww_ui_dos_nag_0", "§gNo mod-tracked agreements on file.§!")
-L("pww_ui_dos_count", "§g[?pww_ui_nk_all|0] agreements on file§!")
+L("pww_ui_dos_nag_0", "§gNo long-term trade agreements with anyone.§!")
+L("pww_ui_dos_kmore", "§g...and [?pww_ui_nk_more|0] more agreements§!")
 L("pww_ui_lock_1", "§glocked§!")
-L("pww_ui_lock_0", "§gcan end§!")
+L("pww_ui_lock_0", "§gopen§!")
 L("pww_ui_dos_poach", "Poach")
 for k in range(NK):
     v = f"pww_ui_k{k}"
@@ -738,12 +919,16 @@ for k in range(NK):
         (cv(v + "_kind", ">", 0), f"pww_ui_k{k}_lease_out"),
         (cv(v + "_side", "=", 1), f"pww_ui_k{k}_buy"),
     ], f"pww_ui_k{k}_sell")
-    L(f"pww_ui_k{k}_lease_in", f"Leases [?{v}_state.GetName] from [?{v}_cp.GetNameWithFlag]")
-    L(f"pww_ui_k{k}_lease_out", f"[?{v}_state.GetName] leased to [?{v}_cp.GetNameWithFlag]")
-    L(f"pww_ui_k{k}_buy", f"Buys [?{v}_amt|0] [pww_ui_sl_k{k}_res_lc] from [?{v}_cp.GetNameWithFlag]")
-    L(f"pww_ui_k{k}_sell", f"Sells [?{v}_amt|0] [pww_ui_sl_k{k}_res_lc] to [?{v}_cp.GetNameWithFlag]")
+    L(f"pww_ui_k{k}_lease_in", f"Leases [?{v}_state.GetName] from [?{v}_cp.GetFlag] [?{v}_cp.GetName]")
+    L(f"pww_ui_k{k}_lease_out", f"[?{v}_state.GetName] leased to [?{v}_cp.GetFlag] [?{v}_cp.GetName]")
+    L(f"pww_ui_k{k}_buy", f"Buys [?{v}_amt|0] [pww_ui_sl_k{k}_res_lc] from [?{v}_cp.GetFlag] [?{v}_cp.GetName]")
+    L(f"pww_ui_k{k}_sell", f"Sells [?{v}_amt|0] [pww_ui_sl_k{k}_res_lc] to [?{v}_cp.GetFlag] [?{v}_cp.GetName]")
     dt(f"pww_ui_sl_k{k}_st", [(cv(f"{v}_st", "=", s), key) for s, key in STATUS.items()], "pww_ui_blank")
     dt(f"pww_ui_sl_k{k}_lock", [(cv(f"{v}_com", "=", 1), "pww_ui_lock_1")], "pww_ui_lock_0")
+    # leases (kind > 0) carry no lock word
+    dt(f"pww_ui_sl_k{k}_right", [(cv(f"{v}_kind", ">", 0), f"pww_ui_k{k}_right_lease")], f"pww_ui_k{k}_right")
+    L(f"pww_ui_k{k}_right", f"[pww_ui_sl_k{k}_lock]{SEP}[pww_ui_sl_k{k}_st]")
+    L(f"pww_ui_k{k}_right_lease", f"[pww_ui_sl_k{k}_st]")
     bond_dt(f"pww_ui_sl_k{k}_bondw", f"{v}_bond")
     dt(f"pww_ui_sl_k{k}_term", [(cv(v + "_open", "=", 1), "pww_ui_term_open"),
                                 (cv(v + "_com", "=", 1), f"pww_ui_k{k}_locked")], f"pww_ui_k{k}_runs")
@@ -798,9 +983,15 @@ L("pww_ui_dos_quiet", "§gNo demand or Situation stands between us.§!")
 L("pww_ui_dos_st", "[pww_ui_sl_st_line]")
 
 DOS_ROW = 18
-DOS_K = 136                          # first agreement row
+DOS_K = 172                          # first agreement row
 DOS_FLOW = {}                        # element -> offset below the last agreement row
 # the demand block sits under the last agreement row (per target: pww_ui_dossier_layout)
+DOS_BLOCK = {0: 18, 1: 72}           # demand block height: 0 quiet line, 1 demand/Situation lines
+DOS_PAD = 14                         # space under the last line
+
+
+def dos_height(rows, block):
+    return DOS_K + rows * DOS_ROW + 2 + 8 + DOS_BLOCK[block] + DOS_PAD
 
 
 def poach_cond(k):
@@ -814,33 +1005,42 @@ def poach_cond(k):
             f"OR = {{ {produces} }}")
 
 
+DOS_BG = [(rows, block) for rows in range(1, NK + 2) for block in DOS_BLOCK]
+
+
 def dossier_body():
-    b = tb("pww_ui_dos_title", 12, 8, "pww_dossier_title", 200, h=20, font=F18)
-    b += tb("pww_ui_dos_count", 200, 10, "pww_ui_dos_count", 190, fmt="right")
-    # shortages: seven equal cells, icon centred over a band word (tooltip explains)
+    # backgrounds first (drawn under everything); one per content height
+    b = "".join(icon(f"pww_ui_dos_bg_{r}_{q}", 0, 0, f"GFX_pww_ui_dos_bg_{r}_{q}", solid=True) for r, q in DOS_BG)
+    b += tb("pww_ui_dos_title", 14, 11, "pww_dossier_title", OW - 60, h=20, font=F18)
+    b += btn("pww_ui_dos_close", OW - 37, 8, "GFX_closebutton", tip="pww_ui_dos_close_tt", click="click_close")
+    # resources: seven equal cells, icon over the net figure and what becomes of it
     cw = (OW - 24) // 7
     for i, r in enumerate(RES):
         cx = 12 + i * cw
-        b += icon(f"pww_ui_dos_{r}_icon", cx + (cw - 27) // 2, 30, "GFX_resources_strip", frame=i + 1)
-        b += tb(f"pww_ui_dos_{r}_band", cx, 58, f"[pww_ui_sl_short_{r}]", cw, fmt="centre", tip="pww_ui_short_tt")
-    y = 82
-    b += tb("pww_ui_dos_imp", 12, y, "pww_ui_dos_imports", 240, tip="pww_ui_imp_tt")
-    b += tb("pww_ui_dos_bond", 256, y, "pww_ui_dos_bond", OW - 268, fmt="right", tip="pww_ui_dos_bond_tt")
-    b += tb("pww_ui_dos_rsv", 12, y + 18, "[pww_ui_sl_dos_rsv]", OW - 24, tip="pww_ui_dos_rsv_tt")
-    b += tb("pww_ui_dos_exp", 12, y + 36, "[pww_ui_sl_dos_exp]", OW - 24, tip="pww_ui_dos_exp_tt")
-    b += tb("pww_ui_dos_nag0", 12, DOS_K, "pww_ui_dos_nag_0", OW - 24)
+        tip = f"pww_ui_rs_{r}_tt"
+        b += icon(f"pww_ui_dos_{r}_icon", cx + (cw - 27) // 2, 38, "GFX_resources_strip", frame=i + 1, tip=tip)
+        b += tb(f"pww_ui_dos_{r}_net", cx, 64, f"[pww_ui_sl_rn_{r}]", cw, fmt="centre", tip=tip)
+        b += tb(f"pww_ui_dos_{r}_word", cx, 81, f"[pww_ui_sl_rw_{r}]", cw, fmt="centre", tip=tip)
+    y = 108
+    b += tb("pww_ui_dos_imp", 14, y, "pww_ui_dos_imports", 220, tip="pww_ui_imp_tt")
+    b += tb("pww_ui_dos_bond", OW - 14 - 220, y, "pww_ui_dos_bond", 220, fmt="right", tip="pww_ui_dos_bond_tt")
+    b += tb("pww_ui_dos_rsv", 14, y + 18, "[pww_ui_sl_dos_rsv]", OW - 28, tip="pww_ui_dos_rsv_tt")
+    b += tb("pww_ui_dos_exp", 14, y + 36, "[pww_ui_sl_dos_exp]", OW - 28, tip="pww_ui_dos_exp_tt")
+    b += icon("pww_ui_dos_div0", 4, DOS_K - 10, "GFX_pww_ui_divider", scale=f"{(OW - 8) / 514:.3f}")
+    b += tb("pww_ui_dos_nag0", 14, DOS_K, "pww_ui_dos_nag_0", OW - 28)
     for k in range(NK):
         yy = DOS_K + k * DOS_ROW
-        b += tb(f"pww_ui_dos_k{k}", 12, yy, f"[pww_ui_sl_k{k}]", 344, tip=f"pww_ui_k{k}_tt")
-        b += tb(f"pww_ui_dos_k{k}_lock", 360, yy, f"[pww_ui_sl_k{k}_lock]", 60, tip=f"pww_ui_k{k}_tt")
-        b += tb(f"pww_ui_dos_k{k}_st", OW - 102, yy, f"[pww_ui_sl_k{k}_st]", 90, fmt="right", tip=f"pww_ui_k{k}_tt")
-        b += btn(f"pww_ui_dos_k{k}_poach", OW - 70, yy - 1, "GFX_pww_ui_alert_row", text="pww_ui_dos_poach",
+        b += tb(f"pww_ui_dos_k{k}", 14, yy, f"[pww_ui_sl_k{k}]", OW - 28 - 150, tip=f"pww_ui_k{k}_tt")
+        b += tb(f"pww_ui_dos_k{k}_st", OW - 14 - 146, yy, f"[pww_ui_sl_k{k}_right]", 146, fmt="right",
+                tip=f"pww_ui_k{k}_tt")
+        b += btn(f"pww_ui_dos_k{k}_poach", OW - 14 - 58, yy - 1, "GFX_pww_ui_alert_row", text="pww_ui_dos_poach",
                  size=(58, 20), tip=f"pww_ui_k{k}_poach_tt", click="click_default")
     y0 = DOS_K + NK * DOS_ROW + 2      # static position (three rows)
 
     def f(name, off, s):
         DOS_FLOW[name] = off
         return s
+    b += f("pww_ui_dos_kmore", -DOS_ROW - 2, tb("pww_ui_dos_kmore", 14, y0 - DOS_ROW - 2, "pww_ui_dos_kmore", OW - 28))
     b += f("pww_ui_dos_div", 0, icon("pww_ui_dos_div", 4, y0, "GFX_pww_ui_divider", scale=f"{(OW - 8) / 514:.3f}"))
     y = y0 + 8
     # our demand (readout), their demand on us, a shared Situation
@@ -852,7 +1052,7 @@ def dossier_body():
     b += f("pww_ui_dos_pr_head", 8, tb("pww_ui_dos_pr_head", 12, y, "pww_ui_pr_head", OW - 24, h=34))
     b += f("pww_ui_dos_st", 44, tb("pww_ui_dos_st", 12, y + 36, "pww_ui_dos_st", OW - 24, h=34))
     b += f("pww_ui_dos_quiet", 8, tb("pww_ui_dos_quiet", 12, y, "pww_ui_dos_quiet", OW - 24))
-    assert y + 72 <= OH - 6, y
+    assert y + DOS_BLOCK[1] + DOS_PAD <= dos_height(NK + 1, 1), y
     return b
 
 
@@ -868,13 +1068,25 @@ gui = ["# Power Without War: UI lane layout (generated by tools/pww_ui_gen.py).\
        "# one floats when opened from the alert strip), the trade view button, the\n",
        "# alert strip on the top bar, and the Dossier inside the diplomacy tab.\n",
        "guiTypes = {\n"]
-gui.append(window("pww_ui_desk_trade", 696, 0, DW, DH, desk, bg="GFX_tiled_window_1b_border"))
-gui.append(window("pww_ui_desk_float", 683, 78, DW, DH, desk, bg="GFX_tiled_window_1b_border"))
+gui.append(window("pww_ui_desk_trade", 696, 0, DW, DESK_HS[0], desk))
+gui.append(window("pww_ui_desk_float", 683, 78, DW, DESK_HS[0], desk))
 gui.append(window("pww_ui_desk_button", 496, 6, 148, 34, desk_button_body()))
-gui.append(window("pww_ui_alerts", -710, 90, AW, NSIT * AROW, alert_body(), orientation="UPPER_RIGHT"))
-gui.append(window("pww_ui_dossier", OX, OY, OW, OH, dossier_body(), bg="GFX_tiled_window_1b_border"))
+gui.append(window("pww_ui_alerts", -710, 90, AW, (NSIT + NNA) * AROW, alert_body(), orientation="UPPER_RIGHT"))
+gui.append(window("pww_ui_dossier", OX, OY, OW, dos_height(1, 0), dossier_body()))  # smallest card: the backgrounds size the rest
 gui.append(window("pww_ui_dossier_toggle", TOGGLE[0], TOGGLE[1], 94, 31, dossier_toggle_body()))
 gui.append("}\n")
+
+# content-sized backgrounds: dossier (rows 1..NK+1, demand block), desk (height steps)
+def panel_bg(name, w, h):
+    return ("\tcorneredTileSpriteType = {\n"
+            f"\t\tname = \"{name}\"\n"
+            f"\t\tsize = {{ x = {w} y = {h} }}\n"
+            "\t\ttextureFile = \"gfx//interface//tiles//tiled_window_1b_border.dds\"\n"
+            "\t\tborderSize = { x = 64 y = 64 }\n\t\ttilingCenter = yes\n\t}\n")
+
+
+DOS_BG_GFX = ("".join(panel_bg(f"GFX_pww_ui_dos_bg_{r}_{q}", OW, dos_height(r, q)) for r, q in DOS_BG)
+              + "".join(panel_bg(f"GFX_pww_ui_desk_bg_{h}", DW, h) for h in DESK_HS))
 
 gfx = f"""# Power Without War: UI lane sprites (vanilla textures only).
 spriteTypes = {{
@@ -903,7 +1115,7 @@ spriteTypes = {{
 		borderSize = {{ x = 0 y = 0 }}
 		tilingCenter = no
 	}}
-}}
+{DOS_BG_GFX}}}
 """
 
 
@@ -929,6 +1141,8 @@ def desk_properties():
         props.setdefault(f"pww_ui_tab{t}", []).append(f"frame = ROOT.pww_ui_tabf{t}")
     for k in range(NC):
         props.setdefault(f"pww_ui_dc{k}_icon", []).append(f"frame = ROOT.pww_ui_c{k}_frame")
+    for k in range(NO):
+        props.setdefault(f"pww_ui_do{k}_icon", []).append(f"frame = ROOT.pww_ui_o{k}_frame")
     for k in range(NRS):
         props.setdefault(f"pww_ui_dr{k}_icon", []).append(f"frame = ROOT.pww_ui_r{k}_frame")
         props.setdefault(f"pww_ui_dr{k}_fill", []).append(f"x = ROOT.pww_ui_r{k}_fx")
@@ -938,18 +1152,32 @@ def desk_properties():
 
 
 def desk_effects():
+    disarm = "\t\t\t\tclear_variable = pww_ui_end_arm\n"
     close = ("\t\t\t\tclr_country_flag = pww_ui_desk_open\n\t\t\t\tclr_country_flag = pww_ui_desk_float\n"
-             "\t\t\t\tset_variable = { pww_ui_focus = -1 }\n\t\t\t\tadd_to_variable = { pww_ui_dirty = 1 }\n")
+             "\t\t\t\tset_variable = { pww_ui_focus = -1 }\n" + disarm + "\t\t\t\tadd_to_variable = { pww_ui_dirty = 1 }\n")
     e = f"\t\t\tpww_ui_desk_close_click = {{\n{close}\t\t\t}}\n"
     for t in range(len(TABS)):
-        e += (f"\t\t\tpww_ui_tab{t}_click = {{\n\t\t\t\tset_variable = {{ pww_ui_tab = {t} }}\n"
+        e += (f"\t\t\tpww_ui_tab{t}_click = {{\n\t\t\t\tset_variable = {{ pww_ui_tab = {t} }}\n{disarm}"
               f"\t\t\t\tpww_ui_refresh = yes\n\t\t\t}}\n")
     e += ("\t\t\tpww_ui_desk_pg_next_click = {\n\t\t\t\tadd_to_variable = { pww_ui_page = 1 }\n"
           "\t\t\t\tif = { limit = { NOT = { check_variable = { pww_ui_page < pww_ui_npages } } } set_variable = { pww_ui_page = 0 } }\n"
-          "\t\t\t\tpww_ui_refresh = yes\n\t\t\t}\n")
+          + disarm + "\t\t\t\tpww_ui_refresh = yes\n\t\t\t}\n")
     e += ("\t\t\tpww_ui_desk_pg_prev_click = {\n\t\t\t\tsubtract_from_variable = { pww_ui_page = 1 }\n"
           "\t\t\t\tif = { limit = { check_variable = { pww_ui_page < 0 } } set_variable = { pww_ui_page = pww_ui_npages } subtract_from_variable = { pww_ui_page = 1 } }\n"
-          "\t\t\t\tpww_ui_refresh = yes\n\t\t\t}\n")
+          + disarm + "\t\t\t\tpww_ui_refresh = yes\n\t\t\t}\n")
+    # End / Break: arm on the first click, end on the second (the player is the
+    # one ending it: a locked contract is his breach)
+    for k in range(NAG):
+        e += (f"\t\t\tpww_ui_dl{k}_end_click = {{\n"
+              f"\t\t\t\tif = {{\n\t\t\t\t\tlimit = {{ has_variable = pww_ui_end_arm check_variable = {{ pww_ui_end_arm = pww_ui_l{k}_id }} }}\n"
+              f"\t\t\t\t\tset_temp_variable = {{ pww_l_ag = pww_ui_l{k}_id }}\n"
+              f"\t\t\t\t\tset_temp_variable = {{ pww_l_by = THIS }}\n"
+              f"\t\t\t\t\tset_temp_variable = {{ pww_l_cause = 0 }}\n"
+              f"\t\t\t\t\tpww_ledger_withdraw = yes\n"
+              f"\t\t\t\t\tlog = \"[GetDateText] PWW_UI end [THIS.GetTag] agreement [?pww_ui_l{k}_id|0]\"\n"
+              f"\t\t\t\t\tclear_variable = pww_ui_end_arm\n"
+              f"\t\t\t\t}}\n\t\t\t\telse = {{\n\t\t\t\t\tset_variable = {{ pww_ui_end_arm = pww_ui_l{k}_id }}\n\t\t\t\t}}\n"
+              f"\t\t\t\tpww_ui_refresh = yes\n\t\t\t}}\n")
     return e
 
 
@@ -985,6 +1213,7 @@ sg.append("""	pww_ui_desk_button_gui = {
 				}
 				else = {
 					set_country_flag = pww_ui_desk_open
+					set_variable = { pww_ui_news_ack = global.num_days }
 					pww_ui_refresh = yes
 				}
 				add_to_variable = { pww_ui_dirty = 1 }
@@ -1001,32 +1230,46 @@ al_fx = "".join(
 al_tr = "".join(
     f"\t\t\tpww_ui_al{k}_{e}_visible = {{ check_variable = {{ pww_ui_ns > {k} }} }}\n"
     for k in range(NSIT) for e in ("btn", "txt", "date"))
+al_tr += "".join(f"\t\t\tpww_ui_na{r}_{e}_visible = {{ check_variable = {{ pww_ui_nfresh > {r} }} }}\n"
+                 for r in range(NNA) for e in ("btn", "txt"))
+NEWS_ACK = "\t\t\t\tset_variable = { pww_ui_news_ack = global.num_days }\n"
+al_fx += "".join(f"\t\t\tpww_ui_na{r}_btn_click = {{\n\t\t\t\tclr_country_flag = pww_ui_desk_open\n"
+                 f"\t\t\t\tset_country_flag = pww_ui_desk_float\n\t\t\t\tset_variable = {{ pww_ui_tab = 0 }}\n"
+                 f"{NEWS_ACK}\t\t\t\tpww_ui_refresh = yes\n\t\t\t}}\n" for r in range(NNA))
+al_props = "".join(f"\t\t\tpww_ui_na{r}_{e} = {{ y = ROOT.pww_uy_na{r}{'_t' if e == 'txt' else ''} }}\n"
+                   for r in range(NNA) for e in ("btn", "txt"))
 sg.append(f"""	pww_ui_alerts_gui = {{
 		context_type = player_context
 		window_name = "pww_ui_alerts"
 		parent_window_token = top_bar
-		visible = {{ check_variable = {{ pww_ui_ns > 0 }} }}
+		visible = {{ OR = {{ check_variable = {{ pww_ui_ns > 0 }} check_variable = {{ pww_ui_nfresh > 0 }} }} }}
 		dirty = pww_ui_dirty
 		effects = {{
 {al_fx}		}}
 		triggers = {{
 {al_tr}		}}
+		properties = {{
+{al_props}		}}
 		ai_enabled = {{ always = no }}
 	}}
 """)
 foreign = "NOT = { tag = ROOT } ROOT = { is_ai = no }"
 dos_tr = ["\t\t\tpww_ui_dos_nag0_visible = { check_variable = { pww_ui_nk = 0 } }\n",
-          "\t\t\tpww_ui_dos_count_visible = { check_variable = { pww_ui_nk_all > 1 } }\n"]
+          "\t\t\tpww_ui_dos_kmore_visible = { check_variable = { pww_ui_nk_more > 0 } }\n"]
 for k in range(NK):
     on = f"check_variable = {{ pww_ui_nk > {k} }}"
     # NOT with several children is NOR in Paradox script: wrap the conjunction in AND
     dos_tr += [f"\t\t\tpww_ui_dos_k{k}_visible = {{ {on} }}\n",
-               f"\t\t\tpww_ui_dos_k{k}_lock_visible = {{ {on} check_variable = {{ pww_ui_k{k}_kind = 0 }} }}\n",
                f"\t\t\tpww_ui_dos_k{k}_st_visible = {{ {on} NOT = {{ AND = {{ {poach_cond(k)} }} }} }}\n",
                f"\t\t\tpww_ui_dos_k{k}_poach_visible = {{ {poach_cond(k)} }}\n"]
 rd = "check_variable = { pww_ui_rd_viewer = ROOT }"
 pr = "check_variable = { pww_ui_pr_viewer = ROOT }"
 st = "check_variable = { pww_ui_st_viewer = ROOT }"
+# background by content height: rows (pww_ui_dos_rows, layout) and block (viewer)
+quiet = f"NOT = {{ {rd} }} NOT = {{ {pr} }} NOT = {{ {st} }}"
+for r, q in DOS_BG:
+    blk = quiet if q == 0 else f"OR = {{ {rd} {pr} {st} }}"
+    dos_tr.append(f"\t\t\tpww_ui_dos_bg_{r}_{q}_visible = {{ {cv('pww_ui_dos_rows', '=', r)} {blk} }}\n")
 for e in ("head", "for", "hold", "more"):
     dos_tr.append(f"\t\t\tpww_ui_dos_rd_{e}_visible = {{ {rd} }}\n")
 dos_tr.append(f"\t\t\tpww_ui_dos_pr_head_visible = {{ {pr} NOT = {{ {rd} }} }}\n")
@@ -1046,6 +1289,12 @@ dos_fx = "".join(
     f"\t\t\t\t\tclr_country_flag = pww_ui_dos_open\n\t\t\t\t\tadd_to_variable = {{ pww_ui_dirty = 1 }}\n\t\t\t\t}}\n"
     f"\t\t\t\tadd_to_variable = {{ pww_ui_dirty = 1 }}\n"   # the toggle's label reads its dirty on the target
     f"\t\t\t}}\n" for k in range(NK))
+# The diplomacy-context GUIs read their dirty variable on THIS (the target):
+# every click that changes what they show bumps it there as well as on ROOT,
+# or the window keeps its old state (the close button "did nothing").
+dos_close = ("\t\t\t\tROOT = {\n\t\t\t\t\tclr_country_flag = pww_ui_dos_open\n"
+             "\t\t\t\t\tadd_to_variable = { pww_ui_dirty = 1 }\n\t\t\t\t}\n"
+             "\t\t\t\tadd_to_variable = { pww_ui_dirty = 1 }\n")
 sg.append(f"""	pww_ui_dossier_gui = {{
 		context_type = diplomacy_target_context
 		window_name = "pww_ui_dossier"
@@ -1053,6 +1302,8 @@ sg.append(f"""	pww_ui_dossier_gui = {{
 		visible = {{ {foreign} ROOT = {{ has_country_flag = pww_ui_dos_open }} }}
 		dirty = pww_ui_dirty
 		effects = {{
+			pww_ui_dos_close_click = {{
+{dos_close}			}}
 {dos_fx}		}}
 		triggers = {{
 {''.join(dos_tr)}		}}
@@ -1068,14 +1319,15 @@ sg.append(f"""	pww_ui_dossier_gui = {{
 		dirty = pww_ui_dirty
 		effects = {{
 			pww_ui_dos_toggle_click = {{
-				ROOT = {{
-					if = {{
-						limit = {{ has_country_flag = pww_ui_dos_open }}
-						clr_country_flag = pww_ui_dos_open
-					}}
-					else = {{
+				if = {{
+					limit = {{ ROOT = {{ has_country_flag = pww_ui_dos_open }} }}
+{dos_close}				}}
+				else = {{
+					pww_ui_country_summary = yes
+					ROOT = {{
 						set_country_flag = pww_ui_dos_open
 						pww_ui_refresh = yes
+						add_to_variable = {{ pww_ui_dirty = 1 }}
 					}}
 					add_to_variable = {{ pww_ui_dirty = 1 }}
 				}}
@@ -1099,7 +1351,7 @@ SIT_F = ["id", "seat", "tmpl", "res", "days", "phase", "tstate", "pledge", "dev"
 AG_F = ["id", "st", "kind", "res", "amt", "side", "cp", "state", "civ", "pay", "wepay", "end", "open", "com", "bond",
         "route", "dsh"]
 CART_F = ["id", "res", "frame", "status", "anchor", "pct", "cb", "n", "nm", "leader", "me", "quota", "sold", "room",
-          "over", "sb", "conf"] + [f"m{j}" for j in range(NM)]
+          "over", "sb", "conf", "short"] + [f"m{j}" for j in range(NM)]
 
 
 def store(name, prefix, n, slotvar, fields, extra=""):
@@ -1118,6 +1370,84 @@ fx.append(store("pww_ui_store_sit_slot", "pww_ui_s", NSIT, "pww_ui_ns", SIT_F))
 fx.append(store("pww_ui_store_ag_slot", "pww_ui_l", NAG, "pww_ui_lslot", AG_F, "\t\tset_variable = { pww_ui_l{k}_on = 1 }\n"))
 fx.append(store("pww_ui_store_k_slot", "pww_ui_k", NK, "pww_ui_nk", AG_F))
 fx.append(store("pww_ui_store_cart_slot", "pww_ui_c", NC, "pww_ui_nc", CART_F))
+
+NEWS_F = ["nk", "res", "amt", "cp", "side", "civ", "pay", "wepay", "kind", "state", "end", "com", "date", "day"]
+nf = ["# Viewer scope. In temps pww_ui_t_* (pww_ui_load_ag) plus pww_ui_t_nk, _date,\n",
+      "# _day. Shifts the news slots down one and writes slot 0 (newest first).\n",
+      "pww_ui_news_insert = {\n"]
+for j in range(NN - 1, 0, -1):
+    nf += [f"\tset_variable = {{ pww_ui_n{j}_{f_} = pww_ui_n{j - 1}_{f_} }}\n" for f_ in NEWS_F]
+nf += [f"\tset_variable = {{ pww_ui_n0_{f_} = pww_ui_t_{f_} }}\n" for f_ in NEWS_F]
+nf.append(f"\tadd_to_variable = {{ pww_ui_nn = 1 }}\n\tclamp_variable = {{ var = pww_ui_nn min = 0 max = {NN} }}\n}}\n\n")
+nf.append("# Viewer scope. pww_ui_nfresh = news rows newer than the last look at the desk\n"
+          "# (pww_ui_news_ack) and at most ten days old (newest first, so a prefix);\n"
+          "# pww_uy_na<r> places the alert rows under the situation rows.\npww_ui_news_fresh = {\n"
+          "\tset_variable = { pww_ui_nfresh = 0 }\n\tset_temp_variable = { pww_ui_old = global.num_days }\n"
+          "\tsubtract_from_temp_variable = { pww_ui_old = 10 }\n")
+for j in range(NNA):
+    prev = "" if j == 0 else f" check_variable = {{ pww_ui_nfresh = {j} }}"
+    nf.append(f"\tif = {{\n\t\tlimit = {{ check_variable = {{ pww_ui_nn > {j} }}{prev} "
+              f"check_variable = {{ pww_ui_n{j}_day > pww_ui_news_ack }} check_variable = {{ pww_ui_n{j}_day > pww_ui_old }} }}\n"
+              f"\t\tadd_to_variable = {{ pww_ui_nfresh = 1 }}\n\t}}\n")
+for r in range(NNA):
+    nf.append(f"\tset_variable = {{ pww_uy_na{r} = pww_ui_ns }}\n\tadd_to_variable = {{ pww_uy_na{r} = {r} }}\n"
+              f"\tmultiply_variable = {{ pww_uy_na{r} = {AROW} }}\n"
+              f"\tset_variable = {{ pww_uy_na{r}_t = pww_uy_na{r} }}\n\tadd_to_variable = {{ pww_uy_na{r}_t = 4 }}\n")
+nf.append("}\n\n")
+fx.extend(nf)
+OPP_F = ["res", "kind", "amt", "c1", "a1", "c2", "a2", "n"]
+fx.append(store("pww_ui_store_opp_slot", "pww_ui_o", NO, "pww_ui_no", OPP_F,
+                "\t\tset_variable = { pww_ui_o{k}_frame = pww_ui_t_res }\n"
+                "\t\tadd_to_variable = { pww_ui_o{k}_frame = 1 }\n"))
+
+# Viewer scope. Opportunities: resources we are short of (with the two
+# countries holding the most unsold output) first, then our own unsold output
+# (with the two countries importing most of it). Oil surplus is left out: spare oil
+# becomes fuel. Countries at war with us are skipped.
+opp = ["# Viewer scope. Opportunities slots pww_ui_o<k>_* (see the loc header); count pww_ui_no.\n",
+       "pww_ui_load_opps = {\n\tset_variable = { pww_ui_no = 0 }\n"]
+for kind, idx in ((0, range(len(RES))), (1, SRES)):
+    for i_ in idx:
+        r = RES[i_]
+        mine = f"check_variable = {{ resource@{r} < -0.5 }}" if kind == 0 else f"check_variable = {{ resource@{r} > 4.999 }}"
+        if kind == 0:
+            # sellers: output nobody buys (positive balance)
+            scan = (f"\t\tevery_country = {{\n\t\t\tlimit = {{ exists = yes NOT = {{ tag = PREV }} NOT = {{ has_war_with = PREV }} "
+                    f"check_variable = {{ resource@{r} > 0.999 }} }}\n"
+                    f"\t\t\tset_temp_variable = {{ pww_ui_t_v = resource@{r} }}\n\t\t\tpww_ui_opp_insert = yes\n\t\t}}\n")
+        else:
+            # buyers: what they import plus any shortfall left (AI countries cover
+            # their gaps with vanilla imports, so a negative balance is rare)
+            scan = (f"\t\tevery_country = {{\n\t\t\tlimit = {{ exists = yes NOT = {{ tag = PREV }} NOT = {{ has_war_with = PREV }} }}\n"
+                    f"\t\t\tset_temp_variable = {{ pww_ui_t_v = resource_imported@{r} }}\n"
+                    f"\t\t\tif = {{ limit = {{ check_variable = {{ resource@{r} < 0 }} }} subtract_from_temp_variable = {{ pww_ui_t_v = resource@{r} }} }}\n"
+                    f"\t\t\tif = {{ limit = {{ check_variable = {{ pww_ui_t_v > 0.999 }} }} pww_ui_opp_insert = yes }}\n\t\t}}\n")
+        opp.append(
+            f"\tif = {{\n\t\tlimit = {{ check_variable = {{ pww_ui_no < {NO} }} {mine} }}\n"
+            f"\t\tset_temp_variable = {{ pww_ui_t_res = {i_} }}\n"
+            f"\t\tset_temp_variable = {{ pww_ui_t_kind = {kind} }}\n"
+            f"\t\tset_temp_variable = {{ pww_ui_t_amt = resource@{r} }}\n"
+            + ("\t\tmultiply_temp_variable = { pww_ui_t_amt = -1 }\n" if kind == 0 else "")
+            + "\t\tpww_ui_opp_clear = yes\n" + scan
+            + "\t\tpww_ui_store_opp_slot = yes\n\t\tadd_to_variable = { pww_ui_no = 1 }\n\t}\n")
+opp.append("}\n\n")
+opp.append("pww_ui_opp_clear = {\n\tset_temp_variable = { pww_ui_t_n = 0 }\n"
+           "\tset_temp_variable = { pww_ui_t_a1 = 0 }\n\tset_temp_variable = { pww_ui_t_a2 = 0 }\n"
+           "\tset_temp_variable = { pww_ui_t_c1 = 0 }\n\tset_temp_variable = { pww_ui_t_c2 = 0 }\n}\n\n")
+opp.append("# Country scope (a candidate). In temp pww_ui_t_v; keeps the top two in\n"
+           "# pww_ui_t_c1/_a1 and _c2/_a2, count in pww_ui_t_n (max 2).\npww_ui_opp_insert = {\n"
+           "\tif = {\n\t\tlimit = { check_variable = { pww_ui_t_v > pww_ui_t_a1 } }\n"
+           "\t\tset_temp_variable = { pww_ui_t_c2 = pww_ui_t_c1 }\n\t\tset_temp_variable = { pww_ui_t_a2 = pww_ui_t_a1 }\n"
+           "\t\tset_temp_variable = { pww_ui_t_c1 = THIS }\n\t\tset_temp_variable = { pww_ui_t_a1 = pww_ui_t_v }\n\t}\n"
+           "\telse_if = {\n\t\tlimit = { check_variable = { pww_ui_t_v > pww_ui_t_a2 } }\n"
+           "\t\tset_temp_variable = { pww_ui_t_c2 = THIS }\n\t\tset_temp_variable = { pww_ui_t_a2 = pww_ui_t_v }\n\t}\n"
+           "\tif = { limit = { check_variable = { pww_ui_t_n < 2 } } add_to_temp_variable = { pww_ui_t_n = 1 } }\n}\n\n")
+opp.append("# Country scope. In temp pww_ui_t_res (1..6). Out pww_ui_t_prod (1 = we produce it).\n"
+           "pww_ui_produces = {\n\tset_temp_variable = { pww_ui_t_prod = 0 }\n"
+           + "".join(f"\tif = {{ limit = {{ check_variable = {{ pww_ui_t_res = {i_} }} pww_core_produces_{RES[i_]} = yes }} "
+                     f"set_temp_variable = {{ pww_ui_t_prod = 1 }} }}\n" for i_ in SRES) + "}\n\n")
+fx.extend(opp)
+
 fx.append("pww_ui_clear_ag_slots = {\n" + "".join(f"\tset_variable = {{ pww_ui_l{k}_on = 0 }}\n" for k in range(NAG)) + "}\n\n")
 RD = ["dem", "state", "prev", "cause", "cause_side", "for0", "for1", "for2", "for3", "hold0", "hold1", "hold2",
       "hold3", "nfor", "nhold", "reveal", "warn", "intel", "cred_band", "alarm_band"]
@@ -1245,6 +1575,14 @@ lay = ["# Viewer scope. Overview tab layout: sections stack from the content top
        "\tif = {\n\t\tlimit = { check_variable = { pww_ui_ns > 0 } }\n",
        f"\t\tset_temp_variable = {{ pww_ui_yh = pww_ui_ns }}\n\t\tmultiply_temp_variable = {{ pww_ui_yh = {SIT_ROW} }}\n",
        f"\t\tadd_to_temp_variable = {{ pww_ui_yh = {HDR + GAP} }}\n\t\tadd_to_temp_variable = {{ pww_ui_yy = pww_ui_yh }}\n\t}}\n",
+       "\tset_temp_variable = { pww_ui_yb_news = pww_ui_yy }\n",
+       "\tif = {\n\t\tlimit = { check_variable = { pww_ui_nn > 0 } }\n",
+       f"\t\tset_temp_variable = {{ pww_ui_yh = pww_ui_nn }}\n\t\tmultiply_temp_variable = {{ pww_ui_yh = {NEWS_ROW} }}\n",
+       f"\t\tadd_to_temp_variable = {{ pww_ui_yh = {HDR + GAP} }}\n\t\tadd_to_temp_variable = {{ pww_ui_yy = pww_ui_yh }}\n\t}}\n",
+       "\tset_temp_variable = { pww_ui_yb_opp = pww_ui_yy }\n",
+       "\tif = {\n\t\tlimit = { check_variable = { pww_ui_no > 0 } }\n",
+       f"\t\tset_temp_variable = {{ pww_ui_yh = pww_ui_no }}\n\t\tmultiply_temp_variable = {{ pww_ui_yh = {OPP_ROW} }}\n",
+       f"\t\tadd_to_temp_variable = {{ pww_ui_yh = {HDR + GAP} }}\n\t\tadd_to_temp_variable = {{ pww_ui_yy = pww_ui_yh }}\n\t}}\n",
        "\tset_temp_variable = { pww_ui_yb_cart = pww_ui_yy }\n",
        "\tif = {\n\t\tlimit = { check_variable = { pww_ui_nc > 0 } }\n",
        f"\t\tset_temp_variable = {{ pww_ui_yh = pww_ui_nc }}\n\t\tmultiply_temp_variable = {{ pww_ui_yh = {CART_ROW} }}\n",
@@ -1258,18 +1596,45 @@ for name, (sec, off) in FLOW.items():
     lay.append(f"\tset_variable = {{ {uy(name)} = pww_ui_yb_{sec} }}\n")
     if off:
         lay.append(f"\tadd_to_variable = {{ {uy(name)} = {off} }}\n")
+# desk height: the open tab's last line plus a margin, rounded up to a step
+PAD = 16
+lay.append("\t# desk height for the open tab (pww_ui_desk_h, one of the background steps)\n"
+           "\tif = {\n\t\tlimit = { check_variable = { pww_ui_tab = 1 } }\n"
+           "\t\tset_temp_variable = { pww_ui_rows = 0 }\n"
+           + "".join(f"\t\tif = {{ limit = {{ check_variable = {{ pww_ui_l{k}_on = 1 }} }} add_to_temp_variable = {{ pww_ui_rows = 1 }} }}\n"
+                     for k in range(NAG))
+           + f"\t\tset_temp_variable = {{ pww_ui_need = pww_ui_rows }}\n"
+           f"\t\tmultiply_temp_variable = {{ pww_ui_need = {LED_ROW} }}\n"
+           f"\t\tadd_to_temp_variable = {{ pww_ui_need = {LED_Y + PAD} }}\n"
+           f"\t\tif = {{ limit = {{ check_variable = {{ pww_ui_rows = 0 }} }} set_temp_variable = {{ pww_ui_need = {LED_Y + 40 + PAD} }} }}\n"
+           "\t}\n"
+           "\telse_if = {\n\t\tlimit = { check_variable = { pww_ui_tab = 2 } }\n"
+           f"\t\tset_temp_variable = {{ pww_ui_need = pww_ui_yb_rsv }}\n"
+           f"\t\tadd_to_temp_variable = {{ pww_ui_need = {36 + PAD} }}\n"
+           "\t}\n"
+           "\telse = {\n"
+           "\t\tset_temp_variable = { pww_ui_need = pww_ui_yb_mkt }\n"
+           f"\t\tadd_to_temp_variable = {{ pww_ui_need = {26 + 7 * MKT_ROW + PAD} }}\n"
+           f"\t\tif = {{ limit = {{ NOT = {{ has_global_flag = pww_ui_mkt_ready }} }} set_temp_variable = {{ pww_ui_need = pww_ui_yb_mkt }} add_to_temp_variable = {{ pww_ui_need = {28 + 36 + PAD} }} }}\n"
+           "\t}\n"
+           f"\tset_variable = {{ pww_ui_desk_h = {DESK_HS[-1]} }}\n")
+for h in reversed(DESK_HS[:-1]):
+    lay.append(f"\tif = {{ limit = {{ NOT = {{ check_variable = {{ pww_ui_need > {h} }} }} }} set_variable = {{ pww_ui_desk_h = {h} }} }}\n")
 lay.append("}\n\n")
 fx.extend(lay)
 fx.append("# Country scope (a dossier target, viewer independent). The demand block\n"
-          "# sits under the last agreement row (one row when there are none).\n"
+          "# sits under the last agreement row (one row when there are none, plus the\n"
+          "# '...and N more' row). pww_ui_dos_rows picks the background height.\n"
           "pww_ui_dossier_layout = {\n"
-          "\tset_temp_variable = { pww_ui_yd = pww_ui_nk }\n"
-          "\tif = { limit = { check_variable = { pww_ui_yd < 1 } } set_temp_variable = { pww_ui_yd = 1 } }\n"
+          "\tset_variable = { pww_ui_dos_rows = pww_ui_nk }\n"
+          "\tif = { limit = { check_variable = { pww_ui_dos_rows < 1 } } set_variable = { pww_ui_dos_rows = 1 } }\n"
+          "\tif = { limit = { check_variable = { pww_ui_nk_more > 0 } } add_to_variable = { pww_ui_dos_rows = 1 } }\n"
+          "\tset_temp_variable = { pww_ui_yd = pww_ui_dos_rows }\n"
           f"\tmultiply_temp_variable = {{ pww_ui_yd = {DOS_ROW} }}\n"
           f"\tadd_to_temp_variable = {{ pww_ui_yd = {DOS_K + 2} }}\n"
           + "".join(f"\tset_variable = {{ {uy(n)} = pww_ui_yd }}\n" + (f"\tadd_to_variable = {{ {uy(n)} = {o} }}\n" if o else "")
                     for n, o in DOS_FLOW.items()) + "}\n\n")
-worst = CY + HDR + NSIT * SIT_ROW + GAP + HDR + NC * CART_ROW + GAP + 26 + 7 * MKT_ROW
+worst = CY + HDR + NSIT * SIT_ROW + GAP + HDR + NN * NEWS_ROW + GAP + HDR + NO * OPP_ROW + GAP + HDR + NC * CART_ROW + GAP + 26 + 7 * MKT_ROW
 assert worst <= DH - 8, worst
 
 # market report, one block per resource
@@ -1365,6 +1730,35 @@ for i, r in enumerate(RES):
 """)
 mk.append("}\n\n")
 fx.extend(mk)
+res_lines = ["# Country scope (a dossier target, viewer independent). Per resource r, daily\n",
+             "# units: pww_ui_rs_<r>_prod / _imp / _exp / _bal (balance: + unsold, - short),\n",
+             "# _use (prod + imp - exp - bal), _net (bal + exp - imp: spare before any\n",
+             "# trade), _short (-bal when short, else 0).\npww_ui_country_res_lines = {\n"]
+for r in RES:
+    v = f"pww_ui_rs_{r}"
+    res_lines.append(f"""	set_variable = {{ {v}_prod = resource_produced@{r} }}
+	set_variable = {{ {v}_imp = resource_imported@{r} }}
+	set_variable = {{ {v}_exp = resource_exported@{r} }}
+	set_variable = {{ {v}_bal = resource@{r} }}
+	set_variable = {{ {v}_use = {v}_prod }}
+	add_to_variable = {{ {v}_use = {v}_imp }}
+	subtract_from_variable = {{ {v}_use = {v}_exp }}
+	subtract_from_variable = {{ {v}_use = {v}_bal }}
+	set_variable = {{ {v}_net = {v}_bal }}
+	add_to_variable = {{ {v}_net = {v}_exp }}
+	subtract_from_variable = {{ {v}_net = {v}_imp }}
+	set_variable = {{ {v}_short = 0 }}
+	if = {{ limit = {{ check_variable = {{ {v}_bal < 0 }} }} subtract_from_variable = {{ {v}_short = {v}_bal }} }}
+	# what an importer holds over is what it bought, not output it could sell:
+	# unsold counts only output beyond its own use (bal capped at net)
+	if = {{
+		limit = {{ check_variable = {{ {v}_bal > {v}_net }} }}
+		set_variable = {{ {v}_bal = {v}_net }}
+		if = {{ limit = {{ check_variable = {{ {v}_bal < 0 }} }} set_variable = {{ {v}_bal = 0 }} }}
+	}}
+""")
+res_lines.append("}\n\n")
+fx.extend(res_lines)
 fx.append("# Country scope: temps pww_ui_imp (units imported) and pww_ui_con (units\n"
           "# consumed) summed over the seven resources.\npww_ui_import_sums = {\n"
           "\tset_temp_variable = { pww_ui_imp = 0 }\n\tset_temp_variable = { pww_ui_con = 0 }\n"

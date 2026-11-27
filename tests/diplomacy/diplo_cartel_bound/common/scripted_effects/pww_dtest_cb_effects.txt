@@ -1,0 +1,47 @@
+# Diplomacy test helpers (diplo_cartel_bound): GER (the player) proposes to
+# buy rubber from British Malaya, a member of the rubber agreement. Scored by
+# the same evaluation the target's ai_acceptance reads (pww_do_e_*).
+
+# GER scope. in: pww_dtcb_u (rubber a day from Malaya), pww_dtcb_civ (our
+# civilian factories), pww_dtcb_pp (our political power a day, 0 = none).
+# One year, either side may end it. The hidden reserve is set to its
+# minimum (2) and the frozen relations to 0 so only the cartel decides.
+pww_dtcb_draft = {
+	MAL = { set_temp_variable = { pww_dk_target = THIS } }
+	set_temp_variable = { pww_dk_act = 0 }
+	pww_diplo_offer_begin = yes
+	pww_diplo_bundle_clear = yes
+	set_variable = { pww_do_len = 1 }
+	set_variable = { pww_do_bind = 0 }
+	set_temp_variable = { pww_dba_side = 1 }
+	set_temp_variable = { pww_dba_kind = 3 }
+	set_temp_variable = { pww_dba_x = 2 }
+	pww_diplo_bundle_add = yes
+	set_variable = { pww_dob_a^pww_dba_new = pww_dtcb_u }
+	set_temp_variable = { pww_dba_side = 0 }
+	set_temp_variable = { pww_dba_kind = 1 }
+	set_temp_variable = { pww_dba_x = 0 }
+	pww_diplo_bundle_add = yes
+	set_variable = { pww_dob_a^pww_dba_new = pww_dtcb_civ }
+	if = {
+		limit = { check_variable = { pww_dtcb_pp > 0 } }
+		set_temp_variable = { pww_dba_side = 0 }
+		set_temp_variable = { pww_dba_kind = 2 }
+		set_temp_variable = { pww_dba_x = 0 }
+		pww_diplo_bundle_add = yes
+		set_variable = { pww_dob_a^pww_dba_new = pww_dtcb_pp }
+	}
+	pww_diplo_offer_changed = yes
+	set_temp_variable = { pww_dtcb_t = pww_do_talk }
+	set_variable = { global.pww_dt_reserve^pww_dtcb_t = 2 }
+	set_variable = { global.pww_dt_rel^pww_dtcb_t = 0 }
+	set_variable = { global.pww_dt_last_sig^pww_dtcb_t = -1 }
+	pww_diplo_offer_changed = yes
+	set_temp_variable = { pww_dtcb_rest = pww_do_e_total }
+	subtract_from_temp_variable = { pww_dtcb_rest = pww_do_e_cartel }
+}
+
+# GER scope. Logs the current draft.
+pww_dtcb_log = {
+	log = "PWW_RESULT diplo_cartel_bound.values INFO case [?pww_dtcb_case] units=[?pww_dtcb_u|0] civ=[?pww_dtcb_civ|0] pp=[?pww_dtcb_pp|3] cartel price=[?pww_dtcb_cp|2] cartfail=[?pww_do_cartfail|0] res=[?pww_do_cart_res|0] upf=[?pww_do_cart_upf|1] room=[?pww_do_cart_room|0] m0=[?pww_do_mk_m0|3] m1=[?pww_do_mk_m1|3] terms=[?pww_do_e_terms|0] fair=[?pww_do_e_fair|0] reserve=[?pww_do_e_reserve|0] lock=[?pww_do_e_lock|0] red=[?pww_do_e_red|0] cartel=[?pww_do_e_cartel|0] total=[?pww_do_e_total|0] without the agreement=[?pww_dtcb_rest|0] valid=[?pww_do_valid|0] ok=[?pww_do_ok|0]"
+}

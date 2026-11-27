@@ -1,0 +1,184 @@
+# Ending agreements from the Deals tab (tests/ui/ui_end), GER player.
+#   python tools/run_hoi4.py --tag GER --test tests/ui/ui_end
+# The Deals tab End button runs (generated, pww_ui_guis.txt): first click sets
+# pww_ui_end_arm = the row's ledger id, second click calls pww_ledger_withdraw
+# with pww_l_by = the player. Script cannot click, so this replays the same
+# two steps on the refreshed slots and checks the outcome.
+#   day 1  SWE->GER steel (locked, 2 civs, 730 days), GER->ITA coal (open, 1 civ)
+#   day 3  End the open deal: terminated (status 4), our reliability unchanged
+#   day 4  Break the locked deal: defaulted (status 5), our reliability falls,
+#          the Deals tab no longer lists either
+#   day 6  Dossier resource lines for FRA (identity use = prod + imp - exp - bal)
+
+pww_uiend_ag = {
+	set_temp_variable = { pww_l_kind = 0 }
+	set_temp_variable = { pww_l_state = 0 }
+	set_temp_variable = { pww_l_pp = 0 }
+	set_temp_variable = { pww_l_cond = 0 }
+	set_temp_variable = { pww_l_activate = 1 }
+	pww_ledger_create_agreement = yes
+}
+
+pww_uiend_setup = {
+	pww_core_init = yes
+	pww_ledger_init = yes
+	SWE = { set_temp_variable = { pww_l_seller = THIS } }
+	GER = { set_temp_variable = { pww_l_buyer = THIS } }
+	set_temp_variable = { pww_l_res = 4 }
+	set_temp_variable = { pww_l_amount = 8 }
+	set_temp_variable = { pww_l_committal = 1 }
+	set_temp_variable = { pww_l_term_days = 730 }
+	set_temp_variable = { pww_l_civ = 2 }
+	pww_uiend_ag = yes
+	set_variable = { global.pww_uiend_locked = pww_l_new_id }
+
+	GER = { set_temp_variable = { pww_l_seller = THIS } }
+	ITA = { set_temp_variable = { pww_l_buyer = THIS } }
+	set_temp_variable = { pww_l_res = 6 }
+	set_temp_variable = { pww_l_amount = 10 }
+	set_temp_variable = { pww_l_committal = 0 }
+	set_temp_variable = { pww_l_term_days = 365 }
+	set_temp_variable = { pww_l_civ = 1 }
+	pww_uiend_ag = yes
+	set_variable = { global.pww_uiend_open = pww_l_new_id }
+	log = "PWW_RESULT ui_end.setup INFO locked=[?global.pww_uiend_locked|0] open=[?global.pww_uiend_open|0]"
+}
+
+# GER scope. In temp pww_uiend_id. Replays the two clicks on whichever Deals
+# slot holds that agreement; out temp pww_uiend_hit (1 = a slot held it).
+pww_uiend_click_twice = {
+	pww_ui_refresh = yes
+	set_temp_variable = { pww_uiend_hit = 0 }
+	set_temp_variable = { pww_uiend_slot = -1 }
+	if = { limit = { check_variable = { pww_ui_l0_on = 1 } check_variable = { pww_ui_l0_id = pww_uiend_id } } set_temp_variable = { pww_uiend_slot = 0 } }
+	if = { limit = { check_variable = { pww_ui_l1_on = 1 } check_variable = { pww_ui_l1_id = pww_uiend_id } } set_temp_variable = { pww_uiend_slot = 1 } }
+	if = { limit = { check_variable = { pww_ui_l2_on = 1 } check_variable = { pww_ui_l2_id = pww_uiend_id } } set_temp_variable = { pww_uiend_slot = 2 } }
+	if = {
+		limit = { check_variable = { pww_uiend_slot > -1 } }
+		set_temp_variable = { pww_uiend_hit = 1 }
+		# first click: arm
+		set_variable = { pww_ui_end_arm = pww_uiend_id }
+		# second click: confirm
+		if = {
+			limit = { has_variable = pww_ui_end_arm check_variable = { pww_ui_end_arm = pww_uiend_id } }
+			set_temp_variable = { pww_l_ag = pww_uiend_id }
+			set_temp_variable = { pww_l_by = THIS }
+			set_temp_variable = { pww_l_cause = 0 }
+			pww_ledger_withdraw = yes
+			clear_variable = pww_ui_end_arm
+		}
+		pww_ui_refresh = yes
+	}
+}
+
+pww_uiend_end_open = {
+	GER = {
+		set_temp_variable = { pww_uiend_rel0 = pww_reliability }
+		set_temp_variable = { pww_uiend_id = global.pww_uiend_open }
+		pww_uiend_click_twice = yes
+		set_temp_variable = { pww_uiend_st = global.pww_ag_status^pww_uiend_id }
+		if = {
+			limit = {
+				check_variable = { pww_uiend_hit = 1 }
+				check_variable = { pww_uiend_st = 4 }
+				NOT = { check_variable = { pww_reliability < pww_uiend_rel0 } }
+				NOT = { has_variable = pww_ui_end_arm }
+			}
+			log = "PWW_RESULT ui_end.open_ends_cleanly PASS status=[?pww_uiend_st|0] reliability [?pww_uiend_rel0|1] -> [?pww_reliability|1]"
+		}
+		else = {
+			log = "PWW_RESULT ui_end.open_ends_cleanly FAIL hit=[?pww_uiend_hit|0] status=[?pww_uiend_st|0] reliability [?pww_uiend_rel0|1] -> [?pww_reliability|1]"
+		}
+	}
+}
+
+pww_uiend_break_locked = {
+	GER = {
+		set_temp_variable = { pww_uiend_rel0 = pww_reliability }
+		set_temp_variable = { pww_uiend_id = global.pww_uiend_locked }
+		pww_uiend_click_twice = yes
+		set_temp_variable = { pww_uiend_st = global.pww_ag_status^pww_uiend_id }
+		if = {
+			limit = {
+				check_variable = { pww_uiend_hit = 1 }
+				check_variable = { pww_uiend_st = 5 }
+				check_variable = { pww_reliability < pww_uiend_rel0 }
+			}
+			log = "PWW_RESULT ui_end.locked_is_breach PASS status=[?pww_uiend_st|0] reliability [?pww_uiend_rel0|1] -> [?pww_reliability|1]"
+		}
+		else = {
+			log = "PWW_RESULT ui_end.locked_is_breach FAIL hit=[?pww_uiend_hit|0] status=[?pww_uiend_st|0] reliability [?pww_uiend_rel0|1] -> [?pww_reliability|1]"
+		}
+		if = {
+			limit = { check_variable = { pww_ui_nag = 0 } }
+			log = "PWW_RESULT ui_end.deals_tab_cleared PASS"
+		}
+		else = {
+			log = "PWW_RESULT ui_end.deals_tab_cleared FAIL nag=[?pww_ui_nag|0]"
+		}
+	}
+}
+
+pww_uiend_dossier = {
+	FRA = {
+		pww_ui_country_summary = yes
+		set_temp_variable = { pww_uiend_chk = pww_ui_rs_rubber_prod }
+		add_to_temp_variable = { pww_uiend_chk = pww_ui_rs_rubber_imp }
+		subtract_from_temp_variable = { pww_uiend_chk = pww_ui_rs_rubber_exp }
+		subtract_from_temp_variable = { pww_uiend_chk = pww_ui_rs_rubber_bal }
+		subtract_from_temp_variable = { pww_uiend_chk = pww_ui_rs_rubber_use }
+		log = "PWW_RESULT ui_end.dossier_fra INFO rubber prod=[?pww_ui_rs_rubber_prod|1] use=[?pww_ui_rs_rubber_use|1] imp=[?pww_ui_rs_rubber_imp|1] exp=[?pww_ui_rs_rubber_exp|1] bal=[?pww_ui_rs_rubber_bal|1] net=[?pww_ui_rs_rubber_net|1] steel prod=[?pww_ui_rs_steel_prod|1] use=[?pww_ui_rs_steel_use|1] net=[?pww_ui_rs_steel_net|1] bal=[?pww_ui_rs_steel_bal|1] rows=[?pww_ui_dos_rows|0]"
+		if = {
+			limit = {
+				check_variable = { pww_uiend_chk < 0.01 }
+				check_variable = { pww_uiend_chk > -0.01 }
+				check_variable = { pww_ui_rs_steel_prod > 0 }
+				check_variable = { pww_ui_dos_rows > 0 }
+			}
+			log = "PWW_RESULT ui_end.dossier_lines PASS"
+		}
+		else = {
+			log = "PWW_RESULT ui_end.dossier_lines FAIL chk=[?pww_uiend_chk|2]"
+		}
+	}
+}
+
+# News feed: day 2 both deals read "Signed" (newest first) and raise the top-bar
+# alert; day 6 the newest rows read "Contract broken" then "Ended".
+pww_uiend_news_signed = {
+	GER = {
+		# on_daily order between files is not fixed: poll here
+		pww_ui_news_poll = yes
+		pww_ui_refresh = yes
+		if = {
+			limit = {
+				check_variable = { pww_ui_nn = 2 }
+				check_variable = { pww_ui_n0_nk = 1 }
+				check_variable = { pww_ui_n1_nk = 1 }
+				check_variable = { pww_ui_nfresh = 2 }
+			}
+			log = "PWW_RESULT ui_end.news_signed PASS n0 res=[?pww_ui_n0_res|0] amt=[?pww_ui_n0_amt|0] side=[?pww_ui_n0_side|0]"
+		}
+		else = {
+			log = "PWW_RESULT ui_end.news_signed FAIL nn=[?pww_ui_nn|0] n0=[?pww_ui_n0_nk|0] n1=[?pww_ui_n1_nk|0] fresh=[?pww_ui_nfresh|0] seen=[?pww_ui_news_seen|0] next=[?global.pww_lq_next_seq|0]"
+		}
+	}
+}
+
+pww_uiend_news_ended = {
+	GER = {
+		# on_daily order between files is not fixed: poll here
+		pww_ui_news_poll = yes
+		pww_ui_refresh = yes
+		if = {
+			limit = {
+				check_variable = { pww_ui_n0_nk = 5 }
+				check_variable = { pww_ui_n1_nk = 4 }
+			}
+			log = "PWW_RESULT ui_end.news_ended PASS nn=[?pww_ui_nn|0]"
+		}
+		else = {
+			log = "PWW_RESULT ui_end.news_ended FAIL nn=[?pww_ui_nn|0] n0=[?pww_ui_n0_nk|0] n1=[?pww_ui_n1_nk|0] n2=[?pww_ui_n2_nk|0]"
+		}
+	}
+}

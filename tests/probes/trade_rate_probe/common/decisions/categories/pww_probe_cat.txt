@@ -1,0 +1,3 @@
+pww_probe_category = {
+	priority = 1000
+}

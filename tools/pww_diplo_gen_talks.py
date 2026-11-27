@@ -683,15 +683,28 @@ def summary_loc():
         for mk, w in zip((-1, 0, 1), words):
             verdict.append((R(f"{cv('pww_do_frame', '=', fr)} {cv('pww_do_mk', '=', mk)}"), loc(f"pww_dt_mkv_{fr}_{mk + 1}", w)))
     dt("pww_dt_sl_mk_verdict", verdict, "pww_dt_empty")
-    # Send verdict row: an invalid draft's reason, else a Balance it message, else the verdict.
+    # A cartel member's promise (CARTELS in pww_diplo_bundle.txt): the agreement it is bound by,
+    # the most it gives per factory at the agreed price, or its quota room.
+    dt("pww_dt_sl_cart_name", [(R(cv("pww_do_cart_res", "=", r)), loc(f"pww_dt_cart_name_{r}", RES[r]))
+                               for r in range(1, 7)], "pww_dt_empty")
+    dt("pww_dt_sl_cart_quota", [(R(cv("pww_do_cart_room", "<", 1)),
+                                 loc("pww_dt_mk_cart_full", "§OBound by the [pww_dt_sl_cart_name] Agreement: its quota is used up.§!"))],
+       loc("pww_dt_mk_cart_room", f"§OBound by the [pww_dt_sl_cart_name] Agreement: its quota allows {num('pww_do_cart_room')} a day.§!"))
+    # Send verdict row: an invalid draft's reason, else a cartel member's limit, else a Balance it
+    # message, else the verdict.
     dt("pww_dt_sl_mkrow", [
         (R(f"NOT = {{ {cv('pww_do_valid', '=', 0)} }}"), loc("pww_dt_mkrow_inv", "[pww_dt_sl_invalid]")),
+        (R(cv("pww_do_cartfail", "=", 2)), loc("pww_dt_mkrow_cartq", "[pww_dt_sl_cart_quota]")),
+        (R(cv("pww_do_cartfail", "=", 1)),
+         loc("pww_dt_mk_cart_price", f"§OBound by the [pww_dt_sl_cart_name] Agreement: no more than {num('pww_do_cart_upf', 1)} per factory.§!")),
         (R(cv("pww_dbl_msg", "=", 2)), loc("pww_dt_bal_short", "§RCannot balance: not enough free factories or political power.§!")),
         (R(cv("pww_dbl_msg", "=", 3)), loc("pww_dt_bal_over", "§RWe already give more. Give less or ask for more.§!")),
         (R(cv("pww_do_lockfail", "=", 1)), loc("pww_dt_mk_lock", "§OToo little trust for a fixed contract: pay well over market.§!")),
+        (R(f"{cv('pww_do_cart_res', '>', -1)} {cv('pww_do_cart_prem', '>', 0)}"),
+         loc("pww_dt_mk_cart_met", f"At the [pww_dt_sl_cart_name] Agreement's price: {num('pww_do_cart_upf', 1)} per factory.")),
     ], loc("pww_dt_mkrow_v", "[pww_dt_sl_mk_verdict]"))
     loc("pww_dt_balance", "Balance it")
-    loc("pww_dt_tt_balance", "Set our payments so the deal is at market value. Their side does not change.")
+    loc("pww_dt_tt_balance", "Set our payments so the deal is at market value, or at the agreed price when the seller is bound by a producers' agreement. Their side does not change.")
     loc("pww_dt_tt_track", "Leans toward the side that gets more at market value. The centre is an even deal.")
     # Receive perspective (the receiver is "we"): one line, totals then verdict.
     # pww_do_mk is the sender's view: -1 they ask more than they give.

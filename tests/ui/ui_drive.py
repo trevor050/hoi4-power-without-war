@@ -7,7 +7,7 @@ any other process, so it never touches another lane's game:
   python tests/ui/ui_drive.py 1234 key SPACE wait 1 click 640 300 wait 1 shot a.png
   python tests/ui/ui_drive.py 1234 rclick 900 400 move 10 10 shot b.png
 
-Commands: shot PATH | click X Y | rclick X Y | dclick X Y | move X Y |
+Commands: shot PATH | click X Y | rclick X Y | dclick X Y | move X Y | wheel X Y N |
           key NAME (SPACE, ESCAPE, F1..F12, A..Z, 0..9) | wait SECONDS | size
 Only windows of a hoi4.exe whose command line carries the harness -userdir
 tag are touched; the user's own game is never driven.
@@ -132,6 +132,14 @@ def main(argv):
             i += 3
         elif c == "move":
             focus(hwnd); mouse_to(hwnd, float(argv[i + 1]), float(argv[i + 2])); i += 3
+        elif c == "wheel":
+            # wheel X Y N: N notches at (X, Y); negative scrolls down
+            focus(hwnd); mouse_to(hwnd, float(argv[i + 1]), float(argv[i + 2]))
+            n = int(argv[i + 3])
+            for _ in range(abs(n)):
+                user32.mouse_event(0x0800, 0, 0, 120 if n > 0 else -120, 0)
+                time.sleep(0.05)
+            i += 4
         elif c == "key":
             key(hwnd, argv[i + 1]); i += 2
         elif c == "wait":

@@ -1,0 +1,32 @@
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = GER }
+				add_to_variable = { global.pww_uiend_day = 1 }
+				if = {
+					limit = { check_variable = { global.pww_uiend_day = 1 } }
+					pww_uiend_setup = yes
+				}
+				if = {
+					limit = { check_variable = { global.pww_uiend_day = 2 } }
+					pww_uiend_news_signed = yes
+				}
+				if = {
+					limit = { check_variable = { global.pww_uiend_day = 3 } }
+					pww_uiend_end_open = yes
+				}
+				if = {
+					limit = { check_variable = { global.pww_uiend_day = 4 } }
+					pww_uiend_break_locked = yes
+				}
+				if = {
+					limit = { check_variable = { global.pww_uiend_day = 6 } }
+					pww_uiend_news_ended = yes
+					pww_uiend_dossier = yes
+					log = "PWW_DONE ui_end"
+				}
+			}
+		}
+	}
+}

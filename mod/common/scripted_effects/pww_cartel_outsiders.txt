@@ -17,10 +17,24 @@
 #       AI member: 20 + 100 x (premium - cartel price) + 25 x unsold share
 #       + 15 under 15 factories + opinion of the tempter / 4 - cohesion / 3
 #       - 20 subject or faction partner of the leader + half its temptation;
-#       leaves at 30+. Accepted: a committal one-year supply deal (half its
-#       unsold, 8..40 units, civilian factories at the premium) and the
+#       leaves at 30+. Accepted: a committal one-year supply deal and the
 #       member leaves (cause 1, cohesion -25). Declined: temptation +15,
-#       cohesion -3.
+#       cohesion -3. A human tempter gets pww_cartel.10 / .11 with the
+#       signed terms or the main reason for the refusal (pww_cartel_ev_why:
+#       1 the agreement is strong, 2 little unsold output, 3 close to the
+#       chair, 4 cool towards the tempter).
+#   Terms (pww_cartel_tempt_terms): half its unsold output (8..40 units),
+#       paid in whole civilian factories at the premium rounded down (at
+#       least 1, at most 15), then the units trimmed so the realised price
+#       is never under the premium: units = floor(factories x 8 / premium).
+#   pww_cartel_court_terms = yes (country = the member; in pww_kct_cm) the
+#       default offer (cartel price + 0.15), stored on the member so the
+#       Court decision can show it before the click:
+#       pww_cartel_ct_amt_<res> (units a day), _civ_ (civilian factories),
+#       _upf_ (units per factory, to 0.1), _cupf_ (the agreed price as units
+#       per factory, to 0.1). Refreshed on every quota pass (joining and the
+#       member tick) and by every default tempt; the default tempt signs
+#       exactly these terms.
 #   pww_cartel_press = yes       importer pressure. in pww_in_cm,
 #       pww_in_presser. Opinion, temptation +20, cohesion -5, presser flag
 #       pww_cartel_press_cd (90 days).
@@ -183,8 +197,10 @@ pww_cartel_tempt = {
 	set_temp_variable = { pww_ktp_cid = global.pww_cm_cart^pww_ktp_cm }
 	set_temp_variable = { pww_ktp_who = global.pww_cm_who^pww_ktp_cm }
 	set_temp_variable = { pww_ktp_prem = pww_in_premium }
+	set_temp_variable = { pww_ktp_dflt = 0 }
 	if = {
 		limit = { check_variable = { pww_ktp_prem < 0.01 } }
+		set_temp_variable = { pww_ktp_dflt = 1 }
 		set_temp_variable = { pww_ktp_prem = global.pww_cart_price^pww_ktp_cid }
 		add_to_temp_variable = { pww_ktp_prem = 0.15 }
 	}
@@ -208,7 +224,19 @@ pww_cartel_tempt = {
 	}
 	if = {
 		limit = { check_variable = { pww_out_fail = 0 } }
-		pww_cartel_tempt_terms = yes
+		if = {
+			limit = { check_variable = { pww_ktp_dflt = 1 } }
+			# The default offer: the terms the Court decision showed.
+			set_temp_variable = { pww_kct_cm = pww_ktp_cm }
+			var:pww_ktp_who = { pww_cartel_court_terms = yes }
+			set_temp_variable = { pww_ktp_amt = pww_kct_amt }
+			set_temp_variable = { pww_ktp_civ = pww_kct_civ }
+		}
+		else = {
+			pww_cartel_tempt_terms = yes
+		}
+		# Factories free for new projects (construction gives way to the
+		# contract, as with vanilla trade), not idle factories.
 		var:pww_ktp_t = { set_temp_variable = { pww_ktp_free = num_of_civilian_factories_available_for_projects } }
 		if = {
 			limit = { check_variable = { pww_ktp_free < pww_ktp_civ } }
@@ -226,6 +254,8 @@ pww_cartel_tempt = {
 				set_variable = { pww_cartel_ev_prem = pww_ktp_prem }
 				set_variable = { pww_cartel_ev_amt = pww_ktp_amt }
 				set_variable = { pww_cartel_ev_civ = pww_ktp_civ }
+				set_variable = { pww_cartel_ev_upf = pww_ktp_amt }
+				divide_variable = { pww_cartel_ev_upf = pww_ktp_civ }
 				country_event = { id = pww_cartel.9 }
 			}
 		}
@@ -235,6 +265,12 @@ pww_cartel_tempt = {
 			clamp_temp_variable = { var = pww_ktp_score min = 0 max = 1 }
 			multiply_temp_variable = { pww_ktp_score = 100 }
 			add_to_temp_variable = { pww_ktp_score = 20 }
+			# Main reason against (for the refusal event): the largest of
+			# cohesion / 3, the unsold share it lacks (25 - share part), the
+			# tie to the chair (20) and a cool opinion of the tempter.
+			set_temp_variable = { pww_ktp_why = 1 }
+			set_temp_variable = { pww_ktp_wv = global.pww_cart_cohesion^pww_ktp_cid }
+			divide_temp_variable = { pww_ktp_wv = 3 }
 			var:pww_ktp_who = {
 				set_temp_variable = { pww_kr_res = global.pww_cart_res^pww_ktp_cid }
 				pww_cartel_read_res = yes
@@ -245,6 +281,13 @@ pww_cartel_tempt = {
 				clamp_temp_variable = { var = pww_ktp_sh min = 0 max = 1 }
 				multiply_temp_variable = { pww_ktp_sh = 25 }
 				add_to_temp_variable = { pww_ktp_score = pww_ktp_sh }
+				set_temp_variable = { pww_ktp_w2 = 25 }
+				subtract_from_temp_variable = { pww_ktp_w2 = pww_ktp_sh }
+				if = {
+					limit = { check_variable = { pww_ktp_w2 > pww_ktp_wv } }
+					set_temp_variable = { pww_ktp_wv = pww_ktp_w2 }
+					set_temp_variable = { pww_ktp_why = 2 }
+				}
 				if = {
 					limit = { num_of_civilian_factories < 15 }
 					add_to_temp_variable = { pww_ktp_score = 15 }
@@ -253,6 +296,13 @@ pww_cartel_tempt = {
 				pww_core_norm_opinion = yes
 				divide_temp_variable = { pww_norm_opinion = 4 }
 				add_to_temp_variable = { pww_ktp_score = pww_norm_opinion }
+				set_temp_variable = { pww_ktp_w2 = pww_norm_opinion }
+				multiply_temp_variable = { pww_ktp_w2 = -1 }
+				if = {
+					limit = { check_variable = { pww_ktp_w2 > pww_ktp_wv } }
+					set_temp_variable = { pww_ktp_wv = pww_ktp_w2 }
+					set_temp_variable = { pww_ktp_why = 4 }
+				}
 				set_temp_variable = { pww_ktp_l = global.pww_cart_leader^pww_ktp_cid }
 				if = {
 					limit = {
@@ -263,6 +313,11 @@ pww_cartel_tempt = {
 						}
 					}
 					subtract_from_temp_variable = { pww_ktp_score = 20 }
+					if = {
+						limit = { check_variable = { pww_ktp_wv < 20 } }
+						set_temp_variable = { pww_ktp_wv = 20 }
+						set_temp_variable = { pww_ktp_why = 3 }
+					}
 				}
 			}
 			set_temp_variable = { pww_ktp_c = global.pww_cart_cohesion^pww_ktp_cid }
@@ -290,6 +345,14 @@ pww_cartel_tempt = {
 				limit = { is_ai = no }
 				set_variable = { pww_cartel_ev_who = pww_ktp_who }
 				set_variable = { pww_cartel_ev_cid = pww_ktp_cid }
+				set_variable = { pww_cartel_ev_amt = pww_ktp_amt }
+				set_variable = { pww_cartel_ev_civ = pww_ktp_civ }
+				set_variable = { pww_cartel_ev_why = pww_ktp_why }
+				set_variable = { pww_cartel_ev_upf = pww_ktp_amt }
+				divide_variable = { pww_cartel_ev_upf = pww_ktp_civ }
+				# One year on (1 day = 0.00024 of global.date)
+				set_variable = { pww_cartel_ev_until = global.date }
+				add_to_variable = { pww_cartel_ev_until = 0.0876 }
 				if = {
 					limit = { check_variable = { pww_out_result = 1 } }
 					country_event = { id = pww_cartel.10 }
@@ -303,7 +366,8 @@ pww_cartel_tempt = {
 	}
 }
 
-# in: pww_ktp_cm, pww_ktp_cid, pww_ktp_prem. out: pww_ktp_amt, pww_ktp_civ.
+# in: pww_ktp_cm, pww_ktp_prem. out: pww_ktp_amt, pww_ktp_civ (see the
+# header: the realised price is never under the premium).
 pww_cartel_tempt_terms = {
 	set_temp_variable = { pww_ktp_amt = global.pww_cm_unsold^pww_ktp_cm }
 	multiply_temp_variable = { pww_ktp_amt = 0.5 }
@@ -312,8 +376,92 @@ pww_cartel_tempt_terms = {
 	set_temp_variable = { pww_ktp_civ = pww_ktp_amt }
 	multiply_temp_variable = { pww_ktp_civ = pww_ktp_prem }
 	divide_temp_variable = { pww_ktp_civ = 8 }
+	subtract_from_temp_variable = { pww_ktp_civ = 0.499 }
 	round_temp_variable = pww_ktp_civ
 	clamp_temp_variable = { var = pww_ktp_civ min = 1 max = 15 }
+	set_temp_variable = { pww_ktp_amt = pww_ktp_civ }
+	multiply_temp_variable = { pww_ktp_amt = 8 }
+	divide_temp_variable = { pww_ktp_amt = pww_ktp_prem }
+	subtract_from_temp_variable = { pww_ktp_amt = 0.499 }
+	round_temp_variable = pww_ktp_amt
+	clamp_temp_variable = { var = pww_ktp_amt min = 1 max = 99999 }
+}
+
+# Country scope (the member). in: pww_kct_cm. The default Court offer
+# (cartel price + 0.15) stored per resource on the member; see the header.
+# out: pww_kct_amt, pww_kct_civ. Leaves the caller's pww_ktp_* as they were.
+pww_cartel_court_terms = {
+	set_temp_variable = { pww_kct_cid = global.pww_cm_cart^pww_kct_cm }
+	set_temp_variable = { pww_kct_res = global.pww_cart_res^pww_kct_cid }
+	set_temp_variable = { pww_kct_keep_cm = pww_ktp_cm }
+	set_temp_variable = { pww_kct_keep_prem = pww_ktp_prem }
+	set_temp_variable = { pww_kct_keep_amt = pww_ktp_amt }
+	set_temp_variable = { pww_kct_keep_civ = pww_ktp_civ }
+	set_temp_variable = { pww_ktp_cm = pww_kct_cm }
+	set_temp_variable = { pww_kct_cp = global.pww_cart_price^pww_kct_cid }
+	set_temp_variable = { pww_ktp_prem = pww_kct_cp }
+	add_to_temp_variable = { pww_ktp_prem = 0.15 }
+	pww_cartel_tempt_terms = yes
+	set_temp_variable = { pww_kct_amt = pww_ktp_amt }
+	set_temp_variable = { pww_kct_civ = pww_ktp_civ }
+	# Units per factory, rounded down to 0.1 (the offer and the agreed price)
+	set_temp_variable = { pww_kct_upf = pww_kct_amt }
+	multiply_temp_variable = { pww_kct_upf = 10 }
+	divide_temp_variable = { pww_kct_upf = pww_kct_civ }
+	subtract_from_temp_variable = { pww_kct_upf = 0.499 }
+	round_temp_variable = pww_kct_upf
+	divide_temp_variable = { pww_kct_upf = 10 }
+	set_temp_variable = { pww_kct_cupf = 80 }
+	divide_temp_variable = { pww_kct_cupf = pww_kct_cp }
+	subtract_from_temp_variable = { pww_kct_cupf = 0.499 }
+	round_temp_variable = pww_kct_cupf
+	divide_temp_variable = { pww_kct_cupf = 10 }
+	if = {
+		limit = { check_variable = { pww_kct_res = 1 } }
+		set_variable = { pww_cartel_ct_amt_aluminium = pww_kct_amt }
+		set_variable = { pww_cartel_ct_civ_aluminium = pww_kct_civ }
+		set_variable = { pww_cartel_ct_upf_aluminium = pww_kct_upf }
+		set_variable = { pww_cartel_ct_cupf_aluminium = pww_kct_cupf }
+	}
+	else_if = {
+		limit = { check_variable = { pww_kct_res = 2 } }
+		set_variable = { pww_cartel_ct_amt_rubber = pww_kct_amt }
+		set_variable = { pww_cartel_ct_civ_rubber = pww_kct_civ }
+		set_variable = { pww_cartel_ct_upf_rubber = pww_kct_upf }
+		set_variable = { pww_cartel_ct_cupf_rubber = pww_kct_cupf }
+	}
+	else_if = {
+		limit = { check_variable = { pww_kct_res = 3 } }
+		set_variable = { pww_cartel_ct_amt_tungsten = pww_kct_amt }
+		set_variable = { pww_cartel_ct_civ_tungsten = pww_kct_civ }
+		set_variable = { pww_cartel_ct_upf_tungsten = pww_kct_upf }
+		set_variable = { pww_cartel_ct_cupf_tungsten = pww_kct_cupf }
+	}
+	else_if = {
+		limit = { check_variable = { pww_kct_res = 4 } }
+		set_variable = { pww_cartel_ct_amt_steel = pww_kct_amt }
+		set_variable = { pww_cartel_ct_civ_steel = pww_kct_civ }
+		set_variable = { pww_cartel_ct_upf_steel = pww_kct_upf }
+		set_variable = { pww_cartel_ct_cupf_steel = pww_kct_cupf }
+	}
+	else_if = {
+		limit = { check_variable = { pww_kct_res = 5 } }
+		set_variable = { pww_cartel_ct_amt_chromium = pww_kct_amt }
+		set_variable = { pww_cartel_ct_civ_chromium = pww_kct_civ }
+		set_variable = { pww_cartel_ct_upf_chromium = pww_kct_upf }
+		set_variable = { pww_cartel_ct_cupf_chromium = pww_kct_cupf }
+	}
+	else_if = {
+		limit = { check_variable = { pww_kct_res = 6 } }
+		set_variable = { pww_cartel_ct_amt_coal = pww_kct_amt }
+		set_variable = { pww_cartel_ct_civ_coal = pww_kct_civ }
+		set_variable = { pww_cartel_ct_upf_coal = pww_kct_upf }
+		set_variable = { pww_cartel_ct_cupf_coal = pww_kct_cupf }
+	}
+	set_temp_variable = { pww_ktp_cm = pww_kct_keep_cm }
+	set_temp_variable = { pww_ktp_prem = pww_kct_keep_prem }
+	set_temp_variable = { pww_ktp_amt = pww_kct_keep_amt }
+	set_temp_variable = { pww_ktp_civ = pww_kct_keep_civ }
 }
 
 # in: pww_ktp_cm, pww_ktp_cid, pww_ktp_who, pww_ktp_t, pww_ktp_amt,
@@ -456,7 +604,7 @@ pww_cartel_ai_outsiders = {
 				is_ai = yes
 				is_major = yes
 				pww_cartel_is_member_res = no
-				num_of_available_civilian_factories > 2
+				num_of_civilian_factories_available_for_projects > 2
 			}
 			set_temp_variable = { pww_kr_res = pww_kao_res }
 			pww_cartel_read_res = yes
@@ -509,8 +657,9 @@ pww_cartel_ai_outsiders = {
 # country variables the event text reads and save event targets:
 #   pww_cartel_chair (leader), pww_cartel_other (pww_cartel_ev_who, if set).
 #   pww_cartel_ev_res, _coh (cohesion), _pct (cartel price, % over market),
-#   _n (members), _quota / _sold / _susp / _warns (when a member entry is
-#   known).
+#   _n (members), _stat (cartel status), _cupf (agreed price as units per
+#   civilian factory), _quota / _sold / _susp / _warns (when a member entry
+#   is known).
 ###############################################################################
 pww_cartel_ev_from_cm = {
 	set_variable = { pww_cartel_ev_cid = global.pww_cm_cart^pww_cartel_ev_cm }
@@ -525,6 +674,15 @@ pww_cartel_ev_from_cid = {
 	set_variable = { pww_cartel_ev_res = global.pww_cart_res^pww_cartel_ev_cid }
 	set_variable = { pww_cartel_ev_coh = global.pww_cart_cohesion^pww_cartel_ev_cid }
 	set_variable = { pww_cartel_ev_n = global.pww_cart_n^pww_cartel_ev_cid }
+	set_variable = { pww_cartel_ev_stat = global.pww_cart_status^pww_cartel_ev_cid }
+	# Agreed price as units per civilian factory, rounded down to 0.1
+	set_temp_variable = { pww_kev_u = 80 }
+	divide_temp_variable = { pww_kev_u = global.pww_cart_price^pww_cartel_ev_cid }
+	subtract_from_temp_variable = { pww_kev_u = 0.499 }
+	round_temp_variable = pww_kev_u
+	divide_temp_variable = { pww_kev_u = 10 }
+	set_variable = { pww_cartel_ev_cupf = pww_kev_u }
+	set_variable = { pww_cartel_ev_collapse = global.pww_cartel_c_collapse }
 	set_variable = { pww_cartel_ev_pct = global.pww_cart_price^pww_cartel_ev_cid }
 	subtract_from_variable = { pww_cartel_ev_pct = 1 }
 	multiply_variable = { pww_cartel_ev_pct = 100 }

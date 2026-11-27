@@ -33,7 +33,9 @@
 #   expired, 96/97 an AI sender took / refused a human counter, 101-106 the
 #   price is too low (sets global.pww_dt_floor: the "go below market" clue),
 #   111-113 too little trust for a fixed contract (bond under
-#   global.pww_rel_c_lock and the terms not clearly generous).
+#   global.pww_rel_c_lock and the terms not clearly generous), 121 / 122
+#   bound by a producers' agreement (under the agreed price / beyond its
+#   quota: pww_do_cartfail).
 #
 # AUCTION BID VALUES (old single-term model, bids only). Civilian-factory
 # equivalents:
@@ -1158,6 +1160,15 @@ pww_diplo_talk_reply = {
 				modulo_temp_variable = { var = pww_dr_k value = 3 }
 				set_temp_variable = { pww_dr_line = 111 }
 				add_to_temp_variable = { pww_dr_line = pww_dr_k }
+			}
+			else_if = {
+				# Bound by a producers' agreement (CARTELS in
+				# pww_diplo_bundle.txt): 121 under the agreed price, 122
+				# beyond its quota.
+				limit = { check_variable = { pww_do_cartfail > 0 } }
+				subtract_from_temp_variable = { pww_dr_pat = 5 }
+				set_temp_variable = { pww_dr_line = 120 }
+				add_to_temp_variable = { pww_dr_line = pww_do_cartfail }
 			}
 			else_if = {
 				# Reveal the hidden want, unless the draft already carries it

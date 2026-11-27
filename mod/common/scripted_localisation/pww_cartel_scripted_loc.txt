@@ -2,6 +2,9 @@
 # Power Without War: producer cartels scripted localisation
 #   [pww_cartel_loc_res]   resource name from the viewer's pww_cartel_ev_res
 #   [pww_cartel_loc_coh]   cohesion word from the viewer's pww_cartel_ev_coh
+#   [pww_cartel_loc_after] after a member is courted away: broken (viewer's
+#                          pww_cartel_ev_stat 2) or holding
+#   [pww_cartel_loc_why]   why a courted member refused (pww_cartel_ev_why)
 ###############################################################################
 
 defined_text = {
@@ -21,4 +24,18 @@ defined_text = {
 	text = { trigger = { check_variable = { pww_cartel_ev_coh > 39.999 } } localization_key = pww_cartel_cohesion_band_2 }
 	text = { trigger = { check_variable = { pww_cartel_ev_coh > 19.999 } } localization_key = pww_cartel_cohesion_band_1 }
 	text = { localization_key = pww_cartel_cohesion_band_0 }
+}
+
+defined_text = {
+	name = pww_cartel_loc_after
+	text = { trigger = { check_variable = { pww_cartel_ev_stat = 2 } } localization_key = pww_cartel_after_broken }
+	text = { localization_key = pww_cartel_after_holds }
+}
+
+defined_text = {
+	name = pww_cartel_loc_why
+	text = { trigger = { check_variable = { pww_cartel_ev_why = 2 } } localization_key = pww_cartel_why_2 }
+	text = { trigger = { check_variable = { pww_cartel_ev_why = 3 } } localization_key = pww_cartel_why_3 }
+	text = { trigger = { check_variable = { pww_cartel_ev_why = 4 } } localization_key = pww_cartel_why_4 }
+	text = { localization_key = pww_cartel_why_1 }
 }

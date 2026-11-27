@@ -42,9 +42,13 @@
 #                    have plenty", terms at least 40 lower, refused).
 #   K malaya_rubber  the playtest case: GER offers British Malaya 8 rubber for
 #                    1 civilian factory (exactly market) as the player's
-#                    default draft (one year, either side may end it):
-#                    signed on the first draft, natural values, and for all
-#                    24 seeded reserves.
+#                    default draft (one year, either side may end it).
+#                    Malaya is a member of the rubber agreement, so it
+#                    refuses below the agreed price (pww_do_cartfail 1);
+#                    every other part of the evaluation would sign, on the
+#                    first draft and for all 24 seeded reserves (the market
+#                    model itself is unchanged; diplo_cartel_bound covers the
+#                    agreed price).
 #   L glut_discount  POR with a large unsold glut of tungsten accepts 25%
 #                    below market (political power payment) for all 24
 #                    reserves; the same draft with every unit already sold is
@@ -453,7 +457,10 @@ on_actions = {
 					set_temp_variable = { pww_dtest_hg_k_red = pww_do_e_red }
 					set_temp_variable = { pww_dtest_hg_k_ap = pww_do_ap_civ }
 					set_temp_variable = { pww_dtest_hg_k_g = pww_do_glut_rate }
-					pww_dtest_hg_sweep = yes
+					set_temp_variable = { pww_dtest_hg_k_cf = pww_do_cartfail }
+					set_temp_variable = { pww_dtest_hg_k_rest = pww_do_e_total }
+					subtract_from_temp_variable = { pww_dtest_hg_k_rest = pww_do_e_cartel }
+					pww_dtest_hg_sweep_rest = yes
 					set_temp_variable = { pww_dtest_hg_k_n = pww_dtest_hg_n }
 					set_temp_variable = { pww_dg_res = 2 }
 					MAL = {
@@ -463,14 +470,16 @@ on_actions = {
 					log = "PWW_RESULT diplo_haggle.K_values INFO MAL rubber produced=[?pww_dg_prod|0] exported=[?pww_dg_exp|0] unsold=[?pww_dg_unsold|0] desp=[?pww_dg_desp|0] imported=[?pww_dg_imp|0] civs=[?pww_dtest_hg_k_civs|0] factory_appetite=[?pww_dtest_hg_k_ap|2] glut_rate=[?pww_dtest_hg_k_g|2] scarcity=[?pww_dtest_hg_k_scar|2] verdict=[?pww_dtest_hg_k_mk|0] terms=[?pww_dtest_hg_k_terms|0] fair=[?pww_dtest_hg_k_fair|0] reserve=[?pww_dtest_hg_k_rsv|0] rel=[?pww_dtest_hg_k_rel|0] red=[?pww_dtest_hg_k_red|0] total=[?pww_dtest_hg_k_total|0] valid=[?pww_dtest_hg_k_valid|0] accepts=[?pww_dtest_hg_k_ok|0] of24=[?pww_dtest_hg_k_n|0]"
 					if = {
 						limit = {
-							check_variable = { pww_dtest_hg_k_ok = 1 }
+							check_variable = { pww_dtest_hg_k_ok = 0 }
+							check_variable = { pww_dtest_hg_k_cf = 1 }
+							check_variable = { pww_dtest_hg_k_rest > 0 }
 							check_variable = { pww_dtest_hg_k_mk = 0 }
 							check_variable = { pww_dtest_hg_k_n = 24 }
 						}
-						log = "PWW_RESULT diplo_haggle.K_malaya_rubber PASS British Malaya signs 8 rubber for 1 factory on the first draft (terms [?pww_dtest_hg_k_terms|0], total [?pww_dtest_hg_k_total|0]) and for all 24 seeded reserves"
+						log = "PWW_RESULT diplo_haggle.K_malaya_rubber PASS British Malaya refuses 8 rubber for 1 factory only because of the rubber agreement; without it the draft signs (terms [?pww_dtest_hg_k_terms|0], total without the agreement [?pww_dtest_hg_k_rest|0]) and for all 24 seeded reserves"
 					}
 					else = {
-						log = "PWW_RESULT diplo_haggle.K_malaya_rubber FAIL accepts=[?pww_dtest_hg_k_ok|0] verdict=[?pww_dtest_hg_k_mk|0] of24=[?pww_dtest_hg_k_n|0]; see K_values"
+						log = "PWW_RESULT diplo_haggle.K_malaya_rubber FAIL accepts=[?pww_dtest_hg_k_ok|0] cartfail=[?pww_dtest_hg_k_cf|0] without the agreement=[?pww_dtest_hg_k_rest|0] verdict=[?pww_dtest_hg_k_mk|0] of24=[?pww_dtest_hg_k_n|0]; see K_values"
 					}
 
 					# --- L: a glut seller takes 25% below market -------------

@@ -1,0 +1,13 @@
+# Engine probe (tests/probes/trade_rate_probe): vanilla trade-rate levers.
+pww_probe_rate = {
+	resource_trade_cost_bonus_per_factory = pww_probe_rate_v
+}
+pww_probe_cost = {
+	country_resource_cost_rubber = pww_probe_cost_v
+}
+pww_probe_export = {
+	min_export = pww_probe_export_v
+}
+pww_probe_target = {
+	trade_cost_for_target_factor = pww_probe_target_v
+}

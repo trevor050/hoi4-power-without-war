@@ -660,6 +660,14 @@ defined_text = {
 		localization_key = pww_envoy_trust_lock_3
 	}
 	text = {
+		trigger = { ROOT = { check_variable = { pww_dd_line = 121 } } }
+		localization_key = pww_diplo_line_cartel_price
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_dd_line = 122 } } }
+		localization_key = pww_diplo_line_cartel_quota
+	}
+	text = {
 		localization_key = pww_diplo_v_empty
 	}
 }
@@ -6730,10 +6738,58 @@ defined_text = {
 	}
 }
 defined_text = {
+	name = pww_dt_sl_cart_name
+	text = {
+		trigger = { ROOT = { check_variable = { pww_do_cart_res = 1 } } }
+		localization_key = pww_dt_cart_name_1
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_do_cart_res = 2 } } }
+		localization_key = pww_dt_cart_name_2
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_do_cart_res = 3 } } }
+		localization_key = pww_dt_cart_name_3
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_do_cart_res = 4 } } }
+		localization_key = pww_dt_cart_name_4
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_do_cart_res = 5 } } }
+		localization_key = pww_dt_cart_name_5
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_do_cart_res = 6 } } }
+		localization_key = pww_dt_cart_name_6
+	}
+	text = {
+		localization_key = pww_dt_empty
+	}
+}
+defined_text = {
+	name = pww_dt_sl_cart_quota
+	text = {
+		trigger = { ROOT = { check_variable = { pww_do_cart_room < 1 } } }
+		localization_key = pww_dt_mk_cart_full
+	}
+	text = {
+		localization_key = pww_dt_mk_cart_room
+	}
+}
+defined_text = {
 	name = pww_dt_sl_mkrow
 	text = {
 		trigger = { ROOT = { NOT = { check_variable = { pww_do_valid = 0 } } } }
 		localization_key = pww_dt_mkrow_inv
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_do_cartfail = 2 } } }
+		localization_key = pww_dt_mkrow_cartq
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_do_cartfail = 1 } } }
+		localization_key = pww_dt_mk_cart_price
 	}
 	text = {
 		trigger = { ROOT = { check_variable = { pww_dbl_msg = 2 } } }
@@ -6746,6 +6802,10 @@ defined_text = {
 	text = {
 		trigger = { ROOT = { check_variable = { pww_do_lockfail = 1 } } }
 		localization_key = pww_dt_mk_lock
+	}
+	text = {
+		trigger = { ROOT = { check_variable = { pww_do_cart_res > -1 } check_variable = { pww_do_cart_prem > 0 } } }
+		localization_key = pww_dt_mk_cart_met
 	}
 	text = {
 		localization_key = pww_dt_mkrow_v

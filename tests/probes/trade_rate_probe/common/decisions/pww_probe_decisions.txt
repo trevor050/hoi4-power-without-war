@@ -1,0 +1,49 @@
+# Engine probe: click a decision, then read the Malaya rubber trade popup
+# ("Buy amount: N / For civilian factories: 1", "can export up to N units").
+#   A  GER resource_trade_cost_bonus_per_factory +8      (importer side)
+#   B  MAL resource_trade_cost_bonus_per_factory +8      (exporter side)
+#   C  MAL country_resource_cost_rubber 200              (does a cost shrink the export pool?)
+#   D  MAL min_export -0.3                               (export pool lever)
+#   E  MAL trade_cost_for_target_factor 1.0, scope GER   (pair rate, targeted)
+#   R  reset everything
+pww_probe_category = {
+	pww_probe_f = {
+		fire_only_once = no
+		complete_effect = {
+			GER = {
+				set_variable = { pww_probe_target_v = 1.0 }
+				add_dynamic_modifier = { modifier = pww_probe_target scope = MAL }
+				force_update_dynamic_modifier = yes
+			}
+			log = "PWW_PROBE F applied: GER target factor 1.0 on MAL"
+		}
+		ai_will_do = { base = 0 }
+	}
+	pww_probe_g = {
+		fire_only_once = no
+		complete_effect = {
+			GER = {
+				set_variable = { pww_probe_target_v = -0.5 }
+				add_dynamic_modifier = { modifier = pww_probe_target scope = MAL }
+				force_update_dynamic_modifier = yes
+			}
+			log = "PWW_PROBE G applied: GER target factor -0.5 on MAL"
+		}
+		ai_will_do = { base = 0 }
+	}
+	pww_probe_r = {
+		fire_only_once = no
+		complete_effect = {
+			GER = { remove_dynamic_modifier = { modifier = pww_probe_rate } remove_dynamic_modifier = { modifier = pww_probe_target } force_update_dynamic_modifier = yes }
+			MAL = {
+				remove_dynamic_modifier = { modifier = pww_probe_rate }
+				remove_dynamic_modifier = { modifier = pww_probe_cost }
+				remove_dynamic_modifier = { modifier = pww_probe_export }
+				remove_dynamic_modifier = { modifier = pww_probe_target }
+				force_update_dynamic_modifier = yes
+			}
+			log = "PWW_PROBE R reset"
+		}
+		ai_will_do = { base = 0 }
+	}
+}

@@ -248,6 +248,13 @@ scripted_diplomatic_actions = {
 					add = var:pww_dacc
 				}
 			}
+			pww_diplo_acc_cartel = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_do_e_cartel }
+					add = var:pww_dacc
+				}
+			}
 			pww_diplo_acc_unworkable = {
 				base = 0
 				modifier = {
@@ -503,6 +510,13 @@ scripted_diplomatic_actions = {
 					add = var:pww_dacc
 				}
 			}
+			pww_diplo_acc_cartel = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_do_e_cartel }
+					add = var:pww_dacc
+				}
+			}
 			pww_diplo_acc_unworkable = {
 				base = 0
 				modifier = {
@@ -751,6 +765,13 @@ scripted_diplomatic_actions = {
 				base = 0
 				modifier = {
 					set_temp_variable = { pww_dacc = ROOT.pww_do_e_lock }
+					add = var:pww_dacc
+				}
+			}
+			pww_diplo_acc_cartel = {
+				base = 0
+				modifier = {
+					set_temp_variable = { pww_dacc = ROOT.pww_do_e_cartel }
 					add = var:pww_dacc
 				}
 			}

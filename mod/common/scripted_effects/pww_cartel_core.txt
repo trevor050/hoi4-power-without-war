@@ -63,6 +63,9 @@
 #   cartel id or -1; "live" = conference or active), global.pww_cart_cd_res
 #   (num_days before which no new cartel forms), global.pww_cart_glut_n /
 #   global.pww_cart_ripe (formation scan: glut producers, 1 = ripe).
+#   global.pww_cart_coh_res / _upf_res / _qpct_res (cohesion, agreed price
+#   as units per factory, quota % of the newest cartel for that resource:
+#   pww_cartel_sync_coh, for decision tooltips).
 # Live list: global.pww_cart_live (cartel ids in status 0 or 1).
 # Country: array pww_cart_my (member entry ids where status is 0 or 1),
 #   flags pww_cartel_mem_<res> (status 1 in a live cartel), pww_cartel_inv_
@@ -391,6 +394,8 @@ pww_cartel_alloc = {
 	add_to_variable = { global.pww_next_cart_id = 1 }
 	add_to_array = { array = global.pww_cart_live value = pww_ka_id }
 	set_variable = { global.pww_cart_by_res^pww_ka_res = pww_ka_id }
+	set_temp_variable = { pww_kcy_cid = pww_ka_id }
+	pww_cartel_sync_coh = yes
 	add_to_variable = { global.pww_cart_rev = 1 }
 }
 
@@ -690,6 +695,34 @@ pww_cartel_add_cohesion = {
 	set_variable = { global.pww_cart_cohesion^pww_kcz_cid = pww_kcz_v }
 	add_to_variable = { global.pww_cart_rev^pww_kcz_cid = 1 }
 	add_to_variable = { global.pww_cart_rev = 1 }
+	set_temp_variable = { pww_kcy_cid = pww_kcz_cid }
+	pww_cartel_sync_coh = yes
+}
+
+# in: pww_kcy_cid. Mirrors a cartel into per-resource global arrays that
+# decision tooltips read by resource (loc cannot look up the cartel id):
+# global.pww_cart_coh_res (cohesion), _upf_res (agreed price as units per
+# civilian factory, rounded down to 0.1), _qpct_res (quota share of unsold
+# output, %). The newest cartel for the resource writes them.
+pww_cartel_sync_coh = {
+	if = {
+		limit = { NOT = { check_variable = { global.pww_cart_coh_res^num > 6 } } }
+		clear_array = global.pww_cart_coh_res
+		resize_array = { array = global.pww_cart_coh_res value = 0 size = 7 }
+		clear_array = global.pww_cart_upf_res
+		resize_array = { array = global.pww_cart_upf_res value = 0 size = 7 }
+		clear_array = global.pww_cart_qpct_res
+		resize_array = { array = global.pww_cart_qpct_res value = 0 size = 7 }
+	}
+	set_temp_variable = { pww_kcy_res = global.pww_cart_res^pww_kcy_cid }
+	set_variable = { global.pww_cart_coh_res^pww_kcy_res = global.pww_cart_cohesion^pww_kcy_cid }
+	set_variable = { global.pww_cart_qpct_res^pww_kcy_res = global.pww_cart_quota_pct^pww_kcy_cid }
+	set_temp_variable = { pww_kcy_u = 80 }
+	divide_temp_variable = { pww_kcy_u = global.pww_cart_price^pww_kcy_cid }
+	subtract_from_temp_variable = { pww_kcy_u = 0.499 }
+	round_temp_variable = pww_kcy_u
+	divide_temp_variable = { pww_kcy_u = 10 }
+	set_variable = { global.pww_cart_upf_res^pww_kcy_res = pww_kcy_u }
 }
 
 ###############################################################################

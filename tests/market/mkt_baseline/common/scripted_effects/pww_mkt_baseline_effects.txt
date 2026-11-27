@@ -1,0 +1,274 @@
+# Market baseline logger (tests/market/mkt_baseline). All-AI run:
+#   python tools/run_hoi4.py --tag HAI --days 1645 --timeout 5400 --test tests/market/mkt_baseline
+# Every 91 days logs one line per resource:
+#   PWW_RESULT mkt.q INFO <date> res=<r> prod= imp= unsold= short= nshort= ctr= stock= tension= wars=
+# prod/imp/unsold/short are world sums of daily units (resource_produced,
+# resource_imported, positive and negative resource balance); nshort counts
+# countries short by more than half a unit; ctr is the daily volume under
+# active mod supply contracts; stock the world's stored unit-days.
+# Summarize with tests/market/mkt_report.py <game.log>.
+pww_mkt_log_quarter = {
+	set_temp_variable = { pww_mq_wars = 0 }
+	every_country = { limit = { has_war = yes } add_to_temp_variable = { pww_mq_wars = 1 } }
+	set_temp_variable = { pww_mq_t = global.threat }
+	multiply_temp_variable = { pww_mq_t = 100 }
+	set_temp_variable = { pww_mq_prod = 0 }
+	set_temp_variable = { pww_mq_imp = 0 }
+	set_temp_variable = { pww_mq_uns = 0 }
+	set_temp_variable = { pww_mq_sh = 0 }
+	set_temp_variable = { pww_mq_nsh = 0 }
+	set_temp_variable = { pww_mq_stk = 0 }
+	every_country = {
+		limit = { exists = yes }
+		add_to_temp_variable = { pww_mq_prod = resource_produced@oil }
+		add_to_temp_variable = { pww_mq_imp = resource_imported@oil }
+		set_temp_variable = { pww_mq_b = resource@oil }
+		if = { limit = { check_variable = { pww_mq_b > 0 } } add_to_temp_variable = { pww_mq_uns = pww_mq_b } }
+		if = {
+			limit = { check_variable = { pww_mq_b < -0.5 } }
+			subtract_from_temp_variable = { pww_mq_sh = pww_mq_b }
+			add_to_temp_variable = { pww_mq_nsh = 1 }
+		}
+
+	}
+	set_temp_variable = { pww_mq_ctr = 0 }
+	if = {
+		limit = { has_variable = global.pww_next_agreement_id }
+		for_loop_effect = {
+			start = 0
+			end = global.pww_next_agreement_id
+			value = pww_mq_a
+			if = {
+				limit = {
+					check_variable = { global.pww_ag_status^pww_mq_a = 1 }
+					check_variable = { global.pww_ag_kind^pww_mq_a = 0 }
+					check_variable = { global.pww_ag_res^pww_mq_a = 0 }
+				}
+				add_to_temp_variable = { pww_mq_ctr = global.pww_ag_amount^pww_mq_a }
+			}
+		}
+	}
+	log = "PWW_RESULT mkt.q INFO [GetDateText] res=oil prod=[?pww_mq_prod|0] imp=[?pww_mq_imp|0] unsold=[?pww_mq_uns|0] short=[?pww_mq_sh|0] nshort=[?pww_mq_nsh|0] ctr=[?pww_mq_ctr|0] stock=[?pww_mq_stk|0] tension=[?pww_mq_t|0] wars=[?pww_mq_wars|0]"
+	set_temp_variable = { pww_mq_prod = 0 }
+	set_temp_variable = { pww_mq_imp = 0 }
+	set_temp_variable = { pww_mq_uns = 0 }
+	set_temp_variable = { pww_mq_sh = 0 }
+	set_temp_variable = { pww_mq_nsh = 0 }
+	set_temp_variable = { pww_mq_stk = 0 }
+	every_country = {
+		limit = { exists = yes }
+		add_to_temp_variable = { pww_mq_prod = resource_produced@aluminium }
+		add_to_temp_variable = { pww_mq_imp = resource_imported@aluminium }
+		set_temp_variable = { pww_mq_b = resource@aluminium }
+		if = { limit = { check_variable = { pww_mq_b > 0 } } add_to_temp_variable = { pww_mq_uns = pww_mq_b } }
+		if = {
+			limit = { check_variable = { pww_mq_b < -0.5 } }
+			subtract_from_temp_variable = { pww_mq_sh = pww_mq_b }
+			add_to_temp_variable = { pww_mq_nsh = 1 }
+		}
+		if = { limit = { has_variable = pww_stock_aluminium } add_to_temp_variable = { pww_mq_stk = pww_stock_aluminium } }
+	}
+	set_temp_variable = { pww_mq_ctr = 0 }
+	if = {
+		limit = { has_variable = global.pww_next_agreement_id }
+		for_loop_effect = {
+			start = 0
+			end = global.pww_next_agreement_id
+			value = pww_mq_a
+			if = {
+				limit = {
+					check_variable = { global.pww_ag_status^pww_mq_a = 1 }
+					check_variable = { global.pww_ag_kind^pww_mq_a = 0 }
+					check_variable = { global.pww_ag_res^pww_mq_a = 1 }
+				}
+				add_to_temp_variable = { pww_mq_ctr = global.pww_ag_amount^pww_mq_a }
+			}
+		}
+	}
+	log = "PWW_RESULT mkt.q INFO [GetDateText] res=aluminium prod=[?pww_mq_prod|0] imp=[?pww_mq_imp|0] unsold=[?pww_mq_uns|0] short=[?pww_mq_sh|0] nshort=[?pww_mq_nsh|0] ctr=[?pww_mq_ctr|0] stock=[?pww_mq_stk|0] tension=[?pww_mq_t|0] wars=[?pww_mq_wars|0]"
+	set_temp_variable = { pww_mq_prod = 0 }
+	set_temp_variable = { pww_mq_imp = 0 }
+	set_temp_variable = { pww_mq_uns = 0 }
+	set_temp_variable = { pww_mq_sh = 0 }
+	set_temp_variable = { pww_mq_nsh = 0 }
+	set_temp_variable = { pww_mq_stk = 0 }
+	every_country = {
+		limit = { exists = yes }
+		add_to_temp_variable = { pww_mq_prod = resource_produced@rubber }
+		add_to_temp_variable = { pww_mq_imp = resource_imported@rubber }
+		set_temp_variable = { pww_mq_b = resource@rubber }
+		if = { limit = { check_variable = { pww_mq_b > 0 } } add_to_temp_variable = { pww_mq_uns = pww_mq_b } }
+		if = {
+			limit = { check_variable = { pww_mq_b < -0.5 } }
+			subtract_from_temp_variable = { pww_mq_sh = pww_mq_b }
+			add_to_temp_variable = { pww_mq_nsh = 1 }
+		}
+		if = { limit = { has_variable = pww_stock_rubber } add_to_temp_variable = { pww_mq_stk = pww_stock_rubber } }
+	}
+	set_temp_variable = { pww_mq_ctr = 0 }
+	if = {
+		limit = { has_variable = global.pww_next_agreement_id }
+		for_loop_effect = {
+			start = 0
+			end = global.pww_next_agreement_id
+			value = pww_mq_a
+			if = {
+				limit = {
+					check_variable = { global.pww_ag_status^pww_mq_a = 1 }
+					check_variable = { global.pww_ag_kind^pww_mq_a = 0 }
+					check_variable = { global.pww_ag_res^pww_mq_a = 2 }
+				}
+				add_to_temp_variable = { pww_mq_ctr = global.pww_ag_amount^pww_mq_a }
+			}
+		}
+	}
+	log = "PWW_RESULT mkt.q INFO [GetDateText] res=rubber prod=[?pww_mq_prod|0] imp=[?pww_mq_imp|0] unsold=[?pww_mq_uns|0] short=[?pww_mq_sh|0] nshort=[?pww_mq_nsh|0] ctr=[?pww_mq_ctr|0] stock=[?pww_mq_stk|0] tension=[?pww_mq_t|0] wars=[?pww_mq_wars|0]"
+	set_temp_variable = { pww_mq_prod = 0 }
+	set_temp_variable = { pww_mq_imp = 0 }
+	set_temp_variable = { pww_mq_uns = 0 }
+	set_temp_variable = { pww_mq_sh = 0 }
+	set_temp_variable = { pww_mq_nsh = 0 }
+	set_temp_variable = { pww_mq_stk = 0 }
+	every_country = {
+		limit = { exists = yes }
+		add_to_temp_variable = { pww_mq_prod = resource_produced@tungsten }
+		add_to_temp_variable = { pww_mq_imp = resource_imported@tungsten }
+		set_temp_variable = { pww_mq_b = resource@tungsten }
+		if = { limit = { check_variable = { pww_mq_b > 0 } } add_to_temp_variable = { pww_mq_uns = pww_mq_b } }
+		if = {
+			limit = { check_variable = { pww_mq_b < -0.5 } }
+			subtract_from_temp_variable = { pww_mq_sh = pww_mq_b }
+			add_to_temp_variable = { pww_mq_nsh = 1 }
+		}
+		if = { limit = { has_variable = pww_stock_tungsten } add_to_temp_variable = { pww_mq_stk = pww_stock_tungsten } }
+	}
+	set_temp_variable = { pww_mq_ctr = 0 }
+	if = {
+		limit = { has_variable = global.pww_next_agreement_id }
+		for_loop_effect = {
+			start = 0
+			end = global.pww_next_agreement_id
+			value = pww_mq_a
+			if = {
+				limit = {
+					check_variable = { global.pww_ag_status^pww_mq_a = 1 }
+					check_variable = { global.pww_ag_kind^pww_mq_a = 0 }
+					check_variable = { global.pww_ag_res^pww_mq_a = 3 }
+				}
+				add_to_temp_variable = { pww_mq_ctr = global.pww_ag_amount^pww_mq_a }
+			}
+		}
+	}
+	log = "PWW_RESULT mkt.q INFO [GetDateText] res=tungsten prod=[?pww_mq_prod|0] imp=[?pww_mq_imp|0] unsold=[?pww_mq_uns|0] short=[?pww_mq_sh|0] nshort=[?pww_mq_nsh|0] ctr=[?pww_mq_ctr|0] stock=[?pww_mq_stk|0] tension=[?pww_mq_t|0] wars=[?pww_mq_wars|0]"
+	set_temp_variable = { pww_mq_prod = 0 }
+	set_temp_variable = { pww_mq_imp = 0 }
+	set_temp_variable = { pww_mq_uns = 0 }
+	set_temp_variable = { pww_mq_sh = 0 }
+	set_temp_variable = { pww_mq_nsh = 0 }
+	set_temp_variable = { pww_mq_stk = 0 }
+	every_country = {
+		limit = { exists = yes }
+		add_to_temp_variable = { pww_mq_prod = resource_produced@steel }
+		add_to_temp_variable = { pww_mq_imp = resource_imported@steel }
+		set_temp_variable = { pww_mq_b = resource@steel }
+		if = { limit = { check_variable = { pww_mq_b > 0 } } add_to_temp_variable = { pww_mq_uns = pww_mq_b } }
+		if = {
+			limit = { check_variable = { pww_mq_b < -0.5 } }
+			subtract_from_temp_variable = { pww_mq_sh = pww_mq_b }
+			add_to_temp_variable = { pww_mq_nsh = 1 }
+		}
+		if = { limit = { has_variable = pww_stock_steel } add_to_temp_variable = { pww_mq_stk = pww_stock_steel } }
+	}
+	set_temp_variable = { pww_mq_ctr = 0 }
+	if = {
+		limit = { has_variable = global.pww_next_agreement_id }
+		for_loop_effect = {
+			start = 0
+			end = global.pww_next_agreement_id
+			value = pww_mq_a
+			if = {
+				limit = {
+					check_variable = { global.pww_ag_status^pww_mq_a = 1 }
+					check_variable = { global.pww_ag_kind^pww_mq_a = 0 }
+					check_variable = { global.pww_ag_res^pww_mq_a = 4 }
+				}
+				add_to_temp_variable = { pww_mq_ctr = global.pww_ag_amount^pww_mq_a }
+			}
+		}
+	}
+	log = "PWW_RESULT mkt.q INFO [GetDateText] res=steel prod=[?pww_mq_prod|0] imp=[?pww_mq_imp|0] unsold=[?pww_mq_uns|0] short=[?pww_mq_sh|0] nshort=[?pww_mq_nsh|0] ctr=[?pww_mq_ctr|0] stock=[?pww_mq_stk|0] tension=[?pww_mq_t|0] wars=[?pww_mq_wars|0]"
+	set_temp_variable = { pww_mq_prod = 0 }
+	set_temp_variable = { pww_mq_imp = 0 }
+	set_temp_variable = { pww_mq_uns = 0 }
+	set_temp_variable = { pww_mq_sh = 0 }
+	set_temp_variable = { pww_mq_nsh = 0 }
+	set_temp_variable = { pww_mq_stk = 0 }
+	every_country = {
+		limit = { exists = yes }
+		add_to_temp_variable = { pww_mq_prod = resource_produced@chromium }
+		add_to_temp_variable = { pww_mq_imp = resource_imported@chromium }
+		set_temp_variable = { pww_mq_b = resource@chromium }
+		if = { limit = { check_variable = { pww_mq_b > 0 } } add_to_temp_variable = { pww_mq_uns = pww_mq_b } }
+		if = {
+			limit = { check_variable = { pww_mq_b < -0.5 } }
+			subtract_from_temp_variable = { pww_mq_sh = pww_mq_b }
+			add_to_temp_variable = { pww_mq_nsh = 1 }
+		}
+		if = { limit = { has_variable = pww_stock_chromium } add_to_temp_variable = { pww_mq_stk = pww_stock_chromium } }
+	}
+	set_temp_variable = { pww_mq_ctr = 0 }
+	if = {
+		limit = { has_variable = global.pww_next_agreement_id }
+		for_loop_effect = {
+			start = 0
+			end = global.pww_next_agreement_id
+			value = pww_mq_a
+			if = {
+				limit = {
+					check_variable = { global.pww_ag_status^pww_mq_a = 1 }
+					check_variable = { global.pww_ag_kind^pww_mq_a = 0 }
+					check_variable = { global.pww_ag_res^pww_mq_a = 5 }
+				}
+				add_to_temp_variable = { pww_mq_ctr = global.pww_ag_amount^pww_mq_a }
+			}
+		}
+	}
+	log = "PWW_RESULT mkt.q INFO [GetDateText] res=chromium prod=[?pww_mq_prod|0] imp=[?pww_mq_imp|0] unsold=[?pww_mq_uns|0] short=[?pww_mq_sh|0] nshort=[?pww_mq_nsh|0] ctr=[?pww_mq_ctr|0] stock=[?pww_mq_stk|0] tension=[?pww_mq_t|0] wars=[?pww_mq_wars|0]"
+	set_temp_variable = { pww_mq_prod = 0 }
+	set_temp_variable = { pww_mq_imp = 0 }
+	set_temp_variable = { pww_mq_uns = 0 }
+	set_temp_variable = { pww_mq_sh = 0 }
+	set_temp_variable = { pww_mq_nsh = 0 }
+	set_temp_variable = { pww_mq_stk = 0 }
+	every_country = {
+		limit = { exists = yes }
+		add_to_temp_variable = { pww_mq_prod = resource_produced@coal }
+		add_to_temp_variable = { pww_mq_imp = resource_imported@coal }
+		set_temp_variable = { pww_mq_b = resource@coal }
+		if = { limit = { check_variable = { pww_mq_b > 0 } } add_to_temp_variable = { pww_mq_uns = pww_mq_b } }
+		if = {
+			limit = { check_variable = { pww_mq_b < -0.5 } }
+			subtract_from_temp_variable = { pww_mq_sh = pww_mq_b }
+			add_to_temp_variable = { pww_mq_nsh = 1 }
+		}
+		if = { limit = { has_variable = pww_stock_coal } add_to_temp_variable = { pww_mq_stk = pww_stock_coal } }
+	}
+	set_temp_variable = { pww_mq_ctr = 0 }
+	if = {
+		limit = { has_variable = global.pww_next_agreement_id }
+		for_loop_effect = {
+			start = 0
+			end = global.pww_next_agreement_id
+			value = pww_mq_a
+			if = {
+				limit = {
+					check_variable = { global.pww_ag_status^pww_mq_a = 1 }
+					check_variable = { global.pww_ag_kind^pww_mq_a = 0 }
+					check_variable = { global.pww_ag_res^pww_mq_a = 6 }
+				}
+				add_to_temp_variable = { pww_mq_ctr = global.pww_ag_amount^pww_mq_a }
+			}
+		}
+	}
+	log = "PWW_RESULT mkt.q INFO [GetDateText] res=coal prod=[?pww_mq_prod|0] imp=[?pww_mq_imp|0] unsold=[?pww_mq_uns|0] short=[?pww_mq_sh|0] nshort=[?pww_mq_nsh|0] ctr=[?pww_mq_ctr|0] stock=[?pww_mq_stk|0] tension=[?pww_mq_t|0] wars=[?pww_mq_wars|0]"
+}

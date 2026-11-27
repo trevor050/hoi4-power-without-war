@@ -57,6 +57,7 @@ TESTS: list[Test] = [
     T("tests/diplomacy/diplo_glut_sale", ["--tag", "ITA"]),
     T("tests/diplomacy/diplo_value_v2", ["--tag", "GER"]),
     T("tests/diplomacy/diplo_compete", ["--tag", "GER"]),
+    T("tests/diplomacy/diplo_cartel_bound", ["--tag", "GER"]),
     T("tests/diplomacy/diplo_seed_reload",
       ["--autosave", "MONTHLY", "--clear-saves"], ["--continue-last-save"]),
     T("tests/situations/sit_wolfram_ai", ["--tag", "HAI"]),
@@ -84,6 +85,7 @@ TESTS += [
     T("tests/cartels/cartel_irra", []),
     T("tests/cartels/cartel_cheat", []),
     T("tests/cartels/cartel_poach", []),
+    T("tests/cartels/cartel_court", ["--tag", "GER"]),
 ]
 # Stockpiles lane.
 TESTS += [
@@ -93,6 +95,12 @@ TESTS += [
     T("tests/stockpiles/stock_reload",
       ["--autosave", "MONTHLY", "--clear-saves", "--until", "stock_reload.session1_done", "--timeout", "900"],
       ["--continue-last-save", "--timeout", "900"]),
+]
+# UI lane.
+TESTS += [
+    T("tests/ui/ui_end", ["--tag", "GER"]),
+    T("tests/ui/ui_desk", ["--tag", "GER", "--size", "1920x1080", "--leave-running"], group="manual",
+      notes="UI screenshots (desk, dossier); drive with tests/ui/ui_drive.py; never run by this script"),
 ]
 # Logistics + relationships lane.
 TESTS += [

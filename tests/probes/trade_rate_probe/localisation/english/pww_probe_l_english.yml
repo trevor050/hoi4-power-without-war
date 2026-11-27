@@ -1,0 +1,11 @@
+﻿l_english:
+ pww_probe_category:0 "AAA Trade Probe"
+ pww_probe_category_desc:0 "Engine probe for trade rates."
+ pww_probe_a:0 "A: GER rate +8"
+ pww_probe_b:0 "B: MAL rate +8"
+ pww_probe_c:0 "C: MAL rubber cost 200"
+ pww_probe_d:0 "D: MAL min_export -0.3"
+ pww_probe_e:0 "E: MAL target factor on GER"
+ pww_probe_f:0 "F: GER target factor on MAL"
+ pww_probe_g:0 "G: GER target -0.5 on MAL"
+ pww_probe_r:0 "R: reset"

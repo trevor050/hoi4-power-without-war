@@ -125,6 +125,21 @@
 #   deliberately cheats (temptation 30+ or cohesion under 40, with
 #   global.pww_cartel_c_ai_cheat on); ex-members in a price war sell 10%
 #   cheaper. See pww_diplo_ai_build_sale.
+#   The same promise binds an AI member's acceptance of a proposal that buys
+#   the resource from it (pww_diplo_eval_bundle, any sender): unless it
+#   cheats, it refuses when what it receives at market is worth less than
+#   the bound units at the cartel price plus everything else it gives at
+#   market (pww_do_cartfail 1), or when the units exceed its quota room
+#   (pww_do_cartfail 2). pww_do_e_cartel -1000 then; the send window's
+#   verdict row and reply lines 121/122 say why. Display: pww_do_cart_res,
+#   pww_do_cart_upf (agreed price as units per civilian factory, rounded
+#   down to 0.1: the most it gives per factory), pww_do_cart_room (units a
+#   day of quota room, rounded down). A cheating member signs on the usual
+#   terms; the cartel's own scan of the ledger then counts the deal as over
+#   quota or under price (cheat, suspicion, detection), exactly like an AI
+#   side sale. AI buyer drafts (pww_diplo_ai_build_buy) offer at least the
+#   cartel price to a bound seller (never above their own value) and ask
+#   no more than its quota room.
 # POACHING (act 2, Poach Supplier): see the POACHING block below.
 # SCARCITY (pww_do_scar, 0..1, the largest of): per resource it sells,
 #   0.25 x the share of the units not covered by unsold output (redirecting
@@ -773,6 +788,14 @@ pww_diplo_bundle_balance_gap = {
 
 pww_diplo_bundle_balance_step = {
 	pww_diplo_eval_bundle = yes
+	# a seller bound by a producers' agreement is balanced to its agreed price:
+	# the target sits one tolerance above it, so the at-market band never
+	# stops short of the price the member must have
+	if = {
+		limit = { check_variable = { pww_do_cart_prem > 0 } }
+		add_to_variable = { pww_do_gap = pww_do_cart_prem }
+		add_to_variable = { pww_do_gap = pww_do_mk_tol }
+	}
 	pww_diplo_bundle_find_pay = yes
 	pww_diplo_bundle_balance_gap = yes
 }
@@ -1169,6 +1192,18 @@ pww_diplo_eval_bundle = {
 	set_temp_variable = { pww_dvb_scar = 0 }
 	set_temp_variable = { pww_dvb_ngmax = 0 }
 	set_temp_variable = { pww_dvb_sells = 0 }
+	# Cartel promise (CARTELS): the premium the bound units must fetch over
+	# market, the first bound resource, a quota overrun.
+	set_temp_variable = { pww_dvb_cprem = 0 }
+	set_temp_variable = { pww_dvb_cres = -1 }
+	set_temp_variable = { pww_dvb_ccp = 0 }
+	set_temp_variable = { pww_dvb_croom = 0 }
+	set_temp_variable = { pww_dvb_cq = 0 }
+	set_temp_variable = { pww_dvb_tai = 0 }
+	if = {
+		limit = { var:pww_dv_t = { is_ai = yes } }
+		set_temp_variable = { pww_dvb_tai = 1 }
+	}
 
 	# Appetite (see APPETITE above): the target's own situation.
 	var:pww_dv_t = {
@@ -1621,6 +1656,41 @@ pww_diplo_eval_bundle = {
 						pww_diplo_eval_glut = yes
 						set_temp_variable = { pww_dvb_w = pww_dvb_wu }
 						divide_temp_variable = { pww_dvb_w = 8 }
+						# A member of the live cartel for it keeps the agreed
+						# price and its quota unless it cheats (CARTELS).
+						if = {
+							limit = { check_variable = { pww_dvb_tai = 1 } }
+							set_temp_variable = { pww_dsl_quiet = 1 }
+							var:pww_dv_t = { pww_diplo_sale_cartel = yes }
+							set_temp_variable = { pww_dsl_quiet = 0 }
+							if = {
+								limit = {
+									check_variable = { pww_dsl_price > 0 }
+									check_variable = { pww_dsl_cheat = 0 }
+								}
+								set_temp_variable = { pww_dvb_ct = pww_dsl_price }
+								subtract_from_temp_variable = { pww_dvb_ct = 1 }
+								multiply_temp_variable = { pww_dvb_ct = pww_dvb_a }
+								divide_temp_variable = { pww_dvb_ct = 8 }
+								add_to_temp_variable = { pww_dvb_cprem = pww_dvb_ct }
+								if = {
+									limit = {
+										check_variable = { pww_dvb_a > pww_dsl_room }
+										check_variable = { pww_dvb_cq = 0 }
+									}
+									set_temp_variable = { pww_dvb_cq = 1 }
+									set_temp_variable = { pww_dvb_cres = pww_dvb_x }
+									set_temp_variable = { pww_dvb_ccp = pww_dsl_price }
+									set_temp_variable = { pww_dvb_croom = pww_dsl_room }
+								}
+								if = {
+									limit = { check_variable = { pww_dvb_cres < 0 } }
+									set_temp_variable = { pww_dvb_cres = pww_dvb_x }
+									set_temp_variable = { pww_dvb_ccp = pww_dsl_price }
+									set_temp_variable = { pww_dvb_croom = pww_dsl_room }
+								}
+							}
+						}
 					}
 					# Scarcity: redirecting a little of what it already sells is mild
 					# (0.25); asking for more than half of its exports rises to full
@@ -1776,6 +1846,54 @@ pww_diplo_eval_bundle = {
 	}
 	set_variable = { pww_do_mk_tol = pww_dvb_tol }
 	set_variable = { pww_do_mk_base = pww_dvb_base }
+
+	# Cartel promise (CARTELS): what they receive at market must cover the
+	# bound units at the agreed price and the rest of their side at market;
+	# the bound units must fit the quota room.
+	set_variable = { pww_do_cartfail = 0 }
+	set_variable = { pww_do_e_cartel = 0 }
+	set_variable = { pww_do_cart_res = pww_dvb_cres }
+	# Premium the bound units must fetch over market (Balance it closes the gap
+	# to the agreed price, not to market); 0 when nothing binds or on a quota limit.
+	set_variable = { pww_do_cart_prem = 0 }
+	if = {
+		limit = {
+			check_variable = { pww_dvb_cres > -1 }
+			check_variable = { pww_dvb_cq = 0 }
+		}
+		set_variable = { pww_do_cart_prem = pww_dvb_cprem }
+	}
+	set_variable = { pww_do_cart_upf = 0 }
+	set_variable = { pww_do_cart_room = 0 }
+	if = {
+		limit = { check_variable = { pww_dvb_cres > -1 } }
+		set_temp_variable = { pww_dvb_cn = pww_dvb_m1 }
+		add_to_temp_variable = { pww_dvb_cn = pww_dvb_cprem }
+		subtract_from_temp_variable = { pww_dvb_cn = 0.001 }
+		if = {
+			limit = { check_variable = { pww_dvb_cq = 1 } }
+			set_variable = { pww_do_cartfail = 2 }
+		}
+		else_if = {
+			limit = { check_variable = { pww_dvb_m0 < pww_dvb_cn } }
+			set_variable = { pww_do_cartfail = 1 }
+		}
+		set_temp_variable = { pww_dvb_cu = 80 }
+		divide_temp_variable = { pww_dvb_cu = pww_dvb_ccp }
+		subtract_from_temp_variable = { pww_dvb_cu = 0.499 }
+		round_temp_variable = pww_dvb_cu
+		divide_temp_variable = { pww_dvb_cu = 10 }
+		set_variable = { pww_do_cart_upf = pww_dvb_cu }
+		set_temp_variable = { pww_dvb_cu = pww_dvb_croom }
+		subtract_from_temp_variable = { pww_dvb_cu = 0.499 }
+		round_temp_variable = pww_dvb_cu
+		clamp_temp_variable = { var = pww_dvb_cu min = 0 max = 99999 }
+		set_variable = { pww_do_cart_room = pww_dvb_cu }
+	}
+	if = {
+		limit = { check_variable = { pww_do_cartfail > 0 } }
+		set_variable = { pww_do_e_cartel = -1000 }
+	}
 	# pww_do_mk: -1 we ask more than we give (below market for a buyer),
 	# 0 at market, 1 we give more. pww_do_frame: 0 we buy goods, 1 we sell
 	# goods, 2 goods both ways (or none).
@@ -2060,6 +2178,7 @@ pww_diplo_eval_bundle = {
 	add_to_variable = { pww_do_e_total = pww_do_e_invalid }
 	add_to_variable = { pww_do_e_total = pww_do_e_bond }
 	add_to_variable = { pww_do_e_total = pww_do_e_lock }
+	add_to_variable = { pww_do_e_total = pww_do_e_cartel }
 	set_variable = { pww_do_ok = 0 }
 	if = {
 		limit = { check_variable = { pww_do_e_total > 0 } }
@@ -2762,6 +2881,20 @@ pww_diplo_ai_build_buy = {
 	}
 	# What we give: at market, more after a refusal.
 	pww_diplo_eval_bundle = yes
+	# A bound cartel member sells no more than its quota room (CARTELS).
+	if = {
+		limit = {
+			check_variable = { pww_do_act = 0 }
+			check_variable = { pww_dvb_cq = 1 }
+			check_variable = { pww_dvb_croom > 0.999 }
+			check_variable = { pww_dvb_main > -1 }
+		}
+		set_temp_variable = { pww_dab_amt = pww_dvb_croom }
+		subtract_from_temp_variable = { pww_dab_amt = 0.499 }
+		round_temp_variable = pww_dab_amt
+		set_variable = { pww_dob_a^pww_dvb_main = pww_dab_amt }
+		pww_diplo_eval_bundle = yes
+	}
 	set_temp_variable = { pww_dab_pf = 1 }
 	set_temp_variable = { pww_dg_res = pww_do_res }
 	pww_diplo_read_res = yes
@@ -2806,6 +2939,20 @@ pww_diplo_ai_build_buy = {
 		if = {
 			limit = { check_variable = { pww_dab_cacc > pww_dab_pf } }
 			set_temp_variable = { pww_dab_pf = pww_dab_cacc }
+		}
+		# A bound cartel member (CARTELS): its agreed price is public. Offer
+		# it when it is within our own value of the units.
+		if = {
+			limit = { check_variable = { pww_dvb_ccp > pww_dab_pf } }
+			set_temp_variable = { pww_dab_cacc = pww_dvb_ccp }
+			if = {
+				limit = { check_variable = { pww_dab_cacc > pww_dcp_bv } }
+				set_temp_variable = { pww_dab_cacc = pww_dcp_bv }
+			}
+			if = {
+				limit = { check_variable = { pww_dab_cacc > pww_dab_pf } }
+				set_temp_variable = { pww_dab_pf = pww_dab_cacc }
+			}
 		}
 	}
 	# A fixed contract without the trust for it must be clearly generous.
@@ -3392,8 +3539,13 @@ pww_diplo_sale_cartel = {
 			set_temp_variable = { pww_dsl_pw = 1 }
 		}
 	}
-	set_variable = { pww_do_sale_cheat = pww_dsl_cheat }
-	set_variable = { pww_do_sale_cprice = pww_dsl_price }
+	# pww_dsl_quiet 1: an acceptance check on another country's draft (temps
+	# only; the seller's own sale display stays as it was).
+	if = {
+		limit = { NOT = { check_variable = { pww_dsl_quiet = 1 } } }
+		set_variable = { pww_do_sale_cheat = pww_dsl_cheat }
+		set_variable = { pww_do_sale_cprice = pww_dsl_price }
+	}
 }
 
 ###############################################################################
