@@ -7,6 +7,10 @@
 #   day 14  GER signs a supply contract for 95% of A's chromium output, and
 #           the test hook pww_cap_test_demand_chromium marks buyers waiting
 #           (as a refused buyer would).
+#           ledger_same_day  a second contract the same day for half the
+#                            output is refused (no over-commitment)
+#   day 16  ledger_rest      a contract for half of what is left uncommitted
+#                            signs (contracted volume not subtracted twice)
 #   days 15..70 every 5 days A runs the capacity tick: it reopens while the
 #           contract leaves no spare, then expands until spare returns.
 #   day 72  reopened  a reopening step was seen (trend 1)
@@ -57,6 +61,39 @@ on_actions = {
 						pww_tcs_log = yes
 						pww_tcs_top_up = yes
 						set_variable = { pww_cap_test_demand_chromium = 1 }
+						# Same day: the engine has not applied the first
+						# contract yet, so a second one for half the output
+						# must be refused (no over-commitment).
+						set_temp_variable = { pww_tcs_amt = resource_produced@chromium }
+						multiply_temp_variable = { pww_tcs_amt = 0.5 }
+						round_temp_variable = pww_tcs_amt
+						pww_tcs_contract_ita = yes
+						if = {
+							limit = { check_variable = { pww_tcs_res = 0 } }
+							log = "PWW_RESULT cap_soldout.ledger_same_day PASS a second same-day contract for half the output was refused"
+						}
+						else = { log = "PWW_RESULT cap_soldout.ledger_same_day FAIL the ledger over-committed on the same day" }
+					}
+				}
+				if = {
+					limit = {
+						check_variable = { global.pww_tcs_day = 16 }
+						check_variable = { global.pww_tcs_a > -1 }
+					}
+					# Next days: output already under contract is netted out of
+					# resource_produced by the engine; the ledger must not
+					# subtract it again, so what is left can still be sold.
+					var:global.pww_tcs_a = {
+						set_temp_variable = { pww_tcs_amt = resource_produced@chromium }
+						multiply_temp_variable = { pww_tcs_amt = 0.5 }
+						round_temp_variable = pww_tcs_amt
+						if = { limit = { check_variable = { pww_tcs_amt < 1 } } set_temp_variable = { pww_tcs_amt = 1 } }
+						pww_tcs_contract_ita = yes
+						if = {
+							limit = { check_variable = { pww_tcs_res = 1 } }
+							log = "PWW_RESULT cap_soldout.ledger_rest PASS the uncommitted rest of the output could be contracted"
+						}
+						else = { log = "PWW_RESULT cap_soldout.ledger_rest FAIL contracted volume was subtracted twice" }
 					}
 				}
 				set_temp_variable = { pww_tcs_m = global.pww_tcs_day }

@@ -1107,6 +1107,22 @@ pww_diplo_compute_sig = {
 ###############################################################################
 pww_diplo_talk_reply = {
 	set_temp_variable = { pww_dr_t = pww_do_talk }
+	# Refused because they cannot spare the resource (SCARCITY): tell the
+	# capacity lane a buyer was turned away (reopens or expands output).
+	if = {
+		limit = {
+			has_global_flag = pww_cap_loaded
+			check_variable = { pww_do_shres > -1 }
+			check_variable = { pww_do_scar > 0.499 }
+		}
+		set_temp_variable = { pww_in_res = pww_do_shres }
+		var:pww_do_target = {
+			meta_effect = {
+				text = { pww_cap_note_turned = [Y] }
+				Y = "yes"
+			}
+		}
+	}
 	if = {
 		limit = {
 			check_variable = { pww_dr_t > -1 }

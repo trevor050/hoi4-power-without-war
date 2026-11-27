@@ -48,7 +48,8 @@
 # from the unsold output at 95% of market (90% when 40% or more of its output
 # is unsold), 5% less each round, paid in their free civilian factories then
 # political power. Rate limits: the seller waits 60 days after a proposal
-# (120 for a small glut: under 40% unsold and under 40 units); a human
+# (120 for a small glut: under 40% unsold and under 40 units; 30 for a
+# planned economy, capacity lane pww_cap_sys 1: it never idles output); a human
 # receives at most one every 30 days (pww_diplo_ai_sale_last on the human);
 # AI-to-AI sale attempts (sent or dropped) are capped at 6 per 30-day window
 # (global.pww_ds_win / global.pww_ds_n). A draft the buyer would not take is
@@ -816,8 +817,14 @@ pww_diplo_ai_sale_intent = {
 					pww_diplo_talk_close = yes
 				}
 			}
-			# Wait before the next attempt either way.
+			# Wait before the next attempt either way. A planned economy
+			# (capacity lane: pww_cap_sys 1) never idles output and the state
+			# trading monopoly sells its surplus eagerly: 30 days.
 			if = {
+				limit = { check_variable = { pww_cap_sys = 1 } }
+				set_country_flag = { flag = pww_diplo_ai_sell_cd days = 30 value = 1 }
+			}
+			else_if = {
 				limit = {
 					OR = {
 						check_variable = { pww_dsi_ratio > 0.399 }

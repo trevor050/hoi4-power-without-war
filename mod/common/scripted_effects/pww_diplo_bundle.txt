@@ -1191,6 +1191,10 @@ pww_diplo_eval_bundle = {
 	# not covered by unsold output.
 	set_temp_variable = { pww_dvb_scar = 0 }
 	set_temp_variable = { pww_dvb_ngmax = 0 }
+	# First resource they would sell beyond their unsold output (half or more
+	# of the ask uncovered): a buyer turned away for lack of supply when the
+	# draft is refused (pww_diplo_talk_reply -> capacity lane).
+	set_temp_variable = { pww_dvb_shres = -1 }
 	set_temp_variable = { pww_dvb_sells = 0 }
 	# Cartel promise (CARTELS): the premium the bound units must fetch over
 	# market, the first bound resource, a quota overrun.
@@ -1732,6 +1736,14 @@ pww_diplo_eval_bundle = {
 						limit = { check_variable = { pww_dvb_ng > pww_dvb_ngmax } }
 						set_temp_variable = { pww_dvb_ngmax = pww_dvb_ng }
 					}
+					if = {
+						limit = {
+							check_variable = { pww_dvb_goods = 1 }
+							check_variable = { pww_dvb_ng > 0.499 }
+							check_variable = { pww_dvb_shres < 0 }
+						}
+						set_temp_variable = { pww_dvb_shres = pww_dvb_x }
+					}
 					set_temp_variable = { pww_dvb_sells = 1 }
 					set_temp_variable = { pww_dvb_f = pww_dg_desp }
 					divide_temp_variable = { pww_dvb_f = 100 }
@@ -1970,6 +1982,7 @@ pww_diplo_eval_bundle = {
 	}
 	clamp_temp_variable = { var = pww_dvb_scar min = 0 max = 1 }
 	set_variable = { pww_do_scar = pww_dvb_scar }
+	set_variable = { pww_do_shres = pww_dvb_shres }
 
 	# --- Acceptance parts (the target's view) -------------------------------
 	set_temp_variable = { pww_dv_terms = pww_dvb_gain }

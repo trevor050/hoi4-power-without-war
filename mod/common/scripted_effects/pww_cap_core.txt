@@ -228,3 +228,21 @@ pww_cap_reset = {
 		force_update_dynamic_modifier = yes
 	}
 }
+
+# Country scope (the seller). Public: a buyer was turned away for lack of
+# supply of temp pww_in_res (0..6) today. Read by the capacity tick for
+# c_turned_days as demand (diplomacy calls it when a draft is refused for
+# scarcity; through meta_effect under pww_cap_loaded).
+pww_cap_note_turned = {
+	if = { limit = { check_variable = { pww_in_res = 0 } } set_variable = { pww_cap_turned_oil = global.num_days } }
+	else_if = { limit = { check_variable = { pww_in_res = 1 } } set_variable = { pww_cap_turned_aluminium = global.num_days } }
+	else_if = { limit = { check_variable = { pww_in_res = 2 } } set_variable = { pww_cap_turned_rubber = global.num_days } }
+	else_if = { limit = { check_variable = { pww_in_res = 3 } } set_variable = { pww_cap_turned_tungsten = global.num_days } }
+	else_if = { limit = { check_variable = { pww_in_res = 4 } } set_variable = { pww_cap_turned_steel = global.num_days } }
+	else_if = { limit = { check_variable = { pww_in_res = 5 } } set_variable = { pww_cap_turned_chromium = global.num_days } }
+	else_if = { limit = { check_variable = { pww_in_res = 6 } } set_variable = { pww_cap_turned_coal = global.num_days } }
+	if = {
+		limit = { has_global_flag = pww_cap_debug }
+		log = "[GetDateText] PWW_CAP [This.GetTag] turned a buyer away for lack of resource [?pww_in_res|0]"
+	}
+}

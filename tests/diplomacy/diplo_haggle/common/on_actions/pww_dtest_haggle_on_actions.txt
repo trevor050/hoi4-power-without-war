@@ -53,6 +53,8 @@
 #                    below market (political power payment) for all 24
 #                    reserves; the same draft with every unit already sold is
 #                    refused for all 24.
+#   A_turned_away    (capacity lane loaded) the refusal in A records
+#                    pww_cap_turned_tungsten on the seller
 #   M scarcity       at market and below: a POR selling out of its own use
 #                    (nothing unsold or exported) and a POR whose tungsten is
 #                    contested (four other active traders desperate for it,
@@ -120,6 +122,19 @@ on_actions = {
 					}
 					else = {
 						log = "PWW_RESULT diplo_haggle.A_below_market FAIL accepts natural=[?pww_dtest_hg_a_nat|0] lenient=[?pww_dtest_hg_a_min|0] terms=[?pww_dtest_hg_a_terms|0] line=[?pww_dtest_hg_a_line|0] status=[?pww_dtest_hg_a_st|0]"
+					}
+
+					# Capacity lane: a refusal for lack of supply tells the
+					# seller a buyer was turned away (pww_cap_note_turned).
+					if = {
+						limit = { has_global_flag = pww_cap_loaded }
+						var:pww_dtest_hg_tgt = {
+							if = {
+								limit = { check_variable = { pww_cap_turned_tungsten = global.num_days } }
+								log = "PWW_RESULT diplo_haggle.A_turned_away PASS [This.GetTag] records a buyer turned away for tungsten (capacity lane)"
+							}
+							else = { log = "PWW_RESULT diplo_haggle.A_turned_away FAIL [This.GetTag] turned=[?pww_cap_turned_tungsten|0] shres=[?ROOT.pww_do_shres|0] scar=[?ROOT.pww_do_scar|2]" }
+						}
 					}
 
 					# --- B: at market, neutral / friendly / generous ----------

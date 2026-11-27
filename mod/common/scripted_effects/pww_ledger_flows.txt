@@ -22,8 +22,9 @@
 #
 # INTERNAL HELPERS
 #   pww_ledger_calc_seller_avail       (country) temp in pww_lv_res; temp out
-#                                      pww_lfa_avail = resource_produced minus
-#                                      resources already committed out, plus
+#                                      pww_lfa_avail = resource_produced (net
+#                                      of outflows in force) minus outflows
+#                                      added today, plus
 #                                      the stockpiles lane's withheld cartel
 #                                      intake (pww_stock_cost_<res>)
 #   pww_ledger_calc_state_lease_units  (state) temp in pww_lv_res; temp out
@@ -32,6 +33,21 @@
 ###############################################################################
 
 pww_ledger_recompute_flows = {
+	# The engine applies a changed modifier at the next daily tick, so until
+	# then resource_produced@ still reflects the outflows in force before
+	# today's first change: keep them (pww_lf_app_<res>) for the
+	# availability check (pww_ledger_calc_seller_avail).
+	if = {
+		limit = { NOT = { check_variable = { pww_lf_day = global.num_days } } }
+		set_variable = { pww_lf_day = global.num_days }
+		set_variable = { pww_lf_app_oil = pww_lf_out_oil }
+		set_variable = { pww_lf_app_aluminium = pww_lf_out_aluminium }
+		set_variable = { pww_lf_app_rubber = pww_lf_out_rubber }
+		set_variable = { pww_lf_app_tungsten = pww_lf_out_tungsten }
+		set_variable = { pww_lf_app_steel = pww_lf_out_steel }
+		set_variable = { pww_lf_app_chromium = pww_lf_out_chromium }
+		set_variable = { pww_lf_app_coal = pww_lf_out_coal }
+	}
 	set_variable = { pww_lf_in_oil = 0 }
 	set_variable = { pww_lf_in_aluminium = 0 }
 	set_variable = { pww_lf_in_rubber = 0 }
@@ -252,47 +268,84 @@ pww_ledger_apply_civ_receipt = {
 
 # Country scope (the seller). In: pww_lv_res. Out: pww_lfa_avail: output not yet
 # committed. resource_produced@ is already net of every country_resource_cost
-# (our contract outflows included; probe tests/probes/export_probe), so the
-# contracted volume is not subtracted again.
+# in force (our contract outflows included; probe tests/probes/export_probe),
+# so only outflows added today, which the engine applies at the next daily
+# tick, are subtracted: pww_lf_out_<res> - pww_lf_app_<res> (two contracts
+# signed the same day must not both see the whole output).
 pww_ledger_calc_seller_avail = {
 	set_temp_variable = { pww_lfa_avail = 0 }
 	if = {
 		limit = { check_variable = { pww_lv_res = 0 } }
 		set_temp_variable = { pww_lfa_avail = resource_produced@oil }
+		if = {
+			limit = { check_variable = { pww_lf_day = global.num_days } }
+			subtract_from_temp_variable = { pww_lfa_avail = pww_lf_out_oil }
+			add_to_temp_variable = { pww_lfa_avail = pww_lf_app_oil }
+		}
 	}
 	else_if = {
 		limit = { check_variable = { pww_lv_res = 1 } }
 		set_temp_variable = { pww_lfa_avail = resource_produced@aluminium }
+		if = {
+			limit = { check_variable = { pww_lf_day = global.num_days } }
+			subtract_from_temp_variable = { pww_lfa_avail = pww_lf_out_aluminium }
+			add_to_temp_variable = { pww_lfa_avail = pww_lf_app_aluminium }
+		}
 		# Cartel storage requests withhold output through cost; still sellable.
 		add_to_temp_variable = { pww_lfa_avail = pww_stock_cost_aluminium }
 	}
 	else_if = {
 		limit = { check_variable = { pww_lv_res = 2 } }
 		set_temp_variable = { pww_lfa_avail = resource_produced@rubber }
+		if = {
+			limit = { check_variable = { pww_lf_day = global.num_days } }
+			subtract_from_temp_variable = { pww_lfa_avail = pww_lf_out_rubber }
+			add_to_temp_variable = { pww_lfa_avail = pww_lf_app_rubber }
+		}
 		# Cartel storage requests withhold output through cost; still sellable.
 		add_to_temp_variable = { pww_lfa_avail = pww_stock_cost_rubber }
 	}
 	else_if = {
 		limit = { check_variable = { pww_lv_res = 3 } }
 		set_temp_variable = { pww_lfa_avail = resource_produced@tungsten }
+		if = {
+			limit = { check_variable = { pww_lf_day = global.num_days } }
+			subtract_from_temp_variable = { pww_lfa_avail = pww_lf_out_tungsten }
+			add_to_temp_variable = { pww_lfa_avail = pww_lf_app_tungsten }
+		}
 		# Cartel storage requests withhold output through cost; still sellable.
 		add_to_temp_variable = { pww_lfa_avail = pww_stock_cost_tungsten }
 	}
 	else_if = {
 		limit = { check_variable = { pww_lv_res = 4 } }
 		set_temp_variable = { pww_lfa_avail = resource_produced@steel }
+		if = {
+			limit = { check_variable = { pww_lf_day = global.num_days } }
+			subtract_from_temp_variable = { pww_lfa_avail = pww_lf_out_steel }
+			add_to_temp_variable = { pww_lfa_avail = pww_lf_app_steel }
+		}
 		# Cartel storage requests withhold output through cost; still sellable.
 		add_to_temp_variable = { pww_lfa_avail = pww_stock_cost_steel }
 	}
 	else_if = {
 		limit = { check_variable = { pww_lv_res = 5 } }
 		set_temp_variable = { pww_lfa_avail = resource_produced@chromium }
+		if = {
+			limit = { check_variable = { pww_lf_day = global.num_days } }
+			subtract_from_temp_variable = { pww_lfa_avail = pww_lf_out_chromium }
+			add_to_temp_variable = { pww_lfa_avail = pww_lf_app_chromium }
+		}
 		# Cartel storage requests withhold output through cost; still sellable.
 		add_to_temp_variable = { pww_lfa_avail = pww_stock_cost_chromium }
 	}
 	else_if = {
 		limit = { check_variable = { pww_lv_res = 6 } }
 		set_temp_variable = { pww_lfa_avail = resource_produced@coal }
+		if = {
+			limit = { check_variable = { pww_lf_day = global.num_days } }
+			subtract_from_temp_variable = { pww_lfa_avail = pww_lf_out_coal }
+			add_to_temp_variable = { pww_lfa_avail = pww_lf_app_coal }
+		}
 		# Cartel storage requests withhold output through cost; still sellable.
 		add_to_temp_variable = { pww_lfa_avail = pww_stock_cost_coal }
 	}

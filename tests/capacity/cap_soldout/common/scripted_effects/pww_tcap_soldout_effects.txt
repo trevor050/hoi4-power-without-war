@@ -65,3 +65,29 @@ pww_tcs_log = {
 	set_temp_variable = { pww_tcs_bl = resource@chromium }
 	log = "PWW_RESULT cap_soldout.read INFO day=[?global.pww_tcs_day] [This.GetTag] chromium cap=[?pww_cap_chromium|3] trend=[?pww_cap_trend_chromium|0] spare=[?pww_cap_spare_chromium|1] produced=[?pww_tcs_p|1] balance=[?pww_tcs_bl|1]"
 }
+
+# Country scope (the seller). Ledger availability checks (in temp
+# pww_tcs_amt = units a day): a contract to ITA, logged; out pww_tcs_res =
+# pww_l_result.
+pww_tcs_contract_ita = {
+	set_temp_variable = { pww_l_kind = 0 }
+	set_temp_variable = { pww_l_state = 0 }
+	set_temp_variable = { pww_l_committal = 0 }
+	set_temp_variable = { pww_l_term_days = 365 }
+	set_temp_variable = { pww_l_civ = 0 }
+	set_temp_variable = { pww_l_pp = 0 }
+	set_temp_variable = { pww_l_ideo = 0 }
+	set_temp_variable = { pww_l_ideo_giver = 0 }
+	set_temp_variable = { pww_l_cond = 0 }
+	set_temp_variable = { pww_l_reserve_days = 0 }
+	set_temp_variable = { pww_l_revert_days = 0 }
+	set_temp_variable = { pww_l_convoys = 0 }
+	set_temp_variable = { pww_l_seller = THIS }
+	set_temp_variable = { pww_l_buyer = ITA }
+	set_temp_variable = { pww_l_res = 5 }
+	set_temp_variable = { pww_l_amount = pww_tcs_amt }
+	set_temp_variable = { pww_l_activate = 1 }
+	pww_ledger_create_agreement = yes
+	set_temp_variable = { pww_tcs_res = pww_l_result }
+	log = "PWW_RESULT cap_soldout.contract INFO day=[?global.pww_tcs_day] [This.GetTag] sells [?pww_tcs_amt|0] chromium a day to ITA: result [?pww_l_result] fail [?pww_l_fail|0] id [?pww_l_new_id]"
+}
