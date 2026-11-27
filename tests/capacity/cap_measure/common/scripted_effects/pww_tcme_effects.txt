@@ -1,0 +1,264 @@
+# Capacity measurement logger (tests/capacity/cap_measure). Written once by a
+# one-off script; per-resource blocks are repetitive by necessity (no $PARAM$).
+
+pww_tcme_log = {
+	set_temp_variable = { pww_tcme_n = 0 }
+	set_temp_variable = { pww_tcme_i = 0 }
+	set_temp_variable = { pww_tcme_x = 0 }
+	set_temp_variable = { pww_tcme_s = 0 }
+	set_temp_variable = { pww_tcme_lo = 0 }
+	set_temp_variable = { pww_tcme_ga = 0 }
+	every_country = {
+		limit = { exists = yes has_variable = pww_cap_oil }
+		set_temp_variable = { pww_tcme_c = pww_cap_oil }
+		add_to_temp_variable = { pww_tcme_n = 1 }
+		add_to_temp_variable = { pww_tcme_s = pww_tcme_c }
+		# Output at factor 1 ~ produced / factor; the change is the difference.
+		set_temp_variable = { pww_tcme_p = resource_produced@oil }
+		set_temp_variable = { pww_tcme_d = pww_tcme_p }
+		divide_temp_variable = { var = pww_tcme_d value = pww_tcme_c if_zero = 0 }
+		subtract_from_temp_variable = { pww_tcme_d = pww_tcme_p }
+		if = {
+			limit = { check_variable = { pww_tcme_c < 0.99 } }
+			add_to_temp_variable = { pww_tcme_i = 1 }
+			add_to_temp_variable = { pww_tcme_lo = pww_tcme_d }
+		}
+		if = {
+			limit = { check_variable = { pww_tcme_c > 1.01 } }
+			add_to_temp_variable = { pww_tcme_x = 1 }
+			subtract_from_temp_variable = { pww_tcme_ga = pww_tcme_d }
+		}
+	}
+	divide_temp_variable = { var = pww_tcme_s value = pww_tcme_n if_zero = 1 }
+	log = "PWW_RESULT cap_measure.cap INFO [GetDateText] res=oil n=[?pww_tcme_n|0] idle=[?pww_tcme_i|0] exp=[?pww_tcme_x|0] mean=[?pww_tcme_s|3] lost=[?pww_tcme_lo|0] gained=[?pww_tcme_ga|0]"
+	set_temp_variable = { pww_tcme_n = 0 }
+	set_temp_variable = { pww_tcme_i = 0 }
+	set_temp_variable = { pww_tcme_x = 0 }
+	set_temp_variable = { pww_tcme_s = 0 }
+	set_temp_variable = { pww_tcme_lo = 0 }
+	set_temp_variable = { pww_tcme_ga = 0 }
+	every_country = {
+		limit = { exists = yes has_variable = pww_cap_aluminium }
+		set_temp_variable = { pww_tcme_c = pww_cap_aluminium }
+		add_to_temp_variable = { pww_tcme_n = 1 }
+		add_to_temp_variable = { pww_tcme_s = pww_tcme_c }
+		# Output at factor 1 ~ produced / factor; the change is the difference.
+		set_temp_variable = { pww_tcme_p = resource_produced@aluminium }
+		set_temp_variable = { pww_tcme_d = pww_tcme_p }
+		divide_temp_variable = { var = pww_tcme_d value = pww_tcme_c if_zero = 0 }
+		subtract_from_temp_variable = { pww_tcme_d = pww_tcme_p }
+		if = {
+			limit = { check_variable = { pww_tcme_c < 0.99 } }
+			add_to_temp_variable = { pww_tcme_i = 1 }
+			add_to_temp_variable = { pww_tcme_lo = pww_tcme_d }
+		}
+		if = {
+			limit = { check_variable = { pww_tcme_c > 1.01 } }
+			add_to_temp_variable = { pww_tcme_x = 1 }
+			subtract_from_temp_variable = { pww_tcme_ga = pww_tcme_d }
+		}
+	}
+	divide_temp_variable = { var = pww_tcme_s value = pww_tcme_n if_zero = 1 }
+	log = "PWW_RESULT cap_measure.cap INFO [GetDateText] res=aluminium n=[?pww_tcme_n|0] idle=[?pww_tcme_i|0] exp=[?pww_tcme_x|0] mean=[?pww_tcme_s|3] lost=[?pww_tcme_lo|0] gained=[?pww_tcme_ga|0]"
+	set_temp_variable = { pww_tcme_n = 0 }
+	set_temp_variable = { pww_tcme_i = 0 }
+	set_temp_variable = { pww_tcme_x = 0 }
+	set_temp_variable = { pww_tcme_s = 0 }
+	set_temp_variable = { pww_tcme_lo = 0 }
+	set_temp_variable = { pww_tcme_ga = 0 }
+	every_country = {
+		limit = { exists = yes has_variable = pww_cap_rubber }
+		set_temp_variable = { pww_tcme_c = pww_cap_rubber }
+		add_to_temp_variable = { pww_tcme_n = 1 }
+		add_to_temp_variable = { pww_tcme_s = pww_tcme_c }
+		# Output at factor 1 ~ produced / factor; the change is the difference.
+		set_temp_variable = { pww_tcme_p = resource_produced@rubber }
+		set_temp_variable = { pww_tcme_d = pww_tcme_p }
+		divide_temp_variable = { var = pww_tcme_d value = pww_tcme_c if_zero = 0 }
+		subtract_from_temp_variable = { pww_tcme_d = pww_tcme_p }
+		if = {
+			limit = { check_variable = { pww_tcme_c < 0.99 } }
+			add_to_temp_variable = { pww_tcme_i = 1 }
+			add_to_temp_variable = { pww_tcme_lo = pww_tcme_d }
+		}
+		if = {
+			limit = { check_variable = { pww_tcme_c > 1.01 } }
+			add_to_temp_variable = { pww_tcme_x = 1 }
+			subtract_from_temp_variable = { pww_tcme_ga = pww_tcme_d }
+		}
+	}
+	divide_temp_variable = { var = pww_tcme_s value = pww_tcme_n if_zero = 1 }
+	log = "PWW_RESULT cap_measure.cap INFO [GetDateText] res=rubber n=[?pww_tcme_n|0] idle=[?pww_tcme_i|0] exp=[?pww_tcme_x|0] mean=[?pww_tcme_s|3] lost=[?pww_tcme_lo|0] gained=[?pww_tcme_ga|0]"
+	set_temp_variable = { pww_tcme_n = 0 }
+	set_temp_variable = { pww_tcme_i = 0 }
+	set_temp_variable = { pww_tcme_x = 0 }
+	set_temp_variable = { pww_tcme_s = 0 }
+	set_temp_variable = { pww_tcme_lo = 0 }
+	set_temp_variable = { pww_tcme_ga = 0 }
+	every_country = {
+		limit = { exists = yes has_variable = pww_cap_tungsten }
+		set_temp_variable = { pww_tcme_c = pww_cap_tungsten }
+		add_to_temp_variable = { pww_tcme_n = 1 }
+		add_to_temp_variable = { pww_tcme_s = pww_tcme_c }
+		# Output at factor 1 ~ produced / factor; the change is the difference.
+		set_temp_variable = { pww_tcme_p = resource_produced@tungsten }
+		set_temp_variable = { pww_tcme_d = pww_tcme_p }
+		divide_temp_variable = { var = pww_tcme_d value = pww_tcme_c if_zero = 0 }
+		subtract_from_temp_variable = { pww_tcme_d = pww_tcme_p }
+		if = {
+			limit = { check_variable = { pww_tcme_c < 0.99 } }
+			add_to_temp_variable = { pww_tcme_i = 1 }
+			add_to_temp_variable = { pww_tcme_lo = pww_tcme_d }
+		}
+		if = {
+			limit = { check_variable = { pww_tcme_c > 1.01 } }
+			add_to_temp_variable = { pww_tcme_x = 1 }
+			subtract_from_temp_variable = { pww_tcme_ga = pww_tcme_d }
+		}
+	}
+	divide_temp_variable = { var = pww_tcme_s value = pww_tcme_n if_zero = 1 }
+	log = "PWW_RESULT cap_measure.cap INFO [GetDateText] res=tungsten n=[?pww_tcme_n|0] idle=[?pww_tcme_i|0] exp=[?pww_tcme_x|0] mean=[?pww_tcme_s|3] lost=[?pww_tcme_lo|0] gained=[?pww_tcme_ga|0]"
+	set_temp_variable = { pww_tcme_n = 0 }
+	set_temp_variable = { pww_tcme_i = 0 }
+	set_temp_variable = { pww_tcme_x = 0 }
+	set_temp_variable = { pww_tcme_s = 0 }
+	set_temp_variable = { pww_tcme_lo = 0 }
+	set_temp_variable = { pww_tcme_ga = 0 }
+	every_country = {
+		limit = { exists = yes has_variable = pww_cap_steel }
+		set_temp_variable = { pww_tcme_c = pww_cap_steel }
+		add_to_temp_variable = { pww_tcme_n = 1 }
+		add_to_temp_variable = { pww_tcme_s = pww_tcme_c }
+		# Output at factor 1 ~ produced / factor; the change is the difference.
+		set_temp_variable = { pww_tcme_p = resource_produced@steel }
+		set_temp_variable = { pww_tcme_d = pww_tcme_p }
+		divide_temp_variable = { var = pww_tcme_d value = pww_tcme_c if_zero = 0 }
+		subtract_from_temp_variable = { pww_tcme_d = pww_tcme_p }
+		if = {
+			limit = { check_variable = { pww_tcme_c < 0.99 } }
+			add_to_temp_variable = { pww_tcme_i = 1 }
+			add_to_temp_variable = { pww_tcme_lo = pww_tcme_d }
+		}
+		if = {
+			limit = { check_variable = { pww_tcme_c > 1.01 } }
+			add_to_temp_variable = { pww_tcme_x = 1 }
+			subtract_from_temp_variable = { pww_tcme_ga = pww_tcme_d }
+		}
+	}
+	divide_temp_variable = { var = pww_tcme_s value = pww_tcme_n if_zero = 1 }
+	log = "PWW_RESULT cap_measure.cap INFO [GetDateText] res=steel n=[?pww_tcme_n|0] idle=[?pww_tcme_i|0] exp=[?pww_tcme_x|0] mean=[?pww_tcme_s|3] lost=[?pww_tcme_lo|0] gained=[?pww_tcme_ga|0]"
+	set_temp_variable = { pww_tcme_n = 0 }
+	set_temp_variable = { pww_tcme_i = 0 }
+	set_temp_variable = { pww_tcme_x = 0 }
+	set_temp_variable = { pww_tcme_s = 0 }
+	set_temp_variable = { pww_tcme_lo = 0 }
+	set_temp_variable = { pww_tcme_ga = 0 }
+	every_country = {
+		limit = { exists = yes has_variable = pww_cap_chromium }
+		set_temp_variable = { pww_tcme_c = pww_cap_chromium }
+		add_to_temp_variable = { pww_tcme_n = 1 }
+		add_to_temp_variable = { pww_tcme_s = pww_tcme_c }
+		# Output at factor 1 ~ produced / factor; the change is the difference.
+		set_temp_variable = { pww_tcme_p = resource_produced@chromium }
+		set_temp_variable = { pww_tcme_d = pww_tcme_p }
+		divide_temp_variable = { var = pww_tcme_d value = pww_tcme_c if_zero = 0 }
+		subtract_from_temp_variable = { pww_tcme_d = pww_tcme_p }
+		if = {
+			limit = { check_variable = { pww_tcme_c < 0.99 } }
+			add_to_temp_variable = { pww_tcme_i = 1 }
+			add_to_temp_variable = { pww_tcme_lo = pww_tcme_d }
+		}
+		if = {
+			limit = { check_variable = { pww_tcme_c > 1.01 } }
+			add_to_temp_variable = { pww_tcme_x = 1 }
+			subtract_from_temp_variable = { pww_tcme_ga = pww_tcme_d }
+		}
+	}
+	divide_temp_variable = { var = pww_tcme_s value = pww_tcme_n if_zero = 1 }
+	log = "PWW_RESULT cap_measure.cap INFO [GetDateText] res=chromium n=[?pww_tcme_n|0] idle=[?pww_tcme_i|0] exp=[?pww_tcme_x|0] mean=[?pww_tcme_s|3] lost=[?pww_tcme_lo|0] gained=[?pww_tcme_ga|0]"
+	set_temp_variable = { pww_tcme_n = 0 }
+	set_temp_variable = { pww_tcme_i = 0 }
+	set_temp_variable = { pww_tcme_x = 0 }
+	set_temp_variable = { pww_tcme_s = 0 }
+	set_temp_variable = { pww_tcme_lo = 0 }
+	set_temp_variable = { pww_tcme_ga = 0 }
+	every_country = {
+		limit = { exists = yes has_variable = pww_cap_coal }
+		set_temp_variable = { pww_tcme_c = pww_cap_coal }
+		add_to_temp_variable = { pww_tcme_n = 1 }
+		add_to_temp_variable = { pww_tcme_s = pww_tcme_c }
+		# Output at factor 1 ~ produced / factor; the change is the difference.
+		set_temp_variable = { pww_tcme_p = resource_produced@coal }
+		set_temp_variable = { pww_tcme_d = pww_tcme_p }
+		divide_temp_variable = { var = pww_tcme_d value = pww_tcme_c if_zero = 0 }
+		subtract_from_temp_variable = { pww_tcme_d = pww_tcme_p }
+		if = {
+			limit = { check_variable = { pww_tcme_c < 0.99 } }
+			add_to_temp_variable = { pww_tcme_i = 1 }
+			add_to_temp_variable = { pww_tcme_lo = pww_tcme_d }
+		}
+		if = {
+			limit = { check_variable = { pww_tcme_c > 1.01 } }
+			add_to_temp_variable = { pww_tcme_x = 1 }
+			subtract_from_temp_variable = { pww_tcme_ga = pww_tcme_d }
+		}
+	}
+	divide_temp_variable = { var = pww_tcme_s value = pww_tcme_n if_zero = 1 }
+	log = "PWW_RESULT cap_measure.cap INFO [GetDateText] res=coal n=[?pww_tcme_n|0] idle=[?pww_tcme_i|0] exp=[?pww_tcme_x|0] mean=[?pww_tcme_s|3] lost=[?pww_tcme_lo|0] gained=[?pww_tcme_ga|0]"
+	every_country = {
+		limit = { exists = yes }
+		set_variable = { pww_tcme_civ = 0 }
+		set_variable = { pww_tcme_pp = 0 }
+	}
+	if = {
+		limit = { has_variable = global.pww_next_agreement_id }
+		for_loop_effect = {
+			start = 0
+			end = global.pww_next_agreement_id
+			value = pww_tcme_a
+			if = {
+				limit = {
+					check_variable = { global.pww_ag_status^pww_tcme_a = 1 }
+					check_variable = { global.pww_ag_kind^pww_tcme_a = 0 }
+				}
+				set_temp_variable = { pww_tcme_sl = global.pww_ag_seller^pww_tcme_a }
+				set_temp_variable = { pww_tcme_cv = global.pww_ag_civ^pww_tcme_a }
+				set_temp_variable = { pww_tcme_pv = global.pww_ag_pp^pww_tcme_a }
+				var:pww_tcme_sl = {
+					add_to_variable = { pww_tcme_civ = pww_tcme_cv }
+					add_to_variable = { pww_tcme_pp = pww_tcme_pv }
+				}
+			}
+		}
+	}
+	every_country = {
+		limit = { exists = yes }
+		set_temp_variable = { pww_tcme_v = 0 }
+		add_to_temp_variable = { pww_tcme_v = resource_exported@oil }
+		add_to_temp_variable = { pww_tcme_v = resource_exported@aluminium }
+		add_to_temp_variable = { pww_tcme_v = resource_exported@rubber }
+		add_to_temp_variable = { pww_tcme_v = resource_exported@tungsten }
+		add_to_temp_variable = { pww_tcme_v = resource_exported@steel }
+		add_to_temp_variable = { pww_tcme_v = resource_exported@chromium }
+		add_to_temp_variable = { pww_tcme_v = resource_exported@coal }
+		divide_temp_variable = { pww_tcme_v = 8 }
+		set_temp_variable = { pww_tcme_tot = pww_tcme_v }
+		add_to_temp_variable = { pww_tcme_tot = pww_tcme_civ }
+		set_temp_variable = { pww_tcme_t = pww_tcme_pp }
+		multiply_temp_variable = { pww_tcme_t = 9 }
+		add_to_temp_variable = { pww_tcme_tot = pww_tcme_t }
+		# Factories gained through trade (and other non-owned sources):
+		# all factories minus owned ones (probe export_probe: a 3-factory
+		# vanilla import raised the exporter's reading by 3).
+		set_temp_variable = { pww_tcme_fx = num_of_civilian_factories }
+		add_to_temp_variable = { pww_tcme_fx = num_of_military_factories }
+		add_to_temp_variable = { pww_tcme_fx = num_of_naval_factories }
+		set_temp_variable = { pww_tcme_ow = num_of_owned_factories }
+		subtract_from_temp_variable = { pww_tcme_fx = pww_tcme_ow }
+		if = { limit = { check_variable = { pww_tcme_fx > 0.5 } } add_to_temp_variable = { pww_tcme_tot = 1 } }
+		if = {
+			limit = { check_variable = { pww_tcme_tot > 0.249 } }
+			log = "PWW_RESULT cap_measure.inc INFO [GetDateText] tag=[This.GetTag] sys=[?pww_cap_sys|0] van=[?pww_tcme_v|2] fx=[?pww_tcme_fx|0] civ=[?pww_tcme_civ|2] pp=[?pww_tcme_pp|3]"
+		}
+	}
+}

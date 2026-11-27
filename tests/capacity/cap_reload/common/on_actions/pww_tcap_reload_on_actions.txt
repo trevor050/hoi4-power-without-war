@@ -1,0 +1,118 @@
+# Capacity test: save and reload keep the factors.
+# Session 1 (--autosave MONTHLY --clear-saves --until cap_reload.session1_done):
+#   day 2   scheduled capacity ticks off, storage takes nothing, no AI
+#           cartel conferences, faster idle step (0.1).
+#   day 5   A = the largest unused chromium surplus among market economies
+#           with room in their open-market pool; its output is copied.
+#   days 10, 15, 20, 25  A runs the capacity tick (factor about 0.6).
+#   day 30  factor and output copied (in the 1 February autosave).
+# Session 2 (--continue-last-save) resumes at 1 February. Day 33 runs in
+# both sessions:
+#   persist   A keeps the factor (= the day-30 copy), the modifier and the
+#             reduced output (within 2% of the day-30 reading).
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = POR }
+				add_to_variable = { global.pww_tcr_day = 1 }
+				if = {
+					limit = { check_variable = { global.pww_tcr_day = 2 } }
+					set_variable = { global.pww_cap_c_on = 0 }
+					set_variable = { global.pww_cap_c_idle = 0.1 }
+					set_variable = { global.pww_stock_c_fill_share = 0 }
+					set_variable = { global.pww_cartel_c_ai_form = 0 }
+				}
+				if = {
+					limit = { check_variable = { global.pww_tcr_day = 5 } }
+					set_temp_variable = { pww_tcr_best = 5 }
+					set_variable = { global.pww_tcr_a = -1 }
+					every_country = {
+						limit = {
+							exists = yes
+							NOT = { tag = POR }
+							NOT = { has_government = communism }
+							NOT = { has_government = fascism }
+						}
+						set_temp_variable = { pww_tcr_use = resource_consumed@chromium }
+						set_temp_variable = { pww_tcr_bal = resource@chromium }
+						if = {
+							limit = {
+								check_variable = { pww_tcr_use < 0.5 }
+								check_variable = { pww_tcr_bal > pww_tcr_best }
+							}
+							set_temp_variable = { pww_tcr_best = pww_tcr_bal }
+							set_variable = { global.pww_tcr_a = THIS }
+						}
+					}
+					if = {
+						limit = { check_variable = { global.pww_tcr_a > -1 } }
+						var:global.pww_tcr_a = { set_variable = { global.pww_tcr_p5 = resource_produced@chromium } }
+						log = "PWW_RESULT cap_reload.setup INFO A=[?global.pww_tcr_a.GetTag] chromium output [?global.pww_tcr_p5|1]"
+					}
+					else = {
+						log = "PWW_RESULT cap_reload.setup FAIL no market chromium seller"
+						log = "PWW_DONE cap_reload"
+					}
+				}
+				if = {
+					limit = {
+						check_variable = { global.pww_tcr_a > -1 }
+						OR = {
+							check_variable = { global.pww_tcr_day = 10 }
+							check_variable = { global.pww_tcr_day = 15 }
+							check_variable = { global.pww_tcr_day = 20 }
+							check_variable = { global.pww_tcr_day = 25 }
+						}
+					}
+					var:global.pww_tcr_a = { pww_cap_country_tick = yes }
+				}
+				if = {
+					limit = {
+						check_variable = { global.pww_tcr_a > -1 }
+						check_variable = { global.pww_tcr_day = 30 }
+					}
+					var:global.pww_tcr_a = {
+						set_variable = { global.pww_tcr_c30 = pww_cap_chromium }
+						set_variable = { global.pww_tcr_p30 = resource_produced@chromium }
+					}
+					log = "PWW_RESULT cap_reload.copy INFO day 30: factor [?global.pww_tcr_c30|3], output [?global.pww_tcr_p30|1] (day 5: [?global.pww_tcr_p5|1])"
+				}
+				if = {
+					limit = {
+						check_variable = { global.pww_tcr_a > -1 }
+						check_variable = { global.pww_tcr_day = 33 }
+					}
+					var:global.pww_tcr_a = {
+						set_temp_variable = { pww_tcr_p = resource_produced@chromium }
+						set_temp_variable = { pww_tcr_hi = global.pww_tcr_p30 }
+						multiply_temp_variable = { pww_tcr_hi = 1.02 }
+						add_to_temp_variable = { pww_tcr_hi = 0.5 }
+						set_temp_variable = { pww_tcr_lo = global.pww_tcr_p30 }
+						multiply_temp_variable = { pww_tcr_lo = 0.98 }
+						subtract_from_temp_variable = { pww_tcr_lo = 0.5 }
+						set_temp_variable = { pww_tcr_d = pww_cap_chromium }
+						subtract_from_temp_variable = { pww_tcr_d = global.pww_tcr_c30 }
+						if = {
+							limit = {
+								has_dynamic_modifier = { modifier = pww_cap_output }
+								check_variable = { global.pww_tcr_c30 < 0.95 }
+								check_variable = { pww_tcr_d < 0.001 }
+								check_variable = { pww_tcr_d > -0.001 }
+								check_variable = { pww_tcr_p < pww_tcr_hi }
+								check_variable = { pww_tcr_p > pww_tcr_lo }
+							}
+							log = "PWW_RESULT cap_reload.persist PASS [This.GetTag] factor [?pww_cap_chromium|3], output [?pww_tcr_p|1] (day 30 [?global.pww_tcr_p30|1], day 5 [?global.pww_tcr_p5|1])"
+						}
+						else = { log = "PWW_RESULT cap_reload.persist FAIL [This.GetTag] factor [?pww_cap_chromium|3] vs [?global.pww_tcr_c30|3], output [?pww_tcr_p|1] vs [?global.pww_tcr_p30|1]" }
+					}
+					log = "PWW_RESULT cap_reload.session1_done INFO"
+				}
+				if = {
+					limit = { check_variable = { global.pww_tcr_day = 36 } }
+					log = "PWW_DONE cap_reload"
+				}
+			}
+		}
+	}
+}

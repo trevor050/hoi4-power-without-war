@@ -1,0 +1,24 @@
+###############################################################################
+# Power Without War: production capacity on_actions
+#   on_startup   pww_cap_init (no scope: run inside any country). Also run
+#                lazily from on_daily (saves where on_startup did not fire).
+#   on_daily     per country: the monthly capacity tick on the core bucket day.
+# Handlers: common/scripted_effects/pww_cap_core.txt
+###############################################################################
+
+on_actions = {
+	on_startup = {
+		effect = {
+			random_country = {
+				limit = { exists = yes }
+				pww_cap_init = yes
+			}
+		}
+	}
+
+	on_daily = {
+		effect = {
+			pww_cap_on_daily = yes
+		}
+	}
+}

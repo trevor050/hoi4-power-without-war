@@ -1,0 +1,45 @@
+# Capacity measurement (manual). Load together with the market logger, all AI:
+#   python tools/run_hoi4.py --r56 --tag HAI --timeout 5400 --test tests/market/mkt_baseline --test tests/capacity/cap_measure
+# Vanilla-price baseline: the same command with --no-pww (only the vanilla
+# export income is logged then). Capacity off: a test that sets
+# global.pww_cap_c_on = 0 is not needed; the 2026-11-26 R56 run
+# (.hoi4-userdir/runs/20261126_191558_mkt_baseline) is the mod without it.
+# Day 1 turns on the diplomacy debug log (signed deal prices, 1936-1940).
+# Every 91 days logs the capacity state per resource and, per exporting
+# country, its factories earned from resource sales:
+#   PWW_RESULT cap_measure.cap INFO <date> res=<r> n=<countries with a factor>
+#       idle=<factor < 0.99> exp=<factor > 1.01> mean=<mean factor> lost=<units
+#       a day of output idled, approx.> gained=<units a day added>
+#   PWW_RESULT cap_measure.inc INFO <date> tag=<TAG> sys=<0..2> van=<pool on
+#       offer / 8 (not sales)> fx=<factories not owned: trade income, offsite> civ=<contract civilian factories
+#       received> pp=<contract political power a day received>
+# Summarize with tests/capacity/cap_report.py <game.log> [<baseline game.log>].
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = GER }
+				add_to_variable = { global.pww_tcme_day = 1 }
+				if = {
+					limit = { check_variable = { global.pww_tcme_day = 1 } }
+					set_global_flag = pww_diplo_debug
+				}
+				set_temp_variable = { pww_tcme_m = global.pww_tcme_day }
+				modulo_temp_variable = { var = pww_tcme_m value = 91 }
+				if = {
+					limit = {
+						OR = {
+							check_variable = { pww_tcme_m = 1 }
+							check_variable = { global.pww_tcme_day = 1639 }
+						}
+					}
+					pww_tcme_log = yes
+				}
+				if = {
+					limit = { check_variable = { global.pww_tcme_day = 1640 } }
+					log = "PWW_DONE cap_measure"
+				}
+			}
+		}
+	}
+}

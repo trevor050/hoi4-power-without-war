@@ -1,0 +1,127 @@
+# Capacity test: economic systems.
+#   day 2   scheduled capacity ticks off, storage takes nothing, no AI
+#           cartel conferences, debug on, faster idle step (0.05).
+#   day 12  A, B = the two countries (not POR/GER/SOV/USA) with the largest
+#           unused chromium surplus. A is made a planned economy and B a
+#           command economy through the test hook pww_cap_test_sys.
+#   days 15..70 every 5 days: A, B, GER, SOV and USA run the capacity tick.
+#   day 72  regime    the system follows the ruling party: SOV planned (1),
+#                     GER command (2), USA market (0)
+#           planned   A never idled (every factor >= 1) despite its glut
+#           command   B idled the chromium it does not use (< 1)
+#           war_use   GER kept every resource it uses (consumed > 0.5) at 1+
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = POR }
+				add_to_variable = { global.pww_tsy_day = 1 }
+				if = {
+					limit = { check_variable = { global.pww_tsy_day = 2 } }
+					set_global_flag = pww_cap_debug
+					set_variable = { global.pww_cap_c_on = 0 }
+					set_variable = { global.pww_cap_c_idle = 0.05 }
+					set_variable = { global.pww_stock_c_fill_share = 0 }
+					set_variable = { global.pww_cartel_c_ai_form = 0 }
+				}
+				if = {
+					limit = { check_variable = { global.pww_tsy_day = 12 } }
+					pww_tsy_pick = yes
+					if = {
+						limit = {
+							check_variable = { global.pww_tsy_a > -1 }
+							check_variable = { global.pww_tsy_b > -1 }
+						}
+						var:global.pww_tsy_a = { set_variable = { pww_cap_test_sys = 1 } }
+						var:global.pww_tsy_b = { set_variable = { pww_cap_test_sys = 2 } }
+						log = "PWW_RESULT cap_systems.setup INFO planned A=[?global.pww_tsy_a.GetTag], command B=[?global.pww_tsy_b.GetTag]"
+					}
+					else = {
+						log = "PWW_RESULT cap_systems.setup FAIL no chromium sellers found"
+						log = "PWW_DONE cap_systems"
+					}
+				}
+				set_temp_variable = { pww_tsy_m = global.pww_tsy_day }
+				modulo_temp_variable = { var = pww_tsy_m value = 5 }
+				if = {
+					limit = {
+						check_variable = { global.pww_tsy_b > -1 }
+						check_variable = { pww_tsy_m = 0 }
+						check_variable = { global.pww_tsy_day > 14 }
+						check_variable = { global.pww_tsy_day < 71 }
+					}
+					var:global.pww_tsy_a = {
+						pww_cap_country_tick = yes
+						if = {
+							limit = {
+								OR = {
+									check_variable = { pww_cap_oil < 0.999 }
+									check_variable = { pww_cap_aluminium < 0.999 }
+									check_variable = { pww_cap_rubber < 0.999 }
+									check_variable = { pww_cap_tungsten < 0.999 }
+									check_variable = { pww_cap_steel < 0.999 }
+									check_variable = { pww_cap_chromium < 0.999 }
+									check_variable = { pww_cap_coal < 0.999 }
+								}
+							}
+							set_global_flag = pww_tsy_planned_idled
+						}
+					}
+					var:global.pww_tsy_b = { pww_cap_country_tick = yes }
+					GER = { pww_cap_country_tick = yes }
+					SOV = { pww_cap_country_tick = yes }
+					USA = { pww_cap_country_tick = yes }
+				}
+				if = {
+					limit = {
+						check_variable = { global.pww_tsy_day = 72 }
+						check_variable = { global.pww_tsy_b > -1 }
+					}
+					var:global.pww_tsy_a = { pww_tsy_log = yes }
+					var:global.pww_tsy_b = { pww_tsy_log = yes }
+					GER = { pww_tsy_log = yes }
+					SOV = { pww_tsy_log = yes }
+					USA = { pww_tsy_log = yes }
+					if = {
+						limit = {
+							SOV = { check_variable = { pww_cap_sys = 1 } }
+							GER = { check_variable = { pww_cap_sys = 2 } }
+							USA = { check_variable = { pww_cap_sys = 0 } }
+						}
+						log = "PWW_RESULT cap_systems.regime PASS SOV planned, GER command, USA market"
+					}
+					else = { log = "PWW_RESULT cap_systems.regime FAIL SOV [?SOV.pww_cap_sys|0] GER [?GER.pww_cap_sys|0] USA [?USA.pww_cap_sys|0]" }
+					var:global.pww_tsy_a = {
+						if = {
+							limit = {
+								NOT = { has_global_flag = pww_tsy_planned_idled }
+								check_variable = { pww_cap_spare_chromium > 0 }
+							}
+							log = "PWW_RESULT cap_systems.planned PASS [This.GetTag] kept full output with [?pww_cap_spare_chromium|1] spare chromium a day"
+						}
+						else = { log = "PWW_RESULT cap_systems.planned FAIL [This.GetTag] chromium [?pww_cap_chromium|2] spare [?pww_cap_spare_chromium|1]" }
+					}
+					var:global.pww_tsy_b = {
+						if = {
+							limit = { check_variable = { pww_cap_chromium < 0.9 } }
+							log = "PWW_RESULT cap_systems.command PASS [This.GetTag] idled unused chromium to [?pww_cap_chromium|2]"
+						}
+						else = { log = "PWW_RESULT cap_systems.command FAIL [This.GetTag] chromium [?pww_cap_chromium|2]" }
+					}
+					GER = {
+						pww_tsy_ger_check = yes
+						if = {
+							limit = {
+								check_variable = { pww_tsy_bad = 0 }
+								check_variable = { pww_tsy_n > 0 }
+							}
+							log = "PWW_RESULT cap_systems.war_use PASS GER kept all [?pww_tsy_n|0] resources it uses"
+						}
+						else = { log = "PWW_RESULT cap_systems.war_use FAIL GER idled [?pww_tsy_bad|0] of [?pww_tsy_n|0] used resources" }
+					}
+					log = "PWW_DONE cap_systems"
+				}
+			}
+		}
+	}
+}

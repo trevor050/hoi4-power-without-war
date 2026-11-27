@@ -1,0 +1,102 @@
+# Capacity test: a sold-out market seller reopens idle output, then expands.
+#   day 2   scheduled capacity ticks off, storage takes nothing, no AI
+#           cartel conferences, debug on; faster steps (reopen 0.05, market
+#           investment 0.03) so the run stays short.
+#   day 12  A = the market economy with the largest unused chromium surplus.
+#           Its factor is set to 0.8 (idle output, as after a slump).
+#   day 14  GER signs a supply contract for 95% of A's chromium output, and
+#           the test hook pww_cap_test_demand_chromium marks buyers waiting
+#           (as a refused buyer would).
+#   days 15..70 every 5 days A runs the capacity tick: it reopens while the
+#           contract leaves no spare, then expands until spare returns.
+#   day 72  reopened  a reopening step was seen (trend 1)
+#           expanded  then an expansion step (trend 2) and the factor ends
+#                     above 1.05, with no idling step in between.
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = POR }
+				add_to_variable = { global.pww_tcs_day = 1 }
+				if = {
+					limit = { check_variable = { global.pww_tcs_day = 2 } }
+					set_global_flag = pww_cap_debug
+					set_variable = { global.pww_cap_c_on = 0 }
+					set_variable = { global.pww_cap_c_reopen = 0.05 }
+					set_variable = { global.pww_cap_c_invest_market = 0.03 }
+					set_variable = { global.pww_stock_c_fill_share = 0 }
+					set_variable = { global.pww_cartel_c_ai_form = 0 }
+				}
+				if = {
+					limit = { check_variable = { global.pww_tcs_day = 12 } }
+					pww_tcs_pick = yes
+					if = {
+						limit = { check_variable = { global.pww_tcs_a > -1 } }
+						var:global.pww_tcs_a = {
+							set_variable = { pww_cap_chromium = 0.8 }
+							set_variable = { pww_cap_m_chromium = -0.2 }
+							if = {
+								limit = { NOT = { has_dynamic_modifier = { modifier = pww_cap_output } } }
+								add_dynamic_modifier = { modifier = pww_cap_output }
+							}
+							force_update_dynamic_modifier = yes
+						}
+						log = "PWW_RESULT cap_soldout.setup INFO A=[?global.pww_tcs_a.GetTag] factor set to 0.8"
+					}
+					else = {
+						log = "PWW_RESULT cap_soldout.setup FAIL no market chromium seller found"
+						log = "PWW_DONE cap_soldout"
+					}
+				}
+				if = {
+					limit = {
+						check_variable = { global.pww_tcs_day = 14 }
+						check_variable = { global.pww_tcs_a > -1 }
+					}
+					var:global.pww_tcs_a = {
+						pww_tcs_log = yes
+						pww_tcs_top_up = yes
+						set_variable = { pww_cap_test_demand_chromium = 1 }
+					}
+				}
+				set_temp_variable = { pww_tcs_m = global.pww_tcs_day }
+				modulo_temp_variable = { var = pww_tcs_m value = 5 }
+				if = {
+					limit = {
+						check_variable = { global.pww_tcs_a > -1 }
+						check_variable = { global.pww_tcs_day > 14 }
+						check_variable = { global.pww_tcs_day < 71 }
+					}
+					if = {
+						limit = { check_variable = { pww_tcs_m = 0 } }
+						var:global.pww_tcs_a = { pww_cap_country_tick = yes pww_tcs_log = yes }
+					}
+				}
+				if = {
+					limit = {
+						check_variable = { global.pww_tcs_day = 72 }
+						check_variable = { global.pww_tcs_a > -1 }
+					}
+					var:global.pww_tcs_a = {
+						pww_tcs_log = yes
+						if = {
+							limit = { has_global_flag = pww_tcs_saw_reopen }
+							log = "PWW_RESULT cap_soldout.reopened PASS [This.GetTag] reopened idle output"
+						}
+						else = { log = "PWW_RESULT cap_soldout.reopened FAIL no reopening step" }
+						if = {
+							limit = {
+								has_global_flag = pww_tcs_saw_expand
+								NOT = { has_global_flag = pww_tcs_saw_idle }
+								check_variable = { pww_cap_chromium > 1.05 }
+							}
+							log = "PWW_RESULT cap_soldout.expanded PASS [This.GetTag] factor [?pww_cap_chromium|2]"
+						}
+						else = { log = "PWW_RESULT cap_soldout.expanded FAIL factor [?pww_cap_chromium|2]" }
+					}
+					log = "PWW_DONE cap_soldout"
+				}
+			}
+		}
+	}
+}

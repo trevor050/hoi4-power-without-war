@@ -1,0 +1,10 @@
+﻿l_english:
+ pww_cap_output: "Output Follows Demand"
+ pww_cap_output_desc: "Mines, wells and plantations run below capacity when their output finds no buyer, and reopen or expand when buyers return. Reopening idle capacity takes months."
+ pww_cap_sys_0: "Market economy"
+ pww_cap_sys_1: "Planned economy"
+ pww_cap_sys_2: "Command economy"
+ pww_cap_trend_n1: "Output idling"
+ pww_cap_trend_0: "Output steady"
+ pww_cap_trend_1: "Reopening idle output"
+ pww_cap_trend_2: "Expanding"

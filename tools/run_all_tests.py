@@ -96,6 +96,21 @@ TESTS += [
       ["--autosave", "MONTHLY", "--clear-saves", "--until", "stock_reload.session1_done", "--timeout", "900"],
       ["--continue-last-save", "--timeout", "900"]),
 ]
+# Capacity lane.
+TESTS += [
+    T("tests/capacity/cap_market", []),
+    T("tests/capacity/cap_soldout", []),
+    T("tests/capacity/cap_systems", []),
+    T("tests/capacity/cap_reload",
+      ["--autosave", "MONTHLY", "--clear-saves", "--until", "cap_reload.session1_done", "--timeout", "900"],
+      ["--continue-last-save", "--timeout", "900"]),
+    T("tests/probes/cap_probe",
+      ["--no-pww", "--autosave", "MONTHLY", "--clear-saves", "--until", "cap_probe.session1_done"],
+      ["--no-pww", "--continue-last-save"], group="manual",
+      notes="engine probe for local_resources_<res>_factor (live, reload, pool, leases); never run by this script"),
+    T("tests/probes/export_probe", ["--no-pww"], group="manual",
+      notes="engine probe: world resource_exported (pool on offer) vs resource_imported; never run by this script"),
+]
 # UI lane.
 TESTS += [
     T("tests/ui/ui_end", ["--tag", "GER"]),

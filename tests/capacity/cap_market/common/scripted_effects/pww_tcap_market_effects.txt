@@ -1,0 +1,56 @@
+# Capacity test helpers (tests/capacity/cap_market).
+
+# Any scope. Picks the two market economies (not POR) with the largest
+# chromium surplus that use none of it: global.pww_tcm_a (largest),
+# global.pww_tcm_b (second).
+pww_tcm_pick = {
+	set_temp_variable = { pww_tcm_best = 5 }
+	set_variable = { global.pww_tcm_a = -1 }
+	set_variable = { global.pww_tcm_b = -1 }
+	every_country = {
+		limit = {
+			exists = yes
+			NOT = { tag = POR }
+			NOT = { has_government = communism }
+			NOT = { has_government = fascism }
+		}
+		set_temp_variable = { pww_tcm_use = resource_consumed@chromium }
+		set_temp_variable = { pww_tcm_bal = resource@chromium }
+		if = {
+			limit = {
+				check_variable = { pww_tcm_use < 0.5 }
+				check_variable = { pww_tcm_bal > pww_tcm_best }
+			}
+			set_temp_variable = { pww_tcm_best = pww_tcm_bal }
+			set_variable = { global.pww_tcm_a = THIS }
+		}
+	}
+	set_temp_variable = { pww_tcm_best = 5 }
+	every_country = {
+		limit = {
+			exists = yes
+			NOT = { tag = POR }
+			NOT = { check_variable = { global.pww_tcm_a = THIS } }
+			NOT = { has_government = communism }
+			NOT = { has_government = fascism }
+		}
+		set_temp_variable = { pww_tcm_use = resource_consumed@chromium }
+		set_temp_variable = { pww_tcm_bal = resource@chromium }
+		if = {
+			limit = {
+				check_variable = { pww_tcm_use < 0.5 }
+				check_variable = { pww_tcm_bal > pww_tcm_best }
+			}
+			set_temp_variable = { pww_tcm_best = pww_tcm_bal }
+			set_variable = { global.pww_tcm_b = THIS }
+		}
+	}
+}
+
+# Country scope. One line of chromium readings.
+pww_tcm_log = {
+	set_temp_variable = { pww_tcm_p = resource_produced@chromium }
+	set_temp_variable = { pww_tcm_x = resource_exported@chromium }
+	set_temp_variable = { pww_tcm_bl = resource@chromium }
+	log = "PWW_RESULT cap_market.read INFO day=[?global.pww_tcm_day] [This.GetTag] chromium cap=[?pww_cap_chromium|3] trend=[?pww_cap_trend_chromium|0] spare=[?pww_cap_spare_chromium|1] produced=[?pww_tcm_p|1] exported=[?pww_tcm_x|1] balance=[?pww_tcm_bl|1]"
+}

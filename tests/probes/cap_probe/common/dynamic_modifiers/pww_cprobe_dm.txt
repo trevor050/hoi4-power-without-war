@@ -1,0 +1,11 @@
+# Engine probe (tests/probes/cap_probe): output factor driven by a variable.
+pww_cprobe_mod = {
+	enable = { always = yes }
+	icon = GFX_idea_export_focus
+	local_resources_rubber_factor = pww_cprobe_rubber
+}
+pww_cprobe_mod2 = {
+	enable = { always = yes }
+	icon = GFX_idea_export_focus
+	local_resources_factor = 0.5
+}

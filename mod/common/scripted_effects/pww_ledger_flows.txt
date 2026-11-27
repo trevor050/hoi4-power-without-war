@@ -250,53 +250,49 @@ pww_ledger_apply_civ_receipt = {
 	}
 }
 
-# Country scope (the seller). In: pww_lv_res. Out: pww_lfa_avail.
+# Country scope (the seller). In: pww_lv_res. Out: pww_lfa_avail: output not yet
+# committed. resource_produced@ is already net of every country_resource_cost
+# (our contract outflows included; probe tests/probes/export_probe), so the
+# contracted volume is not subtracted again.
 pww_ledger_calc_seller_avail = {
 	set_temp_variable = { pww_lfa_avail = 0 }
 	if = {
 		limit = { check_variable = { pww_lv_res = 0 } }
 		set_temp_variable = { pww_lfa_avail = resource_produced@oil }
-		subtract_from_temp_variable = { pww_lfa_avail = pww_lf_out_oil }
 	}
 	else_if = {
 		limit = { check_variable = { pww_lv_res = 1 } }
 		set_temp_variable = { pww_lfa_avail = resource_produced@aluminium }
-		subtract_from_temp_variable = { pww_lfa_avail = pww_lf_out_aluminium }
 		# Cartel storage requests withhold output through cost; still sellable.
 		add_to_temp_variable = { pww_lfa_avail = pww_stock_cost_aluminium }
 	}
 	else_if = {
 		limit = { check_variable = { pww_lv_res = 2 } }
 		set_temp_variable = { pww_lfa_avail = resource_produced@rubber }
-		subtract_from_temp_variable = { pww_lfa_avail = pww_lf_out_rubber }
 		# Cartel storage requests withhold output through cost; still sellable.
 		add_to_temp_variable = { pww_lfa_avail = pww_stock_cost_rubber }
 	}
 	else_if = {
 		limit = { check_variable = { pww_lv_res = 3 } }
 		set_temp_variable = { pww_lfa_avail = resource_produced@tungsten }
-		subtract_from_temp_variable = { pww_lfa_avail = pww_lf_out_tungsten }
 		# Cartel storage requests withhold output through cost; still sellable.
 		add_to_temp_variable = { pww_lfa_avail = pww_stock_cost_tungsten }
 	}
 	else_if = {
 		limit = { check_variable = { pww_lv_res = 4 } }
 		set_temp_variable = { pww_lfa_avail = resource_produced@steel }
-		subtract_from_temp_variable = { pww_lfa_avail = pww_lf_out_steel }
 		# Cartel storage requests withhold output through cost; still sellable.
 		add_to_temp_variable = { pww_lfa_avail = pww_stock_cost_steel }
 	}
 	else_if = {
 		limit = { check_variable = { pww_lv_res = 5 } }
 		set_temp_variable = { pww_lfa_avail = resource_produced@chromium }
-		subtract_from_temp_variable = { pww_lfa_avail = pww_lf_out_chromium }
 		# Cartel storage requests withhold output through cost; still sellable.
 		add_to_temp_variable = { pww_lfa_avail = pww_stock_cost_chromium }
 	}
 	else_if = {
 		limit = { check_variable = { pww_lv_res = 6 } }
 		set_temp_variable = { pww_lfa_avail = resource_produced@coal }
-		subtract_from_temp_variable = { pww_lfa_avail = pww_lf_out_coal }
 		# Cartel storage requests withhold output through cost; still sellable.
 		add_to_temp_variable = { pww_lfa_avail = pww_stock_cost_coal }
 	}

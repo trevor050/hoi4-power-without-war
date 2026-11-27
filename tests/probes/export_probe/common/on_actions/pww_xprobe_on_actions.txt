@@ -1,0 +1,84 @@
+# Engine probe: is resource_exported real sales or the offered pool? World
+# sums of exported vs imported per resource on days 10 and 40 (vanilla).
+# Also fx = all factories - num_of_owned_factories (trade income?) for a few
+# exporters and importers; POR imports 3 factories of SAF chromium on day 12.
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = POR }
+				add_to_variable = { global.pww_xp_day = 1 }
+				if = {
+					limit = { OR = { check_variable = { global.pww_xp_day = 10 } check_variable = { global.pww_xp_day = 40 } } }
+					set_temp_variable = { pww_xp_e = 0 }
+					set_temp_variable = { pww_xp_i = 0 }
+					set_temp_variable = { pww_xp_p = 0 }
+					every_country = {
+						add_to_temp_variable = { pww_xp_e = resource_exported@oil }
+						add_to_temp_variable = { pww_xp_i = resource_imported@oil }
+						add_to_temp_variable = { pww_xp_p = resource_produced@oil }
+					}
+					log = "PWW_RESULT export_probe.world INFO day=[?global.pww_xp_day] res=oil produced=[?pww_xp_p|0] exported=[?pww_xp_e|0] imported=[?pww_xp_i|0]"
+					set_temp_variable = { pww_xp_e = 0 }
+					set_temp_variable = { pww_xp_i = 0 }
+					set_temp_variable = { pww_xp_p = 0 }
+					every_country = {
+						add_to_temp_variable = { pww_xp_e = resource_exported@aluminium }
+						add_to_temp_variable = { pww_xp_i = resource_imported@aluminium }
+						add_to_temp_variable = { pww_xp_p = resource_produced@aluminium }
+					}
+					log = "PWW_RESULT export_probe.world INFO day=[?global.pww_xp_day] res=aluminium produced=[?pww_xp_p|0] exported=[?pww_xp_e|0] imported=[?pww_xp_i|0]"
+					set_temp_variable = { pww_xp_e = 0 }
+					set_temp_variable = { pww_xp_i = 0 }
+					set_temp_variable = { pww_xp_p = 0 }
+					every_country = {
+						add_to_temp_variable = { pww_xp_e = resource_exported@rubber }
+						add_to_temp_variable = { pww_xp_i = resource_imported@rubber }
+						add_to_temp_variable = { pww_xp_p = resource_produced@rubber }
+					}
+					log = "PWW_RESULT export_probe.world INFO day=[?global.pww_xp_day] res=rubber produced=[?pww_xp_p|0] exported=[?pww_xp_e|0] imported=[?pww_xp_i|0]"
+					set_temp_variable = { pww_xp_e = 0 }
+					set_temp_variable = { pww_xp_i = 0 }
+					set_temp_variable = { pww_xp_p = 0 }
+					every_country = {
+						add_to_temp_variable = { pww_xp_e = resource_exported@tungsten }
+						add_to_temp_variable = { pww_xp_i = resource_imported@tungsten }
+						add_to_temp_variable = { pww_xp_p = resource_produced@tungsten }
+					}
+					log = "PWW_RESULT export_probe.world INFO day=[?global.pww_xp_day] res=tungsten produced=[?pww_xp_p|0] exported=[?pww_xp_e|0] imported=[?pww_xp_i|0]"
+					set_temp_variable = { pww_xp_e = 0 }
+					set_temp_variable = { pww_xp_i = 0 }
+					set_temp_variable = { pww_xp_p = 0 }
+					every_country = {
+						add_to_temp_variable = { pww_xp_e = resource_exported@steel }
+						add_to_temp_variable = { pww_xp_i = resource_imported@steel }
+						add_to_temp_variable = { pww_xp_p = resource_produced@steel }
+					}
+					log = "PWW_RESULT export_probe.world INFO day=[?global.pww_xp_day] res=steel produced=[?pww_xp_p|0] exported=[?pww_xp_e|0] imported=[?pww_xp_i|0]"
+					set_temp_variable = { pww_xp_e = 0 }
+					set_temp_variable = { pww_xp_i = 0 }
+					set_temp_variable = { pww_xp_p = 0 }
+					every_country = {
+						add_to_temp_variable = { pww_xp_e = resource_exported@chromium }
+						add_to_temp_variable = { pww_xp_i = resource_imported@chromium }
+						add_to_temp_variable = { pww_xp_p = resource_produced@chromium }
+					}
+					log = "PWW_RESULT export_probe.world INFO day=[?global.pww_xp_day] res=chromium produced=[?pww_xp_p|0] exported=[?pww_xp_e|0] imported=[?pww_xp_i|0]"
+					set_temp_variable = { pww_xp_e = 0 }
+					set_temp_variable = { pww_xp_i = 0 }
+					set_temp_variable = { pww_xp_p = 0 }
+					every_country = {
+						add_to_temp_variable = { pww_xp_e = resource_exported@coal }
+						add_to_temp_variable = { pww_xp_i = resource_imported@coal }
+						add_to_temp_variable = { pww_xp_p = resource_produced@coal }
+					}
+					log = "PWW_RESULT export_probe.world INFO day=[?global.pww_xp_day] res=coal produced=[?pww_xp_p|0] exported=[?pww_xp_e|0] imported=[?pww_xp_i|0]"
+					MAL = { pww_xprobe_fx = yes } SAF = { pww_xprobe_fx = yes } USA = { pww_xprobe_fx = yes } GER = { pww_xprobe_fx = yes } ITA = { pww_xprobe_fx = yes } POR = { pww_xprobe_fx = yes } TUR = { pww_xprobe_fx = yes }
+					MAL = { log = "PWW_RESULT export_probe.mal INFO day=[?global.pww_xp_day] rubber exported=[?resource_exported@rubber|0]" }
+				}
+				if = { limit = { check_variable = { global.pww_xp_day = 12 } } POR = { create_import = { resource = chromium factories = 3 exporter = SAF } } }
+				if = { limit = { check_variable = { global.pww_xp_day = 41 } } log = "PWW_DONE export_probe" }
+			}
+		}
+	}
+}

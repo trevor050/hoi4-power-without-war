@@ -1,0 +1,128 @@
+# Capacity test: a market economy idles a glut; vanilla imports survive.
+#   day 2   scheduled capacity ticks off (the test runs them), storage takes
+#           nothing (fill share 0), no AI cartel conferences, debug on.
+#   day 12  A, B = the two market economies with the largest chromium
+#           surplus that use none. POR (human, so the AI cannot cancel it)
+#           imports from B about 40% of B's open-market pool (max 4
+#           factories): more than the pool keeps if B idled to a third.
+#   day 14  baseline: A and B produced, B exported, POR imported.
+#   days 15..70 every 5 days: A and B run the capacity tick with a faster
+#           idle step (c_idle 0.05: 12 steps instead of a year at 2%).
+#   day 72  market_idle   A's factor is at most 0.6 and its chromium output
+#                         fell at least 30%.
+#           imports_kept  POR still imports at least 95% of the day-14
+#                         amount after B idled (the floor keeps half of B's
+#                         pool; B's pool is logged).
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = POR }
+				add_to_variable = { global.pww_tcm_day = 1 }
+				if = {
+					limit = { check_variable = { global.pww_tcm_day = 2 } }
+					set_global_flag = pww_cap_debug
+					set_variable = { global.pww_cap_c_on = 0 }
+					set_variable = { global.pww_cap_c_idle = 0.05 }
+					set_variable = { global.pww_stock_c_fill_share = 0 }
+					set_variable = { global.pww_cartel_c_ai_form = 0 }
+				}
+				if = {
+					limit = { check_variable = { global.pww_tcm_day = 12 } }
+					pww_tcm_pick = yes
+					if = {
+						limit = {
+							check_variable = { global.pww_tcm_a > -1 }
+							check_variable = { global.pww_tcm_b > -1 }
+						}
+						var:global.pww_tcm_b = {
+							set_temp_variable = { pww_tcm_n = resource_exported@chromium }
+							multiply_temp_variable = { pww_tcm_n = 0.4 }
+							divide_temp_variable = { pww_tcm_n = 8 }
+							round_temp_variable = pww_tcm_n
+							clamp_temp_variable = { var = pww_tcm_n min = 1 max = 4 }
+							set_variable = { global.pww_tcm_n = pww_tcm_n }
+							meta_effect = {
+								text = { POR = { create_import = { resource = chromium factories = [N] exporter = [B] } } }
+								N = "[?global.pww_tcm_n|0]"
+								B = "[This.GetTag]"
+							}
+						}
+						log = "PWW_RESULT cap_market.setup INFO A=[?global.pww_tcm_a.GetTag] B=[?global.pww_tcm_b.GetTag] POR imports [?global.pww_tcm_n|0] factories of chromium from B"
+					}
+					else = {
+						log = "PWW_RESULT cap_market.setup FAIL no market chromium sellers found"
+						log = "PWW_DONE cap_market"
+					}
+				}
+				if = {
+					limit = {
+						check_variable = { global.pww_tcm_day = 14 }
+						check_variable = { global.pww_tcm_b > -1 }
+					}
+					var:global.pww_tcm_a = {
+						set_variable = { global.pww_tcm_pa = resource_produced@chromium }
+						pww_tcm_log = yes
+					}
+					var:global.pww_tcm_b = {
+						set_variable = { global.pww_tcm_xb = resource_exported@chromium }
+						pww_tcm_log = yes
+					}
+					POR = { set_variable = { global.pww_tcm_ip = resource_imported@chromium } }
+					log = "PWW_RESULT cap_market.base INFO POR chromium imports [?global.pww_tcm_ip|1]"
+				}
+				set_temp_variable = { pww_tcm_m = global.pww_tcm_day }
+				modulo_temp_variable = { var = pww_tcm_m value = 5 }
+				if = {
+					limit = {
+						check_variable = { global.pww_tcm_b > -1 }
+						check_variable = { pww_tcm_m = 0 }
+						check_variable = { global.pww_tcm_day > 14 }
+						check_variable = { global.pww_tcm_day < 71 }
+					}
+					var:global.pww_tcm_a = { pww_cap_country_tick = yes pww_tcm_log = yes }
+					var:global.pww_tcm_b = { pww_cap_country_tick = yes pww_tcm_log = yes }
+				}
+				if = {
+					limit = {
+						check_variable = { global.pww_tcm_day = 72 }
+						check_variable = { global.pww_tcm_b > -1 }
+					}
+					var:global.pww_tcm_a = {
+						pww_tcm_log = yes
+						set_temp_variable = { pww_tcm_r = resource_produced@chromium }
+						divide_temp_variable = { pww_tcm_r = global.pww_tcm_pa }
+						if = {
+							limit = {
+								check_variable = { pww_cap_chromium < 0.601 }
+								check_variable = { pww_tcm_r < 0.7 }
+							}
+							log = "PWW_RESULT cap_market.market_idle PASS [This.GetTag] factor [?pww_cap_chromium|2], output x[?pww_tcm_r|2]"
+						}
+						else = { log = "PWW_RESULT cap_market.market_idle FAIL [This.GetTag] factor [?pww_cap_chromium|2], output x[?pww_tcm_r|2]" }
+					}
+					var:global.pww_tcm_b = {
+						pww_tcm_log = yes
+						set_temp_variable = { pww_tcm_x = resource_exported@chromium }
+						set_temp_variable = { pww_tcm_xl = global.pww_tcm_xb }
+						multiply_temp_variable = { pww_tcm_xl = 0.95 }
+						subtract_from_temp_variable = { pww_tcm_xl = 0.5 }
+						POR = { set_temp_variable = { pww_tcm_i = resource_imported@chromium } }
+						set_temp_variable = { pww_tcm_il = global.pww_tcm_ip }
+						multiply_temp_variable = { pww_tcm_il = 0.95 }
+						subtract_from_temp_variable = { pww_tcm_il = 0.5 }
+						if = {
+							limit = {
+								check_variable = { global.pww_tcm_ip > 1 }
+								check_variable = { pww_tcm_i > pww_tcm_il }
+							}
+							log = "PWW_RESULT cap_market.imports_kept PASS POR imports [?global.pww_tcm_ip|1] -> [?pww_tcm_i|1]; [This.GetTag] exports [?global.pww_tcm_xb|1] -> [?pww_tcm_x|1] (factor [?pww_cap_chromium|2])"
+						}
+						else = { log = "PWW_RESULT cap_market.imports_kept FAIL POR imports [?global.pww_tcm_ip|1] -> [?pww_tcm_i|1]; [This.GetTag] exports [?global.pww_tcm_xb|1] -> [?pww_tcm_x|1] (factor [?pww_cap_chromium|2])" }
+					}
+					log = "PWW_DONE cap_market"
+				}
+			}
+		}
+	}
+}

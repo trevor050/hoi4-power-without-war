@@ -20,6 +20,10 @@
 #      store request goes to pww_cartel_store_<res> and the part storage
 #      did not take (pww_stock_in_<res>) is withheld; without it the whole
 #      request is withheld (fallback, see the core header).
+#      Capacity lane loaded (pww_cap_loaded): the hold counts as unsold
+#      output there and idles over time; the integrator takes the balance
+#      unclamped, so the hold falls as output falls, and no fallback pool
+#      accumulates (withheld output stays in the ground).
 #   4. AI members may cheat (pww_cartel_ai_consider_cheat): a quiet side
 #      sale through the ledger at a discount to a desperate AI outsider.
 #   5. Detection (pww_cartel_detect): suspicion rises with the cheat volume
@@ -233,7 +237,13 @@ pww_cartel_apply_quota = {
 		# with the hold added back would ratchet upward; the cap is the
 		# surplus beyond the headroom when the member joined.
 		set_temp_variable = { pww_kaq_store = pww_kr_net }
-		clamp_temp_variable = { var = pww_kaq_store min = 0 max = 99999 }
+		# With the capacity lane the member's output idles under its hold,
+		# so a deficit releases the hold first (no clamp): the hold shrinks
+		# as capacity idles instead of turning the member short.
+		if = {
+			limit = { NOT = { has_global_flag = pww_cap_loaded } }
+			clamp_temp_variable = { var = pww_kaq_store min = 0 max = 99999 }
+		}
 		add_to_temp_variable = { pww_kaq_store = pww_kr_hold }
 		add_to_temp_variable = { pww_kaq_store = pww_kr_sin }
 		subtract_from_temp_variable = { pww_kaq_store = pww_kaq_head }
@@ -260,7 +270,14 @@ pww_cartel_apply_quota = {
 		subtract_from_temp_variable = { pww_kaq_days = global.pww_cm_last_tick^pww_kt_cm2 }
 		clamp_temp_variable = { var = pww_kaq_days min = 0 max = 365 }
 	}
+	# With the capacity lane, withheld output is left in the ground (idle
+	# mines, untapped trees) and becomes idle capacity, not a held pool:
+	# only an older pool remains, and it decays.
 	set_temp_variable = { pww_kaq_held = pww_kr_hold }
+	if = {
+		limit = { has_global_flag = pww_cap_loaded }
+		set_temp_variable = { pww_kaq_held = 0 }
+	}
 	multiply_temp_variable = { pww_kaq_held = pww_kaq_days }
 	add_to_temp_variable = { pww_kaq_held = pww_kr_held }
 	set_temp_variable = { pww_kaq_dec = global.pww_cartel_c_held_decay }

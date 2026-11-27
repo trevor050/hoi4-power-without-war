@@ -1,0 +1,34 @@
+# Engine probe (tests/probes/cap_probe). Logs British Malaya's rubber, its two
+# largest rubber states (S1 owned, S2 leased to Portugal on day 1), Portugal's
+# rubber and Germany's imports.
+pww_cprobe_snap = {
+	MAL = {
+		set_temp_variable = { pww_cps_p = resource_produced@rubber }
+		set_temp_variable = { pww_cps_x = resource_exported@rubber }
+		set_temp_variable = { pww_cps_b = resource@rubber }
+		set_temp_variable = { pww_cps_c = resource_consumed@rubber }
+		set_temp_variable = { pww_cps_e = modifier@min_export }
+		set_temp_variable = { pww_cps_f = modifier@local_resources_rubber_factor }
+		set_temp_variable = { pww_cps_g = modifier@local_resources_factor }
+		set_temp_variable = { pww_cps_pool = pww_cps_p }
+		multiply_temp_variable = { pww_cps_pool = pww_cps_e }
+		log = "PWW_RESULT cap_probe.mal INFO day=[?global.pww_cp_day] var=[?pww_cprobe_rubber|2] mod_rubber_factor=[?pww_cps_f|2] mod_res_factor=[?pww_cps_g|2] produced=[?pww_cps_p|1] consumed=[?pww_cps_c|1] exported=[?pww_cps_x|1] balance=[?pww_cps_b|1] min_export=[?pww_cps_e|2] pool_est=[?pww_cps_pool|1]"
+	}
+	var:global.pww_cp_s1 = {
+		set_temp_variable = { pww_cps_s = resource@rubber }
+		log = "PWW_RESULT cap_probe.s1 INFO day=[?global.pww_cp_day] state=[THIS.GetID] owner=[THIS.Owner.GetTag] rubber=[?pww_cps_s|1]"
+	}
+	var:global.pww_cp_s2 = {
+		set_temp_variable = { pww_cps_s = resource@rubber }
+		log = "PWW_RESULT cap_probe.s2 INFO day=[?global.pww_cp_day] state=[THIS.GetID] owner=[THIS.Owner.GetTag] rubber=[?pww_cps_s|1] (leased to POR)"
+	}
+	POR = {
+		set_temp_variable = { pww_cps_p = resource_produced@rubber }
+		set_temp_variable = { pww_cps_b = resource@rubber }
+		log = "PWW_RESULT cap_probe.por INFO day=[?global.pww_cp_day] var=[?pww_cprobe_rubber|2] produced=[?pww_cps_p|1] balance=[?pww_cps_b|1]"
+	}
+	GER = {
+		set_temp_variable = { pww_cps_i = resource_imported@rubber }
+		log = "PWW_RESULT cap_probe.ger INFO day=[?global.pww_cp_day] rubber imported=[?pww_cps_i|1]"
+	}
+}

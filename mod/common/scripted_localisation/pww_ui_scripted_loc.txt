@@ -566,6 +566,17 @@ defined_text = {
 	text = { localization_key = pww_ui_opp_tt_spare }
 }
 defined_text = {
+	name = pww_ui_sl_o0_cap
+	text = { trigger = { check_variable = { pww_ui_o0_res = 0 } has_variable = pww_cap_oil check_variable = { pww_cap_oil < 0.995 } } localization_key = pww_ui_o_cap_oil }
+	text = { trigger = { check_variable = { pww_ui_o0_res = 1 } has_variable = pww_cap_aluminium check_variable = { pww_cap_aluminium < 0.995 } } localization_key = pww_ui_o_cap_aluminium }
+	text = { trigger = { check_variable = { pww_ui_o0_res = 2 } has_variable = pww_cap_rubber check_variable = { pww_cap_rubber < 0.995 } } localization_key = pww_ui_o_cap_rubber }
+	text = { trigger = { check_variable = { pww_ui_o0_res = 3 } has_variable = pww_cap_tungsten check_variable = { pww_cap_tungsten < 0.995 } } localization_key = pww_ui_o_cap_tungsten }
+	text = { trigger = { check_variable = { pww_ui_o0_res = 4 } has_variable = pww_cap_steel check_variable = { pww_cap_steel < 0.995 } } localization_key = pww_ui_o_cap_steel }
+	text = { trigger = { check_variable = { pww_ui_o0_res = 5 } has_variable = pww_cap_chromium check_variable = { pww_cap_chromium < 0.995 } } localization_key = pww_ui_o_cap_chromium }
+	text = { trigger = { check_variable = { pww_ui_o0_res = 6 } has_variable = pww_cap_coal check_variable = { pww_cap_coal < 0.995 } } localization_key = pww_ui_o_cap_coal }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
 	name = pww_ui_sl_o1_res
 	text = { trigger = { check_variable = { pww_ui_o1_res = 0 } } localization_key = pww_mkt_res_oil }
 	text = { trigger = { check_variable = { pww_ui_o1_res = 1 } } localization_key = pww_mkt_res_aluminium }
@@ -594,6 +605,17 @@ defined_text = {
 	name = pww_ui_sl_o1_tt
 	text = { trigger = { check_variable = { pww_ui_o1_kind = 0 } } localization_key = pww_ui_opp_tt_short }
 	text = { localization_key = pww_ui_opp_tt_spare }
+}
+defined_text = {
+	name = pww_ui_sl_o1_cap
+	text = { trigger = { check_variable = { pww_ui_o1_res = 0 } has_variable = pww_cap_oil check_variable = { pww_cap_oil < 0.995 } } localization_key = pww_ui_o_cap_oil }
+	text = { trigger = { check_variable = { pww_ui_o1_res = 1 } has_variable = pww_cap_aluminium check_variable = { pww_cap_aluminium < 0.995 } } localization_key = pww_ui_o_cap_aluminium }
+	text = { trigger = { check_variable = { pww_ui_o1_res = 2 } has_variable = pww_cap_rubber check_variable = { pww_cap_rubber < 0.995 } } localization_key = pww_ui_o_cap_rubber }
+	text = { trigger = { check_variable = { pww_ui_o1_res = 3 } has_variable = pww_cap_tungsten check_variable = { pww_cap_tungsten < 0.995 } } localization_key = pww_ui_o_cap_tungsten }
+	text = { trigger = { check_variable = { pww_ui_o1_res = 4 } has_variable = pww_cap_steel check_variable = { pww_cap_steel < 0.995 } } localization_key = pww_ui_o_cap_steel }
+	text = { trigger = { check_variable = { pww_ui_o1_res = 5 } has_variable = pww_cap_chromium check_variable = { pww_cap_chromium < 0.995 } } localization_key = pww_ui_o_cap_chromium }
+	text = { trigger = { check_variable = { pww_ui_o1_res = 6 } has_variable = pww_cap_coal check_variable = { pww_cap_coal < 0.995 } } localization_key = pww_ui_o_cap_coal }
+	text = { localization_key = pww_ui_blank }
 }
 defined_text = {
 	name = pww_ui_sl_o2_res
@@ -626,6 +648,17 @@ defined_text = {
 	text = { localization_key = pww_ui_opp_tt_spare }
 }
 defined_text = {
+	name = pww_ui_sl_o2_cap
+	text = { trigger = { check_variable = { pww_ui_o2_res = 0 } has_variable = pww_cap_oil check_variable = { pww_cap_oil < 0.995 } } localization_key = pww_ui_o_cap_oil }
+	text = { trigger = { check_variable = { pww_ui_o2_res = 1 } has_variable = pww_cap_aluminium check_variable = { pww_cap_aluminium < 0.995 } } localization_key = pww_ui_o_cap_aluminium }
+	text = { trigger = { check_variable = { pww_ui_o2_res = 2 } has_variable = pww_cap_rubber check_variable = { pww_cap_rubber < 0.995 } } localization_key = pww_ui_o_cap_rubber }
+	text = { trigger = { check_variable = { pww_ui_o2_res = 3 } has_variable = pww_cap_tungsten check_variable = { pww_cap_tungsten < 0.995 } } localization_key = pww_ui_o_cap_tungsten }
+	text = { trigger = { check_variable = { pww_ui_o2_res = 4 } has_variable = pww_cap_steel check_variable = { pww_cap_steel < 0.995 } } localization_key = pww_ui_o_cap_steel }
+	text = { trigger = { check_variable = { pww_ui_o2_res = 5 } has_variable = pww_cap_chromium check_variable = { pww_cap_chromium < 0.995 } } localization_key = pww_ui_o_cap_chromium }
+	text = { trigger = { check_variable = { pww_ui_o2_res = 6 } has_variable = pww_cap_coal check_variable = { pww_cap_coal < 0.995 } } localization_key = pww_ui_o_cap_coal }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
 	name = pww_ui_sl_o3_res
 	text = { trigger = { check_variable = { pww_ui_o3_res = 0 } } localization_key = pww_mkt_res_oil }
 	text = { trigger = { check_variable = { pww_ui_o3_res = 1 } } localization_key = pww_mkt_res_aluminium }
@@ -654,6 +687,17 @@ defined_text = {
 	name = pww_ui_sl_o3_tt
 	text = { trigger = { check_variable = { pww_ui_o3_kind = 0 } } localization_key = pww_ui_opp_tt_short }
 	text = { localization_key = pww_ui_opp_tt_spare }
+}
+defined_text = {
+	name = pww_ui_sl_o3_cap
+	text = { trigger = { check_variable = { pww_ui_o3_res = 0 } has_variable = pww_cap_oil check_variable = { pww_cap_oil < 0.995 } } localization_key = pww_ui_o_cap_oil }
+	text = { trigger = { check_variable = { pww_ui_o3_res = 1 } has_variable = pww_cap_aluminium check_variable = { pww_cap_aluminium < 0.995 } } localization_key = pww_ui_o_cap_aluminium }
+	text = { trigger = { check_variable = { pww_ui_o3_res = 2 } has_variable = pww_cap_rubber check_variable = { pww_cap_rubber < 0.995 } } localization_key = pww_ui_o_cap_rubber }
+	text = { trigger = { check_variable = { pww_ui_o3_res = 3 } has_variable = pww_cap_tungsten check_variable = { pww_cap_tungsten < 0.995 } } localization_key = pww_ui_o_cap_tungsten }
+	text = { trigger = { check_variable = { pww_ui_o3_res = 4 } has_variable = pww_cap_steel check_variable = { pww_cap_steel < 0.995 } } localization_key = pww_ui_o_cap_steel }
+	text = { trigger = { check_variable = { pww_ui_o3_res = 5 } has_variable = pww_cap_chromium check_variable = { pww_cap_chromium < 0.995 } } localization_key = pww_ui_o_cap_chromium }
+	text = { trigger = { check_variable = { pww_ui_o3_res = 6 } has_variable = pww_cap_coal check_variable = { pww_cap_coal < 0.995 } } localization_key = pww_ui_o_cap_coal }
+	text = { localization_key = pww_ui_blank }
 }
 defined_text = {
 	name = pww_ui_sl_c0_res
@@ -2891,6 +2935,13 @@ defined_text = {
 	text = { localization_key = pww_ui_rtt_even }
 }
 defined_text = {
+	name = pww_ui_sl_rcap_oil
+	text = { trigger = { has_variable = pww_cap_oil check_variable = { pww_cap_trend_oil = 2 } } localization_key = pww_ui_rcap_up_oil }
+	text = { trigger = { has_variable = pww_cap_oil check_variable = { pww_cap_oil < 0.995 } } localization_key = pww_ui_rcap_idle_oil }
+	text = { trigger = { has_variable = pww_cap_oil check_variable = { pww_cap_oil > 1.005 } } localization_key = pww_ui_rcap_high_oil }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
 	name = pww_ui_sl_rn_aluminium
 	text = { trigger = { check_variable = { pww_ui_rs_aluminium_net > 0.5 } } localization_key = pww_ui_rn_pos_aluminium }
 	text = { trigger = { check_variable = { pww_ui_rs_aluminium_net < -0.5 } } localization_key = pww_ui_rn_neg_aluminium }
@@ -2917,6 +2968,13 @@ defined_text = {
 	text = { trigger = { check_variable = { pww_ui_rs_aluminium_bal > 0.5 } } localization_key = pww_ui_rtt_unsold_aluminium }
 	text = { trigger = { check_variable = { pww_ui_rs_aluminium_bal < -0.5 } } localization_key = pww_ui_rtt_short_aluminium }
 	text = { localization_key = pww_ui_rtt_even }
+}
+defined_text = {
+	name = pww_ui_sl_rcap_aluminium
+	text = { trigger = { has_variable = pww_cap_aluminium check_variable = { pww_cap_trend_aluminium = 2 } } localization_key = pww_ui_rcap_up_aluminium }
+	text = { trigger = { has_variable = pww_cap_aluminium check_variable = { pww_cap_aluminium < 0.995 } } localization_key = pww_ui_rcap_idle_aluminium }
+	text = { trigger = { has_variable = pww_cap_aluminium check_variable = { pww_cap_aluminium > 1.005 } } localization_key = pww_ui_rcap_high_aluminium }
+	text = { localization_key = pww_ui_blank }
 }
 defined_text = {
 	name = pww_ui_sl_rn_rubber
@@ -2947,6 +3005,13 @@ defined_text = {
 	text = { localization_key = pww_ui_rtt_even }
 }
 defined_text = {
+	name = pww_ui_sl_rcap_rubber
+	text = { trigger = { has_variable = pww_cap_rubber check_variable = { pww_cap_trend_rubber = 2 } } localization_key = pww_ui_rcap_up_rubber }
+	text = { trigger = { has_variable = pww_cap_rubber check_variable = { pww_cap_rubber < 0.995 } } localization_key = pww_ui_rcap_idle_rubber }
+	text = { trigger = { has_variable = pww_cap_rubber check_variable = { pww_cap_rubber > 1.005 } } localization_key = pww_ui_rcap_high_rubber }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
 	name = pww_ui_sl_rn_tungsten
 	text = { trigger = { check_variable = { pww_ui_rs_tungsten_net > 0.5 } } localization_key = pww_ui_rn_pos_tungsten }
 	text = { trigger = { check_variable = { pww_ui_rs_tungsten_net < -0.5 } } localization_key = pww_ui_rn_neg_tungsten }
@@ -2973,6 +3038,13 @@ defined_text = {
 	text = { trigger = { check_variable = { pww_ui_rs_tungsten_bal > 0.5 } } localization_key = pww_ui_rtt_unsold_tungsten }
 	text = { trigger = { check_variable = { pww_ui_rs_tungsten_bal < -0.5 } } localization_key = pww_ui_rtt_short_tungsten }
 	text = { localization_key = pww_ui_rtt_even }
+}
+defined_text = {
+	name = pww_ui_sl_rcap_tungsten
+	text = { trigger = { has_variable = pww_cap_tungsten check_variable = { pww_cap_trend_tungsten = 2 } } localization_key = pww_ui_rcap_up_tungsten }
+	text = { trigger = { has_variable = pww_cap_tungsten check_variable = { pww_cap_tungsten < 0.995 } } localization_key = pww_ui_rcap_idle_tungsten }
+	text = { trigger = { has_variable = pww_cap_tungsten check_variable = { pww_cap_tungsten > 1.005 } } localization_key = pww_ui_rcap_high_tungsten }
+	text = { localization_key = pww_ui_blank }
 }
 defined_text = {
 	name = pww_ui_sl_rn_steel
@@ -3003,6 +3075,13 @@ defined_text = {
 	text = { localization_key = pww_ui_rtt_even }
 }
 defined_text = {
+	name = pww_ui_sl_rcap_steel
+	text = { trigger = { has_variable = pww_cap_steel check_variable = { pww_cap_trend_steel = 2 } } localization_key = pww_ui_rcap_up_steel }
+	text = { trigger = { has_variable = pww_cap_steel check_variable = { pww_cap_steel < 0.995 } } localization_key = pww_ui_rcap_idle_steel }
+	text = { trigger = { has_variable = pww_cap_steel check_variable = { pww_cap_steel > 1.005 } } localization_key = pww_ui_rcap_high_steel }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
 	name = pww_ui_sl_rn_chromium
 	text = { trigger = { check_variable = { pww_ui_rs_chromium_net > 0.5 } } localization_key = pww_ui_rn_pos_chromium }
 	text = { trigger = { check_variable = { pww_ui_rs_chromium_net < -0.5 } } localization_key = pww_ui_rn_neg_chromium }
@@ -3031,6 +3110,13 @@ defined_text = {
 	text = { localization_key = pww_ui_rtt_even }
 }
 defined_text = {
+	name = pww_ui_sl_rcap_chromium
+	text = { trigger = { has_variable = pww_cap_chromium check_variable = { pww_cap_trend_chromium = 2 } } localization_key = pww_ui_rcap_up_chromium }
+	text = { trigger = { has_variable = pww_cap_chromium check_variable = { pww_cap_chromium < 0.995 } } localization_key = pww_ui_rcap_idle_chromium }
+	text = { trigger = { has_variable = pww_cap_chromium check_variable = { pww_cap_chromium > 1.005 } } localization_key = pww_ui_rcap_high_chromium }
+	text = { localization_key = pww_ui_blank }
+}
+defined_text = {
 	name = pww_ui_sl_rn_coal
 	text = { trigger = { check_variable = { pww_ui_rs_coal_net > 0.5 } } localization_key = pww_ui_rn_pos_coal }
 	text = { trigger = { check_variable = { pww_ui_rs_coal_net < -0.5 } } localization_key = pww_ui_rn_neg_coal }
@@ -3057,6 +3143,13 @@ defined_text = {
 	text = { trigger = { check_variable = { pww_ui_rs_coal_bal > 0.5 } } localization_key = pww_ui_rtt_unsold_coal }
 	text = { trigger = { check_variable = { pww_ui_rs_coal_bal < -0.5 } } localization_key = pww_ui_rtt_short_coal }
 	text = { localization_key = pww_ui_rtt_even }
+}
+defined_text = {
+	name = pww_ui_sl_rcap_coal
+	text = { trigger = { has_variable = pww_cap_coal check_variable = { pww_cap_trend_coal = 2 } } localization_key = pww_ui_rcap_up_coal }
+	text = { trigger = { has_variable = pww_cap_coal check_variable = { pww_cap_coal < 0.995 } } localization_key = pww_ui_rcap_idle_coal }
+	text = { trigger = { has_variable = pww_cap_coal check_variable = { pww_cap_coal > 1.005 } } localization_key = pww_ui_rcap_high_coal }
+	text = { localization_key = pww_ui_blank }
 }
 defined_text = {
 	name = pww_ui_sl_dos_bondw

@@ -1,0 +1,19 @@
+# Engine probe helper: factories gained or lost through trade.
+#   fx = civilian + military + naval factories - num_of_owned_factories
+pww_xprobe_fx = {
+	set_temp_variable = { pww_xp_f = num_of_civilian_factories }
+	add_to_temp_variable = { pww_xp_f = num_of_military_factories }
+	add_to_temp_variable = { pww_xp_f = num_of_naval_factories }
+	set_temp_variable = { pww_xp_o = num_of_owned_factories }
+	subtract_from_temp_variable = { pww_xp_f = pww_xp_o }
+	set_temp_variable = { pww_xp_c = num_of_civilian_factories }
+	set_temp_variable = { pww_xp_a = num_of_civilian_factories_available_for_projects }
+	set_temp_variable = { pww_xp_i = resource_imported@rubber }
+	add_to_temp_variable = { pww_xp_i = resource_imported@steel }
+	add_to_temp_variable = { pww_xp_i = resource_imported@oil }
+	add_to_temp_variable = { pww_xp_i = resource_imported@chromium }
+	add_to_temp_variable = { pww_xp_i = resource_imported@tungsten }
+	add_to_temp_variable = { pww_xp_i = resource_imported@aluminium }
+	add_to_temp_variable = { pww_xp_i = resource_imported@coal }
+	log = "PWW_RESULT export_probe.fx INFO day=[?global.pww_xp_day] [This.GetTag] civ=[?pww_xp_c|1] free=[?pww_xp_a|1] owned=[?pww_xp_o|1] fx=[?pww_xp_f|2] imported_all=[?pww_xp_i|0]"
+}

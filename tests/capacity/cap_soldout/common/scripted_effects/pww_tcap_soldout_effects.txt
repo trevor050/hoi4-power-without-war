@@ -1,0 +1,67 @@
+# Capacity test helpers (tests/capacity/cap_soldout).
+
+# Any scope. global.pww_tcs_a = the market economy (not POR, not GER) with the
+# largest chromium surplus that uses none of it.
+pww_tcs_pick = {
+	set_temp_variable = { pww_tcs_best = 10 }
+	set_variable = { global.pww_tcs_a = -1 }
+	every_country = {
+		limit = {
+			exists = yes
+			NOT = { tag = POR }
+			NOT = { tag = GER }
+			NOT = { has_government = communism }
+			NOT = { has_government = fascism }
+		}
+		set_temp_variable = { pww_tcs_use = resource_consumed@chromium }
+		set_temp_variable = { pww_tcs_bal = resource@chromium }
+		if = {
+			limit = {
+				check_variable = { pww_tcs_use < 0.5 }
+				check_variable = { pww_tcs_bal > pww_tcs_best }
+			}
+			set_temp_variable = { pww_tcs_best = pww_tcs_bal }
+			set_variable = { global.pww_tcs_a = THIS }
+		}
+	}
+}
+
+# Country scope (the seller). A supply contract to GER for 95% of the
+# current chromium output.
+pww_tcs_top_up = {
+	set_temp_variable = { pww_tcs_amt = resource_produced@chromium }
+	multiply_temp_variable = { pww_tcs_amt = 0.95 }
+	round_temp_variable = pww_tcs_amt
+	if = {
+		limit = { check_variable = { pww_tcs_amt > 0.999 } }
+		set_temp_variable = { pww_l_kind = 0 }
+		set_temp_variable = { pww_l_state = 0 }
+		set_temp_variable = { pww_l_committal = 0 }
+		set_temp_variable = { pww_l_term_days = 365 }
+		set_temp_variable = { pww_l_civ = 0 }
+		set_temp_variable = { pww_l_pp = 0 }
+		set_temp_variable = { pww_l_ideo = 0 }
+		set_temp_variable = { pww_l_ideo_giver = 0 }
+		set_temp_variable = { pww_l_cond = 0 }
+		set_temp_variable = { pww_l_reserve_days = 0 }
+		set_temp_variable = { pww_l_revert_days = 0 }
+		set_temp_variable = { pww_l_convoys = 0 }
+		set_temp_variable = { pww_l_seller = THIS }
+		set_temp_variable = { pww_l_buyer = GER }
+		set_temp_variable = { pww_l_res = 5 }
+		set_temp_variable = { pww_l_amount = pww_tcs_amt }
+		set_temp_variable = { pww_l_activate = 1 }
+		pww_ledger_create_agreement = yes
+		log = "PWW_RESULT cap_soldout.contract INFO day=[?global.pww_tcs_day] [This.GetTag] sells [?pww_tcs_amt|0] chromium a day to GER: result [?pww_l_result] fail [?pww_l_fail|0] id [?pww_l_new_id]"
+	}
+}
+
+# Country scope. One line of chromium readings; records seen trends.
+pww_tcs_log = {
+	if = { limit = { check_variable = { pww_cap_trend_chromium = 1 } } set_global_flag = pww_tcs_saw_reopen }
+	if = { limit = { check_variable = { pww_cap_trend_chromium = 2 } } set_global_flag = pww_tcs_saw_expand }
+	if = { limit = { check_variable = { pww_cap_trend_chromium = -1 } } set_global_flag = pww_tcs_saw_idle }
+	set_temp_variable = { pww_tcs_p = resource_produced@chromium }
+	set_temp_variable = { pww_tcs_bl = resource@chromium }
+	log = "PWW_RESULT cap_soldout.read INFO day=[?global.pww_tcs_day] [This.GetTag] chromium cap=[?pww_cap_chromium|3] trend=[?pww_cap_trend_chromium|0] spare=[?pww_cap_spare_chromium|1] produced=[?pww_tcs_p|1] balance=[?pww_tcs_bl|1]"
+}

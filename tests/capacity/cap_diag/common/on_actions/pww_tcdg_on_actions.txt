@@ -1,0 +1,22 @@
+# Capacity diagnostic (manual): every capacity tick logs PWW_CAP lines
+# (pww_cap_debug) for 150 days, all lanes live. Read the per-resource lines
+# for why a producer with spare output does or does not idle (ok, stin, fl).
+#   python tools/run_hoi4.py --r56 --tag HAI --timeout 1800 --test tests/capacity/cap_diag
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = GER }
+				add_to_variable = { global.pww_tcdg_day = 1 }
+				if = {
+					limit = { check_variable = { global.pww_tcdg_day = 1 } }
+					set_global_flag = pww_cap_debug
+				}
+				if = {
+					limit = { check_variable = { global.pww_tcdg_day = 150 } }
+					log = "PWW_DONE cap_diag"
+				}
+			}
+		}
+	}
+}

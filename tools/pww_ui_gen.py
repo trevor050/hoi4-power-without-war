@@ -482,11 +482,20 @@ for k in range(NO):
     L(f"pww_ui_o{k}_buy2", f"§gBuyers:§! {c1}{SEP}{c2}")
     L(f"pww_ui_o{k}_buy1", f"§gBuyers:§! {c1}")
     dt(f"pww_ui_sl_o{k}_tt", [(cv(v + "_kind", "=", 0), "pww_ui_opp_tt_short")], "pww_ui_opp_tt_spare")
-    L(f"pww_ui_o{k}_tt", f"[pww_ui_sl_o{k}_l1]\\n[pww_ui_sl_o{k}_l2]\\n\\n[pww_ui_sl_o{k}_tt]")
+    # our own mines for this resource (capacity lane)
+    capc = []
+    for i_, r_ in enumerate(RES):
+        cap = f"pww_cap_{r_}"
+        capc.append((f"{cv(v + '_res', '=', i_)} has_variable = {cap} {cv(cap, '<', 0.995)}", f"pww_ui_o_cap_{r_}"))
+    dt(f"pww_ui_sl_o{k}_cap", capc, "pww_ui_blank")
+    L(f"pww_ui_o{k}_tt", f"[pww_ui_sl_o{k}_l1]\\n[pww_ui_sl_o{k}_l2][pww_ui_sl_o{k}_cap]\\n\\n[pww_ui_sl_o{k}_tt]")
 L("pww_ui_opp_nosell", "§gNo country has any to spare.§!")
+for r_ in RES:
+    L(f"pww_ui_o_cap_{r_}", f"\\n§YOur mines are idling:§! working at [?pww_cap_{r_}|%0] of capacity. "
+                            "Output nobody buys slowly goes idle, and takes months to restart.")
 L("pww_ui_opp_nobuy", "§gNobody imports it. Our surplus goes to storage.§!")
 L("pww_ui_opp_tt_short", "Figures are a day of output nobody buys. A seller sitting on unsold output usually takes less than the market rate. Open its diplomacy panel and choose Propose Trade Deal.")
-L("pww_ui_opp_tt_spare", "Figures are what each country imports a day, plus anything it still lacks. They buy on the open market today; a better offer can win them over, and a buyer that is badly short pays above the market rate. Open its diplomacy panel and choose Propose Trade Deal.")
+L("pww_ui_opp_tt_spare", "Output nobody buys slowly goes idle: mines close and output falls until buyers return. Figures are what each country imports a day, plus anything it still lacks. They buy on the open market today; a better offer can win them over, and a buyer that is badly short pays above the market rate. Open its diplomacy panel and choose Propose Trade Deal.")
 
 # ---------------------------------------------------------------- cartel slot loc
 # Slots pww_ui_c<k>_*: id res status anchor pct (price over market, %), cb
@@ -857,7 +866,17 @@ for i, r in enumerate(RES):
     L(f"pww_ui_rtt_short_{r}", f"§RShort [?{v}_short|0] a day§! even after imports.")
     L(f"pww_ui_rs_{r}_tt", f"§H{RES_NAME[i]}§!: [FROM.GetName]\\nOutput [?{v}_prod|0] a day, own use [?{v}_use|0].\\n"
                            f"Imports [?{v}_imp|0], exports [?{v}_exp|0].\\n[pww_ui_sl_rtt_{r}]\\n"
-                           f"How hard pressed for it: [pww_ui_sl_press_{r}].")
+                           f"How hard pressed for it: [pww_ui_sl_press_{r}].[pww_ui_sl_rcap_{r}]")
+    # production capacity (capacity lane): mines idle below 1, expanding when the trend is 2
+    cap = f"pww_cap_{r}"
+    dt(f"pww_ui_sl_rcap_{r}", [
+        (f"has_variable = {cap} {cv(f'pww_cap_trend_{r}', '=', 2)}", f"pww_ui_rcap_up_{r}"),
+        (f"has_variable = {cap} {cv(cap, '<', 0.995)}", f"pww_ui_rcap_idle_{r}"),
+        (f"has_variable = {cap} {cv(cap, '>', 1.005)}", f"pww_ui_rcap_high_{r}"),
+    ], "pww_ui_blank")
+    L(f"pww_ui_rcap_idle_{r}", f"\\n§YMines idle:§! working at [?{cap}|%0] of capacity for want of buyers.")
+    L(f"pww_ui_rcap_up_{r}", f"\\n§GExpanding:§! output at [?{cap}|%0] of the old capacity, and rising.")
+    L(f"pww_ui_rcap_high_{r}", f"\\nOutput at [?{cap}|%0] of the old capacity after new investment.")
 L("pww_ui_rn_zero", "§g·§!")
 L("pww_ui_rw_sold", "§gall sold§!")
 L("pww_ui_rw_imports", "§gimported§!")

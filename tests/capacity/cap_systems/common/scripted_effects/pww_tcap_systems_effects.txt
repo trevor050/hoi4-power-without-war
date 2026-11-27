@@ -1,0 +1,74 @@
+# Capacity test helpers (tests/capacity/cap_systems).
+
+# Any scope. The two countries (not POR, GER, SOV, USA) with the largest
+# chromium surplus that use none of it: global.pww_tsy_a, global.pww_tsy_b.
+pww_tsy_pick = {
+	set_variable = { global.pww_tsy_a = -1 }
+	set_variable = { global.pww_tsy_b = -1 }
+	set_temp_variable = { pww_tsy_best = 5 }
+	every_country = {
+		limit = {
+			exists = yes
+			NOT = { tag = POR }
+			NOT = { tag = GER }
+			NOT = { tag = SOV }
+			NOT = { tag = USA }
+		}
+		set_temp_variable = { pww_tsy_use = resource_consumed@chromium }
+		set_temp_variable = { pww_tsy_bal = resource@chromium }
+		if = {
+			limit = {
+				check_variable = { pww_tsy_use < 0.5 }
+				check_variable = { pww_tsy_bal > pww_tsy_best }
+			}
+			set_temp_variable = { pww_tsy_best = pww_tsy_bal }
+			set_variable = { global.pww_tsy_a = THIS }
+		}
+	}
+	set_temp_variable = { pww_tsy_best = 5 }
+	every_country = {
+		limit = {
+			exists = yes
+			NOT = { tag = POR }
+			NOT = { tag = GER }
+			NOT = { tag = SOV }
+			NOT = { tag = USA }
+			NOT = { check_variable = { global.pww_tsy_a = THIS } }
+		}
+		set_temp_variable = { pww_tsy_use = resource_consumed@chromium }
+		set_temp_variable = { pww_tsy_bal = resource@chromium }
+		if = {
+			limit = {
+				check_variable = { pww_tsy_use < 0.5 }
+				check_variable = { pww_tsy_bal > pww_tsy_best }
+			}
+			set_temp_variable = { pww_tsy_best = pww_tsy_bal }
+			set_variable = { global.pww_tsy_b = THIS }
+		}
+	}
+}
+
+# Country scope. Logs every resource factor.
+pww_tsy_log = {
+	log = "PWW_RESULT cap_systems.read INFO day=[?global.pww_tsy_day] [This.GetTag] sys=[?pww_cap_sys|0] oil=[?pww_cap_oil|2]/[?pww_cap_spare_oil|0] alu=[?pww_cap_aluminium|2]/[?pww_cap_spare_aluminium|0] rub=[?pww_cap_rubber|2]/[?pww_cap_spare_rubber|0] tun=[?pww_cap_tungsten|2]/[?pww_cap_spare_tungsten|0] ste=[?pww_cap_steel|2]/[?pww_cap_spare_steel|0] chr=[?pww_cap_chromium|2]/[?pww_cap_spare_chromium|0] coa=[?pww_cap_coal|2]/[?pww_cap_spare_coal|0]"
+}
+
+# GER scope. Flags a used resource (consumed > 0.5) whose factor fell.
+pww_tsy_ger_check = {
+	set_temp_variable = { pww_tsy_bad = 0 }
+	set_temp_variable = { pww_tsy_n = 0 }
+	set_temp_variable = { pww_tsy_u = resource_consumed@coal }
+	if = { limit = { check_variable = { pww_tsy_u > 0.5 } } add_to_temp_variable = { pww_tsy_n = 1 } if = { limit = { check_variable = { pww_cap_coal < 0.999 } } add_to_temp_variable = { pww_tsy_bad = 1 } } }
+	set_temp_variable = { pww_tsy_u = resource_consumed@steel }
+	if = { limit = { check_variable = { pww_tsy_u > 0.5 } } add_to_temp_variable = { pww_tsy_n = 1 } if = { limit = { check_variable = { pww_cap_steel < 0.999 } } add_to_temp_variable = { pww_tsy_bad = 1 } } }
+	set_temp_variable = { pww_tsy_u = resource_consumed@oil }
+	if = { limit = { check_variable = { pww_tsy_u > 0.5 } } add_to_temp_variable = { pww_tsy_n = 1 } if = { limit = { check_variable = { pww_cap_oil < 0.999 } } add_to_temp_variable = { pww_tsy_bad = 1 } } }
+	set_temp_variable = { pww_tsy_u = resource_consumed@aluminium }
+	if = { limit = { check_variable = { pww_tsy_u > 0.5 } } add_to_temp_variable = { pww_tsy_n = 1 } if = { limit = { check_variable = { pww_cap_aluminium < 0.999 } } add_to_temp_variable = { pww_tsy_bad = 1 } } }
+	set_temp_variable = { pww_tsy_u = resource_consumed@tungsten }
+	if = { limit = { check_variable = { pww_tsy_u > 0.5 } } add_to_temp_variable = { pww_tsy_n = 1 } if = { limit = { check_variable = { pww_cap_tungsten < 0.999 } } add_to_temp_variable = { pww_tsy_bad = 1 } } }
+	set_temp_variable = { pww_tsy_u = resource_consumed@chromium }
+	if = { limit = { check_variable = { pww_tsy_u > 0.5 } } add_to_temp_variable = { pww_tsy_n = 1 } if = { limit = { check_variable = { pww_cap_chromium < 0.999 } } add_to_temp_variable = { pww_tsy_bad = 1 } } }
+	set_temp_variable = { pww_tsy_u = resource_consumed@rubber }
+	if = { limit = { check_variable = { pww_tsy_u > 0.5 } } add_to_temp_variable = { pww_tsy_n = 1 } if = { limit = { check_variable = { pww_cap_rubber < 0.999 } } add_to_temp_variable = { pww_tsy_bad = 1 } } }
+}

@@ -1,0 +1,178 @@
+# Engine probe: local_resources_<res>_factor from a mod dynamic modifier with a
+# variable (capacity lane). Vanilla, --no-pww, two sessions:
+#   1: --autosave MONTHLY --clear-saves --until cap_probe.session1_done
+#   2: --continue-last-save (resumes at the 1 February autosave)
+# Timeline (day counter on POR):
+#   1  MAL leases its 2nd largest rubber state to POR; GER imports 30
+#      factories of MAL rubber (more than the pool after a cut).
+#   5  baseline snapshot.
+#   6  MAL factor -0.5.  7, 8, 12 snapshots (live? halves? pool? lease?).
+#   13 POR factor -0.5 too (does the lease holder's factor touch the lease?).
+#   15 snapshot; 16 POR modifier removed.
+#   20 MAL factor -0.25 (variable change applies live?). 22 snapshot.
+#   24 copy output. 25 MAL also gets local_resources_factor +0.5 (techs use
+#      it): additive with the per-resource factor (1.25 / 0.75 = 1.667x) or
+#      multiplicative (1.5x)? 28 ratio. 29 removed again.
+#   33 check (runs in both sessions): modifier still applied, factor still
+#      -0.25, output still reduced vs the day-5 copy. session1_done.
+#   40 done.
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { tag = POR }
+				add_to_variable = { global.pww_cp_day = 1 }
+				if = {
+					limit = { check_variable = { global.pww_cp_day = 1 } }
+					MAL = {
+						set_temp_variable = { pww_cp_best = 0 }
+						every_owned_state = {
+							if = {
+								limit = { check_variable = { resource@rubber > pww_cp_best } }
+								set_temp_variable = { pww_cp_best = resource@rubber }
+								set_variable = { global.pww_cp_s1 = THIS }
+							}
+						}
+						set_temp_variable = { pww_cp_best = 0 }
+						every_owned_state = {
+							if = {
+								limit = {
+									NOT = { check_variable = { global.pww_cp_s1 = THIS } }
+									check_variable = { resource@rubber > pww_cp_best }
+								}
+								set_temp_variable = { pww_cp_best = resource@rubber }
+								set_variable = { global.pww_cp_s2 = THIS }
+							}
+						}
+						give_resource_rights = { receiver = POR state = global.pww_cp_s2 }
+					}
+					GER = { create_import = { resource = rubber factories = 30 exporter = MAL } }
+				}
+				if = {
+					limit = { check_variable = { global.pww_cp_day = 5 } }
+					pww_cprobe_snap = yes
+					MAL = { set_variable = { global.pww_cp_p5 = resource_produced@rubber } }
+					GER = { set_variable = { global.pww_cp_i5 = resource_imported@rubber } }
+					POR = { set_variable = { global.pww_cp_por5 = resource_produced@rubber } }
+				}
+				if = {
+					limit = { check_variable = { global.pww_cp_day = 6 } }
+					MAL = {
+						set_variable = { pww_cprobe_rubber = -0.5 }
+						add_dynamic_modifier = { modifier = pww_cprobe_mod }
+						force_update_dynamic_modifier = yes
+					}
+					pww_cprobe_snap = yes
+				}
+				if = {
+					limit = {
+						OR = {
+							check_variable = { global.pww_cp_day = 7 }
+							check_variable = { global.pww_cp_day = 8 }
+							check_variable = { global.pww_cp_day = 12 }
+							check_variable = { global.pww_cp_day = 15 }
+							check_variable = { global.pww_cp_day = 22 }
+						}
+					}
+					pww_cprobe_snap = yes
+				}
+				if = {
+					limit = { check_variable = { global.pww_cp_day = 12 } }
+					MAL = {
+						set_temp_variable = { pww_cp_r = resource_produced@rubber }
+						divide_temp_variable = { pww_cp_r = global.pww_cp_p5 }
+						log = "PWW_RESULT cap_probe.ratio INFO day 12 MAL rubber produced / day 5 = [?pww_cp_r|3] at factor -0.5"
+						if = {
+							limit = { check_variable = { pww_cp_r < 0.9 } }
+							log = "PWW_RESULT cap_probe.live PASS the variable-driven factor changed extraction"
+						}
+						else = { log = "PWW_RESULT cap_probe.live FAIL ratio [?pww_cp_r|3]" }
+					}
+					GER = {
+						set_temp_variable = { pww_cp_r = resource_imported@rubber }
+						log = "PWW_RESULT cap_probe.import INFO GER rubber imports day 5 [?global.pww_cp_i5|1] -> day 12 [?pww_cp_r|1]"
+					}
+					POR = {
+						set_temp_variable = { pww_cp_r = resource_produced@rubber }
+						log = "PWW_RESULT cap_probe.lease INFO POR rubber produced (lease) day 5 [?global.pww_cp_por5|1] -> day 12 [?pww_cp_r|1] with the owner's factor -0.5"
+					}
+				}
+				if = {
+					limit = { check_variable = { global.pww_cp_day = 13 } }
+					POR = {
+						set_variable = { pww_cprobe_rubber = -0.5 }
+						add_dynamic_modifier = { modifier = pww_cprobe_mod }
+						force_update_dynamic_modifier = yes
+					}
+				}
+				if = {
+					limit = { check_variable = { global.pww_cp_day = 16 } }
+					POR = {
+						remove_dynamic_modifier = { modifier = pww_cprobe_mod }
+						clear_variable = pww_cprobe_rubber
+						force_update_dynamic_modifier = yes
+					}
+				}
+				if = {
+					limit = { check_variable = { global.pww_cp_day = 20 } }
+					MAL = {
+						set_variable = { pww_cprobe_rubber = -0.25 }
+						force_update_dynamic_modifier = yes
+					}
+				}
+				if = {
+					limit = { check_variable = { global.pww_cp_day = 24 } }
+					MAL = { set_variable = { global.pww_cp_p24 = resource_produced@rubber } }
+				}
+				if = {
+					limit = { check_variable = { global.pww_cp_day = 25 } }
+					MAL = {
+						add_dynamic_modifier = { modifier = pww_cprobe_mod2 }
+						force_update_dynamic_modifier = yes
+					}
+				}
+				if = {
+					limit = { check_variable = { global.pww_cp_day = 28 } }
+					pww_cprobe_snap = yes
+					MAL = {
+						set_temp_variable = { pww_cp_r = resource_produced@rubber }
+						divide_temp_variable = { pww_cp_r = global.pww_cp_p24 }
+						log = "PWW_RESULT cap_probe.stack INFO rubber factor -0.25 plus local_resources_factor +0.5: output x[?pww_cp_r|3] (additive 1.667, multiplicative 1.5)"
+					}
+				}
+				if = {
+					limit = { check_variable = { global.pww_cp_day = 29 } }
+					MAL = {
+						remove_dynamic_modifier = { modifier = pww_cprobe_mod2 }
+						force_update_dynamic_modifier = yes
+					}
+				}
+				if = {
+					limit = { check_variable = { global.pww_cp_day = 33 } }
+					pww_cprobe_snap = yes
+					MAL = {
+						set_temp_variable = { pww_cp_r = resource_produced@rubber }
+						divide_temp_variable = { pww_cp_r = global.pww_cp_p5 }
+						log = "PWW_RESULT cap_probe.ratio33 INFO day 33 MAL rubber produced / day 5 = [?pww_cp_r|3] at factor [?pww_cprobe_rubber|2]"
+						if = {
+							limit = {
+								has_dynamic_modifier = { modifier = pww_cprobe_mod }
+								check_variable = { pww_cprobe_rubber < -0.2 }
+								check_variable = { pww_cp_r < 0.9 }
+								check_variable = { pww_cp_r > 0.5 }
+							}
+							log = "PWW_RESULT cap_probe.persist PASS modifier, variable and reduced output intact"
+						}
+						else = { log = "PWW_RESULT cap_probe.persist FAIL" }
+					}
+					log = "PWW_RESULT cap_probe.session1_done INFO"
+				}
+				if = {
+					limit = { check_variable = { global.pww_cp_day = 40 } }
+					pww_cprobe_snap = yes
+					log = "PWW_DONE cap_probe"
+				}
+			}
+		}
+	}
+}
